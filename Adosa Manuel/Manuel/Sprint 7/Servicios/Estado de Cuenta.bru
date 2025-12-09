@@ -1,0 +1,22 @@
+meta {
+  name: Estado de Cuenta
+  type: http
+  seq: 6
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/EstadoCuentaCli?IdCliente=933&Fecha=12/31/2024&TasaInt=10&IdUser=DJGL
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdCliente: 933
+  Fecha: 12/31/2024
+  TasaInt: 10
+  IdUser: DJGL
+}
+
+settings {
+  encodeUrl: true
+}

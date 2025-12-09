@@ -1,0 +1,24 @@
+meta {
+  name: Reporte Release
+  type: http
+  seq: 7
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/ReporteRelease?Fecini=2025-01-01&Fecfin=2025-03-13&Embarcado=1&Facturado=1&Cliente=660
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Fecini: 2025-01-01
+  Fecfin: 2025-03-13
+  Embarcado: 1
+  Facturado: 1
+  Cliente: 660
+  ~Asociado: true
+}
+
+settings {
+  encodeUrl: true
+}

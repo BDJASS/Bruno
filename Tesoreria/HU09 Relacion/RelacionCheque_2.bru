@@ -1,0 +1,46 @@
+meta {
+  name: RelacionCheque_2
+  type: http
+  seq: 3
+}
+
+delete {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/RelacionCheque
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "ttCheque": [
+      {
+        "Tipo": 1,
+        "NoCheque": 12345,
+        "Banco": 10,
+        "Importe": 2500.75,
+        "FecReg" : "2025-05-02"
+      },
+      {
+        "Tipo": 1,
+        "NoCheque": 12346,
+        "Banco": 10,
+        "Importe": 1800.00,
+        "FecReg" : "2025-05-02"
+      },
+        {
+        "Tipo": 2,
+        "NoCheque": 12346,
+        "Banco": 10,
+        "Importe": 1100.00,
+        "FecReg" : "2025-05-02",
+        "Zona": 36
+      }
+    ]
+  }
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+}

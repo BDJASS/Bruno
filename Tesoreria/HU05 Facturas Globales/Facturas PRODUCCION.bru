@@ -1,0 +1,22 @@
+meta {
+  name: Facturas PRODUCCION
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.9:8823/RestADOSATes/rest/RestADOSATes/FacturasGlobales?Cliente=5&Tipo=Electronica&Fecha=2025-10-27
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Cliente: 5
+  Tipo: Electronica
+  Fecha: 2025-10-27
+  ~Usuario: ELF
+}
+
+settings {
+  encodeUrl: true
+}

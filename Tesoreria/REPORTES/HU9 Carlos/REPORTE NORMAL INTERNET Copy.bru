@@ -1,0 +1,25 @@
+meta {
+  name: REPORTE NORMAL INTERNET Copy
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.9:8823/RestADOSATes/rest/RestADOSATes/MovCajaTP?Sucursal=A&Caja=0&FechaIni=2025-07-24&FechaFin=2025-07-24&TipoPago=0&NumCheque=0&Monto=0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Sucursal: A
+  Caja: 0
+  FechaIni: 2025-07-24
+  FechaFin: 2025-07-24
+  TipoPago: 0
+  NumCheque: 0
+  Monto: 0
+}
+
+settings {
+  encodeUrl: true
+}

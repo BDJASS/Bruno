@@ -1,0 +1,23 @@
+meta {
+  name: Acuse Cancelar
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/CancelaAcuse?Acuse=00009NA&Usuario=ELF&Motivo=PRUEBA acuse de tipo A&UsuarioSolicita=DJGL
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Acuse: 00009NA
+  Usuario: ELF
+  Motivo: PRUEBA acuse de tipo A
+  UsuarioSolicita: DJGL
+  ~Confirmar: true
+}
+
+settings {
+  encodeUrl: true
+}

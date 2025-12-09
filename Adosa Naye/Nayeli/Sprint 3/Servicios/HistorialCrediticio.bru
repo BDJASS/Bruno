@@ -1,0 +1,19 @@
+meta {
+  name: HistorialCrediticio
+  type: http
+  seq: 5
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/HistorialCrediticio?Cliente=581
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Cliente: 581
+}
+
+settings {
+  encodeUrl: true
+}

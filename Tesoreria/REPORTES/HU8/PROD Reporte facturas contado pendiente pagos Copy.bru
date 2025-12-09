@@ -1,0 +1,20 @@
+meta {
+  name: PROD Reporte facturas contado pendiente pagos Copy
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.9:8823/RestADOSATes/rest/RestADOSATes/RepFacNormal?FechaInicio=2025-01-01&FechaFin=2025-07-07
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FechaInicio: 2025-01-01
+  FechaFin: 2025-07-07
+}
+
+settings {
+  encodeUrl: true
+}

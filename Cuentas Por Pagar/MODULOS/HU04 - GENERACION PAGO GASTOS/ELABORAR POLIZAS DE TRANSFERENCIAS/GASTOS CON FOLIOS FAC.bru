@@ -1,0 +1,41 @@
+meta {
+  name: GASTOS CON FOLIOS FAC
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/GeneracionGastos
+  body: json
+  auth: inherit
+}
+
+params:query {
+  ~Beneficiario: TRUE
+  ~Tipo: 2
+  ~Confirmar: true
+  ~Genera: TRUE
+}
+
+body:json {
+  {
+    "ttGasto": [
+      {
+        "IdUser": "AVGO",
+        "Banco": 25,
+        "CtaCheque": "65-500904209",
+        "Folio":0,
+         "FecReg": "2025-11-13",
+         "Negociable": false,
+         "Beneficiario":"EUROCOMPONENTES S.A.DE C.V.",
+          "FolioFac":"30060"
+      }
+    ]
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

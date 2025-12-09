@@ -1,0 +1,20 @@
+meta {
+  name: CORRE PEDIDOS PRUEBAS
+  type: http
+  seq: 9
+}
+
+get {
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/CorrePedido?Pedido=1067408&Resto=0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Pedido: 1067408
+  Resto: 0
+}
+
+settings {
+  encodeUrl: true
+}

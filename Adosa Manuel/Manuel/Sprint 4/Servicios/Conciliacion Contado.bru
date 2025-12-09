@@ -1,0 +1,56 @@
+meta {
+  name: Conciliacion Contado
+  type: http
+  seq: 5
+}
+
+post {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/ConciliacionContado
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "ttDocto": [
+      {
+        "IdUser": "JAGR",
+        "IdCliente": 3,
+        "IdDoc": "75565SD",
+        "FecReg": "2025-02-17",
+        "RazonSocial": "PUBLICO EN GENERAL.",
+        "Total": 0,
+        "SubTotal": 0,
+        "TDoc": "CONTADO",
+        "ImpPago": 2891,
+        "ImpAnt": 0,
+        "Desc1": 0,
+        "Desc2": 0,
+        "Desc3": 0,
+        "Desc4": 0,
+        "Desc5": 0,
+        "Desc6": 0,
+        "Desc7": 0,
+        "Desc8": 0,
+        "Desc9": 0,
+        "Desc10": 453.98,
+        "Desc11": 0,
+        "Desc12": 0
+      }
+    ],
+    "ttPago": [
+      {
+        "FormaPago": 57,
+        "Importe": 2891,
+        "Rec": "59275619",
+        "FecDep": "2025-03-04",
+        "RelationId": "0"
+      }
+    ],
+    "ttAnticipos": []
+  }
+}
+
+settings {
+  encodeUrl: true
+}

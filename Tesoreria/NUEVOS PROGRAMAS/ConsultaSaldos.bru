@@ -1,0 +1,19 @@
+meta {
+  name: ConsultaSaldos
+  type: http
+  seq: 5
+}
+
+get {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/ConsultaSaldos?Documento=340842I
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Documento: 340842I
+}
+
+settings {
+  encodeUrl: true
+}

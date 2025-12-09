@@ -1,0 +1,21 @@
+meta {
+  name: Eliminar Documento
+  type: http
+  seq: 4
+}
+
+delete {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/CteCajaSucursalDocumentos?Sucursal=512&FechaCorte=2025-09-13&Secuencia=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Sucursal: 512
+  FechaCorte: 2025-09-13
+  Secuencia: 1
+}
+
+settings {
+  encodeUrl: true
+}

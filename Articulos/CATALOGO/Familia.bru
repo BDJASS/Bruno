@@ -1,0 +1,20 @@
+meta {
+  name: Familia
+  type: http
+  seq: 8
+}
+
+get {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/CatalogoFamilia?IdFamilia=0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdFamilia: 0
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

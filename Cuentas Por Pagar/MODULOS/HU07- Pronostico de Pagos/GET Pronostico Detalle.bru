@@ -1,0 +1,23 @@
+meta {
+  name: GET Pronostico Detalle
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/PronosticoDePagosDetalle?Fecha=2025-10-31&ProntoPago=1&Moneda=1&IdProv=744
+  body: json
+  auth: inherit
+}
+
+params:query {
+  Fecha: 2025-10-31
+  ProntoPago: 1
+  Moneda: 1
+  IdProv: 744
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

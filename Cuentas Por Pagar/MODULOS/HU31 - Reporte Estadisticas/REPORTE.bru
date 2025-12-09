@@ -1,0 +1,23 @@
+meta {
+  name: REPORTE
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/ReporteEstadisticas?Year=2025&Mes=11
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Year: 2025
+  Mes: 11
+  ~Prov1: 1
+  ~Prov2: 5
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

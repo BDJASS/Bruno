@@ -1,0 +1,23 @@
+meta {
+  name: Acuse Cancelar PROD
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://192.0.1.9:8823/RestADOSATes/rest/RestADOSATes/CancelaAcuse?Acuse=175518C&Usuario=ELF&Confirmar=true&Motivo=Se va aplicar Devolucion&UsuarioSolicita=NJCC
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Acuse: 175518C
+  Usuario: ELF
+  Confirmar: true
+  Motivo: Se va aplicar Devolucion
+  UsuarioSolicita: NJCC
+}
+
+settings {
+  encodeUrl: true
+}

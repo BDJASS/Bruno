@@ -1,0 +1,20 @@
+meta {
+  name: Get Ficha Deposito
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.9:8823/RestADOSATes/rest/RestADOSATes/FichaDeposito?Fecha=2025-08-19&Confirmar=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Fecha: 2025-08-19
+  Confirmar: true
+}
+
+settings {
+  encodeUrl: true
+}

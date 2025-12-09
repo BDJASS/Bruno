@@ -1,0 +1,22 @@
+meta {
+  name: Reporte
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/RepValuacionDeMovimientos?Almacen=02B&FecIni=2025-10-24&FecFin=2025-11-23
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Almacen: 02B
+  FecIni: 2025-10-24
+  FecFin: 2025-11-23
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

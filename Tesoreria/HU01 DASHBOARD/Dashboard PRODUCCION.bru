@@ -1,0 +1,19 @@
+meta {
+  name: Dashboard PRODUCCION
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.9:8823/RestADOSATes/rest/RestADOSATes/TesDashboard?Fecha=2025-06-12
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Fecha: 2025-06-12
+}
+
+settings {
+  encodeUrl: true
+}

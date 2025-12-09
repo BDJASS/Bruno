@@ -1,0 +1,22 @@
+meta {
+  name: RelacionCobranza Consulta
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/RelacionCobranzaConsulta?Cliente&FecIni&FecFin&RelCob
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Cliente: null
+  FecIni: null
+  FecFin: null
+  RelCob: null
+}
+
+settings {
+  encodeUrl: true
+}

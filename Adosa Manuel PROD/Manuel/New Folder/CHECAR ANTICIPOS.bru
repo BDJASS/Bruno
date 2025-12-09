@@ -1,0 +1,22 @@
+meta {
+  name: CHECAR ANTICIPOS
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.9:8816/RestADOSACyc/rest/RestADOSACyc/AnticipoCte?Cliente=34281&EsMov=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Cliente: 34281
+  EsMov: true
+  ~FechaInicio: 2024-04-01
+  ~FechaFin: 2025-04-04
+}
+
+settings {
+  encodeUrl: true
+}

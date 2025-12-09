@@ -1,0 +1,19 @@
+meta {
+  name: Vendedor
+  type: http
+  seq: 19
+}
+
+get {
+  url: 192.0.1.9:8816/RestADOSACyc/rest/RestADOSACyc/Vendedor
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~TipoVen: 3
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,21 @@
+meta {
+  name: CteCajaSucursal PROD Copy copy
+  type: http
+  seq: 7
+}
+
+get {
+  url: http://192.0.1.9:8823/RestADOSATes/rest/RestADOSATes/CteCajaSucursal?Fecha=2025-11-11&IdSucursal=03A
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Fecha: 2025-11-11
+  IdSucursal: 03A
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

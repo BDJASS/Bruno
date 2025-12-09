@@ -1,0 +1,63 @@
+meta {
+  name: MODIFICAR
+  type: http
+  seq: 9
+}
+
+put {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/GeneracionGastos
+  body: json
+  auth: inherit
+}
+
+params:query {
+  ~Modifica: TRUE
+}
+
+body:json {
+  {
+  "ttGasto": [
+                      {
+                          "IdUser": "AVGO",
+                          "Banco": 25,
+                          "CtaCheque": "65-500904209",
+                          "Folio": 289117,
+                          "FecReg": "2025-08-04",
+                          "Negociable": false,
+                          "Beneficiario": "(GBC) ACCO MEXICANA,S.A.DE C.V.",
+                          "CasaBolsa": "",
+                          "FolioFac": "INV20251429",
+                          "RefBancaria": "",
+                          "Concepto": "FACTURA No. INV20251429",
+                          "Concepto2": ""
+                      }
+                  ],
+                  "ttDetGasto": [
+                      {
+                          "Cuenta": "6102",
+                          "sc": "8",
+                          "ssc": "3",
+                          "sssc": "3",
+                          "Descripcion": "EDIFICIO",
+                          "Importe": 39084.0,
+                          "IVA": false,
+                          "CA": "C"
+                      },
+                      {
+                          "Cuenta": "1109",
+                          "sc": "1",
+                          "ssc": "48",
+                          "sssc": "0",
+                          "Descripcion": "RODOLFO TREVINO BELMARES",
+                          "Importe": 500.0,
+                          "IVA": true,
+                          "CA": "C"
+                      }
+                  ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

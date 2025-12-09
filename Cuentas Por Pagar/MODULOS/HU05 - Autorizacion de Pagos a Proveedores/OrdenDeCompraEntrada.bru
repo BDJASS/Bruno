@@ -1,0 +1,20 @@
+meta {
+  name: OrdenDeCompraEntrada
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/OrdenDeCompraPorEntrada?OrdenDeCompra=50734&IdUsuario=sge
+  body: none
+  auth: inherit
+}
+
+params:query {
+  OrdenDeCompra: 50734
+  IdUsuario: sge
+}
+
+settings {
+  encodeUrl: true
+}

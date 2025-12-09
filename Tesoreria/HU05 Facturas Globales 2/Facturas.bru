@@ -1,0 +1,77 @@
+meta {
+  name: Facturas
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/FacturasGlobales?Cliente=1&Tipo=Electronica&Usuario=ELF&Fecha=2025-02-17
+  body: json
+  auth: inherit
+}
+
+params:query {
+  Cliente: 1
+  Tipo: Electronica
+  Usuario: ELF
+  Fecha: 2025-02-17
+  ~Cheque: C000001
+}
+
+body:json {
+  {
+    "wMov": [
+      {
+        "id": "T",
+        "idcaja": 99,
+        "turno": 1,
+        "concepto": "C99  T1",
+        "ImpVentas": 1475.56,
+        "ImpNCred": 0.0,
+        "Total": 1475.56,
+        "iva": 236.09,
+        "Donativo": 0.0,
+        "manual": false,
+        "selec": true
+      }
+    ],
+    "ttfact": [
+      {
+        "id": "T",
+        "Documento": "60689CA",
+        "IdCliente": 3,
+        "nomcte": "PUBLICO EN GENERAL.",
+        "subtotal": 561.84,
+        "iva": 89.89,
+        "tot": 651.73,
+        "selec": false,
+        "Descr": "",
+        "tipo": 0,
+        "Flag": "",
+        "IDmc": 99,
+        "IdSuplente": 1,
+        "tty": "J"
+      },
+      {
+        "id": "T",
+        "Documento": "60751CA",
+        "IdCliente": 48584,
+        "nomcte": "DISTRIBUIDORA INDUSTRIAL SOLEO DE MONTERREY, S.A. DE C.V.",
+        "subtotal": 913.72,
+        "iva": 146.2,
+        "tot": 1059.92,
+        "selec": false,
+        "Descr": "",
+        "tipo": 0,
+        "Flag": "",
+        "IDmc": 99,
+        "IdSuplente": 1,
+        "tty": "J"
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+}

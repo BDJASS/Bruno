@@ -1,0 +1,21 @@
+meta {
+  name: CteCajaSucursal TESORERIA PROD copy
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://192.0.1.9:8823/RestADOSATes/rest/RestADOSATes/CteCajaTesoreria?Fecha=2025-10-20&IdSucursal=515
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Fecha: 2025-10-20
+  IdSucursal: 515
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

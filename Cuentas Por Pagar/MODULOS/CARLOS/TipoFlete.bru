@@ -1,0 +1,19 @@
+meta {
+  name: TipoFlete
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/TipoFlete
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~IdFlete: 20
+}
+
+settings {
+  encodeUrl: true
+}

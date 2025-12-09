@@ -1,0 +1,20 @@
+meta {
+  name: RelacionCheque
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.9:8823/RestADOSATes/rest/RestADOSATes/RelacionCheque?Fecha=2025-06-12
+  body: json
+  auth: inherit
+}
+
+params:query {
+  Fecha: 2025-06-12
+  ~Tipo: 1
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,42 @@
+meta {
+  name: Chequera_1
+  type: http
+  seq: 6
+}
+
+post {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/ClienteCreditoChequera
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "ttBancoInfo": [
+      {
+        "IdCliente": 440,
+        "IdBanco": 25,
+        "CuentaBancaria": "1234567890123456",
+        "Bloqueado": true
+      },
+      {
+        "IdCliente": 440,
+        "IdBanco": 26,
+        "CuentaBancaria": "9876543210987654",
+        "Bloqueado": false
+      },
+      {
+        "IdCliente": 440,
+        "IdBanco": 27,
+        "CuentaBancaria": "1122334455667788",
+        "Bloqueado": true
+      }
+    ]
+  }
+  // sOLO SE PERMITE 3 BANCOS POR CLIENTE 
+  
+}
+
+settings {
+  encodeUrl: true
+}

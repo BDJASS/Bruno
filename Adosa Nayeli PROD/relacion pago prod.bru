@@ -1,0 +1,25 @@
+meta {
+  name: relacion pago prod
+  type: http
+  seq: 8
+}
+
+get {
+  url: http://192.0.1.9:8816/RestADOSACyc/rest/RestADOSACyc/RepAnalisisSaldos2?FecIni=2025-11-04&FecFin=2025-11-19&Dias=5
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FecIni: 2025-11-04
+  FecFin: 2025-11-19
+  Dias: 5
+  ~Cobrador: 0
+  ~Resp: 0
+  ~Clase: 0
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,19 @@
+meta {
+  name: PedidoAutCanRec
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://192.0.1.9:8816/RestADOSACyc/rest/RestADOSACyc/PedidoAutCanRec?Clase=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Clase: 1
+}
+
+settings {
+  encodeUrl: true
+}

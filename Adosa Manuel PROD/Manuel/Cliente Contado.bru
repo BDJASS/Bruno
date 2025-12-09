@@ -1,0 +1,19 @@
+meta {
+  name: Cliente Contado
+  type: http
+  seq: 6
+}
+
+get {
+  url: http://192.0.1.9:8816/RestADOSACyc/rest/RestADOSACyc/ClienteContado?Cliente=39345
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Cliente: 39345
+}
+
+settings {
+  encodeUrl: true
+}

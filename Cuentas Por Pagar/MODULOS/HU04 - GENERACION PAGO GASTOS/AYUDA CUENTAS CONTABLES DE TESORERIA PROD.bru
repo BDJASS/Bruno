@@ -1,0 +1,24 @@
+meta {
+  name: AYUDA CUENTAS CONTABLES DE TESORERIA PROD
+  type: http
+  seq: 6
+}
+
+get {
+  url: http://192.0.1.9:8823/RestADOSATes/rest/RestADOSATes/CuentasContables?Cuenta=6101&Nsc=0&Ssc=30
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Cuenta: 6101
+  Nsc: 0
+  Ssc: 30
+  ~IdProv: 2585
+  ~Sss: 0
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

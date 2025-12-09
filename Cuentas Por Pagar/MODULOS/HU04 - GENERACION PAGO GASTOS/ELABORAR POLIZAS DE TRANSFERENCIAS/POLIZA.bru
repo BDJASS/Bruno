@@ -1,0 +1,23 @@
+meta {
+  name: POLIZA
+  type: http
+  seq: 10
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/PolizaGastos?CtaCheque=65-500904209&Banco=25&NumCheque=291434&Genera=FALSE
+  body: none
+  auth: inherit
+}
+
+params:query {
+  CtaCheque: 65-500904209
+  Banco: 25
+  NumCheque: 291434
+  Genera: FALSE
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,20 @@
+meta {
+  name: OrdenDeCompra CANCELADA
+  type: http
+  seq: 5
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/OrdenDeCompra?OrdenDeCompra=41996
+  body: none
+  auth: inherit
+}
+
+params:query {
+  OrdenDeCompra: 41996
+  ~IdUsuario: sge
+}
+
+settings {
+  encodeUrl: true
+}

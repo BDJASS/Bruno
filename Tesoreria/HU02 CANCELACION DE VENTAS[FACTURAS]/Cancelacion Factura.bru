@@ -1,0 +1,24 @@
+meta {
+  name: Cancelacion Factura
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/CancelaFact?Factura=2072419&IdUser=MLLR&Confirmar=TRUE&Tipo=3&Motivo=Ajuste&UsuarioSolicita=DJGL
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Factura: 2072419
+  IdUser: MLLR
+  Confirmar: TRUE
+  Tipo: 3
+  Motivo: Ajuste
+  UsuarioSolicita: DJGL
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,19 @@
+meta {
+  name: AYUDA CUENTAS CONTABLES DE TESORERIA
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/CuentasContables?IdProv=2585
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdProv: 2585
+}
+
+settings {
+  encodeUrl: true
+}

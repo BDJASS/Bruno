@@ -1,0 +1,74 @@
+meta {
+  name: ALTA
+  type: http
+  seq: 5
+}
+
+post {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/GeneracionGastos?Beneficiario=TRUE&Genera=FALSE
+  body: json
+  auth: inherit
+}
+
+params:query {
+  Beneficiario: TRUE
+  Genera: FALSE
+}
+
+body:json {
+  {
+    "ttGasto": [
+      {
+        "IdUser": "AVGO",
+        "Banco": 25,
+        "CtaCheque": "65-500904209",
+        "Folio":123456,
+         "FecReg": "2025-09-02",
+         "Negociable": false,
+         "Beneficiario": "Juan Francisco",
+          "CasaBolsa": "",
+          "FolioFac": "399210202-55",
+         "RefBancaria": "",
+          "Concepto": "",
+        "Concepto2": ""
+      }
+    ],
+    "ttDetGasto": [ {
+        "Cuenta": "1101",
+        "sc": "2",
+        "ssc": "0",
+        "sssc": "0",
+        "Descripcion": "RUIZ CORTINES",
+        "Importe": 5,
+        "IVA": true,
+        "CA": "C"
+      },
+      {
+        "Cuenta": "1101",
+        "sc": "8",
+        "ssc": "0",
+        "sssc": "0",
+        "Descripcion": "CEDIS/FUG",
+        "Importe": 500,
+        "IVA": true,
+        "CA": "C"
+      },
+      {
+        "Cuenta": "6102",
+        "sc": "2",
+        "ssc": "4",
+        "sssc": "3",
+        "Descripcion": "CESANTIA Y VEJE",
+        "Importe": 100,
+        "IVA": false,
+        "CA": "C"
+      }
+      ]
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

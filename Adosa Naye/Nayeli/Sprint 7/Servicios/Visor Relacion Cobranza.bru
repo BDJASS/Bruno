@@ -1,0 +1,21 @@
+meta {
+  name: Visor Relacion Cobranza
+  type: http
+  seq: 19
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/RelacionCobranzaConsulta?Cliente=3&FecIni=2025-03-05&FecFin=2026-15-03
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Cliente: 3
+  FecIni: 2025-03-05
+  FecFin: 2026-15-03
+}
+
+settings {
+  encodeUrl: true
+}

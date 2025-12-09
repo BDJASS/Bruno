@@ -1,0 +1,38 @@
+meta {
+  name: DETALLE PROD
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/VentasPorClienteDetalle?IdCliente=42288&Fecha=2025-11-28
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdCliente: 42288
+  Fecha: 2025-11-28
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  **Summary:**
+  Retrieves detailed sales information for a specific client in the production environment on a given date. Use this endpoint to analyze the products purchased by a client and their sales breakdown in production.
+  
+  **Required Parameters:**
+  - `IdCliente` (integer): The unique identifier of the client.
+  - `Fecha` (string, format: YYYY-MM-DD): The date for which to retrieve the sales details.
+  
+  **Example Usage:**
+  ```
+  GET http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/VentasPorClienteDetalle?IdCliente=34343&Fecha=2025-09-02
+  ```
+  
+  **Response:**
+  Returns a list of products and sales details for the specified client and date in the production environment.
+}

@@ -1,0 +1,19 @@
+meta {
+  name: Asociado- Asociado Venta y AsociadoCredito
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/ClienteCreditoAsociados?IdCliente=29528
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdCliente: 29528
+}
+
+settings {
+  encodeUrl: true
+}

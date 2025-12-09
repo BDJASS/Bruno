@@ -1,0 +1,19 @@
+meta {
+  name: Anticipo Detalle
+  type: http
+  seq: 12
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Anticipo?Acuse=23785IA
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Acuse: 23785IA
+}
+
+settings {
+  encodeUrl: true
+}

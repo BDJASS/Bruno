@@ -1,0 +1,29 @@
+meta {
+  name: CARGAR DOCUMENTO
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/CteCajaSucursalDocumentos
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "ttDocCorteCaja": [
+      {
+        "IdSucursal": 512,
+        "FechaCorte": "2025-09-13",
+        "TipoDocumento": "Pagarwe",
+        "Documento": "VGhpcyBpcyBhIHRlc3QgZG9jdW1lbnQ="
+      }
+    ]
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+}

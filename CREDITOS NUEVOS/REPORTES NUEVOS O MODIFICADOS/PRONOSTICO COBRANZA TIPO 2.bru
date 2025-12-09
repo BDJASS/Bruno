@@ -1,0 +1,27 @@
+meta {
+  name: PRONOSTICO COBRANZA TIPO 2
+  type: http
+  seq: 2
+}
+
+get {
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/ReporteCartera?Tipo=2&Moneda=0&Zonas=0&Segmento=0&Cobrador=0&Calidad=0&FechaIni=2025-10-08&Dias=0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Tipo: 2
+  Moneda: 0
+  Zonas: 0
+  Segmento: 0
+  Cobrador: 0
+  Calidad: 0
+  FechaIni: 2025-10-08
+  Dias: 0
+  ~Clase: 3
+}
+
+settings {
+  encodeUrl: true
+}

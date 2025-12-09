@@ -1,0 +1,21 @@
+meta {
+  name: VISTA
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/CteCajaSucursalDocumentos?FechaCorte=2025-09-13&Sucursal=512
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FechaCorte: 2025-09-13
+  Sucursal: 512
+  ~Secuencia: 2
+}
+
+settings {
+  encodeUrl: true
+}

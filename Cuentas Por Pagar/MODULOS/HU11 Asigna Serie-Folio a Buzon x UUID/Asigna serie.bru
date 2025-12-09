@@ -1,0 +1,20 @@
+meta {
+  name: Asigna serie
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/FoliosBuzonFiscal?FechaIni=2025-07-15&FechaFin=2025-08-12
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FechaIni: 2025-07-15
+  FechaFin: 2025-08-12
+}
+
+settings {
+  encodeUrl: true
+}

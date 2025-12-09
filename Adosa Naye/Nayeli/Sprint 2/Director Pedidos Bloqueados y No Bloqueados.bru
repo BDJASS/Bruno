@@ -1,0 +1,15 @@
+meta {
+  name: Director Pedidos Bloqueados y No Bloqueados
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/PedidoNoAutDir
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

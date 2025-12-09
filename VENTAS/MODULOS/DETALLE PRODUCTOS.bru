@@ -1,0 +1,37 @@
+meta {
+  name: DETALLE PRODUCTOS
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://192.0.1.14:8850/RestADOSAVentas/rest/RestADOSAVentas/VentasPorClienteDetalle?IdCliente=588&Fecha=2024-12-31
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdCliente: 588
+  Fecha: 2024-12-31
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  **Summary:**
+  Retrieves detailed sales information for a specific client on a given date. Use this endpoint to analyze the products purchased by a client and their sales breakdown.
+  
+  **Required Parameters:**
+  - `IdCliente` (integer): The unique identifier of the client.
+  - `Fecha` (string, format: YYYY-MM-DD): The date for which to retrieve the sales details.
+  
+  **Example Usage:**
+  ```
+  GET http://192.0.1.14:8850/RestADOSAVentas/rest/RestADOSAVentas/VentasPorClienteDetalle?IdCliente=588&Fecha=2024-12-31
+  ```
+  
+  **Response:**
+  Returns a list of products and sales details for the specified client and date.
+}

@@ -1,0 +1,35 @@
+meta {
+  name: Guardar documento contado
+  type: http
+  seq: 10
+}
+
+post {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/DocumentoContado
+  body: json
+  auth: inherit
+}
+
+params:query {
+  ~Cliente: 581
+}
+
+body:json {
+   {
+          "ttDocReq": [
+              {
+                  "Cliente": 581,
+                  "TipoDoc":1,
+                  "NombreArchivo":"Constancia.pdf",
+                  "PDF": "JVBERi0xLjQKJcLB2s"
+              }
+          ]
+  }
+  
+       
+          
+}
+
+settings {
+  encodeUrl: true
+}

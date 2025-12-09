@@ -1,0 +1,56 @@
+meta {
+  name: ConciliacionManuel
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/ConciliacionManuel
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "ttDocto": [
+      {
+        "IdUser": "DJGL",
+        "IdCliente": 581,
+        "IdDoc": "2057092",
+        "FecReg": "2025-05-17",
+        "RazonSocial": "Mi Empresa SA de CV",
+        "Total": 662.36,
+        "SubTotal": 620.00,
+        "TDoc": "FACT",
+        "ImpPago": 662.36,
+        "ImpAnt": 0,
+        "Desc1": 0,
+        "Desc2": 0,
+        "Desc3": 0,
+        "Desc4": 0,
+        "Desc5": 0,
+        "Desc6": 0,
+        "Desc7": 0,
+        "Desc8": 0,
+        "Desc9": 0,
+        "Desc10": 0,
+        "Desc11": 0,
+        "Desc12": 0
+      }
+    ],
+    "ttPago": [
+      {
+        "FormaPago": 62,
+        "Importe": 662.36,
+        "Rec": 0,
+        "FecDep": "2025-05-17",
+        "RelationId": "2057092"  // Este es solo para relacionar y deje enviar 3 tablas IdDoc
+      }
+    ]
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,47 @@
+meta {
+  name: ClienteContado_1
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/ClienteContado
+  body: json
+  auth: inherit
+}
+
+body:json {
+  [
+      {
+          "IdUser":"DJGL",
+          "Tipo":1,
+          "RazonSocial":"Comercial DA",
+          "RFC":"AURN990113FQ9",
+          "RegimenCapital":"Comercial NAR ",
+          "NombreComercial":"Jose Angel Segura Sidrian",
+          "Propietario":"",
+          "Curp": "AURN990113MVZNMY05",
+          "Email": "desarrllo9@adosa.com.mx",
+           "Telefono": "8182561513",
+           "Telefono2": "818256144",
+           "Telefono3": "8182561577",
+          "BuzonFiscal":"nayelianguiano.ro@gmail.com",
+          "IdRFiscal":601,
+          "IdUsoCFDI":"Sin obligaciones fiscales",
+          "IdRamo":"2",
+          "IdGiro":22,
+          "IdSegmentoCte":4,
+          "IdClase":1,
+          "IdCiudad":1,
+          "CP":"66640",
+          "Colonia":"Hacienda San Juan",
+          "Calle":"San Juan",
+          "NumExterior":"508",
+          "NumInterior":"508"
+      }
+  ]
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,63 @@
+meta {
+  name: Pago FUERA_1
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/ConciliacionManuel
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "ttDocto": [
+      {
+        "IdUser": "DJGL",
+        "IdCliente": 256,
+        "IdDoc": "2069075",
+        "FecReg": "2025-01-25",
+        "RazonSocial": "IMPRENTA Y PAPELERIA FLORES, S.A. DE C.V.",
+        "Total": 0,
+        "SubTotal": 0,
+        "TDoc": "FACT",
+        "ImpPago": 7739.91,
+        "ImpAnt": 0,
+        "Desc1": 0,
+        "Desc2": 0,
+        "Desc3": 0,
+        "Desc4": 0,
+        "Desc5": 0,
+        "Desc6": 0,
+        "Desc7": 0,
+        "Desc8": 0,
+        "Desc9": 0,
+        "Desc10": 0,
+        "Desc11": 0,
+        "Desc12": 0
+      }
+    ],
+    "ttPago": [
+      {
+        "FormaPago": 62,
+        "Importe": 5000,
+        "Rec": "0",
+        "FecDep": "2025-03-19",
+        "RelationId": "0"
+      },
+      {
+        "FormaPago": 52,
+        "Importe" : 2739.91,
+        "Rec": "0",
+        "FecDep": "2025-03-19",
+        "RelationId": "0"
+      }
+    ],
+    "ttAnticipos": []
+  }
+}
+
+settings {
+  encodeUrl: true
+}

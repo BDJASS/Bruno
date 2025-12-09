@@ -1,0 +1,19 @@
+meta {
+  name: GiroProv
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/GiroProv
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~IdGiroProv: 6
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,22 @@
+meta {
+  name: REPORTE DIARIO DEPOSITOS CREDITOS
+  type: http
+  seq: 11
+}
+
+get {
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/ReporteDepositos?FecInicio=2025-05-06&FecFin=2025-06-06&Clase=0&Tipo=2
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FecInicio: 2025-05-06
+  FecFin: 2025-06-06
+  Clase: 0
+  Tipo: 2
+}
+
+settings {
+  encodeUrl: true
+}

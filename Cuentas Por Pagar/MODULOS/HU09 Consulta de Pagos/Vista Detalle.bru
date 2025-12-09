@@ -1,0 +1,23 @@
+meta {
+  name: Vista Detalle
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/ConsultaDePagosDetalle?NumCheque=270881&Banco=25&CtaCheq=65-500904209&Tipo=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  NumCheque: 270881
+  Banco: 25
+  CtaCheq: 65-500904209
+  Tipo: 1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

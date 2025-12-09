@@ -1,0 +1,20 @@
+meta {
+  name: Reporte Relacion Cheques Deposito
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/RepRelacionCheque?FechaInicio=2025-06-12
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FechaInicio: 2025-06-12
+  ~Relacion: 000001C
+}
+
+settings {
+  encodeUrl: true
+}

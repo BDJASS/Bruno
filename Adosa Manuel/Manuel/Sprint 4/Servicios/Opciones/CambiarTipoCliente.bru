@@ -1,0 +1,21 @@
+meta {
+  name: CambiarTipoCliente
+  type: http
+  seq: 4
+}
+
+put {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/CambiarTipoCliente?IdTipoCliente&Rec&Nivel
+  body: none
+  auth: none
+}
+
+params:query {
+  IdTipoCliente: null
+  Rec: null
+  Nivel: null
+}
+
+settings {
+  encodeUrl: true
+}

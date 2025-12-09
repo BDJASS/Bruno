@@ -1,0 +1,35 @@
+meta {
+  name: AltaPdfPagare
+  type: http
+  seq: 4
+}
+
+put {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Pagare
+  body: json
+  auth: inherit
+}
+
+params:query {
+  ~: null
+}
+
+body:json {
+  {
+    "ttPagare": [
+      {
+        "IdPagare": 8,
+       // "Importe": 8888888888,
+       // "FecExp": "2022-01-05",
+      //  "DocPagare": "base64encodedPDFdata"
+        "DocIneAval": "base64encodedPDFdata"
+      //  "DocIneDeudor": ""
+      }
+    ]
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,60 @@
+meta {
+  name: PROVEDOR ALTA
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/GeneracionProv?Genera=TRUE
+  body: json
+  auth: inherit
+}
+
+params:query {
+  Genera: TRUE
+  ~Tipo: 2
+  ~Beneficiario: TRUE
+  ~Confirmar: true
+}
+
+body:json {
+  {
+    "ttProv": [
+      {
+        "IdUser": "PJRZ",
+        "Banco": 25,
+        "BancoNombre": "BANCA SANTANDER MEXICO,SA",
+        "CtaCheque": "65-500904209",
+        "Folio": 123456,
+        "FecReg": "2025-12-03",
+        "Prov": 2083,
+        "Proveedor": "BIO PAPPEL, S.A. DE C.V.(CUADERNO)",
+        "IdMoneda": 0,
+        "CasaBolsa": "banco base",
+        "Beneficiario": "BIO PAPPEL, S.A. DE C.V.(CUADERNO)"
+      }
+    ],
+    "ttDetProv": [
+      {
+       
+        "Factura": "13297987",
+        "FecVen": "2025-12-03",
+        "ImpOriginal": 26,
+        "PP1": 0.0,
+        "PP2": 0.0,
+        "PP3": 0.0,
+        "PP4": 0.0,
+        "Plazo": 0.0,
+        "TC": 18.285,
+        "Comision": 0.0,
+        "Pagado": 263924.31
+      }
+    ]
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

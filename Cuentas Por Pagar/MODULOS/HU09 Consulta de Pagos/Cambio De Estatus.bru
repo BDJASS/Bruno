@@ -1,0 +1,23 @@
+meta {
+  name: Cambio De Estatus
+  type: http
+  seq: 8
+}
+
+put {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/ConsultaDePagosEstatus?NumCheque=290520&Banco=25&CtaCheq=65-500904209&Tipo=2&Estatus=10
+  body: json
+  auth: inherit
+}
+
+params:query {
+  NumCheque: 290520
+  Banco: 25
+  CtaCheq: 65-500904209
+  Tipo: 2
+  Estatus: 10
+}
+
+settings {
+  encodeUrl: true
+}

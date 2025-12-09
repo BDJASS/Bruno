@@ -1,0 +1,19 @@
+meta {
+  name: Estado de Cuenta
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/EstadoDeCuentaProv?IdProv=2033
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdProv: 2033
+}
+
+settings {
+  encodeUrl: true
+}

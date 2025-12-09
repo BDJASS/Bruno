@@ -1,0 +1,39 @@
+meta {
+  name: CORREO COTIZACION+
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/correo?idCotiza=3013065&pMail=hey.angeel@gmail.com&pContenido=Prueba
+  body: none
+  auth: inherit
+}
+
+params:query {
+  idCotiza: 3013065
+  pMail: hey.angeel@gmail.com
+  pContenido: Prueba
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  **Summary:**
+  Sends a quotation email to a specified recipient with the provided content. Use this endpoint to automate the process of emailing quotations to clients or internal stakeholders in the production environment.
+  
+  **Required Parameters:**
+  - `idCotiza` (integer): The unique identifier of the quotation.
+  - `pMail` (string): The recipient's email address.
+  - `pContenido` (string): The content of the email message.
+  
+  **Example Usage:**
+  ```
+  GET http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/correo?idCotiza=3013065&pMail=hey.angeel@gmail.com&pContenido=Prueba
+  ```
+  
+  **Response:**
+  Returns the status of the email sending operation.
+}

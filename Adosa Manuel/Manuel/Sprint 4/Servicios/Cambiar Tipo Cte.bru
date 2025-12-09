@@ -1,0 +1,19 @@
+meta {
+  name: Cambiar Tipo Cte
+  type: http
+  seq: 14
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/CambiarTipoCliente?TipoCte=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  TipoCte: 1
+}
+
+settings {
+  encodeUrl: true
+}

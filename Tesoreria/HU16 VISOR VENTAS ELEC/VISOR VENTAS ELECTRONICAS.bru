@@ -1,0 +1,21 @@
+meta {
+  name: VISOR VENTAS ELECTRONICAS
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/VisorVentasElectronicas?Reporte=2&Fecha=2025-04-22&Tienda=7
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Reporte: 2
+  Fecha: 2025-04-22
+  Tienda: 7
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,19 @@
+meta {
+  name: Comisiones Bancarias
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/ComisionBancaria?Fecha=2025-02-02
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Fecha: 2025-02-02
+}
+
+settings {
+  encodeUrl: true
+}

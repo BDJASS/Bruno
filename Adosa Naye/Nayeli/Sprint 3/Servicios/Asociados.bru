@@ -1,0 +1,19 @@
+meta {
+  name: Asociados
+  type: http
+  seq: 9
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Asociado?Cliente=1307
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Cliente: 1307
+}
+
+settings {
+  encodeUrl: true
+}

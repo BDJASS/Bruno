@@ -1,0 +1,22 @@
+meta {
+  name: GET PRONOSTICO PROD
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.9:8857/RestADOSACxp/rest/RestADOSACxp/PronosticoDePagos?Fecha=2025-10-31&ProntoPago=1&Moneda=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Fecha: 2025-10-31
+  ProntoPago: 1
+  Moneda: 1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,37 @@
+meta {
+  name: Autorizacion
+  type: http
+  seq: 4
+}
+
+put {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/AutorizacionPagos
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+      "ttAut": [
+        {
+         "Folio": 289057,
+                          "IdBanco": 25,
+                          "Banco": "SANTANDE",
+                          "Beneficiario": "INDUSTRIAS TUK,S.A.DE C.V.",
+                          "FecReg": "2025-08-01",
+                          "FecVenc": "2025-08-01",
+                          "PP": "P",
+                          "Importe": 63160.95,
+                          "Aut": false,
+                          "B": "",
+                          "CtaCheque": "65-500904209",
+                          "Tipo": 1
+        }
+      ]
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+}

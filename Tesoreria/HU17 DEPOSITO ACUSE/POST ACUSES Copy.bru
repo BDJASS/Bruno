@@ -1,0 +1,22 @@
+meta {
+  name: POST ACUSES Copy
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/DepositoAcuses?Usuario=GEE&Fecha=2025-04-10&Acuse=001153N&Confirmar=TRUE
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Usuario: GEE
+  Fecha: 2025-04-10
+  Acuse: 001153N
+  Confirmar: TRUE
+}
+
+settings {
+  encodeUrl: true
+}

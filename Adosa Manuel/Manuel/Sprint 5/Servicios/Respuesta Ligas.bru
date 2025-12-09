@@ -1,0 +1,19 @@
+meta {
+  name: Respuesta Ligas
+  type: http
+  seq: 6
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/LigaPagoResp?IdReference=P000005
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdReference: P000005
+}
+
+settings {
+  encodeUrl: true
+}

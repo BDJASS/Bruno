@@ -1,0 +1,22 @@
+meta {
+  name: FacturasGb
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/FacturasGlobales?Cliente=1&Tipo=Electronica&Usuario=ELF&Fecha=2025-06-14
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Cliente: 1
+  Tipo: Electronica
+  Usuario: ELF
+  Fecha: 2025-06-14
+}
+
+settings {
+  encodeUrl: true
+}

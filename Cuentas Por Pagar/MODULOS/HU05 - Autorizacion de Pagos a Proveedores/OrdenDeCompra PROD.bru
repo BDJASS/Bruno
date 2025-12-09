@@ -1,0 +1,19 @@
+meta {
+  name: OrdenDeCompra PROD
+  type: http
+  seq: 7
+}
+
+get {
+  url: http://192.0.1.9:8857/RestADOSACxp/rest/RestADOSACxp/OrdenDeCompra?OrdenDeCompra=052579
+  body: none
+  auth: inherit
+}
+
+params:query {
+  OrdenDeCompra: 052579
+}
+
+settings {
+  encodeUrl: true
+}

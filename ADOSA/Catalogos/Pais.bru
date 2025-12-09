@@ -1,0 +1,19 @@
+meta {
+  name: Pais
+  type: http
+  seq: 16
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Pais?IdCiudad=MEX
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdCiudad: MEX
+}
+
+settings {
+  encodeUrl: true
+}

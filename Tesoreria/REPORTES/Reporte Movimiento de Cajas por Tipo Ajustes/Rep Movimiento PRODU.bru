@@ -1,0 +1,25 @@
+meta {
+  name: Rep Movimiento PRODU
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://192.0.1.9:8823/RestADOSATes/rest/RestADOSATes/MovCajaTP?FechaIni=2025-08-17&FechaFin=2025-08-21&TipoPago=0&NumCheque=0&Monto=0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FechaIni: 2025-08-17
+  FechaFin: 2025-08-21
+  TipoPago: 0
+  NumCheque: 0
+  Monto: 0
+  ~Sucursal: A
+  ~Caja: 99
+}
+
+settings {
+  encodeUrl: true
+}

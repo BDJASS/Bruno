@@ -1,0 +1,24 @@
+meta {
+  name: Post Bloqueo RFC-NUMERO CLIENTE
+  type: http
+  seq: 15
+}
+
+post {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/ClienteBloqueo?NumCliente=1307&Usuario=DJGL&BloqueoCliente=TRUE&Asociados=122,322,34&BloqueoRFC=true&RFC=WUIUWIUWIUQ
+  body: none
+  auth: inherit
+}
+
+params:query {
+  NumCliente: 1307
+  Usuario: DJGL
+  BloqueoCliente: TRUE
+  Asociados: 122,322,34
+  BloqueoRFC: true
+  RFC: WUIUWIUWIUQ
+}
+
+settings {
+  encodeUrl: true
+}

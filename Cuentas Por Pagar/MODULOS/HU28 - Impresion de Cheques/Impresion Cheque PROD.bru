@@ -1,0 +1,36 @@
+meta {
+  name: Impresion Cheque PROD
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://192.0.1.9:8857/RestADOSACxp/rest/RestADOSACxp/ImpresionCheque?Impresion=true&Impresora=ych
+  body: json
+  auth: inherit
+}
+
+params:query {
+  Impresion: true
+  Impresora: ych
+}
+
+body:json {
+  {
+    "ttImpCheque": [
+      {
+        "Banco": 25,
+        "CtaCheque": "65-500904209",
+        "NumCheque": 113958,
+        "Leyenda": true,
+            "FecReg": "2025-11-05",
+            "Beneficiario": "OLGA LIDIA RODRIGUEZ ANGELES"
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

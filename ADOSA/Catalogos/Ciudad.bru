@@ -1,0 +1,19 @@
+meta {
+  name: Ciudad
+  type: http
+  seq: 15
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Ciudad
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~IdEstado: 019
+}
+
+settings {
+  encodeUrl: true
+}

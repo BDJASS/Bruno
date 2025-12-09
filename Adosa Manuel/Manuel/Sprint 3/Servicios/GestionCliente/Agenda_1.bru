@@ -1,0 +1,36 @@
+meta {
+  name: Agenda_1
+  type: http
+  seq: 9
+}
+
+post {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/ClienteCreditoAgenda
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "ttSeguimiento": [
+      {
+        "IdCliente": 440,
+        "Fecha":"2025-01-11",
+        "SeguimientoAcuerdo": "El Cliente No se presento",
+        "IdUser": "DJGL"
+      },
+      {
+        "IdCliente": 440,
+        "Fecha":"2025-01-12",
+        "SeguimientoAcuerdo": "Actualizacion",
+        "IdUser": "DJGL"
+      }
+    ]
+  }
+  // Colocar el IdUser de la sesion
+  
+}
+
+settings {
+  encodeUrl: true
+}

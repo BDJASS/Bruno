@@ -1,0 +1,26 @@
+meta {
+  name: DESARROLLO
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/VisorAcuses?FecIni=2025-09-15&FecFin=2025-09-15&Estatus=4&IdCliente=7
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FecIni: 2025-09-15
+  FecFin: 2025-09-15
+  Estatus: 4
+  IdCliente: 7
+  ~PorDeposito: True
+  ~TipoPago: 58
+  ~IdCliente: 7
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

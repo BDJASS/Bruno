@@ -1,0 +1,22 @@
+meta {
+  name: Cuenta Contable
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/CuentasContables?Cuenta=1101&Nsc=0&Ssc=0&Sss=0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Cuenta: 1101
+  Nsc: 0
+  Ssc: 0
+  Sss: 0
+}
+
+settings {
+  encodeUrl: true
+}

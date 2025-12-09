@@ -1,0 +1,60 @@
+meta {
+  name: PROVEEDOR GET
+  type: http
+  seq: 6
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/GeneracionProv?Banco=25&CtaCheque=65-500904209&NumCheque=290240
+  body: json
+  auth: inherit
+}
+
+params:query {
+  Banco: 25
+  CtaCheque: 65-500904209
+  NumCheque: 290240
+}
+
+body:json {
+  {
+    "ttProv": [
+      {
+        "IdUser": "AVGO",
+        "Banco": 25,
+         "CtaCheque": "65-500904209",
+         "Folio": 997635,
+         "FecReg": "2025-09-15",
+         "Prov": 1104,
+         "IdMoneda": 0
+      }
+    ],
+    "ttDetGasto": [ {
+        "Cuenta": "1101",
+        "sc": "5",
+        "ssc": "0",
+        "sssc": "0",
+        "Descripcion": "CHIHUAHA",
+        "Importe": 500,
+        "IVA": false,
+        "CA": "C"
+      },
+      {
+        "Cuenta": "1101",
+        "sc": "5",
+        "ssc": "0",
+        "sssc": "0",
+        "Descripcion": "CHIHUAHA",
+        "Importe": 800.00,
+        "IVA": false,
+        "CA": "A"
+      }
+      ]
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

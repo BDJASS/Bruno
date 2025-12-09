@@ -1,0 +1,20 @@
+meta {
+  name: DEV-PedidoEmpMes
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/PedidoEmpMes?Clase=2&Nivel=3
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Clase: 2
+  Nivel: 3
+}
+
+settings {
+  encodeUrl: true
+}

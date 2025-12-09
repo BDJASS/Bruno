@@ -1,0 +1,22 @@
+meta {
+  name: Eliminar Fotos
+  type: http
+  seq: 4
+}
+
+delete {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/AltaArticulos/Fotos/Eliminar?IdArticulo=000304&TipoFoto=presentacion&NombreArchivo=pres11.jpg
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdArticulo: 000304
+  TipoFoto: presentacion
+  NombreArchivo: pres11.jpg
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

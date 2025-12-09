@@ -1,0 +1,20 @@
+meta {
+  name: Facturas con Saldo
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/FacturasConSaldo?IdProv=2083
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdProv: 2083
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

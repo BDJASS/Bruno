@@ -1,0 +1,55 @@
+meta {
+  name: PROVEDOR ALTA Copy
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/GeneracionProv
+  body: json
+  auth: inherit
+}
+
+params:query {
+  ~Tipo: 2
+  ~Beneficiario: TRUE
+  ~Confirmar: true
+  ~Genera: TRUE
+}
+
+body:json {
+  {
+    "ttProv": [
+      {
+        "IdUser": "PJRZ",
+        "Banco": 25,
+        "CtaCheque": "65-500904209",
+        "Folio": 999403,
+         "FecReg": "2025-10-16",
+          "Prov": 
+      }
+    ],
+    "ttDetProv": [
+      {
+       
+        "Factura": "F90281873",
+        "FecVen": "2025-02-19",
+        "ImpOriginal": 263924.31,
+        "PP1": 0.0,
+        "PP2": 0.0,
+        "PP3": 0.0,
+        "PP4": 0.0,
+        "Plazo": 0.0,
+        "TC": 1.0,
+        "Comision": 0.0,
+        "Pagado": 263924.31
+      }
+    ]
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,21 @@
+meta {
+  name: Reporte
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/RepVentasMensualesTienda?FecIni=2025-10-07&FecFin=2025-11-07
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FecIni: 2025-10-07
+  FecFin: 2025-11-07
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

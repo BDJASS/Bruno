@@ -1,0 +1,20 @@
+meta {
+  name: Autorizacion y Detalle PROD
+  type: http
+  seq: 5
+}
+
+get {
+  url: http://192.0.1.9:8857/RestADOSACxp/rest/RestADOSACxp/AutorizacionGastos?IdUsuario=sge
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdUsuario: sge
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

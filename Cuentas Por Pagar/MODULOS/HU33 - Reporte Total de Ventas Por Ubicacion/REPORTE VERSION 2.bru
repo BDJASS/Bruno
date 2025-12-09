@@ -1,0 +1,22 @@
+meta {
+  name: REPORTE VERSION 2
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/ReporteTotalDeVentas2?TipoConsulta=anio&Comp=TRUE&Year=2024
+  body: none
+  auth: inherit
+}
+
+params:query {
+  TipoConsulta: anio
+  Comp: TRUE
+  Year: 2024
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

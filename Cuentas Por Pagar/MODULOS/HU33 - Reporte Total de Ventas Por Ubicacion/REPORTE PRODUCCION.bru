@@ -1,0 +1,23 @@
+meta {
+  name: REPORTE PRODUCCION
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.9:8857/RestADOSACxp/rest/RestADOSACxp/ReporteTotalDeVentas?FecIni=2025-11-01&FecFin=2025-11-19&Comp=si&Year=2024
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FecIni: 2025-11-01
+  FecFin: 2025-11-19
+  Comp: si
+  Year: 2024
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

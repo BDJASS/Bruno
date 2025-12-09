@@ -1,0 +1,21 @@
+meta {
+  name: Reporte
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/RepVentasPorCategoria?FecIni=2025-10-10&FecFin=2025-10-10
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FecIni: 2025-10-10
+  FecFin: 2025-10-10
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

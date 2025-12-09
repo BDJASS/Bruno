@@ -1,0 +1,22 @@
+meta {
+  name: GET ACUSES
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/DepositoAcuses?Usuario=NJCC&Fecha=2025-04-28&Acuse=001153N
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Usuario: NJCC
+  Fecha: 2025-04-28
+  Acuse: 001153N
+  ~Confirmar: TRUE
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,21 @@
+meta {
+  name: REPORTE  Acuses
+  type: http
+  seq: 12
+}
+
+get {
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/ReporteAcuses?FecInicio=1997-11-27&FecFin=1997-11-28&FormaPago=0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FecInicio: 1997-11-27
+  FecFin: 1997-11-28
+  FormaPago: 0
+}
+
+settings {
+  encodeUrl: true
+}

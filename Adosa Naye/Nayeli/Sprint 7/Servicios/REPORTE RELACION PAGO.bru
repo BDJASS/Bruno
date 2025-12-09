@@ -1,0 +1,21 @@
+meta {
+  name: REPORTE RELACION PAGO
+  type: http
+  seq: 25
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/RepRelacionPago?FecIni=2025-01-01&FecFin=2025-03-12&Cliente=2464
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FecIni: 2025-01-01
+  FecFin: 2025-03-12
+  Cliente: 2464
+}
+
+settings {
+  encodeUrl: true
+}

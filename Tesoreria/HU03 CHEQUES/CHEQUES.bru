@@ -1,0 +1,19 @@
+meta {
+  name: CHEQUES
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/ChequesDevueltos?Cheque=C000001
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Cheque: C000001
+}
+
+settings {
+  encodeUrl: true
+}

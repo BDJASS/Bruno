@@ -1,0 +1,39 @@
+meta {
+  name: CLIENTE PROD
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/VentasPorClienteComparativo?IdVendedor=0&Fecha=2025-11-28&IdCliente=33757
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdVendedor: 0
+  Fecha: 2025-11-28
+  IdCliente: 33757
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  **Summary:**
+  Retrieves a comparative sales report for all clients in the production environment, filtered by vendor and date. Useful for analyzing sales trends and comparing client performance for a specific period in production.
+  
+  **Required Parameters:**
+  - `IdVendedor` (integer): The vendor's unique identifier. Use 0 to retrieve data for all vendors.
+  - `Fecha` (string, format: YYYY-MM-DD): The date for which to retrieve the comparative sales data.
+  
+  **Example Usage:**
+  ```
+  GET http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/VentasPorClienteComparativo?IdVendedor=0&Fecha=2025-09-01
+  ```
+  
+  **Response:**
+  Returns a list of clients with their respective sales data for the specified date and vendor in the production environment.
+}

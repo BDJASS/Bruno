@@ -1,0 +1,15 @@
+meta {
+  name: Catalogo Estatus De Cheque Copy
+  type: http
+  seq: 33
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/CatEstatusCheque
+  body: json
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

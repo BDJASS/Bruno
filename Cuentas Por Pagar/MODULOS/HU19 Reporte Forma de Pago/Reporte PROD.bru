@@ -1,0 +1,21 @@
+meta {
+  name: Reporte PROD
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.9:8857/RestADOSACxp/rest/RestADOSACxp/FormaDePago?IdFormaPago=M301572&IdUsuario=sge
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdFormaPago: M301572
+  IdUsuario: sge
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

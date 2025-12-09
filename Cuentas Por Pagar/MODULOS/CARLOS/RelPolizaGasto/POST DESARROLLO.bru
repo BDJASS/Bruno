@@ -1,0 +1,44 @@
+meta {
+  name: POST DESARROLLO
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/RelPolizaGasto?Remitente=avgo&Destinatario=sis10
+  body: json
+  auth: inherit
+}
+
+params:query {
+  Remitente: avgo
+  Destinatario: sis10
+}
+
+body:json {
+  {
+    "ttRelFacInput": [
+      {
+        "IdDocumento": "FAC-001",
+        "Tipo": "Factura",
+        "IdProv": 123,
+        "Benef": "PROVEEDOR EJEMPLO SA DE CV",
+        "FechaVenc": "2025-11-15",
+        "Importe": 5000.00
+      },
+      {
+        "IdDocumento": "FAC-002",
+        "Tipo": "Factura",
+        "IdProv": 456,
+        "Benef": "OTRO PROVEEDOR SA",
+        "FechaVenc": "2025-11-20",
+        "Importe": 3500.50
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

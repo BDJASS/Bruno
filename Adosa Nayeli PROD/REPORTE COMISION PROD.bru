@@ -1,0 +1,21 @@
+meta {
+  name: REPORTE COMISION PROD
+  type: http
+  seq: 9
+}
+
+get {
+  url: http://192.0.1.9:8816/RestADOSACyc/rest/RestADOSACyc/ReporteComision?FecIni=2025-07-01&FecFin=2025-07-17
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FecIni: 2025-07-01
+  FecFin: 2025-07-17
+  ~Agente: null
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,38 @@
+meta {
+  name: AutorizarSolicitud
+  type: http
+  seq: 6
+}
+
+post {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/SolCredAutorizacion
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "ttSolCred": [
+      {
+        "IdSolicitud": 10,
+        "CreditoAutorizado": 777700.00,
+        "PlazoAutorizado": 90,
+        "IdUser":"DJGL",
+        "CheckRevision1": true,
+        "CheckRevision2": true,
+        "CheckRevision3": true,
+        "CheckRevision4": true,
+        "Estatus": "Autorizar",
+        "MotivoRechazo": "No se crea cliente contado",
+        "AltaContado": false   // Este campo se usa cuando se rechaza y se decide crear como cliente contado (true)
+      }
+    ]
+  }
+  //Guardar,Autorizar,Rechazar
+  
+  
+}
+
+settings {
+  encodeUrl: true
+}

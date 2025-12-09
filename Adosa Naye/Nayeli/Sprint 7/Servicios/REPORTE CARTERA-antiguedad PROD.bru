@@ -1,0 +1,29 @@
+meta {
+  name: REPORTE CARTERA-antiguedad PROD
+  type: http
+  seq: 8
+}
+
+get {
+  url: 192.0.1.9:8816/RestADOSACyc/rest/RestADOSACyc/ReporteCartera?Tipo=3&Moneda=1&Clase=0&Zonas=0&Segmento=0&Cobrador=0&Calidad=0&FechaIni=2025-11-20&Dias=0&Resp=30
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Tipo: 3
+  Moneda: 1
+  Clase: 0
+  Zonas: 0
+  Segmento: 0
+  Cobrador: 0
+  Calidad: 0
+  FechaIni: 2025-11-20
+  Dias: 0
+  Resp: 30
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

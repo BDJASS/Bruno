@@ -1,0 +1,22 @@
+meta {
+  name: CONSULTA
+  type: http
+  seq: 6
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/GeneracionGastos?Banco=25&CtaCheque=65-500904209&NumCheque=289117
+  body: json
+  auth: inherit
+}
+
+params:query {
+  Banco: 25
+  CtaCheque: 65-500904209
+  NumCheque: 289117
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

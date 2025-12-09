@@ -1,0 +1,19 @@
+meta {
+  name: notificaciones solicitud credito
+  type: http
+  seq: 14
+}
+
+get {
+  url: https://localhost:7282/api/notificaciones/verificar-solicitudes?idSolicitud=42
+  body: none
+  auth: inherit
+}
+
+params:query {
+  idSolicitud: 42
+}
+
+settings {
+  encodeUrl: true
+}

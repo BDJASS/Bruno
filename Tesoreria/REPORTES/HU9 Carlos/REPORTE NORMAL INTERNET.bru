@@ -1,0 +1,20 @@
+meta {
+  name: REPORTE NORMAL INTERNET
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/RepFactInt?FechaIni=2025-05-13&FechaFin=2025-07-13
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FechaIni: 2025-05-13
+  FechaFin: 2025-07-13
+}
+
+settings {
+  encodeUrl: true
+}

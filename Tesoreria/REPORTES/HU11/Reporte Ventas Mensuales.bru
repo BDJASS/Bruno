@@ -1,0 +1,21 @@
+meta {
+  name: Reporte Ventas Mensuales
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/RepVentasMensuales?FechaInicio=2025-01-01&FechaFin=2025-05-26&Sucursal=3
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FechaInicio: 2025-01-01
+  FechaFin: 2025-05-26
+  Sucursal: 3
+}
+
+settings {
+  encodeUrl: true
+}

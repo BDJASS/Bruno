@@ -1,0 +1,22 @@
+meta {
+  name: ReporteDepositos
+  type: http
+  seq: 2
+}
+
+get {
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/ReporteDepositos?FecInicio=2024-12-01&FecFin=2025-01-01&Clase=1&Tipo=0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FecInicio: 2024-12-01
+  FecFin: 2025-01-01
+  Clase: 1
+  Tipo: 0
+}
+
+settings {
+  encodeUrl: true
+}

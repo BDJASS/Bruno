@@ -1,0 +1,36 @@
+meta {
+  name: Autorizacion
+  type: http
+  seq: 2
+}
+
+put {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/AutorizacionGastos
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+      "ttAut": [
+        {
+          "Folio": 289117,
+                          "IdBanco": 25,
+                          "Banco": "SANTANDE",
+                          "Beneficiario": "MIRADOR 2500, A.C.",
+                          "FecReg": "2025-08-04",
+                          "Importe": 39083.0,
+                          "Aut": false,
+                          "B": "N",
+                          "CtaCheque": "65-500904209",
+                          "Tipo": 2,
+                          "Elaboro": "AVGO",
+                          "Concepto": "FACTURA No. INV20251429 "
+        }
+      ]
+  }
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,20 @@
+meta {
+  name: Catalogo Procesos
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/CatalogoProcesos?IdProceso=0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdProceso: 0
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

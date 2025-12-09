@@ -1,0 +1,21 @@
+meta {
+  name: bITACORA CTE EMP
+  type: http
+  seq: 1
+}
+
+get {
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/ConsultaCambios?IdCliente=51273&Todos=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdCliente: 51273
+  Todos: true
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

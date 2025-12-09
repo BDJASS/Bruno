@@ -1,0 +1,19 @@
+meta {
+  name: Cliente Desbloqueo
+  type: http
+  seq: 16
+}
+
+post {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/ClienteDesbloqueado?NumCliente=4372
+  body: none
+  auth: inherit
+}
+
+params:query {
+  NumCliente: 4372
+}
+
+settings {
+  encodeUrl: true
+}

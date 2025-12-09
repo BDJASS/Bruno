@@ -1,0 +1,19 @@
+meta {
+  name: Chequera
+  type: http
+  seq: 5
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/ClienteCreditoChequera?IdCliente=
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdCliente: 
+}
+
+settings {
+  encodeUrl: true
+}

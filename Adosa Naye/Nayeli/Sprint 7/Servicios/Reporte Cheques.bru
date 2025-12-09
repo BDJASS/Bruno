@@ -1,0 +1,22 @@
+meta {
+  name: Reporte Cheques
+  type: http
+  seq: 20
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/RepChequeSeguricheq?FecFin=2024-01-01&FecIni=2025-04-02
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FecFin: 2024-01-01
+  FecIni: 2025-04-02
+  ~Estatus: 2
+  ~Cliente: 0
+}
+
+settings {
+  encodeUrl: true
+}

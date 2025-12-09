@@ -1,0 +1,28 @@
+meta {
+  name: REPORTE CARTERA DE CLIENTES-- ANTIGUEDAD SALDOS
+  type: http
+  seq: 11
+}
+
+get {
+  url: http://192.0.1.9:8816/RestADOSACyc/rest/RestADOSACyc/ReporteCartera?Clase=0&Tipo=3&Moneda=0&Zonas=101,1&Segmento=0&Cobrador=0&Calidad=0&FecIni=2025-07-15&Dias=0&Resp=33
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Clase: 0
+  Tipo: 3
+  Moneda: 0
+  Zonas: 101,1
+  Segmento: 0
+  Cobrador: 0
+  Calidad: 0
+  FecIni: 2025-07-15
+  Dias: 0
+  Resp: 33
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,21 @@
+meta {
+  name: Cambiar Estatus de Entregado
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/DetalleDocumentoEnvio?IdRelFac=B053474&IdFactura=2070597&IdEntregado=false
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdRelFac: B053474
+  IdFactura: 2070597
+  IdEntregado: false
+}
+
+settings {
+  encodeUrl: true
+}

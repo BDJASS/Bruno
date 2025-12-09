@@ -1,0 +1,20 @@
+meta {
+  name: Detalle Copy
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/CteCajaSucursalTarjetas?Fecha=2025-09-13&IdSucursal=512
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Fecha: 2025-09-13
+  IdSucursal: 512
+}
+
+settings {
+  encodeUrl: true
+}

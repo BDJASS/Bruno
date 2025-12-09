@@ -1,0 +1,19 @@
+meta {
+  name: PedidoNoAut
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://192.0.1.9:8816/RestADOSACyc/rest/RestADOSACyc/PedidoNoAut?Clase=3
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Clase: 3
+}
+
+settings {
+  encodeUrl: true
+}

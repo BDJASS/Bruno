@@ -1,0 +1,27 @@
+meta {
+  name: Re imprimir Hoja de Pagos autorizados
+  type: http
+  seq: 5
+}
+
+put {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/AutorizacionPagos?Impresion=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  Impresion: true
+}
+
+body:json {
+  {
+      "ttAut": [
+      ]
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+}

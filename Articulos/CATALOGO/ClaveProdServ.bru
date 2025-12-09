@@ -1,0 +1,20 @@
+meta {
+  name: ClaveProdServ
+  type: http
+  seq: 7
+}
+
+get {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/CatalogoClaveProdServ?IdClavePS=0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdClavePS: 0
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

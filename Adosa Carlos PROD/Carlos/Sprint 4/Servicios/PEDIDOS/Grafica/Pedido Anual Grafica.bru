@@ -1,0 +1,20 @@
+meta {
+  name: Pedido Anual Grafica
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.9:8816/RestADOSACyc/rest/RestADOSACyc/PedidoAnual?user=rgp&year=2025
+  body: none
+  auth: inherit
+}
+
+params:query {
+  user: rgp
+  year: 2025
+}
+
+settings {
+  encodeUrl: true
+}

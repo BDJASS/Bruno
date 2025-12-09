@@ -1,0 +1,22 @@
+meta {
+  name: Vista Factura
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/CancelaFact?Factura=2072427&IdUser=ELF&Confirmar=TRUE&Tipo=3
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Factura: 2072427
+  IdUser: ELF
+  Confirmar: TRUE
+  Tipo: 3
+}
+
+settings {
+  encodeUrl: true
+}

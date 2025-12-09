@@ -1,0 +1,20 @@
+meta {
+  name: GraficaCartera Cliente Mes
+  type: http
+  seq: 5
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/CarteraGraCteMes?Mes=1&Year=2025
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Mes: 1
+  Year: 2025
+}
+
+settings {
+  encodeUrl: true
+}

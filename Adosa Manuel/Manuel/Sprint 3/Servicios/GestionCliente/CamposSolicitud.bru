@@ -1,0 +1,31 @@
+meta {
+  name: CamposSolicitud
+  type: http
+  seq: 4
+}
+
+put {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/SolicitudCredito
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "dsSolicitud": {
+      "ttSolCred": [
+        {
+          "IdSolicitud": 24,
+          "Observaciones": "Ninguna",
+          "PagareFirmado": true,
+          "Vendedor":"0034"
+        }
+      ]
+    }
+  }
+  // Este servicio es para agregar las columnas de la tabla Solicitud que se Modifican Despues, siempre debe llevar IdSolicitud y en caso de que no se vaya a modifcar alguno solo eliminarlo
+}
+
+settings {
+  encodeUrl: true
+}

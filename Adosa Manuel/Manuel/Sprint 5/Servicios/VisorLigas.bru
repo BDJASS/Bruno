@@ -1,0 +1,21 @@
+meta {
+  name: VisorLigas
+  type: http
+  seq: 5
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/LigaPago?FechaInicio=2025-02-17&FechaFin=2025-03-30
+  body: json
+  auth: inherit
+}
+
+params:query {
+  FechaInicio: 2025-02-17
+  FechaFin: 2025-03-30
+  ~Cliente: 581
+}
+
+settings {
+  encodeUrl: true
+}

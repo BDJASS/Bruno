@@ -1,0 +1,19 @@
+meta {
+  name: Movimientos Cliente DESARROLLO
+  type: http
+  seq: 5
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/MovimientoCliente?Cliente=34762
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Cliente: 34762
+}
+
+settings {
+  encodeUrl: true
+}

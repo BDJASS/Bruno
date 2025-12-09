@@ -1,0 +1,65 @@
+meta {
+  name: GASTOS CON DETALLE
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/GeneracionGastos?Beneficiario=TRUE&Confirmar=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  Beneficiario: TRUE
+  Confirmar: true
+  ~Tipo: 2
+}
+
+body:json {
+  {
+    "ttGasto": [
+      {
+        "IdUser": "AVGO",
+        "Banco": 25,
+        "CtaCheque": "65-500904209",
+        "Folio":123456,
+         "FecReg": "2025-09-02",
+         "Negociable": false,
+         "Beneficiario": "Juan Francisco",
+          "CasaBolsa": "",
+          "FolioFac": "399210202-55",
+         "RefBancaria": "",
+          "Concepto": "",
+        "Concepto2": ""
+      }
+    ],
+    "ttDetGasto": [ {
+        "Cuenta": "1101",
+        "sc": "5",
+        "ssc": "0",
+        "sssc": "0",
+        "Descripcion": "CHIHUAHA",
+        "Importe": 500,
+        "IVA": false,
+        "CA": "C"
+      },
+      {
+        "Cuenta": "1101",
+        "sc": "5",
+        "ssc": "0",
+        "sssc": "0",
+        "Descripcion": "CHIHUAHA",
+        "Importe": 800.00,
+        "IVA": false,
+        "CA": "A"
+      }
+      ]
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,21 @@
+meta {
+  name: CANCELAR
+  type: http
+  seq: 3
+}
+
+delete {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/GeneracionCheques?Banco=25&CtaCheque=65-500904209&NumCheque=113996
+  body: json
+  auth: inherit
+}
+
+params:query {
+  Banco: 25
+  CtaCheque: 65-500904209
+  NumCheque: 113996
+}
+
+settings {
+  encodeUrl: true
+}

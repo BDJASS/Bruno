@@ -1,0 +1,19 @@
+meta {
+  name: reporteanticipos
+  type: http
+  seq: 7
+}
+
+get {
+  url: http://127.0.0.1:8000/reporteanticipos
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~Cliente: 1307
+}
+
+settings {
+  encodeUrl: true
+}

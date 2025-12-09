@@ -1,0 +1,19 @@
+meta {
+  name: Ayuda para enviar Cajas por Departamento
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/MovCajaPermitida?Depto=503
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Depto: 503
+}
+
+settings {
+  encodeUrl: true
+}

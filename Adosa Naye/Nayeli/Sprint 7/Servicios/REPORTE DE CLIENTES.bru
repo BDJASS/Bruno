@@ -1,0 +1,28 @@
+meta {
+  name: REPORTE DE CLIENTES
+  type: http
+  seq: 9
+}
+
+get {
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/ReporteClientes?TipoCliente=0&Clase=0&Estatus=true&Segmento=0&FechaInicio=2025-01-01&FechaFin=2025-06-05&Giro=0&Vendedor=0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  TipoCliente: 0
+  Clase: 0
+  Estatus: true
+  Segmento: 0
+  FechaInicio: 2025-01-01
+  FechaFin: 2025-06-05
+  Giro: 0
+  Vendedor: 0
+  ~Ciudad: 0
+  ~Estado: 0
+}
+
+settings {
+  encodeUrl: true
+}

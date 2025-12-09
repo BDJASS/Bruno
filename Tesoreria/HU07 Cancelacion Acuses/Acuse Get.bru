@@ -1,0 +1,19 @@
+meta {
+  name: Acuse Get
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/CancelaAcuse?Acuse=00009NA
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Acuse: 00009NA
+}
+
+settings {
+  encodeUrl: true
+}

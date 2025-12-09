@@ -1,0 +1,20 @@
+meta {
+  name: Dummy
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8836/RestDummyCYRB/rest/RestDummyCYRBService/PrecioArticulo?Opciones=3&Parametro=447
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Opciones: 3
+  Parametro: 447
+}
+
+settings {
+  encodeUrl: true
+}

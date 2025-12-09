@@ -1,0 +1,19 @@
+meta {
+  name: AYUDA BENEFICIARIOS
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/Beneficiarios?IdBene=JUAN ANGEL
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdBene: JUAN ANGEL
+}
+
+settings {
+  encodeUrl: true
+}

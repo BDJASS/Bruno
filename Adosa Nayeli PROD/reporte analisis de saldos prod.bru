@@ -1,0 +1,26 @@
+meta {
+  name: reporte analisis de saldos prod
+  type: http
+  seq: 6
+}
+
+get {
+  url: http://192.0.1.9:8816/RestADOSACyc/rest/RestADOSACyc/RepAnalisisSaldos?FecIni=2025-11-07&FecFin=2025-11-22&Dias=5&Cobrador=0&Resp=0&Zona=0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FecIni: 2025-11-07
+  FecFin: 2025-11-22
+  Dias: 5
+  Cobrador: 0
+  Resp: 0
+  Zona: 0
+  ~Clase: 0
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,25 @@
+meta {
+  name: Rep Movimiento Cajas
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/MovCajaTP?FechaIni=2025-07-15&FechaFin=2025-08-04&Caja=0&TipoPago=0&NumCheque=0&Monto=0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FechaIni: 2025-07-15
+  FechaFin: 2025-08-04
+  Caja: 0
+  TipoPago: 0
+  NumCheque: 0
+  Monto: 0
+  ~Sucursal: A
+}
+
+settings {
+  encodeUrl: true
+}

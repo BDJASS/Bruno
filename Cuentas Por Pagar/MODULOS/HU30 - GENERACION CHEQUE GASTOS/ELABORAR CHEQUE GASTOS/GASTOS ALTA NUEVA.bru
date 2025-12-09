@@ -1,0 +1,63 @@
+meta {
+  name: GASTOS ALTA NUEVA
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/GeneracionCheques?Confirmar=true&Genera=TRUE
+  body: json
+  auth: inherit
+}
+
+params:query {
+  Confirmar: true
+  Genera: TRUE
+}
+
+body:json {
+  {
+    "ttGasto": [
+      {
+        "IdUser": "AVGO",
+        "Banco": 25,
+        "CtaCheque": "65-500904209",
+         "Folio": 113996,
+         "FecReg": "2025-10-26",
+         "Negociable": false,
+          "Beneficiario": "THE NAVIGATOR COMPANY, S.A.",
+          "CasaBolsa": "",
+          "FolioFac": "8585",
+          "RefBancaria": "",
+          "Concepto": "FACTURA No. 8585",
+          "Concepto2": ""
+      }
+    ],
+    "ttDetGasto": [ {
+        "Cuenta": "1101",
+        "sc": "5",
+        "ssc": "0",
+        "sssc": "0",
+        "Descripcion": "CHIHUAHA",
+        "Importe": 500,
+        "IVA": false,
+        "CA": "C"
+      },
+      {
+        "Cuenta": "1101",
+        "sc": "5",
+        "ssc": "0",
+        "sssc": "0",
+        "Descripcion": "CHIHUAHA",
+        "Importe": 800.00,
+        "IVA": false,
+        "CA": "C"
+      }
+      ]
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+}

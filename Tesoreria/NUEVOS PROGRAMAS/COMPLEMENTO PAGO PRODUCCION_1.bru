@@ -1,0 +1,22 @@
+meta {
+  name: COMPLEMENTO PAGO PRODUCCION_1
+  type: http
+  seq: 10
+}
+
+post {
+  url: http://192.0.1.9:8823/RestADOSATes/rest/RestADOSATes/CompPago?Acuse=003397N&IdUser=NMRA&FormaPago=03&FechaPago=2025-05-31
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Acuse: 003397N
+  IdUser: NMRA
+  FormaPago: 03
+  FechaPago: 2025-05-31
+}
+
+settings {
+  encodeUrl: true
+}

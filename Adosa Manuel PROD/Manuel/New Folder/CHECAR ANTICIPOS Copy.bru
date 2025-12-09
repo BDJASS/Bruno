@@ -1,0 +1,19 @@
+meta {
+  name: CHECAR ANTICIPOS Copy
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.9:8816/RestADOSACyc/rest/RestADOSACyc/Anticipo?Anticipo=23785IA
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Anticipo: 23785IA
+}
+
+settings {
+  encodeUrl: true
+}

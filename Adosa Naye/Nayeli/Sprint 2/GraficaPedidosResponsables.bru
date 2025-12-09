@@ -1,0 +1,19 @@
+meta {
+  name: GraficaPedidosResponsables
+  type: http
+  seq: 9
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/PedidoNoAut?Clase=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Clase: 1
+}
+
+settings {
+  encodeUrl: true
+}

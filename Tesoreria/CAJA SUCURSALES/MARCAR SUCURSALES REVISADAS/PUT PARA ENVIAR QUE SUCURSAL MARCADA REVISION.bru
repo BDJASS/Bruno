@@ -1,0 +1,38 @@
+meta {
+  name: PUT PARA ENVIAR QUE SUCURSAL MARCADA REVISION
+  type: http
+  seq: 2
+}
+
+put {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/CteCajaSucursal
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "ttConCteCaja": [
+      {
+        "IdSucursal": "204",
+        "FecCorte": "2025-11-08",
+        "SucursalRevisada": false
+      },
+      {
+        "IdSucursal": "402",
+        "FecCorte": "2025-11-08",
+        "SucursalRevisada": false
+      },
+      {
+        "IdSucursal": "503",
+        "FecCorte": "2025-11-08",
+        "SucursalRevisada": false
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,19 @@
+meta {
+  name: Estado
+  type: http
+  seq: 17
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Estado?IdPais=MEX
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdPais: MEX
+}
+
+settings {
+  encodeUrl: true
+}

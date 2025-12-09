@@ -1,0 +1,24 @@
+meta {
+  name: GET ACUSES PRODUCCION
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.9:8823/RestADOSATes/rest/RestADOSATes/VisorAcuses?FecIni=2025-06-01&FecFin=2025-06-03&Estatus=4
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FecIni: 2025-06-01
+  FecFin: 2025-06-03
+  Estatus: 4
+  ~IdAcuse: 
+  ~IdCliente: 
+  ~TipoPago: 
+}
+
+settings {
+  encodeUrl: true
+}

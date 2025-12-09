@@ -1,0 +1,39 @@
+meta {
+  name: CLIENTE
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.14:8850/RestADOSAVentas/rest/RestADOSAVentas/VentasPorClienteComparativo?Fecha=2025-11-28&IdCliente=2306&IdVendedor=444
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Fecha: 2025-11-28
+  IdCliente: 2306
+  IdVendedor: 444
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  **Summary:**
+  Retrieves a comparative sales report for all clients, filtered by vendor and date. Useful for analyzing sales trends and comparing client performance over a specific period.
+  
+  **Required Parameters:**
+  - `IdVendedor` (integer): The vendor's unique identifier. Use 0 to retrieve data for all vendors.
+  - `Fecha` (string, format: YYYY-MM-DD): The date for which to retrieve the comparative sales data.
+  
+  **Example Usage:**
+  ```
+  GET http://192.0.1.14:8850/RestADOSAVentas/rest/RestADOSAVentas/VentasPorClienteComparativo?IdVendedor=0&Fecha=2025-09-01
+  ```
+  
+  **Response:**
+  Returns a list of clients with their respective sales data for the specified date and vendor.
+}

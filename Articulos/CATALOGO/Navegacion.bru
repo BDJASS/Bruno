@@ -1,0 +1,20 @@
+meta {
+  name: Navegacion
+  type: http
+  seq: 12
+}
+
+get {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/CatalogoNavegacion?IdNavegacion=0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdNavegacion: 0
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

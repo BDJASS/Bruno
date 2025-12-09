@@ -1,0 +1,23 @@
+meta {
+  name: BAJA TOTAL GASTO
+  type: http
+  seq: 6
+}
+
+put {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/GeneracionBajaGasto?Banco=25&CtaCheque=65-500904209&NumCheque=291416&Usuario=avgo
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Banco: 25
+  CtaCheque: 65-500904209
+  NumCheque: 291416
+  Usuario: avgo
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,19 @@
+meta {
+  name: Acuses
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://192.0.1.9:8816/RestADOSACyc/rest/RestADOSACyc/Acuse?Acuse=012311N
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Acuse: 012311N
+}
+
+settings {
+  encodeUrl: true
+}

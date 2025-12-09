@@ -1,0 +1,24 @@
+meta {
+  name: VISTA DE DOCUMENTOS
+  type: http
+  seq: 5
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/ConsultaDePagosDocumento?NumCheque=291568&Banco=25&CtaCheq=65-500904209&Tipo=1&Secuencia=1
+  body: json
+  auth: inherit
+}
+
+params:query {
+  NumCheque: 291568
+  Banco: 25
+  CtaCheq: 65-500904209
+  Tipo: 1
+  Secuencia: 1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

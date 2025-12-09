@@ -1,0 +1,36 @@
+meta {
+  name: Impresion Cheque
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/ImpresionCheque?Impresion=TRUE&Impresora=ych
+  body: json
+  auth: inherit
+}
+
+params:query {
+  Impresion: TRUE
+  Impresora: ych
+}
+
+body:json {
+  {
+    "ttImpCheque": [
+      {
+        "Banco": 25,
+        "CtaCheque": "65-500904209",
+        "NumCheque": 113984,
+        "Leyenda": true,
+        "FecReg": "2025-11-04",
+         "Beneficiario": "(BARRILITO) ACCO MEXICANA, S.A. DE C.V."
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

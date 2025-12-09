@@ -1,0 +1,29 @@
+meta {
+  name: Asociados_2
+  type: http
+  seq: 13
+}
+
+delete {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/ClienteCreditoAsociados
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "ttSeguimiento": [
+      {
+        "IdCliente": 442,
+        "IdAsociado": 47636,
+        "TipoAsociado": 1
+      }
+    ]
+  }
+  // Esto es a Nivel Cliente siempre debe ser el mismo-- TipoAsociado 1 = Venta 2 = Credito
+  
+}
+
+settings {
+  encodeUrl: true
+}

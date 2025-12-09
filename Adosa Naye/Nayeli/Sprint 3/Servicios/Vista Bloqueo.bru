@@ -1,0 +1,19 @@
+meta {
+  name: Vista Bloqueo
+  type: http
+  seq: 14
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/ClienteBloqueo?NumCliente=52285
+  body: none
+  auth: inherit
+}
+
+params:query {
+  NumCliente: 52285
+}
+
+settings {
+  encodeUrl: true
+}

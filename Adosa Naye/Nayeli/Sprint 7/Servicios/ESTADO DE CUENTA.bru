@@ -1,0 +1,22 @@
+meta {
+  name: ESTADO DE CUENTA
+  type: http
+  seq: 21
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/EstadoCuentaCli?IdCliente=29886&Fecha=07/22/2025&TasaInt=0&IdUser=RGP
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdCliente: 29886
+  Fecha: 07/22/2025
+  TasaInt: 0
+  IdUser: RGP
+}
+
+settings {
+  encodeUrl: true
+}

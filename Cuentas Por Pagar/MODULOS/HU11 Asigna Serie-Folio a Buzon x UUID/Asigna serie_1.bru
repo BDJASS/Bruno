@@ -1,0 +1,21 @@
+meta {
+  name: Asigna serie_1
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/FoliosBuzonFiscal?UUID=5EC349A8-8A68-4621-ABD7-6DDA89F0BC5D&Serie=&Folio
+  body: none
+  auth: inherit
+}
+
+params:query {
+  UUID: 5EC349A8-8A68-4621-ABD7-6DDA89F0BC5D
+  Serie: 
+  Folio: null
+}
+
+settings {
+  encodeUrl: true
+}

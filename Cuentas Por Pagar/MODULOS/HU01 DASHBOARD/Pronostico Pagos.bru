@@ -1,0 +1,15 @@
+meta {
+  name: Pronostico Pagos
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/PronosticoDePagos
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

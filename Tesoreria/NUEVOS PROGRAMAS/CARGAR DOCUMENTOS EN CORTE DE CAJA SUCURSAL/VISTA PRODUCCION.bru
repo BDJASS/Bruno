@@ -1,0 +1,21 @@
+meta {
+  name: VISTA PRODUCCION
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.9:8823/RestADOSATes/rest/RestADOSATes/CteCajaSucursalDocumentos?FechaCorte=2025-10-07&Sucursal=512&Secuencia=2
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FechaCorte: 2025-10-07
+  Sucursal: 512
+  Secuencia: 2
+}
+
+settings {
+  encodeUrl: true
+}

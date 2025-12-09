@@ -1,0 +1,21 @@
+meta {
+  name: Reporte
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/RepEstadisticasDeVentas?Fecha=2025-07-10&Ubicacion=10a
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Fecha: 2025-07-10
+  Ubicacion: 10a
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

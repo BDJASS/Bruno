@@ -1,0 +1,22 @@
+meta {
+  name: Anticipo Cliente
+  type: http
+  seq: 11
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/AnticipoCte?Cliente=39463&EsMov=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Cliente: 39463
+  EsMov: true
+  ~FechaInicio: 2024-04-01
+  ~FechaFin: 2025-04-04
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,21 @@
+meta {
+  name: Documento Envio por Factura
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/DocumentoEnvioPorFactura?IdFactura=A020882&FechaInicio=2025-08-29&FechaFin=2025-08-29
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdFactura: A020882
+  FechaInicio: 2025-08-29
+  FechaFin: 2025-08-29
+}
+
+settings {
+  encodeUrl: true
+}

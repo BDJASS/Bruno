@@ -1,0 +1,19 @@
+meta {
+  name: cartera produccion
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.9:8816/RestADOSACyc/rest/RestADOSACyc/CarteraGraCliente
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~Clase: 1
+}
+
+settings {
+  encodeUrl: true
+}

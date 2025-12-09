@@ -1,0 +1,21 @@
+meta {
+  name: CHEQUES_2
+  type: http
+  seq: 3
+}
+
+delete {
+  url: http://192.0.1.9:8823/RestADOSATes/rest/RestADOSATes/ChequesDevueltos?Cheque=C009866&Usuario=ELF&Confirmar=TRUE
+  body: json
+  auth: inherit
+}
+
+params:query {
+  Cheque: C009866
+  Usuario: ELF
+  Confirmar: TRUE
+}
+
+settings {
+  encodeUrl: true
+}

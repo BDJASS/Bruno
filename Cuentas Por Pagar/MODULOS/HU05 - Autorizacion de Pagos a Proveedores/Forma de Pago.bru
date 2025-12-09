@@ -1,0 +1,21 @@
+meta {
+  name: Forma de Pago
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/FormaDePago?IdFormaPago=M297835&IdUsuario=sge
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdFormaPago: M297835
+  IdUsuario: sge
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

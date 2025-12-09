@@ -1,0 +1,39 @@
+meta {
+  name: FichaDeposito
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/FichaDeposito?Fecha=2025-07-16
+  body: json
+  auth: inherit
+}
+
+params:query {
+  Fecha: 2025-07-16
+}
+
+body:json {
+  {
+      "ttFichaDep": [
+          {
+              "Id": "T",
+              "IdBanco":1,
+              "Banco": "BANAMEX",
+              "Tipo": 1,
+              "Clave": "C",
+              "IdCta": 1105,
+              "IdSCta": 0,
+              "IdSSCta": 0,
+              "IdSSSCta": 0,
+              "Descr": "CLIENTES NACIONALES MONEDA NACIONAL",
+              "Importe": 2771.53
+          }
+      ]
+  }
+}
+
+settings {
+  encodeUrl: true
+}

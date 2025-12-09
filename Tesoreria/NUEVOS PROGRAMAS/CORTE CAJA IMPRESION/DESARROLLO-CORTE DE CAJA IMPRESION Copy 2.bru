@@ -1,0 +1,23 @@
+meta {
+  name: DESARROLLO-CORTE DE CAJA IMPRESION Copy 2
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/ImpresionCorteCaja?Fecha=2025-06-13&Caja=1&Turno=1&Usuario=ELF&Impresora=DE2
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Fecha: 2025-06-13
+  Caja: 1
+  Turno: 1
+  Usuario: ELF
+  Impresora: DE2
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,23 @@
+meta {
+  name: ELIMINAR DOCUMENTO
+  type: http
+  seq: 6
+}
+
+delete {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/ConsultaDePagosDocumento?NumCheque=270881&Banco=25&CtaCheq=65-500904209&Tipo=1&Secuencia=2
+  body: json
+  auth: inherit
+}
+
+params:query {
+  NumCheque: 270881
+  Banco: 25
+  CtaCheq: 65-500904209
+  Tipo: 1
+  Secuencia: 2
+}
+
+settings {
+  encodeUrl: true
+}

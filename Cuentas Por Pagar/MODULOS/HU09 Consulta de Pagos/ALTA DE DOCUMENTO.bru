@@ -1,0 +1,31 @@
+meta {
+  name: ALTA DE DOCUMENTO
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/ConsultaDePagosDocumento
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "ttDocCheque": [
+      {
+        "IdBanco": 25,
+        "IdCtaCheq": "65-500904209",
+        "NumCheque": 270881,
+        "Tipo": 1,
+        "TipoDocumento": "Remision",
+        "Documento": "U29tZSBleGFtcGxlIGJhc2U2NCBkYXRhIGZvciB0aGUgZmlsZSBjb250ZW50Lg=="
+      }
+    ]
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+}

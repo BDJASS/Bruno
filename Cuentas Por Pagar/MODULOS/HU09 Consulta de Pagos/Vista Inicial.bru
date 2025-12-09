@@ -1,0 +1,22 @@
+meta {
+  name: Vista Inicial
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.9:8857/RestADOSACxp/rest/RestADOSACxp/ConsultaDePagos?Beneficiario=ANTONIO BAUTISTA CRUZ&FechaInicio=2025-09-04&FechaFin=2025-10-04
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Beneficiario: ANTONIO BAUTISTA CRUZ
+  FechaInicio: 2025-09-04
+  FechaFin: 2025-10-04
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

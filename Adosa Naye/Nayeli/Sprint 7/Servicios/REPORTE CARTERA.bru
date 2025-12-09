@@ -1,0 +1,23 @@
+meta {
+  name: REPORTE CARTERA
+  type: http
+  seq: 6
+}
+
+get {
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/ReporteCartera?FechaInicio=2024-02-02&FechaFin=2025-02-02&Tipo=2
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FechaInicio: 2024-02-02
+  FechaFin: 2025-02-02
+  Tipo: 2
+  ~Clase: 2
+  ~Cobrador: 25
+}
+
+settings {
+  encodeUrl: true
+}

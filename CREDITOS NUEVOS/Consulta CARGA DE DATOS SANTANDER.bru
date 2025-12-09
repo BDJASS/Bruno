@@ -1,0 +1,15 @@
+meta {
+  name: Consulta CARGA DE DATOS SANTANDER
+  type: http
+  seq: 10
+}
+
+get {
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/DepositoCargaDatos
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

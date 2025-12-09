@@ -1,0 +1,19 @@
+meta {
+  name: Anticipo Detalle Copy
+  type: http
+  seq: 13
+}
+
+get {
+  url: http://192.0.1.9:8816/RestADOSACyc/rest/RestADOSACyc/Anticipo?Acuse=00026NA
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Acuse: 00026NA
+}
+
+settings {
+  encodeUrl: true
+}

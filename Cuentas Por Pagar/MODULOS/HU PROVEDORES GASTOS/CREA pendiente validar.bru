@@ -1,0 +1,65 @@
+meta {
+  name: CREA pendiente validar
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/Proveedores?IdUser=sge
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdUser: sge
+}
+
+body:json {
+  {
+          "ttProvGastos":[
+              {
+                  "IdProvGastos": 233,
+                  "Nombre": "SCAN DATA DE MEXICO, S.A. DE C.V.",
+                  "CalleNo": "AV. DE LOS MAESTRO 557",
+                  "Colonia": "NUEVA SANTA MARIA",
+                  "IdCiudad": 550,
+                  "IdEstado": "009",
+                  "Estado": "CIUDAD DE MEXICO",
+                  "CP": "02800",
+                  "Tel1": "0155553568087",
+                  "Tel2": "0155553568509",
+                  "Tel3": "0155553568514",
+                  "Fax": "0155553568085",
+                  "RFC": "SDM010926IS8",
+                  "IdPais": "MEX",
+                  "CURP": "",
+                  "Email": "",
+                  "Cuenta": "0131337157",
+                  "IdBanco": 20,
+                  "Suc": "",
+                  "Clabe": "",
+                  "BuzonFiscal": "",
+                  "Abrev": "",
+                  "Referencia": "",
+                  "Refer": "",
+                  "IdRFiscal": "",
+                  "Activo": true,
+                  "FecReg": null,
+                  "FecBaja": null,
+                  "IdUser": "",
+                  "Motivo": "",
+                  "IdCia": 0,
+                  "IdCta": 0,
+                  "IdSCta": 0,
+                  "IdSSCta": 0,
+                  "IdSSSCta": 0,
+                  "DescCia": "",
+                  "ConIVA": false
+              }
+          ]
+  }
+}
+
+settings {
+  encodeUrl: true
+}

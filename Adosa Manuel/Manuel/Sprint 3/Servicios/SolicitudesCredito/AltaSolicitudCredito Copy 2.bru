@@ -1,0 +1,86 @@
+meta {
+  name: AltaSolicitudCredito Copy 2
+  type: http
+  seq: 3
+}
+
+post {
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/SolicitudCredito
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "dsSolicitud": {
+      "ttSolCred": [
+        {
+          "IdSolicitud": 0,
+          "FecReg": "2024-11-01",
+          "IdEstatus": 1,
+          "TipoPersona": "Moral",
+          "IdCiudad": 19,
+          "CP": "12345",
+          "Colonia": "Centro",
+          "Calle": "Av. Principal",
+          "NumExt": "123",
+          "NumInt": "4A",
+          "SitioWeb": "www.empresa.com",
+          "NumEmpleados": 50,
+          "NumSucursales": 3,
+          "DondeRealizaraPago": "En sucursal",
+          "LocalPropio": true,
+          "EsAsociado": true,
+          "PronCompraMensual": 15000.50,
+          "CreditoSol": 50000.00,
+          "PlazoSol": 12,
+          "Propietario": "Juan Pérez",
+          "CURP": "PEJX901223HDFRNL09",
+          "Correo": "contcto444@epresa.com",
+          "Telefono": "5551234567",
+          "RFCFiscal": "XA2X00310100088",
+          "RazonSocial": "Juan Angel",
+          "RegimenCapital": "Variable",
+          "RegimenFiscal": "601",
+          "FormasPago": "50",
+          "UsoCFDI": "S01",
+          "CPFiscal": "12345",
+          "CapitalSocial": 200000.00,
+          "CapitalContable": 150000.00,
+          "RequiereOC": false,
+          "PlataformaFacPago": "Banco XYZ",
+          "PortalPlataforma": "www.banco.xyz",
+          "NombreAval": "Luis López",
+          "ParentescoAval": "Socio",
+          "CheckDatosCorrectos": true,
+          "CheckEnvio": false,
+          "CheckValMinPed": true,
+          "CheckValMinCompMensual": false,
+          "IdDocumento": 45,
+          "IdClase": 10,
+          "CheckRevision1": true,
+          "CheckRevision2": true,
+          "CheckRevision3": true,
+          "CheckRevision4": true,
+          "Estatus": "Pendiente",
+          "MotivoRechazo": "",
+          "CreditoAutorizado": 45000.00,
+          "PlazoAutorizado": 10,
+          "Observaciones": "Ninguna",
+          "PagareFirmado": false,
+          "Vendedor": "Carlos Martínez",
+          "IdRamo": "1",
+          "IdGiro": 11,
+          "IdSegmentoCte": 1,
+          "IdCalidad": 2,
+          "NombreAsociado": 1024
+        }
+      ]
+    }
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+}

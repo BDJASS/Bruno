@@ -1,0 +1,15 @@
+meta {
+  name: PROVEEDORES
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/CatProveedores
+  body: json
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

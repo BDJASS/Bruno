@@ -1,0 +1,24 @@
+meta {
+  name: Consulta de Articulos
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/ConsultaArticulos?Activo=TRUE&FecFin
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Activo: TRUE
+  FecFin: 
+  ~BuscaPor: 5
+  ~Filtro: 1687
+  ~FecIni: 
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

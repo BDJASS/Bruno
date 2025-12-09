@@ -1,0 +1,20 @@
+meta {
+  name: COMPLEMENTO PAGO PRODUCCION
+  type: http
+  seq: 7
+}
+
+get {
+  url: http://192.0.1.9:8823/RestADOSATes/rest/RestADOSATes/CompPago?Acuse=00026NA&IdUser=NMRA
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Acuse: 00026NA
+  IdUser: NMRA
+}
+
+settings {
+  encodeUrl: true
+}

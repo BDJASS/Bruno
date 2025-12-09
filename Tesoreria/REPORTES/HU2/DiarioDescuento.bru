@@ -1,0 +1,20 @@
+meta {
+  name: DiarioDescuento
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/RepDiarioDescuento?FechaInicio=2025-04-01&FechaFin=2025-05-27
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FechaInicio: 2025-04-01
+  FechaFin: 2025-05-27
+}
+
+settings {
+  encodeUrl: true
+}

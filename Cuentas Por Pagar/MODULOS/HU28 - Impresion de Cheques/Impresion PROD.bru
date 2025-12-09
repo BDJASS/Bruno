@@ -1,0 +1,36 @@
+meta {
+  name: Impresion PROD
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://192.0.1.9:8857/RestADOSACxp/rest/RestADOSACxp/ImpresionCheque?Impresion=TRUE&Impresora=ych
+  body: json
+  auth: inherit
+}
+
+params:query {
+  Impresion: TRUE
+  Impresora: ych
+}
+
+body:json {
+  {
+    "ttImpCheque": [
+      {
+        "Banco": 25,
+        "CtaCheque": "65-500904209",
+        "NumCheque": 113892,
+        "Leyenda": false,
+        "FecReg": "2025-09-29",
+        "Beneficiario": "JOSE ANGEL SEGURA SIDRIAN"
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

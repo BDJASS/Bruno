@@ -1,0 +1,19 @@
+meta {
+  name: Cuenta Cheque
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/CatCtaCheq?IdBanco=25
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdBanco: 25
+}
+
+settings {
+  encodeUrl: true
+}

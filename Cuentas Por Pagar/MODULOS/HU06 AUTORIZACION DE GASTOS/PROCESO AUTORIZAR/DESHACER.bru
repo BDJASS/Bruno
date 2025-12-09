@@ -1,0 +1,19 @@
+meta {
+  name: DESHACER
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/AutorizacionGastos
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~Confirmar: true
+}
+
+settings {
+  encodeUrl: true
+}

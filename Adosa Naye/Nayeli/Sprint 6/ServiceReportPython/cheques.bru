@@ -1,0 +1,19 @@
+meta {
+  name: cheques
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://127.0.0.1:8000/cheques?IdBanco=11
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdBanco: 11
+}
+
+settings {
+  encodeUrl: true
+}

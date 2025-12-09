@@ -1,0 +1,23 @@
+meta {
+  name: ImpresionCorteCaja PROD
+  type: http
+  seq: 7
+}
+
+get {
+  url: http://192.0.1.9:8823/RestADOSATes/rest/RestADOSATes/ImpresionCorteCaja?Fecha=2025-10-20&Caja=104&Turno=1&Usuario=elf
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Fecha: 2025-10-20
+  Caja: 104
+  Turno: 1
+  Usuario: elf
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

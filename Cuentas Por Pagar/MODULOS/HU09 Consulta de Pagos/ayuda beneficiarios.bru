@@ -1,0 +1,19 @@
+meta {
+  name: ayuda beneficiarios
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/Beneficiarios?IdBene=exel 
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdBene: exel 
+}
+
+settings {
+  encodeUrl: true
+}

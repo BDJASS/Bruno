@@ -1,0 +1,20 @@
+meta {
+  name: Resumen Cobranza
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/RepResumenCob?FechaInicio=2025-04-20&FechaFin=2025-05-04
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FechaInicio: 2025-04-20
+  FechaFin: 2025-05-04
+}
+
+settings {
+  encodeUrl: true
+}

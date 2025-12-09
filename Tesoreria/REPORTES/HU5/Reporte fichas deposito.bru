@@ -1,0 +1,19 @@
+meta {
+  name: Reporte fichas deposito
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/RepFichaDeposito?FechaInicio=2025-02-28
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FechaInicio: 2025-02-28
+}
+
+settings {
+  encodeUrl: true
+}

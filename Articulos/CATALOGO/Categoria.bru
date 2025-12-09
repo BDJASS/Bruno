@@ -1,0 +1,20 @@
+meta {
+  name: Categoria
+  type: http
+  seq: 6
+}
+
+get {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/CatalogoCatego?IdCatego=0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdCatego: 0
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,25 @@
+meta {
+  name: Reporte
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/RepPorcentajeVentasPorDep?TipoReporte=2&ResumenVenta=1&TipoUbicacion=1&FecIni=2025-10-07&FecFin=2025-11-07
+  body: none
+  auth: inherit
+}
+
+params:query {
+  TipoReporte: 2
+  ResumenVenta: 1
+  TipoUbicacion: 1
+  FecIni: 2025-10-07
+  FecFin: 2025-11-07
+  ~UbiVtas: 10A
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

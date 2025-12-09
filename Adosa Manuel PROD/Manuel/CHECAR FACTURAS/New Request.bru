@@ -1,0 +1,20 @@
+meta {
+  name: New Request
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.9:8816/RestADOSACyc/rest/RestADOSACyc/ConciliacionManuel?Cliente=707
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Cliente: 707
+  ~Rec: 59955566
+}
+
+settings {
+  encodeUrl: true
+}

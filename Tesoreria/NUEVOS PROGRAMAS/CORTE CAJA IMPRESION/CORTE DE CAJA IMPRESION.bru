@@ -1,0 +1,22 @@
+meta {
+  name: CORTE DE CAJA IMPRESION
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/ImpresionCorteCaja?Fecha=2025-06-13&Caja=9&Turno=1&Usuario=ELF
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Fecha: 2025-06-13
+  Caja: 9
+  Turno: 1
+  Usuario: ELF
+}
+
+settings {
+  encodeUrl: true
+}
