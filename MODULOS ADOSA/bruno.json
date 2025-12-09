@@ -1,9 +1,0 @@
-{
-  "version": "1",
-  "name": "MODULOS ARTICULOS",
-  "type": "collection",
-  "ignore": [
-    "node_modules",
-    ".git"
-  ]
-}
