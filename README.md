@@ -35,24 +35,30 @@ Cada carpeta contiene los requests `.bru` y subcarpetas necesarias para Bruno.
 ```bash
 git clone https://github.com/BDJASS/Bruno.git
 Esto descargará las colecciones permitidas.
+```
 
-2️⃣ Descargar actualizaciones futuras
-
-Cada vez que se agreguen nuevas colecciones o se actualicen:
-
-cd Bruno
-git pull
+<img width="1117" height="185" alt="image" src="https://github.com/user-attachments/assets/b8b3d707-62a8-4f94-b98c-3c8bfd658e95" />
 
 
-Esto actualizará la copia local con los cambios más recientes.
-
-3️⃣ Abrir las colecciones en Bruno
+### 2️⃣ Abrir las colecciones en Bruno
 
 Abrir Bruno en su computadora.
 
 Ir a File > Open Collection.
 
+<img width="415" height="340" alt="image" src="https://github.com/user-attachments/assets/4910c0e5-e7f7-462a-903b-7cf0bf05449b" />
+
 Seleccionar la colección dentro de la carpeta correspondiente del repo.
+
+
+### 3️⃣ Descargar actualizaciones futuras
+
+Cada vez que se agreguen nuevas colecciones o se actualicen:
+```bash
+cd Bruno
+git pull
+
+```
 
 ⚠️ Importante para el equipo
 
