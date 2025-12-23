@@ -1,0 +1,22 @@
+meta {
+  name: Consulta de Articulos Transformados
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/Transformacion/GetArticulosConTransformacion?IdArticulo=0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdArticulo: 0
+  ~FecIni: 2025-12-11
+  ~FecFin: 2025-12-18
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

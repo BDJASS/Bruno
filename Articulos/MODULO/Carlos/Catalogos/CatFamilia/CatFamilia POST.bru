@@ -1,0 +1,59 @@
+meta {
+  name: CatFamilia POST
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/CatFamilia?Accion=3&Descripcion=Prueba&Familia=9
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Accion: 3
+  Descripcion: Prueba
+  Familia: 9
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  📌 PostCatFamilia
+  
+  POST - PostCatFamilia
+  --------------------------------------------------
+  Descripción:
+  Alta, actualización, eliminación y activación
+  del catálogo de familias.
+  
+  Parámetros:
+  - l-Accion      : INTEGER
+  - l-Familia     : INTEGER
+  - l-Descripcion : CHARACTER
+  
+  Acciones:
+  1 = Alta
+  2 = Actualizar
+  3 = Eliminar
+  Otro = Activar / Inactivar
+  
+  Salida:
+  - oError   : LOGICAL
+  - oMensaje : CHARACTER
+  
+  Validaciones:
+  - No permite descripción vacía
+  - Evita duplicados
+  - No elimina familias con artículos
+  - No inactiva familias con artículos activos
+  
+  Notas:
+  - Usa EXCLUSIVE-LOCK / NO-WAIT
+  - Devuelve mensajes claros al front
+  --------------------------------------------------
+  
+}

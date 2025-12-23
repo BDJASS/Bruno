@@ -1,0 +1,41 @@
+meta {
+  name: Modificar proveedor
+  type: http
+  seq: 3
+}
+
+put {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/ArticuloProveedor/ModificarProveedor?IdUsuario=meev&IdArticulo=001005
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdUsuario: meev
+  IdArticulo: 001005
+}
+
+body:json {
+  {
+      "ttAltaArtProv": [
+        {
+          "IdArticulo": "001005",
+          "IdProv": 97,
+          "IdPres": 2,
+          "LMC": 1.0,
+          "Empaque": "50",
+          "PrecioProv": 18.75,
+          "FecPrecio": "1999-05-31",
+          "Referencia": "",
+          "IdMoneda": 1,
+          "Desc1": 40.00,
+          "Desc2": 0.00
+        }
+      ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
