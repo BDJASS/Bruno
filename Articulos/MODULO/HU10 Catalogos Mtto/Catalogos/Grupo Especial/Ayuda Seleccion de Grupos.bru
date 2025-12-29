@@ -1,0 +1,16 @@
+meta {
+  name: Ayuda Seleccion de Grupos
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/CatalogoGrupoEspecial
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

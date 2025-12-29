@@ -1,0 +1,32 @@
+meta {
+  name: Alta Colores
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/ArticuloColor/AltaColor?IdUsuario=meev
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdUsuario: meev
+}
+
+body:json {
+  {
+    "ttAltaArtCol": [
+        {
+          "IdArticulo": "100501",
+          "IdColor": 2,
+          "CveHex": "0202AE"
+        }
+      ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

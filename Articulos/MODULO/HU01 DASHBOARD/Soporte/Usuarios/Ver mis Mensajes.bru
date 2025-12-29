@@ -1,0 +1,21 @@
+meta {
+  name: Ver mis Mensajes
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/Chat/MisMensajes?IdUser=nmra&IdModulo=2
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdUser: nmra
+  IdModulo: 2
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

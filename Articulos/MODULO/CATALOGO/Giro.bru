@@ -1,17 +1,17 @@
 meta {
-  name: Color
+  name: Giro
   type: http
-  seq: 1
+  seq: 4
 }
 
 get {
-  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/CatalogoArtCol
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/CatalogoGiro?IdGiro=0
   body: none
   auth: inherit
 }
 
 params:query {
-  ~IdArticulo: 156020
+  IdGiro: 0
 }
 
 settings {

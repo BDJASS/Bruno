@@ -1,0 +1,22 @@
+meta {
+  name: Activar/Inactivar Color
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/ArticuloColor/ActivarDesactivarColor?IdUsuario=meev&IdColor=4&IdArticulo=001005
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdUsuario: meev
+  IdColor: 4
+  IdArticulo: 001005
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,31 @@
+meta {
+  name: Modificar
+  type: http
+  seq: 4
+}
+
+put {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/CatalogoTipoArt/Modificar?IdUsuario=meev
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdUsuario: meev
+}
+
+body:json {
+  {
+    "ttTipoArt": [
+      {
+        "IdTipoArt": "M",      // 1 caracteres
+        "Descr": "NACIONAL"
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

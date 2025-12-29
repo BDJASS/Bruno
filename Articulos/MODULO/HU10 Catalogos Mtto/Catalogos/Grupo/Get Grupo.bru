@@ -1,0 +1,22 @@
+meta {
+  name: Get Grupo
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/CatalogoGrupo?IdGrupo=0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdGrupo: 0
+  ~IdFamilia: 192
+  ~Activo: true
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
