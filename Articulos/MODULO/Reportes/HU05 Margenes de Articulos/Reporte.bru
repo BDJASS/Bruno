@@ -1,0 +1,34 @@
+meta {
+  name: Reporte
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/Reporte/MargenesDeArticulos?TipoSeleccion=1&IdArticulo&ListaGrupos&ListaFamilias&ListaMarcas&ListaCompradores&ListaCategos&Orden=1&OrdenMargenes=1&Presentaciones=1&ListaTipos&MargenDesde=0&MargenHasta=999&IdProv&ListaProv=2033
+  body: none
+  auth: inherit
+}
+
+params:query {
+  TipoSeleccion: 1
+  IdArticulo: 
+  ListaGrupos: 
+  ListaFamilias: 
+  ListaMarcas: 
+  ListaCompradores: 
+  ListaCategos: 
+  Orden: 1
+  OrdenMargenes: 1
+  Presentaciones: 1
+  ListaTipos: 
+  MargenDesde: 0
+  MargenHasta: 999
+  IdProv: 
+  ListaProv: 2033
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
