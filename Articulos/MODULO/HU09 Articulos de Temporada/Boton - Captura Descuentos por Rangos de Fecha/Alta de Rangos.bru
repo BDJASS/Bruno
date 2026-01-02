@@ -1,0 +1,23 @@
+meta {
+  name: Alta de Rangos
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/DescuentoPorRangoDeFechas/CrearRango?IdCond=1&FechaIni=2025-12-31&FechaFin=2026-01-01&PorcDesc=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdCond: 1
+  FechaIni: 2025-12-31
+  FechaFin: 2026-01-01
+  PorcDesc: 1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

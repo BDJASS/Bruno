@@ -1,0 +1,20 @@
+meta {
+  name: Listar Rangos
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/DescuentoPorRangoDeFechas/Listar?IdCond=0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdCond: 0
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
