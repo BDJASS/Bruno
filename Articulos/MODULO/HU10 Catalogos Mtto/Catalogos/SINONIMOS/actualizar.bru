@@ -1,0 +1,38 @@
+meta {
+  name: actualizar
+  type: http
+  seq: 4
+}
+
+put {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/CatalogoSinonimos/Modificar?SinonimoOriginal=ALTO,LARGO&SinonimoNuevo=ALTO,BAJO&IdUsuario=meev
+  body: json
+  auth: inherit
+}
+
+params:query {
+  SinonimoOriginal: ALTO,LARGO
+  SinonimoNuevo: ALTO,BAJO
+  IdUsuario: meev
+}
+
+body:json {
+  {
+    "ttNavegacion": [
+         {
+            "Codigo": 88,
+            "Nivel": 2,
+            "Descr": "ARCHIVEROS MOD",
+            "SubDiv": 0,
+            "TotalArts": 0,
+            "Padre": 1,
+            "DescrPadre": "Oficina y Escuela"
+          }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

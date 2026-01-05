@@ -1,0 +1,33 @@
+meta {
+  name: ALTA
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/CatalogoNavegaciones/Alta?IdUsuario=meev
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdUsuario: meev
+}
+
+body:json {
+  {
+    "ttNavegacion": [
+      {
+        "Codigo": 0,  // se envia en 0 para que genere
+        "Descr": "ARCHIVEROS",
+        "Nivel": 2,
+        "Padre": 1
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
