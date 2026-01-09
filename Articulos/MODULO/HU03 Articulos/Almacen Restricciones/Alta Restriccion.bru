@@ -1,0 +1,30 @@
+meta {
+  name: Alta Restriccion
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/AltaArticulos/Almacen/CrearRestriccion?IdUsuario=meev
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdUsuario: meev
+}
+
+body:json {
+  {
+    "ttAltaRestriccion": [{
+      "IdArticulo": "027129",
+      "IdColor": 0,
+      "IdAlm": "03A"
+    }]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

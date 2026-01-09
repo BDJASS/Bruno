@@ -1,0 +1,23 @@
+meta {
+  name: Eliminar Restriccion
+  type: http
+  seq: 3
+}
+
+delete {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/AltaArticulos/Almacen/EliminarRestriccion?IdUsuario=meev&IdArticulo=027129&IdColor=0&IdAlm=03A
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdUsuario: meev
+  IdArticulo: 027129
+  IdColor: 0
+  IdAlm: 03A
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

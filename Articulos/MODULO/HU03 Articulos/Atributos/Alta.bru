@@ -1,0 +1,30 @@
+meta {
+  name: Alta
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/AltaArticulos/Atributos/CrearAtributo?IdUsuario=meev
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdUsuario: meev
+}
+
+body:json {
+  {
+    "ttAtributo": [{
+      "IdArticulo": "002741",
+      "IdAtributo": 4,
+      "Valor": "10"
+    }]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
