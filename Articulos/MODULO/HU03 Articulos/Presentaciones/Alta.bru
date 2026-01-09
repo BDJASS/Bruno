@@ -1,0 +1,32 @@
+meta {
+  name: Alta
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/AltaArticulos/Presentacion/CrearPresentacion?IdArticulo=002741&IdUsuario=meev
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdArticulo: 002741
+  IdUsuario: meev
+}
+
+body:json {
+  {
+    "ttPresentacion": [{
+      "IdArticulo": "002741",
+      "Descr": "CAJA 20",
+      "Tipo": 3,
+      "Equiv": 20.00
+    }]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

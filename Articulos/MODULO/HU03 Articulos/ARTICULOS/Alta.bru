@@ -1,0 +1,56 @@
+meta {
+  name: Alta
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/AltaArticulos/General/AltaArticulo?IdUsuario=sge
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdUsuario: sge
+}
+
+body:json {
+  {
+    "ttAltaArticulo": [
+      {
+        "IdGrupo": 10,
+        "Descr": "ARTICULO DE PRUEBA REST",
+        "Generico": true,
+        "IdMarca": 5,
+        "Modelo": "MOD-2025",
+        "Medidas": "10x20 cm",
+        "Peso": 1.25,
+        "Resto": "Observacion 1",
+        "Resto2": "Observacion 2",
+        "Procedencia": "NACIONAL",
+        "IdProv": 3,
+        "IdCatego": "A01",
+        "PorcIva": 16,
+        "Base": false,
+        "Serie": false,
+        "Pedimento": false,
+        "MarMay": 10,
+        "MarPub": 11,
+        "PorcDst": 5,
+        "IdNavega": 2,
+        "Name": "Articulo extendido REST",
+        "IdClavePS": "01010101",
+        "Insumos": false,
+        "Concatenar": true,
+        "Gramaje": 120,
+        "Ancho": 30
+      }
+    ]
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
