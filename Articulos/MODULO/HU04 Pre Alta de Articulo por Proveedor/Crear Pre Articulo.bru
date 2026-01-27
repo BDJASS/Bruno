@@ -1,0 +1,111 @@
+meta {
+  name: Crear Pre Articulo
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/PreAltaArticulos/CrearPreArticulo
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "dsPreAltaArticulo": {
+      "ttPreArt": [
+        {
+          "IdProv": 2033,
+          "Descr": "Carpeta Ejecutiva Piel Sintética 3 Argollas",
+          "Generico": "CARPETA",
+          "Marca": "OfficeMax",
+          "Modelo": "EXEC-3A-2024",
+          "Caracteristicas": "Carpeta ejecutiva de alta calidad\nInterior forrado en tela\nCierre con cremallera\nCompartimento para tarjetas\nBolsillo interior con zipper\nDimensiones: 32 x 28 x 5 cm\nColor: Negro\nMaterial: Piel sintética premium\nCapacidad: 400 hojas",
+          "IdPres": 0,
+          "IdColor": 0,
+          "Activo": false
+        }
+      ],
+      "ttPreArtPres": [
+        {
+          "Descr": "PIEZA",
+          "Abrev": "PZA",
+          "Tipo": 1,
+          "Flag": "",
+          "Equiv": 1.00000,
+          "MarMay": 0.00,
+          "MarPub": 0.00,
+          "PorcDst": 0.00,
+          "Largo": 32.0000,
+          "Ancho": 28.0000,
+          "Alto": 5.0000,
+          "Peso": 0.850000,
+          "PesoTara": 0.150000,
+          "MultPza": 1.00,
+          "PTDA": 0.00,
+          "PWEB": 0.00,
+          "Activo": true
+        },
+        {
+          "Descr": "CAJA",
+          "Abrev": "CJA",
+          "Tipo": 2,
+          "Flag": "C",
+          "Equiv": 12.00000,
+          "MarMay": 0.00,
+          "MarPub": 0.00,
+          "PorcDst": 0.00,
+          "Largo": 65.0000,
+          "Ancho": 35.0000,
+          "Alto": 32.0000,
+          "Peso": 11.400000,
+          "PesoTara": 1.200000,
+          "MultPza": 12.00,
+          "PTDA": 0.00,
+          "PWEB": 0.00,
+          "Activo": true
+        },
+        {
+          "Descr": "PIEZA VENTA",
+          "Abrev": "PZAV",
+          "Tipo": 3,
+          "Flag": "M",
+          "Equiv": 1.00000,
+          "MarMay": 28.50,
+          "MarPub": 42.00,
+          "PorcDst": 18.00,
+          "Largo": 32.0000,
+          "Ancho": 28.0000,
+          "Alto": 5.0000,
+          "Peso": 0.850000,
+          "PesoTara": 0.150000,
+          "MultPza": 1.00,
+          "PTDA": 450.00,
+          "PWEB": 425.00,
+          "Activo": true
+        }
+      ],
+      "ttPreArtProv": [
+        {
+          "PrecioLista": 285.00,
+          "PrecioProv": 250.5000,
+          "FraccAran": "4202.31.01",
+          "ImptoAran": 15.00,
+          "IdPresUDC": 1,
+          "IdMoneda": 1,
+          "Desc1": 2.50,
+          "Desc2": 1.50,
+          "Desc3": 0.00,
+          "Desc4": 0.00,
+          "Desc5": 0.00,
+          "FecPrecio": "2025-01-27"
+        }
+      ]
+    }
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
