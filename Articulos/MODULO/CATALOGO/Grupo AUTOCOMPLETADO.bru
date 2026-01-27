@@ -1,0 +1,20 @@
+meta {
+  name: Grupo AUTOCOMPLETADO
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/Grupo_cls?filter=Id-Grupo =447 AND ACTIVO = TRUE NO-LOCK
+  body: none
+  auth: inherit
+}
+
+params:query {
+  filter: Id-Grupo =447 AND ACTIVO = TRUE NO-LOCK
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

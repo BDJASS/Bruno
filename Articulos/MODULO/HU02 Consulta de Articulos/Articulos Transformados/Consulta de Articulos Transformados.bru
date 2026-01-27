@@ -5,15 +5,15 @@ meta {
 }
 
 get {
-  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/Transformacion/GetArticulosConTransformacion?IdArticulo=0
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/Transformacion/GetArticulosConTransformacion?FecIni=2025-12-11&FecFin=2026-12-18
   body: none
   auth: inherit
 }
 
 params:query {
-  IdArticulo: 0
-  ~FecIni: 2025-12-11
-  ~FecFin: 2025-12-18
+  FecIni: 2025-12-11
+  FecFin: 2026-12-18
+  ~IdArticulo: 0
 }
 
 settings {

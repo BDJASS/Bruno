@@ -1,17 +1,17 @@
 meta {
-  name: Kolor
+  name: Kolor 2
   type: http
-  seq: 11
+  seq: 21
 }
 
-get {
+put {
   url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/CatalogoKolor
   body: none
   auth: inherit
 }
 
 params:query {
-  ~filter: 5
+  ~IdColor: 0004
 }
 
 settings {

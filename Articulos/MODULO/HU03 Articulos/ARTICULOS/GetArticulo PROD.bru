@@ -1,0 +1,21 @@
+meta {
+  name: GetArticulo PROD
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.9:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/GetArticulo?IdUsuario=sge&IdArticulo=165119
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdUsuario: sge
+  IdArticulo: 165119
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

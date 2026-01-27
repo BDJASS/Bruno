@@ -1,0 +1,35 @@
+meta {
+  name: Modificar Presentacion
+  type: http
+  seq: 5
+}
+
+put {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/AltaArticulos/Presentacion/ModificarPresentacion?IdUsuario=meev
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdUsuario: meev
+}
+
+body:json {
+  {
+    "ttPresentacion": [{
+      "IdArticulo": "044711",
+      "IdPres": 1,
+      "Descr": "CAJA 20",
+      "Tipo": 1,
+      "Equiv": 1.00,
+      "Flag": "M",
+      "Equiv": 12.00,
+      "Activo": true
+    }]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
