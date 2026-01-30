@@ -1,0 +1,24 @@
+meta {
+  name: Modificar
+  type: http
+  seq: 4
+}
+
+put {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/AltaArticulos/Atributos/ModificarAtributo?IdUsuario=meev&IdArticulo=044711&IdAtributo=1&ValorAnterior=78844&ValorNuevo=788
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdUsuario: meev
+  IdArticulo: 044711
+  IdAtributo: 1
+  ValorAnterior: 78844
+  ValorNuevo: 788
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
