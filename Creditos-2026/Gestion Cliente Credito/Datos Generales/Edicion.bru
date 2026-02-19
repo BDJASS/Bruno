@@ -1,0 +1,52 @@
+meta {
+  name: Edicion
+  type: http
+  seq: 2
+}
+
+put {
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionCredito/DatosGenerales/Edicion?IdCliente=54631&IdUser=nmra
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdCliente: 54631
+  IdUser: nmra
+}
+
+body:json {
+  {
+        "ttDatosGral": [
+          {
+            "IdCliente": 54631,
+            "IdPais": "MEX",
+            "IdEstado": "005",
+            "CP": "25298",
+            "Colonia": "LEANDRO VALLE",
+            "Calle": "RENATO VEGA",
+            "NumExt": "136",
+            "NumInt": "",
+            "SitioWeb": "www.chiriwice.com",
+            "NumEmpleados": 0,
+            "NumSucursales": 0,
+            "IdRamo": "7",
+            "IdGiro": 75,
+            "DondeRealizaraPago": "",
+            "LocalPropio": false,
+            "EsAsociado": false,
+            "PronCompraMensual": 0.0,
+            "Propietario": "",
+            "CURP": "",
+            "Correo": "aayala@adosa.com.mx",
+            "Telefono": "8444154910",
+            "IdCiudad": 158
+          }
+        ]
+      }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

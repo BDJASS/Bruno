@@ -1,0 +1,35 @@
+meta {
+  name: Edicion
+  type: http
+  seq: 2
+}
+
+put {
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionCredito/ReferenciaProv/Edicion
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+        "ttReferProv": [
+          {
+            "IdCliente": 54631,
+            "Num": 1,
+            "TipoProv": 1,
+            "NombreContacto": "Juan Perez",
+            "Telefono": "8181234567",
+            "Celular": "8112345678",
+            "Correo": "juan.perez@proveedo3r.com",
+            "Revisada": false,
+            "Observaciones": "Proveedor principal de papeleria"
+      }
+    ]
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

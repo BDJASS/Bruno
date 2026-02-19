@@ -1,0 +1,38 @@
+meta {
+  name: Edicion
+  type: http
+  seq: 2
+}
+
+put {
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionCredito/InformacionFiscal/Edicion?IdCliente=54631&IdUser=nmra
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdCliente: 54631
+  IdUser: nmra
+}
+
+body:json {
+  {
+       "ttInfoFiscal": [
+          {
+            "IdCliente": 54631,
+            "RFCFiscal": "RDE1111142R8",
+            "RazonSocial": "REALCE DESARROLLOS",
+            "FormasPago": "03",
+            "UsoCFDI": "G03",
+            "CP": "25298",
+            "CapitalSocial": 0.0,
+            "CapitalContable": 0.0
+          }
+        ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

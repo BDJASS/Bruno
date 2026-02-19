@@ -1,0 +1,37 @@
+meta {
+  name: Alta Prov
+  type: http
+  seq: 3
+}
+
+post {
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionCredito/ReferenciaProv/Alta?IdCliente=54631
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdCliente: 54631
+}
+
+body:json {
+  {
+    "ttReferProv": [
+      {
+        "TipoProv": 1,
+        "NombreContacto": "Juan Perez",
+        "Telefono": "8181234567",
+        "Celular": "8112345678",
+        "Correo": "juan.perez@proveedor.com",
+        "Revisada": false,
+        "Observaciones": "Proveedor principal de papeleria"
+      }
+    ]
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

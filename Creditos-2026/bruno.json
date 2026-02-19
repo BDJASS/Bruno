@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "Creditos-2026",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}
