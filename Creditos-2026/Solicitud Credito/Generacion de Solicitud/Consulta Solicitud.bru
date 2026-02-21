@@ -1,0 +1,21 @@
+meta {
+  name: Consulta Solicitud
+  type: http
+  seq: 2
+}
+
+get {
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionSolicitud/Solicitud/Consulta?IdSolicitud=7
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdSolicitud: 7
+  ~RFCFiscal: X4X3e1E010088
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
