@@ -1,0 +1,31 @@
+meta {
+  name: Alta
+  type: http
+  seq: 2
+}
+
+post {
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionCliente/Chequera/Alta
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "ttBancoCliente": [
+      {
+        "IdCliente": 18312,
+        "Posicion": 2,
+        "IdBanco": 25,
+        "CuentaBancaria": "999888777",
+        "Bloqueado": true
+      }
+    ]
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,16 @@
+meta {
+  name: Eliminar Chequera
+  type: http
+  seq: 3
+}
+
+delete {
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionCliente/Chequera/Eliminar
+  body: json
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

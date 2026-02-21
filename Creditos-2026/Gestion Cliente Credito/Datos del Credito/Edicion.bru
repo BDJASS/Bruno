@@ -1,0 +1,39 @@
+meta {
+  name: Edicion
+  type: http
+  seq: 2
+}
+
+put {
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionCliente/DatosDelCredito/Edicion?IdCliente=13726&IdUser=nmra
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdCliente: 13726
+  IdUser: nmra
+}
+
+body:json {
+  {
+    "ttCredito": [
+      {
+        "LineaCredito": 50000.00,
+        "PlazoAutorizado": 30,
+        "IdClase": 1,
+        "IdCalidad": 2,
+        "IdCobrador": 5,
+        "EmbRemision": true,
+        "DPP1": 10.00,
+        "DPP2": 5.00
+      }
+    ]
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
