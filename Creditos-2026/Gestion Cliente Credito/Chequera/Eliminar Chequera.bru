@@ -5,9 +5,14 @@ meta {
 }
 
 delete {
-  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionCliente/Chequera/Eliminar
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionCliente/Chequera/Eliminar?IdCliente=18312&Posicion=2
   body: json
   auth: inherit
+}
+
+params:query {
+  IdCliente: 18312
+  Posicion: 2
 }
 
 settings {

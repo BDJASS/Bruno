@@ -1,0 +1,40 @@
+meta {
+  name: Edicion Correos
+  type: http
+  seq: 2
+}
+
+put {
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionCredito/BuzonFiscal/Edicion?IdUser=nmra
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdUser: nmra
+}
+
+body:json {
+  {
+        "ttBuzonFiscal": [
+          {
+            "IdCliente": 575,
+            "BuzonFiscal1": "aayala@adosa.com.mx", 
+            "BuzonFiscal2": "desarrollo10@adosa.com.mx",
+            "BuzonFiscal3": "",
+            "CPBuzonFiscal1": "",
+            "CPBuzonFiscal2": "",
+            "CPBuzonFiscal3": "",
+            "ECBuzon1": "abacomonclova@prodigy.net.mx",
+            "ECBuzon2": "arturo_valdess@hotmail.com",
+            "ECBuzon3": ""
+          }
+        ]
+          }
+      
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
