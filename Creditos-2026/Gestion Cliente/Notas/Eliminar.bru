@@ -1,0 +1,33 @@
+meta {
+  name: Eliminar
+  type: http
+  seq: 3
+}
+
+delete {
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionClientes/Notas/Eliminar?IdCliente=18312&IdUser=ncr
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdCliente: 18312
+  IdUser: ncr
+}
+
+body:json {
+  {
+    "ttNotas": [
+      {
+         "Fecha": "2021-06-14",
+         "SeguimientoAcuerdo": "MAURICIO IBARRA"
+      }
+    ]
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,29 @@
+meta {
+  name: Alta
+  type: http
+  seq: 2
+}
+
+post {
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionCliente/Asociados/Alta
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "ttAsociados": [
+      {
+        "IdCliente": 13726,
+        "IdAsociado": 575,
+        "TipoAsociado": 2   // 1 = Venta, 2 = Crédito
+      }
+    ]
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

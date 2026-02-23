@@ -1,0 +1,21 @@
+meta {
+  name: Eliminar PDF
+  type: http
+  seq: 4
+}
+
+delete {
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionSolicitud/Solicitud/ReferenciaProv/Documento/Eliminar?IdSolicitud=8&Secuencia=2
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdSolicitud: 8
+  Secuencia: 2
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

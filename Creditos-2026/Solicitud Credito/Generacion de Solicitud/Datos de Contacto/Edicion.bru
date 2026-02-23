@@ -1,0 +1,35 @@
+meta {
+  name: Edicion
+  type: http
+  seq: 3
+}
+
+put {
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionSolicitud/Solicitud/DatosDeContacto/Edicion?IdSolicitud=8
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdSolicitud: 8
+}
+
+body:json {
+   {
+        "ttDatosContacto": [
+          {
+              "TipoContacto": "Ejemplo",
+              "Nombre": "NANCY RAMIREZ",
+              "Puesto": "",
+              "Telefono": "8442252428",
+              "Correo": "aayala@adosa.com.mx",
+              "WhatsApp": "818097"
+          }
+        ]
+      }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
