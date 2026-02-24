@@ -1,0 +1,47 @@
+meta {
+  name: Actualizar Autorizacion
+  type: http
+  seq: 2
+}
+
+put {
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionSolicitud/Autorizacion/ActualizarAutorizacion?IdSolicitud=13
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdSolicitud: 13
+}
+
+body:json {
+  {
+          "ttSolCred": [
+            {
+              "IdUser": "NMRA",
+              "IdEstatus": 1,
+              "Estatus": "Autorizar",  //  Guardar, Autorizar o Rechazar."
+              "MotivoRechazo": "",
+              "CreditoAutorizado": 10000,
+              "PlazoAutorizado": 30,
+              "CheckRevision1": true,
+              "CheckRevision2": true,
+              "CheckRevision3": true,
+              "CheckRevision4": true,
+              "IdClase": 0,
+              "IdCalidad": 0,
+              "IdCobrador": 0,
+              "AltaContado": false,
+              "IdCliente": 0,
+              "RazonSocial": "RAZOEN SOC CV",
+              "RFCFiscal": "X4X3e1E010088",
+              "Observaciones": "Ninguna"
+            }
+          ]
+        }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
