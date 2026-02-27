@@ -5,13 +5,13 @@ meta {
 }
 
 put {
-  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionCliente/DatosDelCredito/Edicion?IdCliente=13726&IdUser=nmra
+  url: {{RestADOSACyc}}/GestionCliente/DatosDelCredito/Edicion?IdCliente=575&IdUser=nmra
   body: json
   auth: inherit
 }
 
 params:query {
-  IdCliente: 13726
+  IdCliente: 575
   IdUser: nmra
 }
 
@@ -19,18 +19,36 @@ body:json {
   {
     "ttCredito": [
       {
-        "LineaCredito": 50000.00,
+        "IdCliente": 575,
+        "LineaCredito": 50000.0,
         "PlazoAutorizado": 30,
-        "IdClase": 1,
-        "IdCalidad": 2,
+        "IdClase": 2,
+        "IdCalidad": 21,
         "IdCobrador": 5,
         "EmbRemision": true,
-        "DPP1": 10.00,
-        "DPP2": 5.00
+        "DPP1": 10.0,
+        "DPP2": 5.0,
+        "MontoPagare": 10000.0
+      }
+    ],
+    "ttDatosGral": [
+      {
+        "IdCliente": 575,
+        "SitioWeb": "",
+        "NumEmpleados": 1000,
+        "NumSucursales": 1,
+        "DondeRealizaraPago": "",
+        "LocalPropio": false,
+        "EsAsociado": false,
+        "PronCompraMensual": 0.0,
+        "ProvDePapeleriaActual": "",
+        "RequiereOC": false,
+        "PlataformaFacPago": "www.portal.com",
+        "NombreAval": "",
+        "ParentescoAval": ""
       }
     ]
   }
-  
 }
 
 settings {
