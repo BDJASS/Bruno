@@ -1,0 +1,21 @@
+meta {
+  name: Filtrar Clientes ( Gestion de Clientes)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{RestADOSACyc}}/FiltrarClientes?Clase=1&Activo=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Clase: 1
+  Activo: true
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

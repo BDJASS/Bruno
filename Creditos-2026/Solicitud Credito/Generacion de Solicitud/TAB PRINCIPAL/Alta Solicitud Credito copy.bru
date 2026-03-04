@@ -1,0 +1,85 @@
+meta {
+  name: Alta Solicitud Credito copy
+  type: http
+  seq: 4
+}
+
+post {
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionSolicitud/Solicitud/Alta
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "ttSolicitud": [
+      {
+        "IdSolicitud": 0,
+        "FecReg": "2026-03-03",
+        "TipoPersona": "Moral",
+        "IdCiudad": 158,
+        "IdPais": null,
+        "IdEstado": null,
+        "CP": "25298",
+        "Colonia": "EL TOREO",
+        "Calle": "RODOLFO GAONA",
+        "NumExt": "432",
+        "NumInt": "",
+        "SitioWeb": "",
+        "NumEmpleados": 0,
+        "NumSucursales": 0,
+        "DondeRealizaraPago": "",
+        "LocalPropio": false,
+        "EsAsociado": false,
+        "PronCompraMensual": 0.0,
+        "CreditoSol": 0,
+        "PlazoSol": 0,
+        "Propietario": "",
+        "CURP": "",
+        "Correo": "desarrollo8@adosa.com.mx",
+        "Telefono": "8444379232",
+        "RFCFiscal": "XAXX010101000",
+        "RazonSocial": "TOM\u00A0S ALFONSO CEPEDA GONZ\u00A0LEZ",
+        "RegimenCapital": "",
+        "RegimenFiscal": "616",
+        "FormasPago": "99",
+        "UsoCFDI": "S01",
+        "CPFiscal": "25298",
+        "CapitalSocial": 0,
+        "CapitalContable": 0,
+        "RequiereOC": false,
+        "PlataformaFacPago": "",
+        "PortalPlataforma": "",
+        "NombreAval": "",
+        "ParentescoAval": "",
+        "CheckDatosCorrectos": false,
+        "CheckEnvio": false,
+        "CheckValMinPed": false,
+        "CheckValMinCompMensual": false,
+        "IdRamo": "7",
+        "IdGiro": 71,
+        "IdSegmentoCte": 0,
+        "IdDocumento": 0,
+        "IdClase": 2,
+        "CheckRevision1": false,
+        "CheckRevision2": false,
+        "CheckRevision3": false,
+        "CheckRevision4": false,
+        "Estatus": null,
+        "MotivoRechazo": null,
+        "CreditoAutorizado": 0,
+        "PlazoAutorizado": 0,
+        "Observaciones": "",
+        "PagareFirmado": false,
+        "Vendedor": "",
+        "IdCalidad": 0,
+        "NombreAsociado": 0
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
