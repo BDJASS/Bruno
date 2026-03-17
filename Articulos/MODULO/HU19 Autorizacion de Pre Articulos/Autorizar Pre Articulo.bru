@@ -1,0 +1,22 @@
+meta {
+  name: Autorizar Pre Articulo
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/PreAltaArticulos/Comp/AutorizarPreArticulo?Codigo=203302&IdUsuario=meev&Comentarios=Prueba de Articulo Revisado
+  body: json
+  auth: inherit
+}
+
+params:query {
+  Codigo: 203302
+  IdUsuario: meev
+  Comentarios: Prueba de Articulo Revisado
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

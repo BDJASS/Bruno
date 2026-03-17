@@ -1,0 +1,33 @@
+meta {
+  name: Edicion
+  type: http
+  seq: 3
+}
+
+put {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/PreAltaArticulos/Prov/Colores/Edicion?IdProv=2033
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdProv: 2033
+}
+
+body:json {
+   {
+        "ttPreArtCol": [
+          {
+            "Codigo": 2033004,
+            "CveHex": "0392309#",
+            "IdColor": 2,
+            "Descr": "Azul"
+          }
+        ]
+      }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

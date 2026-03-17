@@ -1,0 +1,37 @@
+meta {
+  name: Alta
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/PreAltaArticulos/Prov/General/Alta?IdProv=2033
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdProv: 2033
+}
+
+body:json {
+   {
+        "ttPreArt": [
+          {
+            "IdArticuloProv": "518148484DE",
+            "Descr": "Carpeta Ejecutiva Piel Sintética 3 Argollas",
+            "Generico": "CARPETA PRUEBA",
+            "Marca": "OfficeMax",
+            "Modelo": "EXEC-3A-2024",
+            "Medidas": "8411",
+            "Peso": "711",
+            "Caracteristicas": "Carpeta ejecutiva de alta calidad\nInterior forrado en tela\nCierre con cremallera\nCompartimento para tarjetas\nBolsillo interior con zipper\nDimensiones: 32 x 28 x 5 cm\nColor: Negro\nMaterial: Piel sintética premium\nCapacidad: 400 hojas"
+          }
+        ]
+   }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
