@@ -1,0 +1,209 @@
+meta {
+  name: Carga Masiva
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/PreAltaArticulos/Prov/CargaMasiva?IdProv=2033
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdProv: 2033
+}
+
+body:json {
+  {
+    "dsPreAltaArticulo": {
+      "ttPreArt": [
+        {
+          "Codigo": 1,
+          "IdProv": 125,
+          "IdArticuloProv": "SKU-PROV-001",
+          "Descr": "MESA DE OFICINA EJECUTIVA 180CM",
+          "Generico": "MESA OFICINA",
+          "Marca": "OFFICEMAX",
+          "Modelo": "EJC-180",
+          "Medidas": "180x80x75 cm",
+          "Peso": "35.5"
+        },
+        {
+          "Codigo": 2,
+          "IdProv": 125,
+          "IdArticuloProv": "SKU-PROV-002",
+          "Descr": "SILLA ERGONOMICA RESPALDO ALTO",
+          "Generico": "SILLA ERGONOMICA",
+          "Marca": "OFFICEMAX",
+          "Modelo": "ERG-500",
+          "Medidas": "65x65x120 cm",
+          "Peso": "12.8"
+        },
+        {
+          "Codigo": 3,
+          "IdProv": 125,
+          "IdArticuloProv": "SKU-PROV-003",
+          "Descr": "ARCHIVERO METALICO 4 GAVETAS",
+          "Generico": "ARCHIVERO",
+          "Marca": "OFFICEMAX",
+          "Modelo": "ARC-4G",
+          "Medidas": "47x60x132 cm",
+          "Peso": "28.0"
+        }
+      ],
+      "ttPreArtPres": [
+        {
+          "Codigo": 1,
+          "IdPres": 1,
+          "Descr": "PIEZA",
+          "Largo": 180.0,
+          "Ancho": 80.0,
+          "Alto": 75.0,
+          "Peso": 35.5
+        },
+        {
+          "Codigo": 2,
+          "IdPres": 1,
+          "Descr": "PIEZA",
+          "Largo": 65.0,
+          "Ancho": 65.0,
+          "Alto": 120.0,
+          "Peso": 12.8
+        },
+        {
+          "Codigo": 2,
+          "IdPres": 2,
+          "Descr": "PAR",
+          "Largo": 70.0,
+          "Ancho": 70.0,
+          "Alto": 125.0,
+          "Peso": 26.0
+        },
+        {
+          "Codigo": 3,
+          "IdPres": 1,
+          "Descr": "PIEZA",
+          "Largo": 47.0,
+          "Ancho": 60.0,
+          "Alto": 132.0,
+          "Peso": 28.0
+        }
+      ],
+      "ttPreArtCol": [
+        {
+          "Codigo": 1,
+          "IdColor": 10,
+          "CveHex": "000000",
+          "Descr": "NEGRO"
+        },
+        {
+          "Codigo": 1,
+          "IdColor": 25,
+          "CveHex": "8B4513",
+          "Descr": "CAFE"
+        },
+        {
+          "Codigo": 2,
+          "IdColor": 10,
+          "CveHex": "000000",
+          "Descr": "NEGRO"
+        },
+        {
+          "Codigo": 2,
+          "IdColor": 15,
+          "CveHex": "808080",
+          "Descr": "GRIS"
+        },
+        {
+          "Codigo": 3,
+          "IdColor": 10,
+          "CveHex": "000000",
+          "Descr": "NEGRO"
+        }
+      ],
+      "ttPreArtBarra": [
+        {
+          "Codigo": 1,
+          "IdPres": 1,
+          "IdColor": 10,
+          "CodBarras": "7501234567890"
+        },
+        {
+          "Codigo": 1,
+          "IdPres": 1,
+          "IdColor": 25,
+          "CodBarras": "7501234567891"
+        },
+        {
+          "Codigo": 2,
+          "IdPres": 1,
+          "IdColor": 10,
+          "CodBarras": "7501234567892"
+        },
+        {
+          "Codigo": 3,
+          "IdPres": 1,
+          "IdColor": 10,
+          "CodBarras": "7501234567893"
+        }
+      ],
+      "ttPreArtPrecios": [
+        {
+          "Codigo": 1,
+          "IdProv": 125,
+          "PrecioProv": 4500.00,
+          "FraccAran": "9403300001",
+          "ImptoAran": 15.00,
+          "IdPresUDC": 1,
+          "IdMoneda": 1,
+          "Desc1": 10.00,
+          "Desc2": 5.00,
+          "Desc3": 0,
+          "Desc4": 0,
+          "Desc5": 0,
+          "Desc6": 0,
+          "DescPP": 0
+        },
+        {
+          "Codigo": 2,
+          "IdProv": 125,
+          "PrecioProv": 8900.50,
+          "FraccAran": "9401710001",
+          "ImptoAran": 15.00,
+          "IdPresUDC": 1,
+          "IdMoneda": 1,
+          "Desc1": 12.00,
+          "Desc2": 0,
+          "Desc3": 0,
+          "Desc4": 0,
+          "Desc5": 0,
+          "Desc6": 0,
+          "DescPP": 0
+        },
+        {
+          "Codigo": 3,
+          "IdProv": 125,
+          "PrecioProv": 3200.00,
+          "FraccAran": "9403100001",
+          "ImptoAran": 15.00,
+          "IdPresUDC": 1,
+          "IdMoneda": 2,
+          "Desc1": 8.00,
+          "Desc2": 3.00,
+          "Desc3": 2.00,
+          "Desc4": 0,
+          "Desc5": 0,
+          "Desc6": 0,
+          "DescPP": 0
+        }
+      ]
+    }
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
