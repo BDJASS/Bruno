@@ -1,0 +1,37 @@
+meta {
+  name: Alta
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/PreAltaArticulos/Prov/Presentaciones/Alta?IdProv=2033
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdProv: 2033
+}
+
+body:json {
+  {
+            "ttPreArtPres": [
+            {
+              "Codigo": 2033005,
+              "IdPres": 1,
+              "Descr": "PIEZA",
+              "Largo": 324444.0,
+              "Ancho": 28.0,
+              "Alto": 5.0,
+              "Peso": 0.85,
+              "Volumen": 0.00448
+            }
+          ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,20 @@
+meta {
+  name: Consultar Lista
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/PreAltaArticulos/Ficha/ConsultarLista?Codigo=203301
+  body: json
+  auth: inherit
+}
+
+params:query {
+  Codigo: 203301
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

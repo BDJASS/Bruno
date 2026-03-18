@@ -1,0 +1,44 @@
+meta {
+  name: Alta
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/PreAltaArticulos/Prov/Precios/Alta?IdProv=2033&Codigo=2033004
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdProv: 2033
+  Codigo: 2033004
+}
+
+body:json {
+  {
+            "ttPreArtPrecios": [
+            {
+            "Codigo": 2033004,
+            "LMC": 5.0,
+            "PrecioProv": 100.0,
+            "FraccAran": "1/2",
+            "ImptoAran": 0.0,
+            "IdPresUDC": 0,
+            "IdMoneda": 0,
+            "Desc1": 100.0,
+            "Desc2": 0.0,
+            "Desc3": 0.0,
+            "Desc4": 0.0,
+            "Desc5": 0.0,
+            "Desc6": 0.0,
+            "DescPP": 10.0
+            }
+          ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

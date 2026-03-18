@@ -1,0 +1,50 @@
+meta {
+  name: Edicion
+  type: http
+  seq: 3
+}
+
+put {
+  url: http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/PreAltaArticulos/Prov/Presentaciones/Edicion?IdProv=2033
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdProv: 2033
+}
+
+body:json {
+  {
+        "ttPreArtPres": [
+          {
+            "Codigo": 2033004,
+            "IdArticulo": "",
+            "IdPres": 1,
+            "Descr": "PIEZA",
+            "Abrev": "PZA",
+            "Tipo": 1,
+            "Flag": "",
+            "Equiv": 1.0,
+            "MarMay": 0.0,
+            "MarPub": 0.0,
+            "PorcDst": 0.0,
+            "Largo": 32.0,
+            "Ancho": 28.0,
+            "Alto": 5.0,
+            "Peso": 0.85,
+            "Volumen": 0.00448,
+            "MultPza": 1.0,
+            "PTDA": 0.0,
+            "PWEB": 0.0,
+            "Activo": true,
+            "FecReg": "2026-03-10"
+          }
+        ]
+      }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
