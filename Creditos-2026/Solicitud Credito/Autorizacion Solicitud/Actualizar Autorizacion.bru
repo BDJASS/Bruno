@@ -5,13 +5,13 @@ meta {
 }
 
 put {
-  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionSolicitud/Autorizacion/ActualizarAutorizacion?IdSolicitud=13
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionSolicitud/Autorizacion/ActualizarAutorizacion?IdSolicitud=9
   body: json
   auth: inherit
 }
 
 params:query {
-  IdSolicitud: 13
+  IdSolicitud: 9
 }
 
 body:json {
@@ -20,7 +20,7 @@ body:json {
             {
               "IdUser": "NMRA",
               "IdEstatus": 1,
-              "Estatus": "Autorizar",  //  Guardar, Autorizar o Rechazar."
+              "Estatus": "Guardar",  //  Guardar, Autorizar o Rechazar."
               "MotivoRechazo": "",
               "CreditoAutorizado": 10000,
               "PlazoAutorizado": 30,
@@ -28,8 +28,8 @@ body:json {
               "CheckRevision2": true,
               "CheckRevision3": true,
               "CheckRevision4": true,
-              "IdClase": 0,
-              "IdCalidad": 0,
+              "IdClase": 1,
+              "IdCalidad": 10,
               "IdCobrador": 0,
               "AltaContado": false,
               "IdCliente": 0,

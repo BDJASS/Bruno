@@ -1,0 +1,28 @@
+meta {
+  name: Programa donde se sube PDF se coloco igual comentario
+  type: http
+  seq: 3
+}
+
+put {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Pagare
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "ttPagare": [
+      { 
+        "IdPagare":154,
+        "FecExp":"2026-03-18",
+        "Comentarios":"Este es un Ejemplo de Comentarios - Editado"
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

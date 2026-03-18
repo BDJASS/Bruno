@@ -1,18 +1,17 @@
 meta {
   name: Consulta
   type: http
-  seq: 2
+  seq: 1
 }
 
 get {
-  url: {{RestADOSACyc}}/GestionCliente/DatosGenerales/Consulta?IdCliente=31683
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Pagare?Pagare=154
   body: none
   auth: inherit
 }
 
 params:query {
-  IdCliente: 31683
-  ~IdCliente: 364666
+  Pagare: 154
 }
 
 settings {
