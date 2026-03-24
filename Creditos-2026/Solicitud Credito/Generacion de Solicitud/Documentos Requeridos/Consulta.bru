@@ -5,14 +5,14 @@ meta {
 }
 
 get {
-  url: {{RestADOSACyc}}/GestionSolicitud/Solicitud/DocumentoRequerido/Consulta?IdSolicitud=8
+  url: {{RestADOSACyc}}/GestionSolicitud/Solicitud/DocumentoRequerido/Consulta?IdSolicitud=8&TipoDoc=3
   body: none
   auth: inherit
 }
 
 params:query {
   IdSolicitud: 8
-  ~TipoDoc: 1
+  TipoDoc: 3
 }
 
 settings {
