@@ -1,8 +1,225 @@
 meta {
   name: CatFamilia
-  seq: 2
 }
 
 auth {
   mode: inherit
+}
+
+docs {
+  # Servicio REST — Actualizar Orden de Descripción de Familia
+  
+  ---
+  
+  ## 1. Título del Servicio
+  
+  **Catálogo de Familias — Actualizar Orden de Descripción (`PutCatFamiliaOrden`)**
+  Actualiza el campo `OrdenDescr` de una familia y **reconstruye automáticamente `Articulo.Descr`**
+  de todos sus artículos activos concatenando los campos en el nuevo orden indicado.
+  Programa servidor: `catfamilia.p` | Procedure: `PutCatFamiliaOrden`
+  
+  ---
+  
+  ## 2. Método HTTP
+  
+  ```
+  PUT
+  ```
+  
+  ---
+  
+  ## 3. URL Completa
+  
+  ```
+  http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/CatalogoFamilia/Ordenar
+  ```
+  
+  ---
+  
+  ## 4. Parámetros de Entrada (Query String)
+  
+  > ✅ = Requerido · ❌ = Opcional
+  
+  **`IdFamilia`** · INT · ✅ — ID de la familia a modificar
+  
+  **`Orden`** · STRING · ✅ — Nuevo orden de campos para la descripción del artículo
+  - Exactamente **7 letras**, cada una de A a G, sin repetir
+  - Orden default del sistema: `ABCDEFG`
+  
+  | Letra | Campo en `Articulo` |
+  |-------|---------------------|
+  | `A`   | Genérico            |
+  | `B`   | Marca               |
+  | `C`   | Modelo              |
+  | `D`   | Medidas             |
+  | `E`   | Peso                |
+  | `F`   | Resto               |
+  | `G`   | Resto2              |
+  
+  **`Confirmar`** · BOOLEAN · ✅ — Controla el flujo de dos pasos
+  - `false` → **Paso 1:** Solo cuenta artículos activos afectados, **no modifica nada**. Usar para pedir confirmación al usuario.
+  - `true`  → **Paso 2:** Aplica el cambio en `Familia.OrdenDescr` y reconstruye `Articulo.Descr` en todos los artículos activos. Si algún artículo está bloqueado → UNDO total.
+  
+  **`IdUsuario`** · STRING · ✅ — Usuario que ejecuta la operación (se registra en auditoría)
+  
+  ---
+  
+  ## 5. Body
+  
+  No aplica. Método `PUT` sin body — todos los parámetros van en Query String.
+  
+  ---
+  
+  ## 6. Headers
+  
+  | Header   | Valor              |
+  |----------|--------------------|
+  | `Accept` | `application/json` |
+  
+  ---
+  
+  ## 7. Flujo recomendado (2 pasos)
+  
+  ```
+  Paso 1  PUT ...?IdFamilia=8&Orden=BACDEFG&Confirmar=false&IdUsuario=meev
+           → Respuesta: "La familia 8 - BOLÍGRAFOS Y PLUMAS tiene 42 articulo(s)
+                         activo(s) que seran afectados. ¿Desea aplicar el cambio?"
+           → Mostrar mensaje al usuario para confirmación
+  
+  Paso 2  PUT ...?IdFamilia=8&Orden=BACDEFG&Confirmar=true&IdUsuario=meev
+           → Respuesta: "Se actualizo el orden de la familia 8 y se reconstruyo
+                         la descripcion de 42 articulo(s) activo(s) correctamente."
+  ```
+  
+  ---
+  
+  ## 8. Ejemplos de Request
+  
+  **Paso 1 — Solo consultar cuántos artículos se afectarían:**
+  ```
+  PUT http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/CatalogoFamilia/Ordenar
+      ?IdFamilia=8
+      &Orden=BACDEFG
+      &Confirmar=false
+      &IdUsuario=meev
+  ```
+  
+  **Paso 2 — Aplicar el cambio:**
+  ```
+  PUT http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/CatalogoFamilia/Ordenar
+      ?IdFamilia=8
+      &Orden=BACDEFG
+      &Confirmar=true
+      &IdUsuario=meev
+  ```
+  
+  ---
+  
+  ## 9. Ejemplos de Response
+  
+  ### Paso 1 — `Confirmar=false` (sin cambios, solo conteo)
+  
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "La familia 8 - BOLÍGRAFOS Y PLUMAS tiene 42 articulo(s) activo(s) que seran afectados. ¿Desea aplicar el cambio?"
+  }
+  ```
+  
+  ### Paso 2 — `Confirmar=true` (cambio aplicado exitosamente)
+  
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Se actualizo el orden de la familia 8 y se reconstruyo la descripcion de 42 articulo(s) activo(s) correctamente."
+  }
+  ```
+  
+  ### Response de error controlado
+  
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "El articulo ART001234 esta bloqueado por otro usuario. No se aplicaron los cambios."
+  }
+  ```
+  
+  ---
+  
+  ## 10. Validaciones del servidor
+  
+  **`IdFamilia`**
+  - Obligatorio. Si es `0` o no se envía → `IdError=true`, `"Se debe enviar el ID de familia."`
+  - La familia debe existir en catálogo → `"No se encontro la familia seleccionada."`
+  
+  **`Orden`**
+  - Debe tener **exactamente 7 caracteres** → `"Orden debe contener exactamente 7 letras (A-G, sin repetir). Se recibieron X caracter(es)."`
+  - Cada carácter debe ser A, B, C, D, E, F o G → `"Orden contiene caracter invalido: 'X'."`
+  - Sin letras repetidas → `"Orden contiene la letra 'X' repetida. Cada letra debe aparecer exactamente una vez."`
+  
+  **`IdUsuario`**
+  - Obligatorio → `"Agregar IdUsuario es Obligatorio."`
+  
+  **Bloqueos (`Confirmar=true`)**
+  - Si algún artículo o la familia están bloqueados por otro usuario → UNDO completo de toda la transacción → `"El articulo XXX esta bloqueado por otro usuario. No se aplicaron los cambios."`
+  
+  ---
+  
+  ## 11. Efecto en base de datos (`Confirmar=true`)
+  
+  1. **`Familia.OrdenDescr`** ← se actualiza con el valor de `Orden`
+  2. **`Articulo.Descr`** ← se reconstruye para cada artículo **activo** de la familia concatenando los campos en el nuevo orden, separados por espacio, omitiendo los vacíos
+  
+  > **Artículos inactivos:** No se modifican. Solo se afectan los artículos con `Activo = TRUE`.
+  
+  ---
+  
+  ## 12. Auditoría
+  
+  Cada ejecución (exitosa o con error) registra en la tabla de auditoría:
+  
+  | Campo      | Valor                            |
+  |------------|----------------------------------|
+  | Área       | `oeArt`                          |
+  | Módulo     | `Catalogo Familia- Cambio de Orden` |
+  | Programa   | `catfamilia`                     |
+  | Operación  | `PUT`                            |
+  | Resource   | `/CatalogoFamilia/Ordenar`       |
+  
+  ---
+  
+  ## 13. Evidencia de Ejecución
+  
+  *Pendiente de captura por parte del equipo de QA.*
+  Adjuntar screenshot de Postman / Insomnia / curl mostrando:
+  - Paso 1: request con `Confirmar=false` y response con conteo de artículos
+  - Paso 2: request con `Confirmar=true` y response de éxito
+  - Status HTTP `200 OK` en ambos pasos
+  
+  ---
+  
+  ## 14. Fecha de Prueba
+  
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | 2026-03-25 | *(pendiente)* |
+  
+  ---
+  
+  ## 15. Resultado
+  
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA  |
+  
+  ---
+  
+  ## 16. Observaciones Técnicas
+  
+  1. **Flujo obligatorio de 2 pasos:** Aunque técnicamente se puede llamar directamente con `Confirmar=true`, el diseño está pensado para que el frontend siempre ejecute el Paso 1 primero y muestre el conteo al usuario antes de confirmar.
+  2. **Transacción atómica:** Con `Confirmar=true` toda la operación corre en un solo `DO TRANSACTION`. Si falla cualquier artículo (bloqueado), **ningún cambio se persiste**.
+  3. **Solo artículos activos:** La reconstrucción de `Articulo.Descr` aplica únicamente a artículos con `Activo=TRUE`. Los inactivos conservan su descripción actual.
+  4. **Campos vacíos se omiten:** Si un campo del artículo está en blanco (ej: `Peso = ""`), simplemente no se incluye en la descripción reconstruida — no genera dobles espacios.
+  5. **`Confirmar` como BOOLEAN:** Enviar `true`/`false` en minúsculas. El AppServer OpenEdge acepta también `TRUE`/`FALSE` en mayúsculas.
+  
 }

@@ -1,8 +1,277 @@
 meta {
   name: Navegaciones
-  seq: 13
 }
 
 auth {
   mode: inherit
+}
+
+docs {
+  # CatálogoNavegaciones — REST API
+  
+  **Servidor:** `http://192.0.1.14:8861`
+  **Base URL:** `/RestADOSArt/rest/RestADOSArt/CatalogoNavegaciones`
+  **Programa:** `catalogo-Navegaciones.p`
+  **Modo:** `single-run`
+  
+  ---
+  
+  ## Jerarquía de Niveles
+  
+  | Nivel | Tipo            | Rango Código | Observación              |
+  |-------|-----------------|--------------|--------------------------|
+  | 1     | Supercategoría  | 1 – 9        | Solo lectura, sin altas  |
+  | 2     | Categoría       | 10 – 99      | Alta/Modificación/Baja   |
+  | 3     | Subcategoría    | 100 – 999    | Alta/Modificación/Baja   |
+  | 4     | Subsubcategoría | 1000 – 9999  | Alta/Modificación/Baja   |
+  
+  ---
+  
+  ## Endpoints
+  
+  | # | Método | Endpoint                          | Procedure              |
+  |---|--------|-----------------------------------|------------------------|
+  | 1 | GET    | `/CatalogoNavegaciones`           | `GetNavegaciones`      |
+  | 2 | POST   | `/CatalogoNavegaciones/Alta`      | `CrearNavegacion`      |
+  | 3 | PUT    | `/CatalogoNavegaciones/Modificar` | `ActualizarNavegacion` |
+  | 4 | DELETE | `/CatalogoNavegaciones/Eliminar`  | `EliminarNavegacion`   |
+  
+  ---
+  
+  ## 1. GET — Consultar Navegaciones
+  
+  **URL de ejemplo:**
+  ```
+  GET http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/CatalogoNavegaciones
+      ?Nivel=1&Padre=0
+  ```
+  
+  ### Parámetros de entrada (Query String)
+  
+  > ✅ = Requerido · ❌ = Opcional
+  
+  **`Nivel`** · INTEGER · ✅ — Nivel jerárquico a consultar
+  - `1` Supercategoría · `2` Categoría · `3` Subcategoría · `4` Subsubcategoría
+  
+  **`Padre`** · INTEGER · ❌ — Filtra solo los hijos de ese código
+  - `0` = todos los del nivel · `>0` = solo hijos del padre indicado
+  
+  ### Respuesta exitosa
+  
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "5 navegacion(es) encontrada(s) nivel 2",
+    "ttNavegacion": [
+      {
+        "Codigo": 10,
+        "Nivel": 2,
+        "Descr": "Oficina y Escuela",
+        "SubDiv": 4,
+        "TotalArts": 0,
+        "Padre": 1,
+        "DescrPadre": "PAPELERIA"
+      }
+    ]
+  }
+  ```
+  
+  ### Campos de respuesta (ttNavegacion)
+  
+  **`Codigo`** · INTEGER — Id de la navegación
+  **`Nivel`** · INTEGER — Nivel jerárquico (1–4)
+  **`Descr`** · CHARACTER — Descripción de la navegación
+  **`SubDiv`** · INTEGER — Número de hijos directos del siguiente nivel
+  **`TotalArts`** · INTEGER — Artículos activos ligados (aplica solo niveles 3 y 4; 0 en niveles 1 y 2)
+  **`Padre`** · INTEGER — Código del padre
+  **`DescrPadre`** · CHARACTER — Descripción del padre (vacío si no tiene)
+  
+  ### Errores posibles
+  
+  ```json
+  { "IdError": true, "Respuesta": "ERROR: Nivel debe ser 1, 2, 3 o 4" }
+  ```
+  
+  ---
+  
+  ## 2. POST — Alta de Navegación
+  
+  **URL de ejemplo:**
+  ```
+  POST http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/CatalogoNavegaciones/Alta
+       ?IdUsuario=meev
+  ```
+  
+  ### Parámetros de entrada (Query String)
+  
+  > ✅ = Requerido
+  
+  **`IdUsuario`** · STRING · ✅ — Usuario que registra el alta (se guarda en `UsrReg`)
+  
+  ### Body (JSON)
+  
+  ```json
+  {
+    "ttNavegacion": [
+      {
+        "Codigo": 0,
+        "Descr": "ARCHIVEROS",
+        "Nivel": 2,
+        "Padre": 1
+      }
+    ]
+  }
+  ```
+  
+  ### Campos del body
+  
+  **`Codigo`** · INTEGER — Enviar `0` para que el sistema auto-asigne según el nivel; o enviar código específico dentro del rango del nivel
+  **`Descr`** · CHARACTER — Descripción de la navegación. **Obligatorio**
+  **`Nivel`** · INTEGER — Nivel a crear: `2`, `3` o `4`. El nivel 1 no permite altas
+  **`Padre`** · INTEGER — Código del padre. Debe existir y pertenecer al nivel `Nivel - 1`. **Obligatorio**
+  
+  ### Auto-asignación de Código (cuando `Codigo = 0`)
+  
+  | Nivel | Inicio | Lógica                        |
+  |-------|--------|-------------------------------|
+  | 2     | 10     | Último nivel 2 + 1            |
+  | 3     | 100    | Último nivel 3 con Id < 1000 + 1 |
+  | 4     | 1000   | Último nivel 4 con Id ≥ 1000 + 1 |
+  
+  > **Caso especial nivel 3:** Si se envía `Codigo >= 1000`, el sistema interpreta que se está copiando una subsubcategoría (nivel 4) existente. Copia su descripción automáticamente.
+  
+  ### Respuesta exitosa
+  
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Navegacion nivel 2 creada: 45 - ARCHIVEROS"
+  }
+  ```
+  
+  ### Errores posibles
+  
+  ```json
+  { "IdError": true, "Respuesta": "ERROR: No se recibieron datos" }
+  { "IdError": true, "Respuesta": "ERROR: IdUsuario es Obligatorio" }
+  { "IdError": true, "Respuesta": "ERROR: Solo se permite crear niveles 2, 3 y 4" }
+  { "IdError": true, "Respuesta": "ERROR: Id-Padre es requerido" }
+  { "IdError": true, "Respuesta": "ERROR: Padre 99 no existe o no es del nivel correcto" }
+  { "IdError": true, "Respuesta": "ERROR: La descripcion es requerida" }
+  { "IdError": true, "Respuesta": "ERROR: Nivel 2 debe estar en rango 10-99" }
+  { "IdError": true, "Respuesta": "ERROR: Nivel 3 debe estar en rango 100-999" }
+  { "IdError": true, "Respuesta": "ERROR: Nivel 4 debe estar en rango 1000-9999" }
+  { "IdError": true, "Respuesta": "ERROR: Esta navegacion ya existe dentro de este mismo grupo" }
+  ```
+  
+  ---
+  
+  ## 3. PUT — Modificar Navegación
+  
+  **URL de ejemplo:**
+  ```
+  PUT http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/CatalogoNavegaciones/Modificar
+      ?IdUsuario=meev
+  ```
+  
+  ### Parámetros de entrada (Query String)
+  
+  > ✅ = Requerido
+  
+  **`IdUsuario`** · STRING · ✅ — Usuario que realiza la modificación (se guarda en `UsrReg`)
+  
+  ### Body (JSON)
+  
+  ```json
+  {
+    "ttNavegacion": [
+      {
+        "Codigo": 88,
+        "Nivel": 2,
+        "Descr": "ARCHIVEROS MOD",
+        "SubDiv": 0,
+        "TotalArts": 0,
+        "Padre": 1,
+        "DescrPadre": "Oficina y Escuela"
+      }
+    ]
+  }
+  ```
+  
+  ### Campos del body
+  
+  **`Codigo`** · INTEGER — Id de la navegación a modificar. **Obligatorio**
+  **`Descr`** · CHARACTER — Nueva descripción. **Obligatorio**. Es el único campo modificable
+  **`Nivel`, `Padre`, `SubDiv`, `TotalArts`, `DescrPadre`** · — Se envían en el body pero **no se modifican** en BD; solo `Descr` se actualiza
+  
+  > **Nota:** Si el código existe en múltiples padres (mismo `Id-Navega`, distinto `Padre`), la actualización aplica a **todos** los registros con ese código.
+  
+  ### Respuesta exitosa
+  
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "1 navegacion(es) actualizada(s)"
+  }
+  ```
+  
+  ### Errores posibles
+  
+  ```json
+  { "IdError": true, "Respuesta": "ERROR: No se recibieron datos" }
+  { "IdError": true, "Respuesta": "ERROR: IdUsuario es Obligatorio" }
+  { "IdError": true, "Respuesta": "ERROR: La descripcion es requerida" }
+  { "IdError": true, "Respuesta": "ERROR: Navegacion 88 no existe" }
+  ```
+  
+  ---
+  
+  ## 4. DELETE — Eliminar Navegación
+  
+  **URL de ejemplo:**
+  ```
+  DELETE http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/CatalogoNavegaciones/Eliminar
+         ?Codigo=89&Padre=1
+  ```
+  
+  ### Parámetros de entrada (Query String)
+  
+  > ✅ = Requerido
+  
+  **`Codigo`** · INTEGER · ✅ — Código de la navegación a eliminar
+  **`Padre`** · INTEGER · ✅ — Código del padre (identifica el registro exacto)
+  
+  ### Validaciones antes de eliminar
+  
+  1. **Registro bloqueado** — Si otro usuario lo tiene en uso, regresa error sin eliminar
+  2. **Tiene hijos** — Si la navegación tiene subcategorías ligadas (niveles 2 y 3), no se elimina
+  3. **Tiene artículos activos** — Si hay artículos activos con esa navegación (niveles 3 y 4), no se elimina
+  
+  ### Respuesta exitosa
+  
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Navegacion 89 eliminada exitosamente"
+  }
+  ```
+  
+  ### Errores posibles
+  
+  ```json
+  { "IdError": true, "Respuesta": "ERROR: Navegacion bloqueada por otro usuario" }
+  { "IdError": true, "Respuesta": "ERROR: Navegacion 89 no existe" }
+  { "IdError": true, "Respuesta": "ERROR: La navegacion tiene subcategorias ligadas" }
+  { "IdError": true, "Respuesta": "ERROR: La navegacion tiene 12 articulo(s) activo(s) relacionado(s)" }
+  ```
+  
+  ---
+  
+  ## Estructura de Respuesta General
+  
+  Todos los endpoints devuelven al menos:
+  
+  **`IdError`** · BOOLEAN — `false` = operación exitosa; `true` = ocurrió un error
+  **`Respuesta`** · STRING — Mensaje descriptivo del resultado o del error
+  
 }

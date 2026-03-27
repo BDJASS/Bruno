@@ -6,3 +6,349 @@ meta {
 auth {
   mode: inherit
 }
+
+docs {
+  # CatalogoGrupo — REST API
+
+  **Servidor:** `http://192.0.1.14:8861`
+  **Base URL:** `/RestADOSArt/rest/RestADOSArt/CatalogoGrupo`
+  **Programa:** `catalogo-grupo.p`
+  **Modo:** `single-run`
+
+  ---
+
+  ## Endpoints
+
+  | # | Método | Endpoint                              | Procedure                  |
+  |---|--------|---------------------------------------|----------------------------|
+  | 1 | GET    | `/CatalogoGrupo`                      | `GetGrupos`                |
+  | 2 | POST   | `/CatalogoGrupo/Alta`                 | `CrearGrupo`               |
+  | 3 | PUT    | `/CatalogoGrupo/Modificar`            | `ActualizarGrupo`          |
+  | 4 | DELETE | `/CatalogoGrupo/Eliminar`             | `EliminarGrupo`            |
+  | 5 | POST   | `/CatalogoGrupo/ActivarDesactivar`    | `ActivarDesactivarGrupo`   |
+
+  ---
+
+  ## 1. GET — Consultar Grupos
+
+  ```
+  GET .../CatalogoGrupo?IdFamilia=8&IdGrupo=963&Activo=true
+  ```
+
+  ### Parámetros de entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdGrupo`** · INTEGER · ❌ — Filtra por grupo específico
+  - `0` o ausente = todos los grupos
+
+  **`IdFamilia`** · INTEGER · ❌ — Filtra por familia
+  - `0` o ausente = todas las familias
+
+  **`Activo`** · BOOLEAN · ❌ — Filtra por estado
+  - `true` = solo activos · `false` = solo inactivos · ausente = todos
+
+  ### Respuesta exitosa
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "5 grupo(s) encontrado(s)",
+    "ttGrupo": [
+      {
+        "IdGrupo": "0963",
+        "Descr": "LAPTOPS",
+        "Resto1": "",
+        "Resto2": "",
+        "Resto3": "",
+        "Resto4": "",
+        "IdFamilia": 8,
+        "DescrFamilia": "COMPUTO",
+        "ConcEspe": false,
+        "PorcDst": 10.0,
+        "CampoImp1": "A",
+        "FormImp1": 20,
+        "CampoImp2": "B",
+        "FormImp2": 25,
+        "CampoImp3": "C",
+        "FormImp3": 15,
+        "CampoImp4": "D",
+        "FormImp4": 15,
+        "Activo": true,
+        "UsuarioAutD": "MEEV",
+        "FecReg": "2024-01-15"
+      }
+    ]
+  }
+  ```
+
+  ### Campos de respuesta (ttGrupo)
+
+  **`IdGrupo`** · STRING — Id del grupo con formato 4 dígitos (ej. `"0963"`)
+  **`Descr`** · STRING — Descripción del grupo (en mayúsculas)
+  **`Resto1`** · STRING — Campo auxiliar 1
+  **`Resto2`** · STRING — Campo auxiliar 2
+  **`Resto3`** · STRING — Campo auxiliar 3
+  **`Resto4`** · STRING — Campo auxiliar 4
+  **`IdFamilia`** · INTEGER — Id de la familia a la que pertenece
+  **`DescrFamilia`** · STRING — Descripción de la familia (calculado)
+  **`ConcEspe`** · BOOLEAN — `true` = grupo especial (sin límite en suma de formatos)
+  **`PorcDst`** · DECIMAL — Porcentaje de descuento general del grupo
+  **`CampoImp1`** · STRING — Etiqueta del campo de impresión 1
+  **`FormImp1`** · INTEGER — Ancho del campo de impresión 1
+  **`CampoImp2`** · STRING — Etiqueta del campo de impresión 2
+  **`FormImp2`** · INTEGER — Ancho del campo de impresión 2
+  **`CampoImp3`** · STRING — Etiqueta del campo de impresión 3
+  **`FormImp3`** · INTEGER — Ancho del campo de impresión 3
+  **`CampoImp4`** · STRING — Etiqueta del campo de impresión 4
+  **`FormImp4`** · INTEGER — Ancho del campo de impresión 4
+  **`Activo`** · BOOLEAN — `true` = activo · `false` = inactivo
+  **`UsuarioAutD`** · STRING — Usuario que realizó el último movimiento
+  **`FecReg`** · DATE — Fecha del último movimiento
+
+  ---
+
+  ## 2. POST — Crear Grupo
+
+  ```
+  POST .../CatalogoGrupo/Alta?IdUsuario=meev
+  ```
+
+  ### Parámetros (Query String)
+
+  **`IdUsuario`** · STRING · ✅ — Usuario que realiza la operación
+
+  ### Body (JSON)
+
+  ```json
+  {
+    "ttGrupo": [
+      {
+        "IdGrupo": 0,
+        "Descr": "LAPTOPS",
+        "Resto1": "Info adicional 1",
+        "Resto2": "",
+        "Resto3": "",
+        "Resto4": "",
+        "IdFamilia": 5,
+        "ConcEspe": false,
+        "PorcDst": 10.0,
+        "CampoImp1": "A",
+        "FormImp1": 20,
+        "CampoImp2": "B",
+        "FormImp2": 25,
+        "CampoImp3": "C",
+        "FormImp3": 15,
+        "CampoImp4": "D",
+        "FormImp4": 15
+      }
+    ]
+  }
+  ```
+
+  ### Campos del body
+
+  **`IdGrupo`** · INTEGER — Enviar `0` para auto-asignar el siguiente Id disponible. Si se envía un Id específico, no debe existir previamente
+  **`Descr`** · STRING — Descripción del grupo. **Obligatorio** · Se almacena en mayúsculas
+  **`IdFamilia`** · INTEGER — Id de la familia. **Obligatorio** · Debe existir en catálogo
+  **`ConcEspe`** · BOOLEAN — `true` = grupo especial (exento del límite de formatos)
+  **`PorcDst`** · DECIMAL — Porcentaje de descuento. `0` si no aplica
+  **`CampoImp1`–`CampoImp4`** · STRING — Etiquetas de campos de impresión
+  **`FormImp1`–`FormImp4`** · INTEGER — Anchos de campos de impresión
+
+  ### Validaciones
+
+  - `Descr` es obligatorio
+  - `IdFamilia` es obligatorio y debe existir
+  - Descripción única — no puede duplicarse con otro grupo
+  - Si `ConcEspe = false`: suma de `FormImp1 + FormImp2 + FormImp3 + FormImp4` no puede exceder **77**
+  - Si `IdGrupo` específico: no debe existir previamente
+
+  ### Respuesta exitosa
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Grupo 1098 creado exitosamente"
+  }
+  ```
+
+  ### Errores posibles
+
+  ```json
+  { "IdError": true, "Respuesta": "ERROR: No se recibieron datos" }
+  { "IdError": true, "Respuesta": "ERROR: Ingresar IdUsuario" }
+  { "IdError": true, "Respuesta": "ERROR: La descripcion del grupo es requerida" }
+  { "IdError": true, "Respuesta": "ERROR: Id-Familia es requerido" }
+  { "IdError": true, "Respuesta": "ERROR: Familia 99 no existe" }
+  { "IdError": true, "Respuesta": "ERROR: Ya existe grupo con descripcion 'LAPTOPS' (Id: 500)" }
+  { "IdError": true, "Respuesta": "ERROR: Ya existe grupo con Id 1098" }
+  { "IdError": true, "Respuesta": "ERROR: Suma de formatos (80) excede 77" }
+  ```
+
+  ---
+
+  ## 3. PUT — Actualizar Grupo
+
+  ```
+  PUT .../CatalogoGrupo/Modificar?IdUsuario=meev
+  ```
+
+  ### Parámetros (Query String)
+
+  **`IdUsuario`** · STRING · ✅ — Usuario que realiza la operación
+
+  ### Body (JSON)
+
+  ```json
+  {
+    "ttGrupo": [
+      {
+        "IdGrupo": 1098,
+        "Descr": "LAPTOPS",
+        "Resto1": "Info adicional 15",
+        "Resto2": "",
+        "Resto3": "",
+        "Resto4": "",
+        "IdFamilia": 5,
+        "ConcEspe": false,
+        "PorcDst": 10.0,
+        "CampoImp1": "A",
+        "FormImp1": 20,
+        "CampoImp2": "B",
+        "FormImp2": 25,
+        "CampoImp3": "C",
+        "FormImp3": 15,
+        "CampoImp4": "D",
+        "FormImp4": 15
+      }
+    ]
+  }
+  ```
+
+  > `IdGrupo` debe ser el Id real del grupo a modificar (no `0`).
+
+  ### Validaciones
+
+  - `IdGrupo` es obligatorio y debe existir
+  - `Descr` es obligatorio
+  - Descripción única (excepto el mismo registro)
+  - `IdFamilia` debe existir si se envía
+  - Si `ConcEspe = false`: suma de FormImp no puede exceder **77**
+  - Usa `EXCLUSIVE-LOCK NO-WAIT` — si está bloqueado por otro usuario, retorna error
+
+  ### Efecto secundario — cambio en PorcDst
+
+  > Si `PorcDst` cambia respecto al valor anterior, el sistema actualiza automáticamente todos los registros de `DstArt` del grupo: si el descuento individual (`PorcDesc`) era mayor al nuevo porcentaje del grupo, se reduce al nuevo valor.
+
+  ### Respuesta exitosa
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Grupo 1098 actualizado exitosamente"
+  }
+  ```
+
+  ### Errores posibles
+
+  ```json
+  { "IdError": true, "Respuesta": "ERROR: No se recibieron datos" }
+  { "IdError": true, "Respuesta": "ERROR: Ingresar IdUsuario" }
+  { "IdError": true, "Respuesta": "ERROR: IdGrupo es requerido" }
+  { "IdError": true, "Respuesta": "ERROR: Grupo bloqueado por otro usuario" }
+  { "IdError": true, "Respuesta": "ERROR: Grupo 1098 no existe" }
+  { "IdError": true, "Respuesta": "ERROR: La descripcion es requerida" }
+  { "IdError": true, "Respuesta": "ERROR: Ya existe grupo con descripcion 'LAPTOPS' (Id: 500)" }
+  { "IdError": true, "Respuesta": "ERROR: Familia 99 no existe" }
+  { "IdError": true, "Respuesta": "ERROR: Suma de formatos (80) excede 77" }
+  ```
+
+  ---
+
+  ## 4. DELETE — Eliminar Grupo
+
+  ```
+  DELETE .../CatalogoGrupo/Eliminar?IdGrupo=1098
+  ```
+
+  ### Parámetros (Query String)
+
+  **`IdGrupo`** · INTEGER · ✅ — Id del grupo a eliminar
+
+  ### Validaciones
+
+  - `IdGrupo` es obligatorio
+  - El grupo debe existir
+  - **No debe tener artículos asociados** — si tiene artículos, la eliminación es rechazada
+  - Usa `EXCLUSIVE-LOCK NO-WAIT`
+
+  ### Respuesta exitosa
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Grupo 1098 eliminado exitosamente"
+  }
+  ```
+
+  ### Errores posibles
+
+  ```json
+  { "IdError": true, "Respuesta": "ERROR: IdGrupo es requerido" }
+  { "IdError": true, "Respuesta": "ERROR: Grupo bloqueado por otro usuario" }
+  { "IdError": true, "Respuesta": "ERROR: Grupo 1098 no existe" }
+  { "IdError": true, "Respuesta": "ERROR: Existen articulos asociados al grupo 'LAPTOPS'. Imposible eliminar" }
+  ```
+
+  ---
+
+  ## 5. POST — Activar / Desactivar Grupo
+
+  ```
+  POST .../CatalogoGrupo/ActivarDesactivar?IdGrupo=1098&Activar=false
+  ```
+
+  ### Parámetros (Query String)
+
+  **`IdGrupo`** · INTEGER · ✅ — Id del grupo
+  **`Activar`** · BOOLEAN · ✅ — `true` = activar · `false` = desactivar
+
+  ### Comportamiento
+
+  **Al activar (`Activar=true`):**
+  - Cambia `Grupo.Activo = TRUE`
+  - No requiere validaciones adicionales
+
+  **Al desactivar (`Activar=false`):**
+  - Verifica que **no existan artículos activos** en el grupo
+  - Elimina todos los registros de `DstArt` asociados al grupo
+  - Cambia `Grupo.Activo = FALSE`
+
+  > Si el grupo ya tiene el estado solicitado, retorna `IdError=false` con mensaje informativo sin hacer cambios.
+
+  ### Respuesta exitosa
+
+  ```json
+  { "IdError": false, "Respuesta": "Grupo LAPTOPS desactivado." }
+  { "IdError": false, "Respuesta": "Grupo LAPTOPS activado exitosamente" }
+  { "IdError": false, "Respuesta": "INFO: Grupo LAPTOPS ya esta inactivo" }
+  ```
+
+  ### Errores posibles
+
+  ```json
+  { "IdError": true, "Respuesta": "ERROR: IdGrupo es requerido" }
+  { "IdError": true, "Respuesta": "ERROR: Debe especificar si desea activar (true) o desactivar (false)" }
+  { "IdError": true, "Respuesta": "ERROR: Grupo bloqueado por otro usuario" }
+  { "IdError": true, "Respuesta": "ERROR: Grupo 1098 no existe" }
+  { "IdError": true, "Respuesta": "ERROR: Existen articulos activos asignados al grupo 'LAPTOPS'. Imposible inactivar" }
+  ```
+
+  ---
+
+  ## Respuesta general
+
+  **`IdError`** · BOOLEAN — `false` = exitoso · `true` = error
+  **`Respuesta`** · STRING — Mensaje descriptivo del resultado o del error
+}
