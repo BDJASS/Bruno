@@ -1,8 +1,207 @@
 meta {
   name: CatAtributos
-  seq: 1
 }
 
 auth {
   mode: inherit
+}
+
+docs {
+  # CatalogoAtributos — REST API
+  
+  **Servidor:** `http://192.0.1.14:8861`
+  **Base URL:** `/RestADOSArt/rest/RestADOSArt/CatalogoAtributos`
+  **Programa:** `catatributos.p`
+  **Modo:** `single-run`
+  **Ticket:** #1986
+  
+  ---
+  
+  ## Endpoints
+  
+  | # | Método | Endpoint                          | Procedure             |
+  |---|--------|-----------------------------------|-----------------------|
+  | 1 | GET    | `/CatalogoAtributos`              | `GetCatAtributos`     |
+  | 2 | POST   | `/CatalogoAtributos/Alta`         | `PostCatAtributos`    |
+  | 3 | PUT    | `/CatalogoAtributos/Editar`       | `PutCatAtributos`     |
+  | 4 | DELETE | `/CatalogoAtributos/Eliminar`     | `DeleteCatAtributos`  |
+  
+  ---
+  
+  ## 1. GET — Consultar Atributos
+  
+  ```
+  GET .../CatalogoAtributos?Atributo=0
+  ```
+  
+  ### Parámetros de entrada (Query String)
+  
+  > ✅ = Requerido · ❌ = Opcional
+  
+  **`Atributo`** · INTEGER · ❌ — ID del atributo a consultar.
+  - `0` o ausente = retorna todos los atributos
+  
+  ### Respuesta exitosa
+  
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Consulta ejecutada correctamente.",
+    "ttAtributos": [
+      {
+        "IdAtributo": 1,
+        "Descr": "Color",
+        "FecReg": "2025-01-15",
+        "UsrReg": "meev"
+      },
+      {
+        "IdAtributo": 2,
+        "Descr": "Talla",
+        "FecReg": "2025-03-10",
+        "UsrReg": "meev"
+      }
+    ]
+  }
+  ```
+  
+  ### Campos de respuesta (ttAtributos)
+  
+  **`IdAtributo`** · INTEGER — Identificador único del atributo.
+  **`Descr`** · STRING — Descripción del atributo.
+  **`FecReg`** · DATE — Fecha en que fue registrado.
+  **`UsrReg`** · STRING — Usuario que lo registró.
+  
+  ---
+  
+  ## 2. POST — Alta de Atributo
+  
+  ```
+  POST .../CatalogoAtributos/Alta?Descr=Nuevo Ejemplo 2&IdUsuario=meev
+  ```
+  
+  ### Parámetros de entrada (Query String)
+  
+  > ✅ = Requerido
+  
+  **`Descr`** · STRING · ✅ — Descripción del nuevo atributo.
+  - No puede estar vacío · No puede duplicarse con un atributo existente
+  
+  **`IdUsuario`** · STRING · ✅ — Usuario que realiza el alta.
+  - Ej: `"meev"`
+  
+  ### Validaciones
+  
+  - `Descr` es obligatorio
+  - `IdUsuario` es obligatorio
+  - La descripción debe ser única — no puede existir otro atributo con la misma descripción
+  - El ID se asigna automáticamente con el siguiente disponible
+  
+  ### Respuesta exitosa
+  
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "El atributo [Nuevo Ejemplo 2] se dio de alta correctamente."
+  }
+  ```
+  
+  ### Errores posibles
+  
+  ```json
+  { "IdError": true, "Respuesta": "La descripcion no puede estar vacia." }
+  { "IdError": true, "Respuesta": "El usuario es requerido." }
+  { "IdError": true, "Respuesta": "Ya existe un atributo con esa descripcion." }
+  ```
+  
+  ---
+  
+  ## 3. PUT — Editar Atributo
+  
+  ```
+  PUT .../CatalogoAtributos/Editar?Descr=Nuevo Ejemplo 23&Atributo=6
+  ```
+  
+  ### Parámetros de entrada (Query String)
+  
+  > ✅ = Requerido
+  
+  **`Atributo`** · INTEGER · ✅ — ID del atributo a editar.
+  - Debe existir en el catálogo
+  
+  **`Descr`** · STRING · ✅ — Nueva descripción del atributo.
+  - No puede estar vacío · No puede duplicarse con **otro** atributo diferente
+  
+  ### Validaciones
+  
+  - `Atributo` es obligatorio y debe existir
+  - `Descr` es obligatorio
+  - Descripción única (se permite conservar la misma descripción del propio registro)
+  - Usa `EXCLUSIVE-LOCK NO-WAIT` — si está bloqueado por otro usuario, retorna error
+  
+  ### Respuesta exitosa
+  
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "El atributo [Nuevo Ejemplo 23] ha sido actualizado correctamente."
+  }
+  ```
+  
+  ### Errores posibles
+  
+  ```json
+  { "IdError": true, "Respuesta": "Debe indicar el atributo a editar." }
+  { "IdError": true, "Respuesta": "La descripcion no puede estar vacia." }
+  { "IdError": true, "Respuesta": "Ya existe otro atributo con esa descripcion." }
+  { "IdError": true, "Respuesta": "El atributo esta siendo utilizado por otro usuario. Intente de nuevo." }
+  { "IdError": true, "Respuesta": "No se encontro el atributo seleccionado." }
+  ```
+  
+  ---
+  
+  ## 4. DELETE — Eliminar Atributo
+  
+  ```
+  DELETE .../CatalogoAtributos/Eliminar?Atributo=6
+  ```
+  
+  ### Parámetros de entrada (Query String)
+  
+  > ✅ = Requerido
+  
+  **`Atributo`** · INTEGER · ✅ — ID del atributo a eliminar.
+  - No puede eliminarse si tiene artículos asignados en `ArtAtributo`
+  
+  ### Validaciones
+  
+  - `Atributo` es obligatorio
+  - El atributo debe existir
+  - **No debe tener artículos asociados** — si cualquier artículo lo usa, la eliminación es rechazada
+  - Usa `EXCLUSIVE-LOCK NO-WAIT`
+  
+  ### Respuesta exitosa
+  
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "El atributo [Nuevo Ejemplo 23] ha sido eliminado correctamente."
+  }
+  ```
+  
+  ### Errores posibles
+  
+  ```json
+  { "IdError": true, "Respuesta": "Debe indicar el atributo a eliminar." }
+  { "IdError": true, "Respuesta": "El atributo tiene articulos asignados. No es posible eliminarlo." }
+  { "IdError": true, "Respuesta": "El atributo esta siendo utilizado por otro usuario. Intente de nuevo." }
+  { "IdError": true, "Respuesta": "No se encontro el atributo seleccionado." }
+  ```
+  
+  ---
+  
+  ## Respuesta general
+  
+  **`IdError`** · BOOLEAN — `false` = exitoso · `true` = error de negocio o sistema
+  **`Respuesta`** · STRING — Mensaje descriptivo del resultado o del error
+  
 }
