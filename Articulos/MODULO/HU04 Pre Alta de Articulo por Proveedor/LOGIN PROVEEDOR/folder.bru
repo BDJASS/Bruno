@@ -1,0 +1,125 @@
+meta {
+  name: LOGIN PROVEEDOR
+}
+
+auth {
+  mode: inherit
+}
+
+docs {
+  # Login Proveedor — REST API
+  
+  **Servidor:** `http://192.0.1.14:8828`
+  **Base URL:** `/RestADOSArt/rest/RestADOSArt/Login/Prov`
+  **Programa:** `art-loginprov.p`
+  **Modo:** `single-run`
+  
+  ---
+  
+  ## Endpoints
+  
+  | # | Método | Endpoint      | Procedure      |
+  |---|--------|---------------|----------------|
+  | 1 | GET    | `/Login/Prov` | `GetUserProv`  |
+  
+  ---
+  
+  ## 1. GET — Autenticación de Proveedor
+  
+  ```
+  GET .../Login/Prov?IdUser=2033&HisPassword=2033
+  ```
+  
+  Valida que el proveedor exista y que la contraseña coincida. Si todo es correcto retorna el id y nombre del proveedor para su uso en sesión.
+  
+  ### Parámetros de entrada (Query String)
+  
+  > ✅ = Requerido · ❌ = Opcional
+  
+  **`IdUser`** · INTEGER · ✅ — Clave del proveedor (Id-Prov)
+  - `0` o ausente = error de validación
+  
+  **`HisPassword`** · STRING · ✅ — Contraseña del proveedor
+  - Vacío o ausente = error de validación
+  
+  ### Respuesta exitosa
+  
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "",
+    "ttUsuario": [
+      {
+        "IdUser": 2033,
+        "NomUsuario": "PROVEEDOR EJEMPLO SA DE CV"
+      }
+    ]
+  }
+  ```
+  
+  ### Campos de respuesta (ttUsuario)
+  
+  **`IdUser`** · INTEGER — Clave del proveedor autenticado
+  **`NomUsuario`** · STRING — Nombre del proveedor
+  
+  ---
+  
+  ## Validaciones y Errores
+  
+  El servicio aplica las siguientes validaciones en orden:
+  
+  **1. IdUser requerido**
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "IdUser es Requerido",
+    "ttUsuario": []
+  }
+  ```
+  
+  **2. Password requerido**
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Password es Requerido",
+    "ttUsuario": []
+  }
+  ```
+  
+  **3. Proveedor no existe**
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Proveedor Incorrecto, Favor de Verificar",
+    "ttUsuario": []
+  }
+  ```
+  
+  **4. Contraseña incorrecta**
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Password Incorrecto",
+    "ttUsuario": []
+  }
+  ```
+  
+  ---
+  
+  ## Ejemplo de Request
+  
+  ```
+  GET http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/Login/Prov
+      ?IdUser=2033
+      &HisPassword=2033
+  ```
+  
+  ---
+  
+  ## Observaciones Técnicas
+  
+  1. **Doble FIND:** El servicio hace primero un FIND solo por `Id-Prov` para distinguir entre "proveedor no existe" y "contraseña incorrecta" y dar mensajes de error precisos.
+  2. **`ttUsuario` vacío en error:** Cuando `IdError = true` la tabla retorna sin registros.
+  3. **Autenticación básica:** La contraseña viaja como texto plano en la query string (`HisPassword`). Se recomienda usar HTTPS en producción.
+  
+}

@@ -31,7 +31,7 @@ docs {
   ## 3. URL Completa
   
   ```
-  http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/CatalogoFamilia/Ordenar
+  http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/CatalogoFamilia/Ordenar
   ```
   
   ---
@@ -97,7 +97,7 @@ docs {
   
   **Paso 1 — Solo consultar cuántos artículos se afectarían:**
   ```
-  PUT http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/CatalogoFamilia/Ordenar
+  PUT http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/CatalogoFamilia/Ordenar
       ?IdFamilia=8
       &Orden=BACDEFG
       &Confirmar=false
@@ -106,7 +106,7 @@ docs {
   
   **Paso 2 — Aplicar el cambio:**
   ```
-  PUT http://192.0.1.14:8861/RestADOSArt/rest/RestADOSArt/CatalogoFamilia/Ordenar
+  PUT http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/CatalogoFamilia/Ordenar
       ?IdFamilia=8
       &Orden=BACDEFG
       &Confirmar=true

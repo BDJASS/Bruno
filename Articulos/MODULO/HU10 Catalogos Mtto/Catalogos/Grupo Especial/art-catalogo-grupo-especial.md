@@ -1,6 +1,6 @@
 # CatálogoGrupoEspecial — REST API
 
-**Servidor:** `http://192.0.1.14:8861`
+**Servidor:** `http://192.0.1.14:8828`
 **Base URL:** `/RestADOSArt/rest/RestADOSArt/CatalogoGrupoEspecial`
 **Programa:** `catalogo-GRUPO-ESPECIAL.p`
 **Modo:** `single-run`
