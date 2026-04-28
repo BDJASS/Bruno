@@ -1,0 +1,149 @@
+meta {
+  name: Ver Bitacora
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Bitacora?IdArticulo=002410
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdArticulo: 002410
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # Servicio REST — Bitácora de Cambios de Artículos
+  
+  ---
+  
+  ## 1. Título del Servicio
+  
+  **Art — Bitácora de Cambios de Artículo**
+  Retorna el historial de modificaciones campo por campo de un artículo, mostrando quién cambió qué, cuándo y cuáles fueron los valores anterior y nuevo.
+  Programa servidor: `art-bitacora.p` · Procedure: `GetBitacoraArt`
+  
+  > Los cambios se graban automáticamente en `CambioArt` desde `EditarArticulo` (`art-0003.p`) cada vez que un campo es modificado.
+  
+  ---
+  
+  ## 2. Método HTTP
+  
+  ```
+  GET
+  ```
+  
+  ---
+  
+  ## 3. URL Completa
+  
+  ```
+  http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Bitacora
+  ```
+  
+  ---
+  
+  ## 4. Parámetros de Entrada (Query String)
+  
+  > ✅ = Requerido · ❌ = Opcional
+  
+  **`IdArticulo`** · STRING · ✅ — Código del artículo (6 caracteres: 4 grupo + 2 consecutivo)
+  
+  **`FechaInicio`** · DATE · ❌ — Fecha inicial del rango de búsqueda
+  - Formato: `YYYY-MM-DD` · Sin valor = desde 01/01/1990
+  
+  **`FechaFin`** · DATE · ❌ — Fecha final del rango de búsqueda
+  - Formato: `YYYY-MM-DD` · Sin valor = fecha de hoy
+  
+  **`IdUser`** · STRING · ❌ — Filtrar por usuario específico
+  - Sin valor = retorna cambios de todos los usuarios
+  
+  ---
+  
+  ## 5. Body
+  
+  No aplica. Método `GET`.
+  
+  ---
+  
+  ## 6. Headers
+  
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+  
+  ---
+  
+  ## 7. Ejemplo de Request
+  
+  ```
+  GET http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Bitacora
+      ?IdArticulo=002410
+  ```
+  
+  ---
+  
+  ## 8. Ejemplo de Response
+  
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "OK",
+      "ttBitacoraArt": {
+        "ttBitacoraArt": [
+          {
+            "IdArticulo": "002410",
+            "IdUser": "MEEV",
+            "Campo": 300,
+            "Descr": "Id-Grupo",
+            "ValorNuevo": "10",
+            "ValorOld": "24",
+            "FecReg": "2026-04-23",
+            "Hora": "20:10:27"
+          },
+          {
+            "IdArticulo": "002410",
+            "IdUser": "MEEV",
+            "Campo": 20,
+            "Descr": "Descr",
+            "ValorNuevo": "ARTICULO DE PRUEBA REST",
+            "ValorOld": "CAJA REBANADA DE PASTEL BLANCA 11.5 X 14",
+            "FecReg": "2026-04-23",
+            "Hora": "20:10:27"
+          },
+          {
+            "IdArticulo": "002410",
+            "IdUser": "MEEV",
+            "Campo": 40,
+            "Descr": "Generico",
+            "ValorNuevo": "GENERICO ACTUALIZADO",
+            "ValorOld": "CAJA REBANADA DE PASTEL",
+            "FecReg": "2026-04-23",
+            "Hora": "20:10:27"
+          }
+        ]
+      }
+    }
+  }
+  ```
+  
+  ### Campos de `ttBitacoraArt`
+  
+  **`IdArticulo`** · STRING — Código del artículo modificado
+  **`IdUser`** · STRING — ID del usuario que realizó el cambio
+  **`Campo`** · INT — Número de orden del campo en la tabla `Articulo`. Ver tabla más abajo
+  **`Descr`** · STRING — Nombre del campo en la base de datos
+  **`ValorNuevo`** · STRING — Valor después del cambio (máx. 40 caracteres)
+  **`ValorOld`** · STRING — Valor antes del cambio (máx. 40 caracteres)
+  **`FecReg`** · DATE — Fecha del cambio. Formato: `YYYY-MM-DD`
+  **`Hora`** · STRING — Hora del cambio en formato `HH:MM:SS`. Ej: `"20:10:27"`
+}
