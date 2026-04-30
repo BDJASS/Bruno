@@ -49,3 +49,89 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ---
+  
+  http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvGastos/DatosGenerales/Alta?IdUser=avgo
+  
+  ## 2. Datos Generales — Alta
+  
+  **Método:** POST  
+  **URL:** `/DatosGenerales/Alta`  
+  **Procedure:** `PostProvGastosGeneral`
+  
+  > Genera el folio automáticamente desde la tabla `Folio` (Id-doc = `"ProvGast"`).  
+  > Requiere permiso `AltaProvGastos` en tabla `URL`.
+  
+  ### Parámetros de entrada (Query String)
+  
+  **`IdUser`** · STRING · ✅ — Usuario autorizado para dar de alta
+  
+  ### Body (JSON)
+  
+  ```json
+  {
+    "ttProvGastosGeneral": [
+      {
+        "Nombre": "ABASTECEDORA ELECTRICA JAIM, S.A. S.E.",
+        "RFC": "AEJ040714V48",
+        "CURP": "SESA920702HNLGDN08",
+        "Solicita": "juan 5",
+        "Email": "desarrollo0101@adosa.com.mx",
+        "Email2": "desarrollo12@adosa.com.mx",
+        "Email3": "desarrollo13@adosa.com.mx",
+        "BuzonFiscal": "desarrollo14@adosa.com.mx",
+        "CalleNo": "VILLAGRAN 6",
+        "Colonia": "CENTRO de",
+        "IdCiudad": 117,
+        "IdEstado": "019",
+        "IdPais": "MEX",
+        "CP": "64008",
+        "Celular": "8386350799",
+        "Fijo1": "7894561244",
+        "Extension": "3355",
+        "Fijo2": "44444444449",
+        "Abrev": "ABREVIATURA EJEMPLO99",
+        "IdRFiscal": "626",
+        "Observacion": "OBSERVACION EJEMPLO 7"
+      }
+    ]
+  }
+  ```
+  
+  > `IdProvGastos` no debe enviarse en el body — se genera automáticamente.  
+  > `Estado` no debe enviarse — es calculado en el GET.
+  
+  ### Campos del body — `ttProvGastosGeneral`
+  
+  **`Nombre`** · STRING · ✅ — Razón social del proveedor  
+  **`RFC`** · STRING · ❌ — RFC del proveedor  
+  **`CURP`** · STRING · ❌ — CURP (persona física)  
+  **`Solicita`** · STRING · ❌ — Nombre de quien solicita  
+  **`Email`** · STRING · ❌ — Correo principal  
+  **`Email2`** · STRING · ❌ — Correo secundario  
+  **`Email3`** · STRING · ❌ — Correo terciario  
+  **`BuzonFiscal`** · STRING · ❌ — Buzón fiscal  
+  **`CalleNo`** · STRING · ❌ — Calle y número  
+  **`Colonia`** · STRING · ❌ — Colonia  
+  **`IdCiudad`** · INTEGER · ❌ — Clave de ciudad  
+  **`IdEstado`** · STRING · ❌ — Clave de estado  
+  **`IdPais`** · STRING · ❌ — Clave del país  
+  **`CP`** · STRING · ❌ — Código postal  
+  **`Celular`** · STRING · ❌ — Celular  
+  **`Fijo1`** · STRING · ❌ — Teléfono fijo 1  
+  **`Extension`** · STRING · ❌ — Extensión  
+  **`Fijo2`** · STRING · ❌ — Teléfono fijo 2  
+  **`Abrev`** · STRING · ❌ — Abreviatura  
+  **`IdRFiscal`** · STRING · ❌ — Régimen fiscal  
+  **`Observacion`** · STRING · ❌ — Observaciones
+  
+  ### Response
+  
+  **`IdProvGastos`** · INTEGER — Folio asignado al nuevo proveedor  
+  **`IdError`** · BOOLEAN — `true` = error; `false` = éxito  
+  **`Respuesta`** · STRING — Mensaje descriptivo del resultado
+  
+  ---
+}

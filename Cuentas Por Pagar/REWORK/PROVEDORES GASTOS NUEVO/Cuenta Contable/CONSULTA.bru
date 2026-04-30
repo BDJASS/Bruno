@@ -19,3 +19,58 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## 6. Cuenta Contable — Consulta
+  
+  **Método:** GET  
+  **URL:** `/CuentaContable/Consulta`  
+  **Procedure:** `GetProvGastosContable`
+  
+  ### Parámetros de entrada (Query String)
+  
+  **`IdProvGastos`** · INTEGER · ✅ — Identificador del proveedor  
+  **`IdUser`** · STRING · ✅ — Usuario que realiza la consulta
+  
+  ### Ejemplo de llamada
+  
+  ```
+  GET /CuentaContable/Consulta?IdProvGastos=100&IdUser=avgo
+  ```
+  
+  ### Response — `ttProvGastosContable`
+  
+  **`IdProvGastos`** · INTEGER — Identificador del proveedor  
+  **`IdCta`** · INTEGER — Cuenta contable principal  
+  **`IdSCta`** · INTEGER — Subcuenta  
+  **`IdSSCta`** · INTEGER — Sub-subcuenta  
+  **`IdSSSCta`** · INTEGER — Sub-sub-subcuenta  
+  **`DescCia`** · STRING — Descripción de la cuenta  
+  **`ConIVA`** · BOOLEAN — `true` = con IVA; `false` = sin IVA
+  
+  ### Ejemplo de response
+  
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "",
+      "ttProvGastosContable": {
+        "ttProvGastosContable": [
+          {
+            "IdProvGastos": 100,
+            "IdCta": 1101,
+            "IdSCta": 0,
+            "IdSSCta": 0,
+            "IdSSSCta": 0,
+            "DescCia": "CAJA CHICA SUCURSALES",
+            "ConIVA": false
+          }
+        ]
+      }
+    }
+  }
+  ```
+  
+  ---
+}

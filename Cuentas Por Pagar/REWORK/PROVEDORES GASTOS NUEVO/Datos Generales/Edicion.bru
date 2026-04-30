@@ -51,3 +51,68 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ---
+  http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvGastos/DatosGenerales/Edicion?IdProvGastos=100&IdUser=avgo
+  
+  ## 3. Datos Generales — Edición
+  
+  **Método:** PUT  
+  **URL:** `/DatosGenerales/Edicion`  
+  **Procedure:** `PutProvGastosGeneral`
+  
+  > Solo actualiza los campos que vengan con valor no vacío y diferente al actual.  
+  > Registra bitácora campo a campo en `CambioProv`.  
+  > Bloqueo `EXCLUSIVE-LOCK NO-WAIT`: si el registro está en uso regresa error descriptivo.
+  
+  ### Parámetros de entrada (Query String)
+  
+  **`IdUser`** · STRING · ✅ — Usuario autorizado para editar
+  
+  ### Body (JSON)
+  
+  ```json
+  {
+    "ttProvGastosGeneral": [
+      {
+        "IdProvGastos": 100,
+        "Nombre": "ABASTECEDORA ELECTRICA JAIM, S.A. DE C.V.",
+        "RFC": "AEJ040714V48",
+        "CURP": "SESA920702HNLGDN08",
+        "Solicita": "juan 5",
+        "Email": "desarrollo0101@adosa.com.mx",
+        "Email2": "desarrollo12@adosa.com.mx",
+        "Email3": "desarrollo13@adosa.com.mx",
+        "BuzonFiscal": "desarrollo14@adosa.com.mx",
+        "CalleNo": "VILLAGRAN 6",
+        "Colonia": "CENTRO de",
+        "IdCiudad": 117,
+        "IdEstado": "019",
+        "IdPais": "MEX",
+        "CP": "64008",
+        "Celular": "8386350799",
+        "Fijo1": "7894561244",
+        "Extension": "3355",
+        "Fijo2": "44444444449",
+        "Abrev": "ABREVIATURA EJEMPLO99",
+        "IdRFiscal": "626",
+        "Observacion": "OBSERVACION EJEMPLO 7"
+      }
+    ]
+  }
+  ```
+  
+  ### Campos del body — `ttProvGastosGeneral`
+  
+  **`IdProvGastos`** · INTEGER · ✅ — Identificador del proveedor a editar  
+  *(resto de campos igual que sección Alta — todos opcionales; solo se actualizan si vienen con valor no vacío y diferente al actual)*
+  
+  ### Response
+  
+  **`IdError`** · BOOLEAN — `true` = error; `false` = éxito  
+  **`Respuesta`** · STRING — Mensaje descriptivo del resultado
+  
+  ---
+  
+}

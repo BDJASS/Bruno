@@ -30,3 +30,46 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## 10. Documentos — Alta
+  
+  **Método:** POST  
+  **URL:** `/Documentos/Alta`  
+  **Procedure:** `PostDocProvGastos`
+  
+  > El `Id-Doc` se asigna automáticamente buscando el primer Id libre en la tabla `DocProvGastos`.  
+  > Permite subir múltiples documentos en una sola llamada.
+  
+  ### Parámetros de entrada (Query String)
+  
+  **`IdProvGastos`** · INTEGER · ✅ — Identificador del proveedor  
+  **`IdUser`** · STRING · ✅ — Usuario autorizado
+  
+  ### Body (JSON)
+  
+  ```json
+  {
+    "ttDocProvGastos": [
+      {
+        "Nombre": "factura_enero.pdf",
+        "Documento": "<Base64 del archivo>"
+      }
+    ]
+  }
+  ```
+  
+  ### Campos del body — `ttDocProvGastos`
+  
+  **`Nombre`** · STRING · ✅ — Nombre del documento (no puede estar vacío)  
+  **`Documento`** · BLOB/Base64 · ✅ — Contenido del archivo en Base64 (no puede ser nulo)
+  
+  > `IdDoc` e `IdProvGastos` no deben enviarse en el body — se asignan automáticamente.
+  
+  ### Response
+  
+  **`IdError`** · BOOLEAN — `true` = error; `false` = éxito  
+  **`Respuesta`** · STRING — Mensaje descriptivo del resultado
+  
+  ---
+}

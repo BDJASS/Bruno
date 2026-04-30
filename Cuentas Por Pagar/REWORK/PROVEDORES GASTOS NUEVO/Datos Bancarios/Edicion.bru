@@ -34,3 +34,56 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## 5. Datos Bancarios — Edición
+  
+  **Método:** PUT  
+  **URL:** `/DatosBancarios/Edicion`  
+  **Procedure:** `PutProvGastosBancario`
+  
+  > Solo actualiza campos con valor no vacío y diferente al actual.  
+  > Registra bitácora campo a campo en `CambioProv`.  
+  > Bloqueo `EXCLUSIVE-LOCK NO-WAIT`.
+  
+  ### Parámetros de entrada (Query String)
+  
+  **`IdProvGastos`** · INTEGER · ✅ — Identificador del proveedor  
+  **`IdUser`** · STRING · ✅ — Usuario autorizado
+  
+  ### Body (JSON)
+  
+  ```json
+  {
+    "ttProvGastosBancario": [
+      {
+        "IdProvGastos": 100,
+        "Cuenta": "83863507",
+        "IdBanco": 25,
+        "Suc": "2",
+        "Clabe": "123123123123123123",
+        "Referencia": "55",
+        "EjManual": true
+      }
+    ]
+  }
+  ```
+  
+  ### Campos del body — `ttProvGastosBancario`
+  
+  **`IdProvGastos`** · INTEGER · ✅ — Identificador del proveedor  
+  **`Cuenta`** · STRING · ❌ — Número de cuenta  
+  **`IdBanco`** · INTEGER · ❌ — Clave del banco  
+  **`Suc`** · STRING · ❌ — Sucursal  
+  **`Clabe`** · STRING · ❌ — CLABE interbancaria  
+  **`Referencia`** · STRING · ❌ — Referencia  
+  **`EjManual`** · BOOLEAN · ❌ — Ejercicio manual
+  
+  ### Response
+  
+  **`IdError`** · BOOLEAN — `true` = error; `false` = éxito  
+  **`Respuesta`** · STRING — Mensaje descriptivo del resultado
+  
+  ---
+  
+}

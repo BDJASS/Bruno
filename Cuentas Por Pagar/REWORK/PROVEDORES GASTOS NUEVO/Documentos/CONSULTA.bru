@@ -19,3 +19,51 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## 8. Documentos — Consulta
+  
+  **Método:** GET  
+  **URL:** `/Documentos/Consulta`  
+  **Procedure:** `GetDocProvGastos`
+  
+  > Devuelve solo metadatos de los documentos. El campo `Documento` (BLOB) regresa `null`.  
+  > Para obtener el contenido del archivo usar el endpoint **Detalle**.
+  
+  ### Parámetros de entrada (Query String)
+  
+  **`IdProvGastos`** · INTEGER · ✅ — Identificador del proveedor  
+  **`IdUser`** · STRING · ✅ — Usuario que realiza la consulta
+  
+  ### Ejemplo de llamada
+  
+  ```
+  GET /Documentos/Consulta?IdProvGastos=100&IdUser=avgo
+  ```
+  
+  ### Response — `ttDocProvGastos`
+  
+  **`IdDoc`** · INTEGER — Identificador único del documento  
+  **`IdProvGastos`** · INTEGER — Identificador del proveedor  
+  **`Nombre`** · STRING — Nombre del archivo  
+  **`Documento`** · BLOB — Siempre `null` en este endpoint (ver Detalle)
+  
+  ### Ejemplo de response
+  
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "",
+      "ttDocProvGastos": {
+        "ttDocProvGastos": [
+          { "IdDoc": 10, "IdProvGastos": 100, "Nombre": "factura_enero.pdf", "Documento": null },
+          { "IdDoc": 11, "IdProvGastos": 100, "Nombre": "contrato.pdf", "Documento": null }
+        ]
+      }
+    }
+  }
+  ```
+  
+  ---
+}

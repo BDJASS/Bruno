@@ -19,3 +19,97 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## 1. Datos Generales — Consulta
+  
+  http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvGastos/DatosGenerales/Consulta?IdProvGastos=100&IdUser=avgo
+  
+  **Método:** GET  
+  **URL:** `/DatosGenerales/Consulta`  
+  **Procedure:** `GetProvGastosGeneral`
+  
+  ### Parámetros de entrada (Query String)
+  
+  > ✅ = Requerido · ❌ = Opcional
+  
+  **`IdProvGastos`** · INTEGER · ✅ — Identificador del proveedor de gastos  
+  **`IdUser`** · STRING · ✅ — Usuario que realiza la consulta
+  
+  ### Ejemplo de llamada
+  
+  ```
+  GET /DatosGenerales/Consulta?IdProvGastos=100&IdUser=avgo
+  ```
+  
+  ### Response — `ttProvGastosGeneral`
+  
+  **`IdProvGastos`** · INTEGER — Identificador del proveedor  
+  **`Nombre`** · STRING — Razón social o nombre del proveedor  
+  **`RFC`** · STRING — RFC del proveedor  
+  **`CURP`** · STRING — CURP (persona física)  
+  **`Solicita`** · STRING — Nombre de quien solicita  
+  **`Email`** · STRING — Correo electrónico principal  
+  **`Email2`** · STRING — Correo electrónico secundario  
+  **`Email3`** · STRING — Correo electrónico terciario  
+  **`BuzonFiscal`** · STRING — Correo para buzón fiscal  
+  **`CalleNo`** · STRING — Calle y número  
+  **`Colonia`** · STRING — Colonia  
+  **`IdCiudad`** · INTEGER — Clave de ciudad  
+  **`IdEstado`** · STRING — Clave de estado (ej. `"019"`)  
+  **`Estado`** · STRING — Nombre del estado (calculado desde catálogo)  
+  **`IdPais`** · STRING — Clave del país (ej. `"MEX"`)  
+  **`CP`** · STRING — Código postal  
+  **`Celular`** · STRING — Número celular (`Tel1` en BD)  
+  **`Fijo1`** · STRING — Teléfono fijo 1 (`Tel2` en BD)  
+  **`Extension`** · STRING — Extensión (`Fax` en BD)  
+  **`Fijo2`** · STRING — Teléfono fijo 2 (`Tel3` en BD)  
+  **`Abrev`** · STRING — Abreviatura del proveedor  
+  **`IdRFiscal`** · STRING — Clave de régimen fiscal (ej. `"626"`)  
+  **`Observacion`** · STRING — Observaciones generales  
+  **`Iva`** · DECIMAL — Porcentaje de IVA aplicable  
+  **`ISR`** · DECIMAL — Porcentaje de ISR aplicable
+  
+  ### Ejemplo de response
+  
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "",
+      "ttProvGastosGeneral": {
+        "ttProvGastosGeneral": [
+          {
+            "IdProvGastos": 100,
+            "Nombre": "ABASTECEDORA ELECTRICA JAIM, S.A. DE C.V.",
+            "RFC": "AEJ040714V48",
+            "CURP": "SESA920702HNLGDN08",
+            "Solicita": "juan 5",
+            "Email": "desarrollo0101@adosa.com.mx",
+            "Email2": "desarrollo12@adosa.com.mx",
+            "Email3": "desarrollo13@adosa.com.mx",
+            "BuzonFiscal": "desarrollo14@adosa.com.mx",
+            "CalleNo": "VILLAGRAN 6",
+            "Colonia": "CENTRO de",
+            "IdCiudad": 117,
+            "IdEstado": "019",
+            "Estado": "NUEVO LEON",
+            "IdPais": "MEX",
+            "CP": "64008",
+            "Celular": "8386350799",
+            "Fijo1": "7894561244",
+            "Extension": "3355",
+            "Fijo2": "4444444444",
+            "Abrev": "ABREVIATURA EJEMPLO99",
+            "IdRFiscal": "626",
+            "Observacion": "OBSERVACION EJEMPLO 7",
+            "Iva": 0.0,
+            "ISR": 0.0
+          }
+        ]
+      }
+    }
+  }
+  ```
+  
+}

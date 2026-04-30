@@ -19,3 +19,60 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ---
+  
+  ## 4. Datos Bancarios — Consulta
+  
+  **Método:** GET  
+  **URL:** `/DatosBancarios/Consulta`  
+  **Procedure:** `GetProvGastosBancario`
+  
+  ### Parámetros de entrada (Query String)
+  
+  **`IdProvGastos`** · INTEGER · ✅ — Identificador del proveedor  
+  **`IdUser`** · STRING · ✅ — Usuario que realiza la consulta
+  
+  ### Ejemplo de llamada
+  
+  ```
+  GET /DatosBancarios/Consulta?IdProvGastos=100&IdUser=avgo
+  ```
+  
+  ### Response — `ttProvGastosBancario`
+  
+  **`IdProvGastos`** · INTEGER — Identificador del proveedor  
+  **`Cuenta`** · STRING — Número de cuenta bancaria  
+  **`IdBanco`** · INTEGER — Clave del banco  
+  **`Suc`** · STRING — Sucursal  
+  **`Clabe`** · STRING — CLABE interbancaria (18 dígitos)  
+  **`Referencia`** · STRING — Referencia de pago  
+  **`EjManual`** · BOOLEAN — `true` = ejercicio manual; `false` = automático
+  
+  ### Ejemplo de response
+  
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "",
+      "ttProvGastosBancario": {
+        "ttProvGastosBancario": [
+          {
+            "IdProvGastos": 100,
+            "Cuenta": "83863507",
+            "IdBanco": 25,
+            "Suc": "2",
+            "Clabe": "123123123123123123",
+            "Referencia": "55",
+            "EjManual": true
+          }
+        ]
+      }
+    }
+  }
+  ```
+  
+  ---
+}
