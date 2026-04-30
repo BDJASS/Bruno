@@ -1,0 +1,22 @@
+meta {
+  name: Detalle ( BLOB)
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvGastos/Documentos/Detalle?IdProvGastos=100&IdUser=avgo&IdDoc=10
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdProvGastos: 100
+  IdUser: avgo
+  IdDoc: 10
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

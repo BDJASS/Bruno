@@ -1,0 +1,20 @@
+meta {
+  name: /EstadoDeCuentaProv
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{RestADOSACxp}}EstadoDeCuentaProv?IdProv=2033
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdProv: 2033
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

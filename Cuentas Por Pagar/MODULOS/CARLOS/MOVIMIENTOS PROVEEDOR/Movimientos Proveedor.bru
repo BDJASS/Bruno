@@ -1,0 +1,22 @@
+meta {
+  name: Movimientos Proveedor
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.9:8857/RestADOSACxp/rest/RestADOSACxp/MovProv?IdProv=1750&FechaIni=2026-01-26&FechaFin=2026-02-26
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdProv: 1750
+  FechaIni: 2026-01-26
+  FechaFin: 2026-02-26
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

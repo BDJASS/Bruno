@@ -1,0 +1,21 @@
+meta {
+  name: Consulta PROD
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://192.0.1.9:8857/RestADOSACxp/rest/RestADOSACxp/Proveedores?Estatus=1&IdProv=2083
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Estatus: 1
+  IdProv: 2083
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

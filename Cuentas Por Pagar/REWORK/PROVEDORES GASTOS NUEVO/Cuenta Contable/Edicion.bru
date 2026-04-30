@@ -1,0 +1,36 @@
+meta {
+  name: Edicion
+  type: http
+  seq: 2
+}
+
+put {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvGastos/CuentaContable/Edicion?IdProvGastos=100&IdUser=avgo
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdProvGastos: 100
+  IdUser: avgo
+}
+
+body:json {
+  {
+        "ttProvGastosContable": [
+          {
+            "IdCta": 1101,
+            "IdSCta": 0,
+            "IdSSCta": 0,
+            "IdSSSCta": 0,
+            "DescCia": "CAJA CHICA SUCURSALES",
+            "ConIVA": false
+          }
+        ]
+      }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,20 @@
+meta {
+  name: Consulta
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.9:8857/RestADOSACxp/rest/RestADOSACxp/Proveedores
+  body: none
+  auth: inherit
+}
+
+params:query {
+  : 1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

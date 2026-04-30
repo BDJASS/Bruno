@@ -1,0 +1,24 @@
+meta {
+  name: Reporte copy PROD
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.9:8857/RestADOSACxp/rest/RestADOSACxp/RepListadoDeProv?FecIni=2025-12-29&FecFin=2026-01-28&Prov=2033
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FecIni: 2025-12-29
+  FecFin: 2026-01-28
+  Prov: 2033
+  ~Prov: 2033
+  ~Almacen: opcional
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

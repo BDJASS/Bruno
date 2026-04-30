@@ -1,0 +1,21 @@
+meta {
+  name: CONSULTA
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvGastos/DatosBancarios/Consulta?IdProvGastos=100&IdUser=avgo
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdProvGastos: 100
+  IdUser: avgo
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

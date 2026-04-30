@@ -1,0 +1,81 @@
+meta {
+  name: MODIFICA
+  type: http
+  seq: 2
+}
+
+put {
+  url: http://192.0.1.9:8857/RestADOSACxp/rest/RestADOSACxp/Proveedores?IdUser=meev
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdUser: meev
+}
+
+body:json {
+  {
+    "ttProvGastos": [
+      {
+        "IdProvGastos": 237,
+        "Nombre": "ACRILICOS OCRE, S.A. DE C.V.",
+        "Abrev": "ACRILICOS OCRE",
+        "CalleNo": "M.M. DE LLANO OTE. 630 A",
+        "Colonia": "MONTERREY CENTRO",
+        "IdCiudad": 118,
+        "IdEstado": "019",
+        "Estado": "NUEVO LEON",
+        "IdPais": "MEX",
+        "CP": "64000",
+  
+        "Tel1": "8114888670",
+        "Tel2": "",
+        "Tel3": "",
+        "Fax": "Extension 07-54",
+  
+        "Email": "ivan@acrilicosocre.com",
+        "Email2": "",
+        "Email3": "",
+        "BuzonFiscal": "",
+  
+        "RFC": "AOC0107032H2",
+        "CURP": "",
+        "IdRFiscal": "601",
+  
+        "Cuenta": "015045110017",
+        "IdBanco": 36,
+        "Suc": "",
+        "Clabe": "058580150451100175",
+  
+        "Solicita": "",
+        "Referencia": "",
+        "Refer": "",
+  
+        "Activo": true,
+        "ConIVA": false,
+        "EjManual": false,
+  
+        "FecReg": null,
+        "FecBaja": null,
+        "Motivo": "",
+  
+        "IdUser": "",
+        "IdCia": 0,
+        "IdCta": 0,
+        "IdSCta": 0,
+        "IdSSCta": 0,
+        "IdSSSCta": 0,
+        "DescCia": "",
+  
+        "observacion": "ALTA CUENTA 22.08.2025 *** SOLIC. GUILLERMO ALVAREZ"
+      }
+    ]
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

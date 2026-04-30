@@ -1,0 +1,20 @@
+meta {
+  name: /AutorizacionGastos
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{RestADOSACxp}}AutorizacionGastos?IdUsuario=sge
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdUsuario: sge
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

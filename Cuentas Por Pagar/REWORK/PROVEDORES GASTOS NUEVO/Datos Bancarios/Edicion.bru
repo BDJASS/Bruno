@@ -1,0 +1,36 @@
+meta {
+  name: Edicion
+  type: http
+  seq: 2
+}
+
+put {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvGastos/DatosBancarios/Edicion?IdUser=avgo
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdUser: avgo
+}
+
+body:json {
+  {
+        "ttProvGastosBancario": [
+          {
+            "IdProvGastos": 100,
+            "Cuenta": "83863507",
+            "IdBanco": 25,
+            "Suc": "2",
+            "Clabe": "123123123123123123",
+            "Referencia": "55",
+            "EjManual": true
+          }
+        ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

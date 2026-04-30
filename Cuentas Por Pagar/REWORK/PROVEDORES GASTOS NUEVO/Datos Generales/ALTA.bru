@@ -1,0 +1,51 @@
+meta {
+  name: ALTA
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvGastos/DatosGenerales/Alta?IdUser=avgo
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdUser: avgo
+}
+
+body:json {
+  {
+        "ttProvGastosGeneral": [
+          {
+            "Nombre": "ABASTECEDORA ELECTRICA JAIM, S.A. S.E.",
+            "RFC": "AEJ040714V48",
+            "CURP": "SESA920702HNLGDN08",
+            "Solicita": "juan 5",
+            "Email": "desarrollo0101@adosa.com.mx",
+            "Email2": "desarrollo12@adosa.com.mx",
+            "Email3": "desarrollo13@adosa.com.mx",
+            "BuzonFiscal": "desarrollo14@adosa.com.mx",
+            "CalleNo": "VILLAGRAN 6",
+            "Colonia": "CENTRO de",
+            "IdCiudad": 117,
+            "IdEstado": "019",
+            "Estado": "NUEVO LEON",
+            "IdPais": "MEX",
+            "CP": "64008",
+            "Celular": "8386350799",
+            "Fijo1": "7894561244",
+            "Extension": "3355",
+            "Fijo2": "44444444449",
+            "Abrev": "ABREVIATURA EJEMPLO99",
+            "IdRFiscal": "626",
+            "Observacion": "OBSERVACION EJEMPLO 7"
+          }
+        ]
+      }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,23 @@
+meta {
+  name: CONSULTA PAGOS DETALLE
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{RestADOSACxp}}ConsultaDePagosDetalle?NumCheque=295189&Banco=25&CtaCheq=65-500904209&Tipo=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  NumCheque: 295189
+  Banco: 25
+  CtaCheq: 65-500904209
+  Tipo: 1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

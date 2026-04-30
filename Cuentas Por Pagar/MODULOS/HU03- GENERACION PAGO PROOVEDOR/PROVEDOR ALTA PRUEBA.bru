@@ -1,0 +1,60 @@
+meta {
+  name: PROVEDOR ALTA PRUEBA
+  type: http
+  seq: 5
+}
+
+post {
+  url: http://192.0.1.9:8857/RestADOSACxp/rest/RestADOSACxp/GeneracionProv?Confirmar=true&Genera=TRUE
+  body: json
+  auth: inherit
+}
+
+params:query {
+  Confirmar: true
+  Genera: TRUE
+  ~Tipo: 2
+  ~Beneficiario: TRUE
+}
+
+body:json {
+  {
+    "ttProv": [
+      {
+        "IdUser": "PJRZ",
+        "Banco": 25,
+        "BancoNombre": "BANCA SANTANDER MEXICO,SA",
+        "CtaCheque": "65-500904209",
+        "Folio": 123456,
+        "FecReg": "2025-12-10",
+        "Prov": 1973,
+        "Proveedor": "THE NAVIGATOR COMPANY, S.A.",
+        "IdMoneda": 3,
+        "CasaBolsa": "BANCO BASE, S.A. IBM",
+        "Beneficiario": "THE NAVIGATOR COMPANY, S.A."
+      }
+    ],
+    "ttDetProv": [
+      {
+        "Factura": "FTR25/059837",
+        "FecVen": "2025-11-21",
+        "FecReg": "2025-12-10",
+        "ImpOriginal": 21186.66,
+        "PP1": 0,
+        "PP2": 0,
+        "PP3": 0,
+        "PP4": 0,
+        "Plazo": 0.00,
+        "TC": 18.2850,
+        "Comision": 0,
+        "Pagado": 387398.078100
+      }
+    ]
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

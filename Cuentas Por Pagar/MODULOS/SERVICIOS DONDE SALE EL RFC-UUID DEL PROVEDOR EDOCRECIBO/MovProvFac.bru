@@ -1,0 +1,21 @@
+meta {
+  name: /MovProvFac
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{RestADOSACxp}}MovProvFac?NumFac=FTR25/118852&IdProv=1973
+  body: none
+  auth: inherit
+}
+
+params:query {
+  NumFac: FTR25/118852
+  IdProv: 1973
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -5,59 +5,51 @@ meta {
 }
 
 post {
-  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/GeneracionGastos
+  url: http://192.0.1.9:8857/RestADOSACxp/rest/RestADOSACxp/GeneracionGastos?Beneficiario=TRUE&Genera=TRUE
   body: json
   auth: inherit
 }
 
 params:query {
-  ~Beneficiario: TRUE
+  Beneficiario: TRUE
+  Genera: TRUE
   ~Tipo: 2
   ~Confirmar: true
-  ~Genera: TRUE
 }
 
 body:json {
   {
     "ttGasto": [
       {
-        "IdUser": "AVGO",
+        "IdUser": "PJRZ",
         "Banco": 25,
         "CtaCheque": "65-500904209",
-        "Folio":0,
-         "FecReg": "2025-11-12",
-         "Negociable": false,
-         "Beneficiario":"NATURGY MEXICO, S.A. DE C.V.",
-        "IdProvGastos": 0,
+        "Folio": 123456,
+        "FecReg": "2025-12-18T00:00:00",
+        "Beneficiario": "PLUXEE MEXICO, S.A. DE C.V.",
         "CasaBolsa": "",
-          "FolioFac": "55556545",
-       "RefBancaria": "Ejemplo de Ref",
-        "Concepto": "FACTURA No. 55556545jidejksdjksdjksdjkds",
-       "Concepto2": ""
+        "Concepto": "FACTURA No. ",
+        "Concepto2": "",
+        "RefBancaria": "ww654654654065465",
+        "FolioFac": "",
+        "Elaboro": "PJRZ",
+        "Negociable": false
       }
     ],
-    "ttDetGasto": [{
-        "Cuenta": "1101",
-        "sc": "5",
-        "ssc": "0",
-        "sssc": "0",
-        "Descripcion": "CHIHUAHA",
-        "Importe": 500,
-        "IVA": false,
-        "CA": "C"
-      },
+    "ttDetGasto": [
       {
-        "Cuenta": "1101",
-        "sc": "5",
-        "ssc": "0",
-        "sssc": "0",
-        "Descripcion": "CHIHUAHA",
-        "Importe": 800.00,
-        "IVA": false,
-        "CA": "C"
-      }]
+        "Cuenta": "1103",
+        "SC": "4",
+        "SSC": "0",
+        "SSSC": "0",
+        "Descripcion": "BANAMEX CHEQUES CTA. 300-594325",
+        "Importe": 6000,
+        "IVA": true,
+        "CA": "C",
+        "Id": "29daf52545434985958a6e24f0cd01e7"
+      }
+    ]
   }
-  
 }
 
 settings {

@@ -1,0 +1,20 @@
+meta {
+  name: PREVIO DE IVA NETO PROD
+  type: http
+  seq: 5
+}
+
+get {
+  url: http://192.0.1.9:8857/RestADOSACxp/rest/RestADOSACxp/PrevioIVA?Fecha=2026-04-06
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Fecha: 2026-04-06
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

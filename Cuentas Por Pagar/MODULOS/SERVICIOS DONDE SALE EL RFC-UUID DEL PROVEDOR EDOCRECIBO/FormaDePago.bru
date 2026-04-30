@@ -1,0 +1,21 @@
+meta {
+  name: /FormaDePago
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{RestADOSACxp}}FormaDePago?IdUsuario=avgo&IdFormaPago=M304554
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdUsuario: avgo
+  IdFormaPago: M304554
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -5,19 +5,20 @@ meta {
 }
 
 delete {
-  url: http://192.0.1.14:8848/RestADOSACxp/rest/RestADOSACxp/ConsultaDePagosDocumento?NumCheque=270881&Banco=25&CtaCheq=65-500904209&Tipo=1&Secuencia=2
+  url: http://192.0.1.9:8857/RestADOSACxp/rest/RestADOSACxp/ConsultaDePagosDocumento?NumCheque=292455&Banco=25&CtaCheq=65-500904209&Tipo=1&Secuencia=6
   body: json
   auth: inherit
 }
 
 params:query {
-  NumCheque: 270881
+  NumCheque: 292455
   Banco: 25
   CtaCheq: 65-500904209
   Tipo: 1
-  Secuencia: 2
+  Secuencia: 6
 }
 
 settings {
   encodeUrl: true
+  timeout: 0
 }

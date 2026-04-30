@@ -1,0 +1,22 @@
+meta {
+  name: Vista Inicial PRODU
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.9:8857/RestADOSACxp/rest/RestADOSACxp/ConsultaDePagos?FechaInicio=2026-01-12&FechaFin=2026-01-13
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FechaInicio: 2026-01-12
+  FechaFin: 2026-01-13
+  ~Beneficiario: GRUPO ADUANAL BASURTO, S.C.
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

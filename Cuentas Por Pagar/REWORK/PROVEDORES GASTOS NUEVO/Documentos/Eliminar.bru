@@ -1,0 +1,22 @@
+meta {
+  name: Eliminar
+  type: http
+  seq: 4
+}
+
+delete {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvGastos/Documentos/Eliminar?IdProvGastos=100&IdUser=avgo&IdDoc=14
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdProvGastos: 100
+  IdUser: avgo
+  IdDoc: 14
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

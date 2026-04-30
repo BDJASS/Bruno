@@ -1,0 +1,22 @@
+meta {
+  name: /MovProv
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{RestADOSACxp}}MovProv?IdProv=1973&FechaIni=2026-03-20&FechaFin=2026-04-20
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdProv: 1973
+  FechaIni: 2026-03-20
+  FechaFin: 2026-04-20
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
