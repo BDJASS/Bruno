@@ -1,0 +1,53 @@
+meta {
+  name: Alta
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvMercancia/Agenda/Alta?IdUser=avgo
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdUser: avgo
+}
+
+body:json {
+   {
+        "ttAgenda": [
+          {
+            "IdProv": 1,
+            "Comentario": "Este es un ejemplo para la agenda del proveedor numero 1 de Adosa."
+          }
+      ]
+  }
+     
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+
+docs {
+  ## POST — Agenda / Alta
+  **Procedure:** `PostProvAgenda`
+
+  Agrega una nueva nota de agenda. Fecha y hora se asignan automáticamente con `TODAY` y `TIME` del servidor.
+
+  ### Parámetros (Query String)
+  - `IdUser` STRING ✅ (debe estar en lista `AltaProvMerc`)
+
+  ### Body — ttAgenda
+  - `IdProv` INTEGER ✅ — Proveedor destinatario
+  - `Comentario` STRING ✅ — Texto completo (máx ~210 chars; se distribuye en Coment1/2/3)
+
+  > No enviar `FecReg` ni `HorReg` — se generan en servidor.
+
+  ### Response
+  - `IdError` BOOLEAN
+  - `Respuesta` STRING
+}

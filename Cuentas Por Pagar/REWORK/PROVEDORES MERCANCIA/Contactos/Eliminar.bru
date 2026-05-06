@@ -1,0 +1,54 @@
+meta {
+  name: Eliminar
+  type: http
+  seq: 4
+}
+
+delete {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvMercancia/Contactos/Eliminar?IdUser=avgo
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdUser: avgo
+}
+
+body:json {
+  {
+        "ttProvCont": [
+           {
+            "IdProv": 1,
+            "Nombre": "JOSE MOLINA"
+          }
+         ]
+          
+  }
+  
+  
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+
+docs {
+  ## DELETE — Contactos / Eliminar
+  **Procedure:** `DeleteProvCont`
+
+  Elimina un contacto por `IdProv + Nombre` (combinación única en BD).
+
+  ### Parámetros (Query String)
+  - `IdUser` STRING ✅ (debe estar en lista `AltaProvMerc`)
+
+  ### Body — ttProvCont
+  - `IdProv` INTEGER ✅
+  - `Nombre` STRING ✅ — Nombre exacto del contacto
+
+  ### Response
+  - `IdError` BOOLEAN
+  - `Respuesta` STRING
+}

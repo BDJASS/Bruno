@@ -1,0 +1,39 @@
+meta {
+  name: Consulta
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvMercancia/Caracteristicas/Consulta?IdProv=1&IdUser=avgo
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdProv: 1
+  IdUser: avgo
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+
+docs {
+  ## GET — Características / Consulta
+  **Procedure:** `GetProvBancario`
+
+  Devuelve datos bancarios (3 bancos), condiciones de compra y comentario de condiciones.
+
+  ### Parámetros (Query String)
+  - `IdProv` INTEGER ✅
+  - `IdUser` STRING ✅
+
+  ### Response — ttProvCaracteristicas
+  **Banco 1:** `FormaPago` `IdBanco` `Cuenta` `clabe1` `Suc` `Refer` `IdBancoObs1` `IdBancoObs2` `ABA` `Swift`  
+  **Banco 2:** `IdBanco2` `Cuenta2` `clabe2` `Suc2` `Refer2` `IdBanco2Obs1` `IdBanco2Obs2` `ABA2` `Swift2`  
+  **Banco 3:** `IdBanco3` `Cuenta3` `clabe3` `Suc3` `Swift3` `ABA3` `Refer3` `IdBanco3Obs1` `IdBanco3Obs2`  
+  **Comercial:** `PerCompra` `DiasEnt` `IdFlete` `LimCred` `DiasBO` `Descuento` `Coment1` `CuentaP`
+}

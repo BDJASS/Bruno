@@ -1,0 +1,58 @@
+meta {
+  name: Edicion
+  type: http
+  seq: 2
+}
+
+put {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvMercancia/Notificaciones/Edicion?IdUser=avgo
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdUser: avgo
+}
+
+body:json {
+   [
+          {
+            "IdProv": 15,
+            "Email1": "arlette.zamorano@baco.com.mx",
+            "Email2": "ejemplo@correo.com.mx",
+            "Email3": "ejemplo3@acorreo.com.mx",
+            "Email4": "",
+            "Email5": "",
+            "Email6": ""
+          }
+        ]
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+
+docs {
+  ## PUT — Notificaciones / Edición
+  **Procedure:** `PutProvNotificacion`
+
+  Guarda Email1–Email6 concatenados con `;` en `Prov.BuzonFiscal`. Enviar vacío (`""`) limpia ese correo.
+
+  ### Parámetros (Query String)
+  - `IdUser` STRING ✅ (debe estar en lista `AltaProvMerc`)
+
+  ### Body — ttProvNotificacion (array directo, sin wrapper)
+  - `IdProv` INTEGER ✅
+  - `Email1` STRING ❌
+  - `Email2` STRING ❌
+  - `Email3` STRING ❌
+  - `Email4` STRING ❌
+  - `Email5` STRING ❌
+  - `Email6` STRING ❌
+
+  ### Response
+  - `IdError` BOOLEAN
+  - `Respuesta` STRING
+}

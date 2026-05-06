@@ -1,0 +1,39 @@
+meta {
+  name: Eliminar
+  type: http
+  seq: 4
+}
+
+delete {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvMercancia/Documentos/Eliminar?IdProv=1&IdUser=avgo&IdDoc=3
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdProv: 1
+  IdUser: avgo
+  IdDoc: 3
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+
+docs {
+  ## DELETE — Documentos / Eliminar
+  **Procedure:** `DeleteDocProv`
+
+  Elimina un documento específico. Sin body — todo por query string.
+
+  ### Parámetros (Query String)
+  - `IdProv` INTEGER ✅
+  - `IdDoc` INTEGER ✅
+  - `IdUser` STRING ✅
+
+  ### Response
+  - `IdError` BOOLEAN
+  - `Respuesta` STRING — `"Documento {N} eliminado correctamente."` si éxito
+}

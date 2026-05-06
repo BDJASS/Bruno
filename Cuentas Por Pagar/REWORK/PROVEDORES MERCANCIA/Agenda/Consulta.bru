@@ -1,0 +1,39 @@
+meta {
+  name: Consulta
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvMercancia/Agenda/Consulta?IdProv=1&IdUser=avgo
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdProv: 1
+  IdUser: avgo
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+
+docs {
+  ## GET — Agenda / Consulta
+  **Procedure:** `GetProvAgenda`
+
+  Devuelve todas las notas de agenda del proveedor. Los 3 campos de comentario en BD se concatenan en uno solo.
+
+  ### Parámetros (Query String)
+  - `IdProv` INTEGER ✅
+  - `IdUser` STRING ✅
+
+  ### Response — ttAgenda
+  - `IdProv` INTEGER — Proveedor
+  - `FecReg` DATE — Fecha del registro
+  - `Comentario` STRING — Coment1 + Coment2 + Coment3 concatenados con espacio
+  - `HorReg` STRING — Hora en formato `HH:MM:SS`
+}

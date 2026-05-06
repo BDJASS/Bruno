@@ -1,0 +1,23 @@
+meta {
+  name: Notificaciones
+  seq: 5
+}
+
+auth {
+  mode: inherit
+}
+
+
+docs {
+  # Notificaciones — Proveedores de Mercancía
+
+  Correos electrónicos de notificación del proveedor (hasta 6). Se almacenan en un solo campo `BuzonFiscal` en BD, delimitados por `;`.
+
+  | Endpoint | Método | Ruta |
+  |----------|--------|------|
+  | Consulta | GET | `/Notificaciones/Consulta` |
+  | Edición  | PUT | `/Notificaciones/Edicion` |
+
+  **Permiso requerido:** `AltaProvMerc` (Edición)  
+  **Campo BD:** `Prov.BuzonFiscal` — separados por `;`
+}

@@ -1,0 +1,39 @@
+meta {
+  name: Consulta
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvMercancia/Descuentos/Consulta?IdProv=1&IdUser=avgo
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdProv: 1
+  IdUser: avgo
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+
+docs {
+  ## GET — Descuentos / Consulta
+  **Procedure:** `GetProvDescuento`
+
+  ### Parámetros (Query String)
+  - `IdProv` INTEGER ✅
+  - `IdUser` STRING ✅
+
+  ### Response — ttProvDescuento
+  - `IdProv` INTEGER
+  - `PlazoEnDias` INTEGER — `Prov.Id-Plazo`
+  - **PP1:** `DctoPP11` `DctoPP12` `DctoPP13` `DctoPP14` `PlazoPP1`
+  - **PP2:** `DctoPP21` `DctoPP22` `DctoPP23` `DctoPP24` `PlazoPP2`
+  - **PP3:** `DctoPP31` `DctoPP32` `DctoPP33` `DctoPP34` `PlazoPP3`
+  - **PP4:** `DctoPP41` `DctoPP42` `DctoPP43` `DctoPP44` `PlazoPP4`
+}

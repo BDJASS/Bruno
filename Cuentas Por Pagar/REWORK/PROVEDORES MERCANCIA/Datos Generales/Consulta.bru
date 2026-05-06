@@ -1,0 +1,42 @@
+meta {
+  name: Consulta
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvMercancia/DatosGenerales/Consulta?IdProv=172&IdUser=avgo
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdProv: 172
+  IdUser: avgo
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+
+docs {
+  ## GET — Datos Generales / Consulta
+  **Procedure:** `GetProvGeneral`
+
+  Devuelve los datos generales del proveedor de mercancía. El campo `Logo` regresa en Base64.
+
+  ### Parámetros (Query String)
+  - `IdProv` INTEGER ✅ — Identificador del proveedor
+  - `IdUser` STRING ✅ — Usuario que consulta
+
+  ### Response — ttProvGeneral
+  `IdProv` `Nombre` `RFC` `CURP` `Tipo` `NumCte` `IdRFiscal` `Iva` `ISR` `Email` `Abrev`
+  `Idfiscal` `IdComp` `Comprador` `CalleNo` `Colonia` `CP` `ApdoPost` `IdCiudad`
+  `IdEstado` `Estado` `IdPais` `Celular` `Fijo1` `Extension` `Fijo2`
+  `IdMoneda` `IdGiro` `Exigencia` `EnviarA` `Fabricante` `IdEnviar` `Attn` `pageweb` `Logo`
+
+  > `Comprador` y `Estado` son calculados del catálogo — no se envían en PUT/POST.  
+  > `Logo` viene en Base64 en el GET; se puede omitir en el POST/PUT.
+}

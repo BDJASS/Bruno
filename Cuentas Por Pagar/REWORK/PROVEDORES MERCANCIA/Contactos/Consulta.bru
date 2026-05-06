@@ -1,0 +1,41 @@
+meta {
+  name: Consulta
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvMercancia/Contactos/Consulta?IdProv=1&IdUser=avgo
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdProv: 1
+  IdUser: avgo
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+
+docs {
+  ## GET — Contactos / Consulta
+  **Procedure:** `GetProvCont`
+
+  ### Parámetros (Query String)
+  - `IdProv` INTEGER ✅
+  - `IdUser` STRING ✅
+
+  ### Response — ttProvCont
+  - `IdProv` INTEGER
+  - `Nombre` STRING — `Contacto` en BD
+  - `Puesto` STRING
+  - `Email` STRING — `e-mail` en BD
+  - `Fijo1` STRING — `ContTel1` en BD
+  - `Fijo2` STRING — `ContTel2` en BD
+  - `Fijo3` STRING — `ContTel3` (Fax) en BD
+  - `Extension` STRING — `Lada` en BD
+}

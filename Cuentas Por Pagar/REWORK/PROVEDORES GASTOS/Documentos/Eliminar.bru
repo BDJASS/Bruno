@@ -1,0 +1,54 @@
+meta {
+  name: Eliminar
+  type: http
+  seq: 4
+}
+
+delete {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvGastos/Documentos/Eliminar?IdProvGastos=100&IdUser=avgo&IdDoc=14
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdProvGastos: 100
+  IdUser: avgo
+  IdDoc: 14
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  ## 11. Documentos — Eliminar
+  
+  **Método:** DELETE  
+  **URL:** `/Documentos/Eliminar`  
+  **Procedure:** `DeleteDocProvGastos`
+  
+  > Elimina un documento específico de un proveedor.  
+  > Bloqueo `EXCLUSIVE-LOCK NO-WAIT`: si el documento está en uso regresa error sin esperar.  
+  > No requiere body.
+  
+  ### Parámetros de entrada (Query String)
+  
+  **`IdProvGastos`** · INTEGER · ✅ — Identificador del proveedor  
+  **`IdDoc`** · INTEGER · ✅ — Identificador del documento a eliminar  
+  **`IdUser`** · STRING · ✅ — Usuario autorizado
+  
+  ### Ejemplo de llamada
+  
+  ```
+  DELETE /Documentos/Eliminar?IdProvGastos=100&IdDoc=14&IdUser=avgo
+  ```
+  
+  ### Response
+  
+  **`IdError`** · BOOLEAN — `true` = error; `false` = éxito  
+  **`Respuesta`** · STRING — Mensaje descriptivo del resultado
+  
+  ---
+  
+}

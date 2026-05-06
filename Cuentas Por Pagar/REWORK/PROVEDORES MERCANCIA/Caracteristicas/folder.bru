@@ -1,0 +1,26 @@
+meta {
+  name: Caracteristicas
+  seq: 2
+}
+
+auth {
+  mode: inherit
+}
+
+
+docs {
+  # Características / Datos Bancarios — Proveedores de Mercancía
+
+  Gestiona los datos bancarios del proveedor (hasta 3 bancos), condiciones comerciales y observaciones bancarias.
+
+  | Endpoint | Método | Ruta |
+  |----------|--------|------|
+  | Consulta | GET | `/Caracteristicas/Consulta` |
+  | Edición  | PUT | `/Caracteristicas/Edicion` |
+
+  **Permiso requerido:** `AltaProvMerc`  
+  **Tabla principal:** `Prov` (campos bancarios)  
+  **Bitácora:** `CambioProv` campo a campo  
+  **Mapeo BD:** `IdBancoObs1/2` → `CalleNo1/Colonia1` · `IdBanco2Obs1/2` → `CalleNo2/Colonia2` · `IdBanco3Obs1/2` → `CalleNo3/Colonia3`  
+  **Nota:** `Refer` → `Prov.Routing` · `Descuento` → `Prov.DctoDir`
+}

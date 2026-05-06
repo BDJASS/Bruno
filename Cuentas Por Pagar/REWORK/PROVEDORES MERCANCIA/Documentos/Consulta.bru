@@ -1,0 +1,39 @@
+meta {
+  name: Consulta
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvMercancia/Documentos/Consulta?IdProv=1&IdUser=avgo
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdProv: 1
+  IdUser: avgo
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+
+docs {
+  ## GET — Documentos / Consulta
+  **Procedure:** `GetDocProv`
+
+  Devuelve metadatos de documentos. El campo `Documento` (BLOB) **no** se incluye — usar Detalle para obtenerlo.
+
+  ### Parámetros (Query String)
+  - `IdProv` INTEGER ✅
+  - `IdUser` STRING ✅
+
+  ### Response — ttDocProv
+  - `IdDoc` INTEGER — Identificador del documento
+  - `IdProv` INTEGER
+  - `Nombre` STRING — Nombre del archivo
+  - `Documento` — siempre `null` en este endpoint
+}

@@ -1,0 +1,90 @@
+meta {
+  name: Edicion
+  type: http
+  seq: 2
+}
+
+put {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvMercancia/Caracteristicas/Edicion?IdProv=1&IdUser=avgo
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdProv: 1
+  IdUser: avgo
+}
+
+body:json {
+  {
+        "ttProvCaracteristicas": [
+          {
+            "FormaPago": "3",
+            "IdBanco": 18,
+            "Cuenta": "4070185376",
+            "clabe1": "021180040701853761",
+            "Suc": "SUCURSAL1",
+            "Refer": "REFER2",
+            "IdBancoObs1": "CAMBIO CUENTA 31.01.2025",
+            "IdBancoObs2": "OBS2",
+            "ABA": "ABA1",
+            "Swift": "SWIFT1",
+            "IdBanco2": 0,
+            "Cuenta2": "",
+            "clabe2": "",
+            "Suc2": "",
+            "Refer2": "",
+            "IdBanco2Obs1": "obs de banco 2",
+            "IdBanco2Obs2": "obs 2 de banco 2",
+            "ABA2": "aba2",
+            "Swift2": "",
+            "IdBanco3": 61,
+            "Cuenta3": "3800719072",
+            "clabe3": "044420038007190725",
+            "Suc3": "08",
+            "Swift3": "",
+            "ABA3": "REF. C0000111",
+            "Refer3": "",
+            "IdBanco3Obs1": "ALTA CLABE VGO",
+            "IdBanco3Obs2": "",
+            "PerCompra": 22,
+            "DiasEnt": 10,
+            "IdFlete": 1,
+            "LimCred": 80,
+            "DiasBO": 44,
+            "Descuento": 77.0,
+            "Coment1": "ACCO 3 90 DIAS CRED.47% CONF./GBC 90 DIAS DE CRED.47% CONF.",
+            "CuentaP": ""
+          }
+        ]
+      }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+
+docs {
+  ## PUT — Características / Edición
+  **Procedure:** `PutProvBancario`
+
+  Actualiza datos bancarios y condiciones comerciales. Solo actualiza campos con valor no vacío y diferente al actual.
+
+  ### Parámetros (Query String)
+  - `IdProv` INTEGER ✅
+  - `IdUser` STRING ✅ (debe estar en lista `AltaProvMerc`)
+
+  ### Body — ttProvCaracteristicas (todos ❌)
+  **Banco 1:** `FormaPago` `IdBanco` `Cuenta` `clabe1` `Suc` `Refer` `IdBancoObs1` `IdBancoObs2` `ABA` `Swift`  
+  **Banco 2:** `IdBanco2` `Cuenta2` `clabe2` `Suc2` `Refer2` `IdBanco2Obs1` `IdBanco2Obs2` `ABA2` `Swift2`  
+  **Banco 3:** `IdBanco3` `Cuenta3` `clabe3` `Suc3` `Swift3` `ABA3` `Refer3` `IdBanco3Obs1` `IdBanco3Obs2`  
+  **Comercial:** `PerCompra` `DiasEnt` `IdFlete` `LimCred` `DiasBO` `Descuento` `Coment1` `CuentaP`
+
+  > `IdProv` NO va en el body — se envía en el query string.
+
+  ### Response
+  - `IdError` BOOLEAN
+  - `Respuesta` STRING
+}

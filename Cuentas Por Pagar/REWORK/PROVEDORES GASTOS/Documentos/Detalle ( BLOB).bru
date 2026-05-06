@@ -1,0 +1,53 @@
+meta {
+  name: Detalle ( BLOB)
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvGastos/Documentos/Detalle?IdProvGastos=100&IdUser=avgo&IdDoc=10
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdProvGastos: 100
+  IdUser: avgo
+  IdDoc: 10
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  ## 9. Documentos — Detalle
+  
+  **Método:** GET  
+  **URL:** `/Documentos/Detalle`  
+  **Procedure:** `GetDocProvGastosDet`
+  
+  > Devuelve el documento completo incluyendo el contenido BLOB en Base64.
+  
+  ### Parámetros de entrada (Query String)
+  
+  **`IdProvGastos`** · INTEGER · ✅ — Identificador del proveedor  
+  **`IdDoc`** · INTEGER · ✅ — Identificador del documento  
+  **`IdUser`** · STRING · ✅ — Usuario que realiza la consulta
+  
+  ### Ejemplo de llamada
+  
+  ```
+  GET /Documentos/Detalle?IdProvGastos=100&IdDoc=10&IdUser=avgo
+  ```
+  
+  ### Response — `ttDocProvGastos`
+  
+  **`IdDoc`** · INTEGER — Identificador del documento  
+  **`IdProvGastos`** · INTEGER — Identificador del proveedor  
+  **`Nombre`** · STRING — Nombre del archivo  
+  **`Documento`** · STRING (Base64) — Contenido binario del archivo codificado en Base64
+  
+  ---
+}

@@ -1,0 +1,90 @@
+meta {
+  name: Edicion
+  type: http
+  seq: 2
+}
+
+put {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvGastos/CuentaContable/Edicion?IdProvGastos=100&IdUser=avgo
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdProvGastos: 100
+  IdUser: avgo
+}
+
+body:json {
+  {
+        "ttProvGastosContable": [
+          {
+            "IdCta": 1101,
+            "IdSCta": 0,
+            "IdSSCta": 0,
+            "IdSSSCta": 0,
+            "DescCia": "CAJA CHICA SUCURSALES",
+            "ConIVA": false
+          }
+        ]
+      }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  ## 7. Cuenta Contable — Edición
+  
+  **Método:** PUT  
+  **URL:** `/CuentaContable/Edicion`  
+  **Procedure:** `PutProvGastosContable`
+  
+  > Valida que la combinación `IdCta / IdSCta / IdSSCta / IdSSSCta` exista en el catálogo `Cuenta`.  
+  > El campo `Id-Cia` se toma automáticamente de `Cuenta.Id-Cia` — no es necesario enviarlo.  
+  > Registra bitácora campo a campo. Bloqueo `EXCLUSIVE-LOCK NO-WAIT`.
+  
+  ### Parámetros de entrada (Query String)
+  
+  **`IdProvGastos`** · INTEGER · ✅ — Identificador del proveedor  
+  **`IdUser`** · STRING · ✅ — Usuario autorizado
+  
+  ### Body (JSON)
+  
+  ```json
+  {
+    "ttProvGastosContable": [
+      {
+        "IdCta": 1101,
+        "IdSCta": 0,
+        "IdSSCta": 0,
+        "IdSSSCta": 0,
+        "DescCia": "CAJA CHICA SUCURSALES",
+        "ConIVA": false
+      }
+    ]
+  }
+  ```
+  
+  ### Campos del body — `ttProvGastosContable`
+  
+  **`IdCta`** · INTEGER · ✅ — Cuenta contable principal  
+  **`IdSCta`** · INTEGER · ✅ — Subcuenta (`0` si no aplica)  
+  **`IdSSCta`** · INTEGER · ✅ — Sub-subcuenta (`0` si no aplica)  
+  **`IdSSSCta`** · INTEGER · ✅ — Sub-sub-subcuenta (`0` si no aplica)  
+  **`DescCia`** · STRING · ❌ — Descripción de la cuenta  
+  **`ConIVA`** · BOOLEAN · ✅ — Con o sin IVA
+  
+  > `IdProvGastos` no va dentro del body; se envía en el query string.  
+  > `IdCia` no se envía — se deriva automáticamente del catálogo `Cuenta`.
+  
+  ### Response
+  
+  **`IdError`** · BOOLEAN — `true` = error; `false` = éxito  
+  **`Respuesta`** · STRING — Mensaje descriptivo del resultado
+  
+  ---
+  
+}

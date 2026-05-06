@@ -1,0 +1,41 @@
+meta {
+  name: Detalle
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvMercancia/Documentos/Consulta/Detalle?IdProv=1&IdUser=avgo&IdDoc=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdProv: 1
+  IdUser: avgo
+  IdDoc: 1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+
+docs {
+  ## GET — Documentos / Detalle
+  **Procedure:** `GetDocProvDet`
+
+  Devuelve el archivo completo incluyendo el BLOB en Base64.
+
+  ### Parámetros (Query String)
+  - `IdProv` INTEGER ✅
+  - `IdDoc` INTEGER ✅ — Obtenido del endpoint Consulta
+  - `IdUser` STRING ✅
+
+  ### Response — ttDocProv
+  - `IdDoc` INTEGER
+  - `IdProv` INTEGER
+  - `Nombre` STRING
+  - `Documento` STRING (Base64) — Contenido binario del archivo
+}

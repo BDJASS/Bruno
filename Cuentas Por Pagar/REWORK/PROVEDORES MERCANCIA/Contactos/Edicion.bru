@@ -1,0 +1,60 @@
+meta {
+  name: Edicion
+  type: http
+  seq: 3
+}
+
+put {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvMercancia/Contactos/Edicion?IdProv=1&IdUser=avgo
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdProv: 1
+  IdUser: avgo
+}
+
+body:json {
+  {
+        "ttProvCont": [
+          {
+            "IdProv":1,
+            "Nombre": "ARTURO ENRIQUE",
+            "Puesto": "GTE VTAS",
+            "Email": "arturo.trevino@barrilito.com.mx",
+            "Fijo1": "8111230464",
+            "Fijo2": "8180971342",
+            "Fijo3": "8180971343",
+            "Extension": "88"
+          }
+         ]
+          
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+
+docs {
+  ## PUT — Contactos / Edición
+  **Procedure:** `PutProvCont`
+
+  Actualiza contactos existentes. NO crea ni elimina registros. El front envía solo los que se van a editar.
+
+  ### Parámetros (Query String)
+  - `IdProv` INTEGER ✅
+  - `IdUser` STRING ✅ (debe estar en lista `AltaProvMerc`)
+
+  ### Body — ttProvCont
+  - `IdProv` INTEGER ✅
+  - `Nombre` STRING ✅ — Llave de búsqueda en BD (no se puede cambiar)
+  - `Puesto` `Email` `Fijo1` `Fijo2` `Fijo3` `Extension` — todos ❌
+
+  ### Response
+  - `IdError` BOOLEAN
+  - `Respuesta` STRING
+}

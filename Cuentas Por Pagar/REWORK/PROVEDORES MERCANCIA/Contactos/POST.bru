@@ -1,0 +1,65 @@
+meta {
+  name: POST
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvMercancia/Contactos/Alta?IdProv=1&IdUser=avgo
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdProv: 1
+  IdUser: avgo
+}
+
+body:json {
+  {
+        "ttProvCont": [
+          {
+            "IdProv":1,
+            "Nombre": "ARTURO ENRIQUE",
+            "Puesto": "GTE VTAS",
+            "Email": "arturo.trevino@barrilito.com.mx",
+            "Fijo1": "8111230464",
+            "Fijo2": "8180971342",
+            "Fijo3": "8180971343",
+            "Extension": "55"
+          }
+         ]
+          
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+
+docs {
+  ## POST — Contactos / Alta
+  **Procedure:** `PostProvCont`
+
+  Agrega nuevos contactos sin modificar los existentes. Valida duplicados dentro del batch y en BD.
+
+  ### Parámetros (Query String)
+  - `IdProv` INTEGER ✅
+  - `IdUser` STRING ✅ (debe estar en lista `AltaProvMerc`)
+
+  ### Body — ttProvCont
+  - `IdProv` INTEGER ✅
+  - `Nombre` STRING ✅ — Único por proveedor
+  - `Puesto` STRING ❌
+  - `Email` STRING ❌
+  - `Fijo1` STRING ❌
+  - `Fijo2` STRING ❌
+  - `Fijo3` STRING ❌
+  - `Extension` STRING ❌
+
+  ### Response
+  - `IdError` BOOLEAN
+  - `Respuesta` STRING
+}

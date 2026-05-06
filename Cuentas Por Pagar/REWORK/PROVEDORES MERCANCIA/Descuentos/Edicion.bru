@@ -1,0 +1,76 @@
+meta {
+  name: Edicion
+  type: http
+  seq: 2
+}
+
+put {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvMercancia/Descuentos/Edicion?IdProv=1&IdUser=avgo
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdProv: 1
+  IdUser: avgo
+}
+
+body:json {
+  {
+        "ttProvDescuento": [
+          {
+            "IdProv": 1,
+            "PlazoEnDias": 90,
+            "DctoPP11": 2.5,
+            "DctoPP12": 0.0,
+            "DctoPP13": 0.0,
+            "DctoPP14": 0.0,
+            "PlazoPP1": 70.0,
+            "DctoPP21": 0.0,
+            "DctoPP22": 0.0,
+            "DctoPP23": 0.0,
+            "DctoPP24": 0.0,
+            "PlazoPP2": 0.0,
+            "DctoPP31": 0.0,
+            "DctoPP32": 0.0,
+            "DctoPP33": 0.0,
+            "DctoPP34": 0.0,
+            "PlazoPP3": 0.0,
+            "DctoPP41": 0.0,
+            "DctoPP42": 7.0,
+            "DctoPP43": 6.0,
+            "DctoPP44": 5.0,
+            "PlazoPP4": 4.0
+          }
+        ]
+      }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+
+docs {
+  ## PUT — Descuentos / Edición
+  **Procedure:** `PutProvDescuento`
+
+  Actualiza plazo y descuentos PP. Solo actualiza los campos con valor diferente al actual (permite poner `0` para limpiar).
+
+  ### Parámetros (Query String)
+  - `IdProv` INTEGER ✅
+  - `IdUser` STRING ✅ (debe estar en lista `AltaProvMerc`)
+
+  ### Body — ttProvDescuento
+  - `IdProv` INTEGER ✅
+  - `PlazoEnDias` INTEGER ❌
+  - `DctoPP11`–`DctoPP14` DECIMAL ❌ · `PlazoPP1` DECIMAL ❌
+  - `DctoPP21`–`DctoPP24` DECIMAL ❌ · `PlazoPP2` DECIMAL ❌
+  - `DctoPP31`–`DctoPP34` DECIMAL ❌ · `PlazoPP3` DECIMAL ❌
+  - `DctoPP41`–`DctoPP44` DECIMAL ❌ · `PlazoPP4` DECIMAL ❌
+
+  ### Response
+  - `IdError` BOOLEAN
+  - `Respuesta` STRING
+}
