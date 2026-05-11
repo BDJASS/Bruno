@@ -1,0 +1,92 @@
+meta {
+  name: Activar-Inactivar
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvMercancia/ActivarInactivar/Procesar
+  body: json
+  auth: inherit
+}
+
+body:json {
+       {
+        "ttProvActivo": [
+          {
+            "IdProv": 6,
+            "Motivo": "Motivo de Ejemplo",
+            "IdUser": "avgo"
+          }
+        ]
+      }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  ---
+  
+  ## 3. Activar / Inactivar — Mercancía
+  
+  **`POST`** `/ProvMercancia/ActivarInactivar/Procesar`
+  
+  Invierte el estado activo/inactivo del proveedor de mercancía. El sistema detecta el estado actual en BD y aplica el toggle automáticamente.
+  
+  - Si el proveedor está **activo** → lo **inactiva** (requiere `Motivo`).
+  - Si el proveedor está **inactivo** → lo **activa** (`Motivo` se ignora).
+  
+  > ⚠️ Validaciones adicionales al inactivar: no debe tener artículos activos relacionados ni saldo pendiente.
+  
+  ```
+  POST http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvMercancia/ActivarInactivar/Procesar
+  ```
+  
+  ### Body (JSON)
+  
+  ```json
+  {
+    "ttProvActivo": [
+      {
+        "IdProv": 6,
+        "Motivo": "Motivo de Ejemplo",
+        "IdUser": "avgo"
+      }
+    ]
+  }
+  ```
+  
+  ### Campos del body
+  
+  > ✅ = Requerido · ❌ = Opcional
+  
+  **`ttProvActivo[].IdProv`** · INTEGER · ✅ — ID del proveedor de mercancía.
+  
+  **`ttProvActivo[].IdUser`** · STRING · ✅ — Clave del usuario que ejecuta la acción.
+  
+  **`ttProvActivo[].Motivo`** · STRING · ✅ si inactiva / ❌ si activa — Motivo de inactivación.
+  
+  > Los campos `Activo` y `FecBaja` de la tabla **no se leen del body**; el sistema los determina internamente.
+  
+  ### Respuesta
+  
+  **`IdError`** · BOOLEAN — `true` = error; `false` = operación exitosa.
+  
+  **`Respuesta`** · STRING — Mensaje descriptivo del resultado.
+  
+  ### Ejemplos de respuesta
+  
+  ```json
+  { "IdError": false, "Respuesta": "El proveedor 6 ha sido inactivado correctamente." }
+  { "IdError": false, "Respuesta": "El proveedor 6 ha sido activado correctamente." }
+  { "IdError": true,  "Respuesta": "El motivo es obligatorio para inactivar el proveedor." }
+  { "IdError": true,  "Respuesta": "No puede inactivar este proveedor por tener artículos relacionados activos." }
+  { "IdError": true,  "Respuesta": "No puede inactivar este proveedor por tener saldo pendiente de 5,000.00." }
+  { "IdError": true,  "Respuesta": "El proveedor 6 está siendo utilizado por otro proceso. Intente más tarde." }
+  ```
+  
+  ---
+}

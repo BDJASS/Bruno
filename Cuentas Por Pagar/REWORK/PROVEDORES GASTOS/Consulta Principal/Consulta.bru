@@ -1,0 +1,82 @@
+meta {
+  name: Consulta
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvGastos/Consulta?IdUser=avgo&Activo=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdUser: avgo
+  Activo: true
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  ---
+  
+  ## 4. Consulta de Proveedores — Gastos
+  
+  **`GET`** `/ProvGastos/Consulta`
+  
+  Retorna el listado de proveedores de gastos filtrado por estatus activo/inactivo.
+  
+  ```
+  GET http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvGastos/Consulta?IdUser=avgo&Activo=true
+  ```
+  
+  ### Parámetros de entrada (Query String)
+  
+  > ✅ = Requerido · ❌ = Opcional
+  
+  **`IdUser`** · STRING · ✅ — Clave del usuario que realiza la consulta.
+  
+  **`Activo`** · BOOLEAN · ❌ — Filtro de estatus.
+  - `true` Activos · `false` Inactivos · Vacío = activos (default)
+  
+  ### Respuesta
+  
+  **`IdError`** · BOOLEAN — `true` = error; `false` = éxito.
+  
+  **`Respuesta`** · STRING — Mensaje descriptivo.
+  
+  **`ttProvGastos`** · ARRAY — Listado de proveedores de gastos.
+  
+  **`ttProvGastos[].IdProv`** · INTEGER — ID del proveedor.
+  **`ttProvGastos[].Nombre`** · STRING — Nombre o razón social.
+  **`ttProvGastos[].RFC`** · STRING — RFC del proveedor.
+  **`ttProvGastos[].FecReg`** · DATE — Fecha de registro.
+  **`ttProvGastos[].Telefono`** · STRING — Teléfono principal.
+  **`ttProvGastos[].Email`** · STRING — Correo electrónico.
+  **`ttProvGastos[].Activo`** · BOOLEAN — `true` = activo; `false` = inactivo.
+  
+  ### Ejemplo de respuesta exitosa
+  
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "",
+    "ttProvGastos": [
+      {
+        "IdProv": 1,
+        "Nombre": "SERVICIOS ADMINISTRATIVOS SA",
+        "RFC": "SAD900101XYZ",
+        "FecReg": "2022-06-01",
+        "Telefono": "5512345678",
+        "Email": "contacto@servicios.com",
+        "Activo": true
+      }
+    ]
+  }
+  ```
+  
+  ---
+}

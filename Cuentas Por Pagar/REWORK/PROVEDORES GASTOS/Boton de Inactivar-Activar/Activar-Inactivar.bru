@@ -1,0 +1,91 @@
+meta {
+  name: Activar-Inactivar
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvGastos/ActivarInactivar/Procesar
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+        "ttProvGastosActivo": [
+          {
+            "IdProv": 1,
+            "Motivo": "Motivo de Inactivacion Ejemplo",
+            "IdUser": "avgo"
+          }
+        ]
+      }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  ---
+  
+  ## 6. Activar / Inactivar — Gastos
+  
+  **`POST`** `/ProvGastos/ActivarInactivar/Procesar`
+  
+  Invierte el estado activo/inactivo del proveedor de gastos. El sistema detecta el estado actual en BD y aplica el toggle automáticamente.
+  
+  - Si el proveedor está **activo** → lo **inactiva** (requiere `Motivo`).
+  - Si el proveedor está **inactivo** → lo **activa** (`Motivo` se ignora).
+  
+  ```
+  POST http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvGastos/ActivarInactivar/Procesar
+  ```
+  
+  ### Body (JSON)
+  
+  ```json
+  {
+    "ttProvGastosActivo": [
+      {
+        "IdProv": 1,
+        "Motivo": "Motivo de Inactivacion Ejemplo",
+        "IdUser": "avgo"
+      }
+    ]
+  }
+  ```
+  
+  ### Campos del body
+  
+  > ✅ = Requerido · ❌ = Opcional
+  
+  **`ttProvGastosActivo[].IdProv`** · INTEGER · ✅ — ID del proveedor de gastos.
+  
+  **`ttProvGastosActivo[].IdUser`** · STRING · ✅ — Clave del usuario que ejecuta la acción.
+  
+  **`ttProvGastosActivo[].Motivo`** · STRING · ✅ si inactiva / ❌ si activa — Motivo de inactivación.
+  
+  > Los campos `Activo` y `FecBaja` de la tabla **no se leen del body**; el sistema los determina internamente.
+  
+  ### Respuesta
+  
+  **`IdError`** · BOOLEAN — `true` = error; `false` = operación exitosa.
+  
+  **`Respuesta`** · STRING — Mensaje descriptivo del resultado.
+  
+  ### Ejemplos de respuesta
+  
+  ```json
+  { "IdError": false, "Respuesta": "El proveedor 1 ha sido inactivado correctamente." }
+  { "IdError": false, "Respuesta": "El proveedor 1 ha sido activado correctamente." }
+  { "IdError": true,  "Respuesta": "El motivo es obligatorio para inactivar el proveedor." }
+  { "IdError": true,  "Respuesta": "El proveedor de gastos con ID 1 no existe." }
+  { "IdError": true,  "Respuesta": "El proveedor 1 esta siendo utilizado por otro proceso. Intente mas tarde." }
+  ```
+  
+  ---
+  
+  > **Desarrollado por:** SIS10 - JASS
+}

@@ -1,25 +1,24 @@
 meta {
   name: Contactos
-  seq: 3
+  seq: 5
 }
 
 auth {
   mode: inherit
 }
 
-
 docs {
   # Contactos — Proveedores de Mercancía
-
+  
   Personas de contacto del proveedor. El `Nombre` es único por proveedor (índice `idx-Contacto`: `Id-Prov + Contacto`).
-
+  
   | Endpoint | Método | Ruta |
   |----------|--------|------|
   | Consulta | GET    | `/Contactos/Consulta` |
   | Alta     | POST   | `/Contactos/Alta` |
   | Edición  | PUT    | `/Contactos/Edicion` |
   | Eliminar | DELETE | `/Contactos/Eliminar` |
-
+  
   **Permiso requerido:** `AltaProvMerc`  
   **Tabla:** `ProvCont` (índice único `idx-Contacto`: `Id-Prov + Contacto`)  
   **Alta:** agrega sin eliminar los existentes.  

@@ -1,24 +1,23 @@
 meta {
   name: Datos Generales
-  seq: 1
+  seq: 3
 }
 
 auth {
   mode: inherit
 }
 
-
 docs {
   # Datos Generales — Proveedores de Mercancía
-
+  
   Sección principal del proveedor. Gestiona razón social, dirección, contacto, comprador, régimen fiscal, moneda, giro y logo.
-
+  
   | Endpoint | Método | Ruta |
   |----------|--------|------|
   | Consulta | GET | `/DatosGenerales/Consulta` |
   | Alta     | POST | `/DatosGenerales/Alta` |
   | Editar   | PUT  | `/DatosGenerales/Editar` |
-
+  
   **Permiso requerido:** `AltaProvMerc`  
   **Tabla principal:** `Prov`  
   **Bitácora:** `CambioProv` campo a campo  

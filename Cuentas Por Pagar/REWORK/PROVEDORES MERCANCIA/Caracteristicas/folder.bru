@@ -1,23 +1,22 @@
 meta {
   name: Caracteristicas
-  seq: 2
+  seq: 4
 }
 
 auth {
   mode: inherit
 }
 
-
 docs {
   # Características / Datos Bancarios — Proveedores de Mercancía
-
+  
   Gestiona los datos bancarios del proveedor (hasta 3 bancos), condiciones comerciales y observaciones bancarias.
-
+  
   | Endpoint | Método | Ruta |
   |----------|--------|------|
   | Consulta | GET | `/Caracteristicas/Consulta` |
   | Edición  | PUT | `/Caracteristicas/Edicion` |
-
+  
   **Permiso requerido:** `AltaProvMerc`  
   **Tabla principal:** `Prov` (campos bancarios)  
   **Bitácora:** `CambioProv` campo a campo  

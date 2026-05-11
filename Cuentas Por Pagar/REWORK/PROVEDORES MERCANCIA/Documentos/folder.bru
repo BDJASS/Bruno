@@ -1,25 +1,24 @@
 meta {
   name: Documentos
-  seq: 7
+  seq: 9
 }
 
 auth {
   mode: inherit
 }
 
-
 docs {
   # Documentos — Proveedores de Mercancía
-
+  
   Archivos adjuntos del proveedor (contratos, facturas, etc.) almacenados como BLOB en tabla `DocProv`.
-
+  
   | Endpoint | Método | Ruta |
   |----------|--------|------|
   | Consulta | GET    | `/Documentos/Consulta` |
   | Detalle  | GET    | `/Documentos/Consulta/Detalle` |
   | Alta     | POST   | `/Documentos/Alta` |
   | Eliminar | DELETE | `/Documentos/Eliminar` |
-
+  
   **Tabla:** `DocProv` (`Id-Doc`, `Id-Prov`, `Nombre`, `Documento BLOB`)  
   **Folio (Alta):** primer `Id-Doc` libre global en tabla `DocProv`  
   **Consulta:** sin BLOB (solo metadatos) — usar Detalle para obtener el archivo  

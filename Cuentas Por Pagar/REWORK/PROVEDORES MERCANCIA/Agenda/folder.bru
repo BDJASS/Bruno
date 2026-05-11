@@ -1,24 +1,23 @@
 meta {
   name: Agenda
-  seq: 4
+  seq: 6
 }
 
 auth {
   mode: inherit
 }
 
-
 docs {
   # Agenda — Proveedores de Mercancía
-
+  
   Notas y comentarios históricos del proveedor. Soporta múltiples entradas por proveedor.
-
+  
   | Endpoint | Método | Ruta |
   |----------|--------|------|
   | Consulta | GET    | `/Agenda/Consulta` |
   | Alta     | POST   | `/Agenda/Alta` |
   | Eliminar | DELETE | `/Agenda/Eliminar` |
-
+  
   **Permiso requerido:** `AltaProvMerc` (Alta y Eliminar)  
   **Tabla:** `Agenda` (campos: `Id-Prov`, `FecReg`, `HorReg`, `Coment1`, `Coment2`, `Coment3`)  
   **Nota:** El GET une Coment1+2+3 en un solo campo `Comentario`. El POST los separa automáticamente al guardar.  

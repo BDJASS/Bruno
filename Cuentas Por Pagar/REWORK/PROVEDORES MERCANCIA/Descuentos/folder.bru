@@ -1,23 +1,22 @@
 meta {
   name: Descuentos
-  seq: 6
+  seq: 8
 }
 
 auth {
   mode: inherit
 }
 
-
 docs {
   # Descuentos — Proveedores de Mercancía
-
+  
   Plazo de pago y descuentos por pronto pago (4 grupos PP1–PP4, cada uno con hasta 4 porcentajes y un plazo en días).
-
+  
   | Endpoint | Método | Ruta |
   |----------|--------|------|
   | Consulta | GET | `/Descuentos/Consulta` |
   | Edición  | PUT | `/Descuentos/Edicion` |
-
+  
   **Permiso requerido:** `AltaProvMerc` (Edición)  
   **Tabla:** `Prov` (campos `DctoPP11`–`DctoPP44`, `PlazoPP1`–`PlazoPP4`, `Id-Plazo`)  
   **Nota:** Se puede actualizar a `0` para limpiar un descuento — la condición compara con el valor actual, no con cero.

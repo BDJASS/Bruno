@@ -1,0 +1,74 @@
+meta {
+  name: Consultar
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvGastos/ActivarInactivar/Consulta?IdProv=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdProv: 1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  ---
+  
+  ## 5. Consulta Estado — Gastos (Toggle)
+  
+  **`GET`** `/ProvGastos/ActivarInactivar/Consulta`
+  
+  Consulta el estado actual de un proveedor de gastos. Usar antes del POST para conocer si está activo o inactivo.
+  
+  ```
+  GET http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvGastos/ActivarInactivar/Consulta?IdProv=1
+  ```
+  
+  ### Parámetros de entrada (Query String)
+  
+  > ✅ = Requerido
+  
+  **`IdProv`** · INTEGER · ✅ — ID del proveedor de gastos.
+  
+  ### Respuesta
+  
+  **`IdError`** · BOOLEAN — `true` = error; `false` = éxito.
+  
+  **`Respuesta`** · STRING — Mensaje descriptivo.
+  
+  **`ttProvGastosActivo`** · ARRAY — Estado actual del proveedor (un solo registro).
+  
+  **`ttProvGastosActivo[].IdProv`** · INTEGER — ID del proveedor.
+  **`ttProvGastosActivo[].Activo`** · BOOLEAN — Estado actual: `true` = activo; `false` = inactivo.
+  **`ttProvGastosActivo[].FecBaja`** · DATE — Fecha de baja (null si está activo).
+  **`ttProvGastosActivo[].Motivo`** · STRING — Motivo de baja registrado.
+  **`ttProvGastosActivo[].IdUser`** · STRING — Último usuario que modificó el registro.
+  
+  ### Ejemplo de respuesta exitosa
+  
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Proveedor de gastos 1 — Activo: true",
+    "ttProvGastosActivo": [
+      {
+        "IdProv": 1,
+        "Activo": true,
+        "FecBaja": null,
+        "Motivo": "",
+        "IdUser": "avgo"
+      }
+    ]
+  }
+  ```
+  
+  ---
+}

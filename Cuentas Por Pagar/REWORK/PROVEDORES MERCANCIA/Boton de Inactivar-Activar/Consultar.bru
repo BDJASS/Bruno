@@ -1,0 +1,75 @@
+meta {
+  name: Consultar
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvMercancia/ActivarInactivar/Consulta?IdProv=6
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdProv: 6
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  ---
+  
+  ## 2. Consulta Estado — Mercancía (Toggle)
+  
+  **`GET`** `/ProvMercancia/ActivarInactivar/Consulta`
+  
+  Consulta el estado actual de un proveedor de mercancía. Usar antes del POST para conocer si está activo o inactivo.
+  
+  ```
+  GET http://192.0.1.14:8857/RestADOSACxp/rest/RestADOSACxp/ProvMercancia/ActivarInactivar/Consulta?IdProv=6
+  ```
+  
+  ### Parámetros de entrada (Query String)
+  
+  > ✅ = Requerido
+  
+  **`IdProv`** · INTEGER · ✅ — ID del proveedor de mercancía.
+  
+  ### Respuesta
+  
+  **`IdError`** · BOOLEAN — `true` = error; `false` = éxito.
+  
+  **`Respuesta`** · STRING — Mensaje descriptivo.
+  
+  **`ttProvActivo`** · ARRAY — Estado actual del proveedor (un solo registro).
+  
+  **`ttProvActivo[].IdProv`** · INTEGER — ID del proveedor.
+  **`ttProvActivo[].Activo`** · BOOLEAN — Estado actual: `true` = activo; `false` = inactivo.
+  **`ttProvActivo[].FecBaja`** · DATE — Fecha de baja (null si está activo).
+  **`ttProvActivo[].Motivo`** · STRING — Motivo de baja registrado.
+  **`ttProvActivo[].IdUser`** · STRING — Último usuario que modificó el registro.
+  
+  ### Ejemplo de respuesta exitosa
+  
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Proveedor 6 — Activo: true",
+    "ttProvActivo": [
+      {
+        "IdProv": 6,
+        "Activo": true,
+        "FecBaja": null,
+        "Motivo": "",
+        "IdUser": "avgo"
+      }
+    ]
+  }
+  ```
+  
+  ---
+  
+}
