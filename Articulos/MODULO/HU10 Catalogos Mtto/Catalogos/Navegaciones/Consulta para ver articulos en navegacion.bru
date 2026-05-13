@@ -1,0 +1,21 @@
+meta {
+  name: Consulta para ver articulos en navegacion
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/ConsultaArticulos?BuscaPor=6&Filtro=134
+  body: none
+  auth: inherit
+}
+
+params:query {
+  BuscaPor: 6
+  Filtro: 134
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
