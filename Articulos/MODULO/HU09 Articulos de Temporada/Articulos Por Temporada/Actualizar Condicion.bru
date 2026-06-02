@@ -1,0 +1,24 @@
+meta {
+  name: Actualizar Condicion
+  type: http
+  seq: 2
+}
+
+put {
+  url: http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/ArticulosDeTemporada/ActualizarCondicion?IdCond=1&Activo=true&FecVen=2026-06-02&Usuario=avgo&Password=*963.
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdCond: 1
+  Activo: true
+  FecVen: 2026-06-02
+  Usuario: avgo
+  Password: *963.
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

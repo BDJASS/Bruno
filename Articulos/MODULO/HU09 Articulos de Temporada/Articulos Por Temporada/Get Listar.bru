@@ -5,13 +5,15 @@ meta {
 }
 
 get {
-  url: http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/ArticulosDeTemporada/ListarArticulos?IdCond=1
+  url: http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/ArticulosDeTemporada/ListarArticulos?IdCond=1&Activo=true&FecVen=2026-06-02
   body: none
   auth: inherit
 }
 
 params:query {
   IdCond: 1
+  Activo: true
+  FecVen: 2026-06-02
 }
 
 settings {
