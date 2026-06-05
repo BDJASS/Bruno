@@ -5,9 +5,13 @@ meta {
 }
 
 delete {
-  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionCliente/Asociados/Eliminar
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionCliente/Asociados/Eliminar?IdUser=RGP
   body: json
   auth: inherit
+}
+
+params:query {
+  IdUser: RGP
 }
 
 body:json {

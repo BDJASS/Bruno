@@ -1,0 +1,21 @@
+meta {
+  name: Inactivar - Activar un Deposito
+  type: http
+  seq: 1
+}
+
+put {
+  url: {{RestADOSACyc}}/DepositoEstatus?Rec=8888&IdUsuario=jagr
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Rec: 8888
+  IdUsuario: jagr
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

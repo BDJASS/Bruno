@@ -1,0 +1,184 @@
+meta {
+  name: Estado de Cuenta Nuevo
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{RestADOSACyc}}/EstadoDeCuenta?IdCliente=35729&Fecha=2026-05-26&TasaInt=0&IdUser=sge
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdCliente: 35729
+  Fecha: 2026-05-26
+  TasaInt: 0
+  IdUser: sge
+  ~FechaEntrega: true
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # Ticket 1885 — InteresMoratorio por Factura en Estado de Cuenta
+  
+  ## 1. Descripción
+  
+  Se agrega el campo `InteresMoratorio` a nivel de renglón (por factura) en el servicio
+  **Estado de Cuenta**, permitiendo que el front-end muestre el interés moratorio calculado
+  individualmente para cada factura vencida, además del total que ya existía en el encabezado
+  del cliente (`ttDatos.IntMoratorios`).
+  
+  > **Corrección de ubicación:** el ajuste fue implementado inicialmente en `Movctep2.p`
+  > (`/MovimientoCliente`, tabla `ttDetalle`). Se removió de ese programa y se colocó
+  > correctamente en `estadoctacli2-Adelantado.p` (`/EstadoDeCuenta`, tabla `ttOrdenCompra`),
+  > que es el servicio que ya contaba con la lógica base del interés en el encabezado.
+  
+  ---
+  
+  ## 2. Servicio afectado
+  
+  **Servicio REST:** `/EstadoDeCuenta`  
+  **Programa:** `AppServer/estadoctacli2-Adelantado.p`  
+  **Procedure:** `GetEstadoCta`  
+  **Método:** `GET`
+  
+  **Ejemplo de endpoint:**
+  ```
+  /RestADOSACyc/rest/RestADOSACyc/EstadoDeCuenta
+    ?IdCliente=35729
+    &Fecha=2026-05-26
+    &TasaInt=18
+    &IdUser=SGE
+  ```
+  
+  ---
+  
+  ## 3. Parámetros de entrada
+  
+  > ✅ = Requerido · ❌ = Opcional
+  
+  **`IdCliente`** · INTEGER · ✅ — Id del cliente a consultar.
+  
+  **`Fecha`** · DATE · ✅ — Fecha de corte del estado de cuenta.
+  - Formato: `YYYY-MM-DD`
+  
+  **`TasaInt`** · DECIMAL · ✅ — Tasa de interés anual en porcentaje.
+  - Ej: `18` = 18% anual
+  - Si se envía `0` todos los campos `InteresMoratorio` y el total `IntMoratorios` serán `0`
+  
+  **`IdUser`** · STRING · ✅ — Clave del usuario que genera la consulta.
+  - Ej: `"SGE"`
+  
+  **`ipFechaEntrega`** · LOGICAL · ❌ — Modo de vencimiento según fecha de entrega (Ticket IMAPCOLOR).
+  - `true` = aplica lógica adelantado · `false` / omitido = vencimiento normal
+  
+  ---
+  
+  ## 4. Cambios en la estructura de respuesta
+  
+  ### Sección `ttOrdenCompra` — campo agregado
+  
+  **`InteresMoratorio`** · DECIMAL — Interés moratorio calculado para esa factura.
+  - `0` = factura por vencer, ya liquidada, en dólares o `TasaInt=0`
+  - `> 0` = factura MXN vencida con interés calculado
+  
+  ### Sección `ttDatos` — campos ya existentes (sin cambio)
+  
+  **`IntMoratorios`** · DECIMAL — Total de intereses moratorios del cliente.
+  - Debe ser igual a la suma de todos los renglones `ttOrdenCompra.InteresMoratorio`
+  
+  **`TasaInt`** · DECIMAL — Tasa diaria almacenada como referencia en la respuesta.
+  - Calculada internamente: `ROUND(ipTasaInt / 30.42, 2)`
+  
+  ---
+  
+  ## 5. Fórmula de cálculo
+  
+  ```
+  InteresMoratorio = Saldo × (TasaInt / 100 / 30.42) × DiasVencidos
+  ```
+  
+  | Variable       | Descripción                                        |
+  |----------------|----------------------------------------------------|
+  | `Saldo`        | Saldo pendiente de la factura                      |
+  | `TasaInt`      | Tasa anual enviada como parámetro (ej. `18`)       |
+  | `30.42`        | Promedio de días por mes (365 / 12)                |
+  | `DiasVencidos` | `ipFecha - MovCliente.FecVenc` (solo si > 0)       |
+  
+  **Condiciones para que se calcule:**
+  
+  - `MovCliente.Id-MC = 1` — solo facturas (no abonos ni notas)
+  - `MovCliente.Id-Moneda <= 1` — solo MXN (facturas en dólares quedan en `0`)
+  - `DiasVencidos > 0` — factura efectivamente vencida a la fecha de corte
+  - `TasaInt > 0` — tasa enviada distinta de cero
+  
+  ---
+  
+  ## 6. Ejemplo de respuesta JSON
+  
+  ```json
+  "ttDatos": [
+    {
+      "IdCliente": 35729,
+      "RazonSocial": "SAUBER PRINT",
+      "SaldoActual": 2579035.13,
+      "TotVencido": 2437552.11,
+      "TotPorVencer": 141483.02,
+      "IntMoratorios": 42318.75,
+      "TasaInt": 0.59
+    }
+  ],
+  "ttOrdenCompra": [
+    {
+      "Folio": "3025137",
+      "FecReg": "2025-07-16",
+      "FecVenc": "2025-09-14",
+      "Descr": "FACT.",
+      "Vencido": 151559.18,
+      "DiasVencido": "254",
+      "PorPagar": 151559.18,
+      "InteresMoratorio": 2854.30
+    },
+    {
+      "Folio": "3025148",
+      "FecReg": "2025-07-17",
+      "FecVenc": "2025-09-15",
+      "Descr": "FACT.",
+      "Vencido": 34581.36,
+      "DiasVencido": "253",
+      "PorPagar": 34581.36,
+      "InteresMoratorio": 649.87
+    }
+  ]
+  ```
+  
+  ---
+  
+  ## 7. Notas técnicas
+  
+  - El resultado se redondea a 2 decimales: `ROUND(saldo × tasa × diasVencidos, 2)`.
+  - La tasa se convierte internamente a **tasa diaria**: `ipTasaInt / 100 / 30.42`.
+  - El cálculo ocurre dentro del bloque `IF MovCliente.Id-MC = 1` en `GetEstadoCta`,
+    después de consolidar el saldo con todos sus abonos.
+  - Para facturas en **dólares** (`Id-Moneda > 1`) la tasa se fuerza a `0`
+    (línea `IF MovCliente.Id-Moneda > 1 THEN ASSIGN l-tasa = 0`).
+  
+  ---
+  
+  ## 8. Historial de cambios
+  
+  | Fecha | Autor | Descripción |
+  |-------|-------|-------------|
+  | 2026-05-27 | JASS | Ticket 1885 — Se agrega `InteresMoratorio` en `ttOrdenCompra` de `estadoctacli2-Adelantado.p`. |
+  | 2026-05-27 | JASS | Se remueve ajuste previo en `Movctep2.p` (`/MovimientoCliente`); campo ubicado en servicio correcto. |
+  
+  ---
+  
+  **Desarrollado por:** SIS10 - JASS
+  
+}

@@ -1,0 +1,23 @@
+meta {
+  name: Estado de Cuenta Anterior
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{RestADOSACyc}}/EstadoCuentaCli?IdCliente=35947&Fecha=2026-04-27&TasaInt=0&IdUser=sge
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdCliente: 35947
+  Fecha: 2026-04-27
+  TasaInt: 0
+  IdUser: sge
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

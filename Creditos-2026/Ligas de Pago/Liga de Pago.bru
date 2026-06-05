@@ -1,0 +1,16 @@
+meta {
+  name: Liga de Pago
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{RestADOSACyc}}/LigaPago
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

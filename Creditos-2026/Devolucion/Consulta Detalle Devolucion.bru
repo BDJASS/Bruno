@@ -1,0 +1,227 @@
+meta {
+  name: Consulta Detalle Devolucion
+  type: http
+  seq: 1
+}
+
+get {
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/DevolucionDetalle?IdDev=904785
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdDev: 904785
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # `GET /DevolucionDetalle` — Detalle de Devolución de Cliente
+  
+  ## 1. Descripción
+  
+  Retorna el encabezado y el detalle por artículo de una devolución de cliente,
+  dado su folio (`Id-Dev`). Basado en el programa de modo carácter `ausc0010.p`.
+  
+  - **Archivo:** `AppServer/ausdevolucion.p`
+  - **Procedure:** `GetDevolucion`
+  - **Tipo:** REST · single-run
+  
+  ---
+  
+  ## 2. Parámetros de entrada
+  
+  > ✅ = Requerido
+  
+  **`ipIdDev`** · INTEGER · ✅ — Folio de la devolución a consultar.
+  - Ej: `12345`
+  
+  ---
+  
+  ## 3. Parámetros de salida (no-dataset)
+  
+  **`IdError`** · BOOLEAN — Indica si ocurrió un error en la consulta.
+  - `true` = error · `false` = éxito
+  
+  **`Respuesta`** · STRING — Mensaje descriptivo del resultado.
+  - `"OK"` cuando todo salió bien.
+  - `"Devolucion no encontrada: 12345"` cuando el folio no existe.
+  - `"Error: <mensaje>"` ante una excepción de OpenEdge.
+  
+  ---
+  
+  ## 4. Dataset de respuesta — `dsDevolucion`
+  
+  Estructura padre-hijo relacionada por `IdDev`.
+  
+  ```
+  dsDevolucion
+   ├── ttEncDev   (1 registro — encabezado)
+   └── ttDetDev   (N registros — detalle por artículo)
+  ```
+  
+  ---
+  
+  ## 5. Campos de respuesta — `ttEncDev` (encabezado)
+  
+  **`IdDev`** · INTEGER — Folio de la devolución.
+  **`Fecha`** · STRING — Fecha de registro en formato largo. Ej: `"25 DE MAYO DE 2026"`
+  **`TipoMovimiento`** · STRING — Siempre `"DEVOLUCION DE CLIENTES"`
+  **`IdCliente`** · INTEGER — Clave del cliente.
+  **`RazonSocial`** · STRING — Nombre o razón social del cliente.
+  **`IdFactura`** · STRING — Folio de la factura o remisión relacionada.
+  **`TipoVenta`** · INTEGER — Tipo de documento origen.
+  - `1` o `2` = Remisión · `3` = Factura
+  **`TipoLabel`** · STRING — Indicador visual del tipo seleccionado.
+  - `"(1) 2 3"` · `"1 (2) 3"` · `"1 2 (3)"`
+  **`FechaFac`** · STRING — Fecha de la factura/remisión en formato largo.
+  **`IdPer`** · STRING — Clave del supervisor que autorizó.
+  **`NombreAuth`** · STRING — Nombre del supervisor autorizador.
+  **`Bultos`** · INTEGER — Cantidad de bultos de la devolución.
+  **`Tarimas`** · INTEGER — Cantidad de tarimas de la devolución.
+  **`Coment1`** · STRING — Comentario línea 1.
+  **`Coment2`** · STRING — Comentario línea 2.
+  **`Coment3`** · STRING — Comentario línea 3.
+  **`IdVendedor`** · STRING — Clave del vendedor.
+  **`NomVendedor`** · STRING — Nombre del vendedor.
+  **`IdMotivo`** · INTEGER — Código del motivo de la devolución.
+  **`DescrMotivo`** · STRING — Descripción del motivo.
+  **`ImpSinIva`** · DECIMAL — Importe de la devolución sin IVA (`Devolucion.SubTotal`).
+  **`ConIva`** · DECIMAL — Importe total con IVA (`Devolucion.Tot`).
+  **`Leyenda`** · STRING — Leyenda de aplicación según el estado del documento (ver sección 6).
+  
+  ---
+  
+  ## 6. Lógica de la Leyenda
+  
+  El campo `Leyenda` varía según el tipo y estado de la devolución:
+  
+  ### TipoVenta = 3 (Factura)
+  
+  | Condición | Leyenda |
+  |-----------|---------|
+  | Tiene NCR generada | `"SE GENERO NOTA CREDITO # {Id-NCR}"` |
+  | Factura cancelada | `"FACTURA CANCELADA"` |
+  | Sin NCR y sin cancelar | `"APLICACION PENDIENTE EN CREDITOS"` |
+  
+  ### TipoVenta = 1 ó 2 (Remisión)
+  
+  | Condición | Leyenda |
+  |-----------|---------|
+  | Remisión pagada con cheque a fecha futura | `"APLICAR EN CAJA {FecDep}"` |
+  | Remisión pagada, cancelada el mismo día | `"DEVOLVER PAGO, CAJA # {Id-Caja}"` |
+  | Remisión cancelada (posterior a 10/06/1997) | `"FACTURA CANCELADA"` |
+  | Remisión activa no pagada | `"APLICAR EN GLOBAL"` |
+  | Default (vence a 180 días) | `"APLICAR EN CAJA - VENCE EL DIA {DD MES AAAA}"` |
+  
+  ---
+  
+  ## 7. Campos de respuesta — `ttDetDev` (detalle por artículo)
+  
+  **`IdDev`** · INTEGER — Folio de la devolución (FK con `ttEncDev`).
+  **`Sec`** · INTEGER — Secuencia de localización CEDIS (0 si no aplica).
+  **`IdArticulo`** · STRING — Código del artículo devuelto.
+  **`Descr`** · STRING — Descripción del artículo.
+  **`Kolor`** · STRING — Abreviatura del color del artículo.
+  **`Cant`** · DECIMAL — Cantidad devuelta.
+  **`PresDescr`** · STRING — Descripción de la presentación del artículo.
+  
+  > Los registros de detalle se ordenan por almacén (`DetDev.Id-Alm`).
+  
+  ---
+  
+  ## 8. Ejemplo de respuesta
+  
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "OK",
+    "dsDevolucion": {
+      "ttEncDev": [
+        {
+          "IdDev": 98765,
+          "Fecha": "25 DE MAYO DE 2026",
+          "TipoMovimiento": "DEVOLUCION DE CLIENTES",
+          "IdCliente": 4321,
+          "RazonSocial": "PAPELERIA EL SOL SA DE CV",
+          "IdFactura": "F-0054321",
+          "TipoVenta": 3,
+          "TipoLabel": "1 2 (3)",
+          "FechaFac": "10 DE ABRIL DE 2026",
+          "IdPer": "15",
+          "NombreAuth": "JUAN PEREZ GARCIA",
+          "Bultos": 2,
+          "Tarimas": 0,
+          "Coment1": "PRODUCTO EN MAL ESTADO",
+          "Coment2": "",
+          "Coment3": "",
+          "IdVendedor": "VEN01",
+          "NomVendedor": "MARIA LOPEZ",
+          "IdMotivo": 3,
+          "DescrMotivo": "DEFECTO DE FABRICA",
+          "ImpSinIva": 1500.00,
+          "ConIva": 1740.00,
+          "Leyenda": "SE GENERO NOTA CREDITO # NC-00123"
+        }
+      ],
+      "ttDetDev": [
+        {
+          "IdDev": 98765,
+          "Sec": 0,
+          "IdArticulo": "ART-001",
+          "Descr": "CUADERNO PROFESIONAL 100H",
+          "Kolor": "AZL",
+          "Cant": 12.00,
+          "PresDescr": "PIEZA"
+        },
+        {
+          "IdDev": 98765,
+          "Sec": 5,
+          "IdArticulo": "ART-002",
+          "Descr": "FOLDER TAMAÑO CARTA",
+          "Kolor": "RJO",
+          "Cant": 24.00,
+          "PresDescr": "PAQUETE"
+        }
+      ]
+    }
+  }
+  ```
+  
+  ---
+  
+  ## 9. Errores comunes
+  
+  **`IdError = true`** · `"Devolucion no encontrada: {folio}"` — El folio no existe en la tabla `Devolucion`.
+  **`IdError = true`** · `"Error: {mensaje OE}"` — Excepción de OpenEdge atrapada en el `CATCH`.
+  
+  ---
+  
+  ## 10. Tablas de base de datos consultadas
+  
+  | Tabla | Uso |
+  |-------|-----|
+  | `Devolucion` | Registro principal de la devolución |
+  | `DetDev` | Líneas de artículos de la devolución |
+  | `Cliente` | Nombre del cliente |
+  | `Factura` | Fecha y datos de la factura (TipoVenta=3) |
+  | `Remision` | Datos de la remisión (TipoVenta 1-2) |
+  | `Vendedor` / `Empleado` | Nombre del vendedor |
+  | `Supervisor` / `Empleado` | Nombre del autorizador |
+  | `MotivoDev` | Descripción del motivo |
+  | `Articulo` | Descripción del artículo |
+  | `Kolor` | Abreviatura del color |
+  | `ArtPres` | Descripción de la presentación |
+  | `Almacen` | Tipo CEDIS para localizacion |
+  | `DetLoc3` / `Localizacion` | Localización en CEDIS cuando aplica |
+  | `MovCaja` / `ChequePF` | Datos de pago para leyenda en remisiones |
+  
+  ---
+  
+  **Desarrollado por:** SIS10 - JASS
+  
+}

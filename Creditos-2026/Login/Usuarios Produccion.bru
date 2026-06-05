@@ -1,0 +1,21 @@
+meta {
+  name: /Usuarios Produccion
+  type: http
+  seq: 2
+}
+
+get {
+  url: 192.0.1.9:8813/RestADOSASysAdmin/rest/RestADOSASysAdmin/Usuarios?IdUser=avgo&HisPassword=verogcia
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdUser: avgo
+  HisPassword: verogcia
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

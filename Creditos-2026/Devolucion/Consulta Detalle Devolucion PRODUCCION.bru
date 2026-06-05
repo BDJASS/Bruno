@@ -1,0 +1,20 @@
+meta {
+  name: Consulta Detalle Devolucion PRODUCCION
+  type: http
+  seq: 2
+}
+
+get {
+  url: 192.0.1.9:8816/RestADOSACyc/rest/RestADOSACyc/DevolucionDetalle?IdDev=483886
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdDev: 483886
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
