@@ -24,10 +24,54 @@ body:json {
       }
     ]
   }
-  
+
 }
 
 settings {
   encodeUrl: true
   timeout: 0
+}
+
+docs {
+  ## Modificar Sinónimo
+
+  **Descripción**: Actualiza el valor de un sinónimo existente asociado a un artículo, reemplazando el sinónimo actual por uno nuevo.
+
+  **Módulo**: Sinonimos — HU03 Articulos
+
+  **Método**: PUT
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/Sinonimos/ModificarSinonimo`
+
+  ---
+
+  ## Parámetros (Query String)
+
+  **`IdUsuario`** · STRING · Requerido — Identificador del usuario que realiza la operación.
+  - Ej: `"meev"`
+
+  ---
+
+  ## Body (JSON)
+
+  **`ttAltaSinonimo`** · ARRAY — Arreglo con los datos del sinónimo a modificar.
+
+  Campos de cada objeto en `ttAltaSinonimo`:
+
+  **`IdArticulo`** · STRING — Clave del artículo al que pertenece el sinónimo.
+  - Ej: `"047306"`
+
+  **`Sinon`** · STRING — Sinónimo actual que se desea reemplazar.
+  - Ej: `"30096UR"`
+
+  **`SinonNuevo`** · STRING — Nuevo valor del sinónimo que sustituirá al existente.
+  - Ej: `"30095UR"`
+
+  ---
+
+  ## Notas
+
+  - Autenticación: heredada del entorno (`auth: inherit`).
+  - La URL está configurada con codificación de parámetros activada (`encodeUrl: true`).
+  - El timeout está establecido en `0` (sin límite de tiempo de espera).
 }

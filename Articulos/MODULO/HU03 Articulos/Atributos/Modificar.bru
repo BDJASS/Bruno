@@ -22,3 +22,41 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Modificar Atributo de Artículo
+
+  **Descripción**: Modifica el valor de un atributo específico asociado a un artículo existente en el sistema.
+
+  **Método**: PUT
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Atributos/ModificarAtributo`
+
+  ---
+
+  ### Parámetros
+
+  **`IdUsuario`** · STRING · Identificador del usuario que realiza la modificación.
+
+  **`IdArticulo`** · STRING · Clave del artículo al que pertenece el atributo a modificar.
+
+  **`IdAtributo`** · INTEGER · Identificador del atributo que se desea modificar.
+
+  **`ValorAnterior`** · STRING · Valor actual del atributo antes de la modificación.
+
+  **`ValorNuevo`** · STRING · Nuevo valor que se asignará al atributo.
+
+  ---
+
+  ### Body
+
+  Este endpoint no requiere cuerpo en la solicitud. Los parámetros se envían como Query String.
+
+  ---
+
+  ### Notas
+
+  - El parámetro `ValorAnterior` se utiliza como validación para confirmar que el valor a reemplazar coincide con el registrado en el sistema antes de aplicar el cambio.
+  - Si el `IdAtributo` o `IdArticulo` no existen, se espera una respuesta de error desde el servidor.
+  - La autenticación es heredada del entorno configurado (`auth: inherit`).
+}

@@ -18,3 +18,23 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## GetEspaciosDisponibles
+
+  **Descripción**: Obtiene los espacios de almacenamiento disponibles para un grupo de artículos específico.
+
+  **Método**: GET
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/GetEspaciosDisponibles?IdGrupo=1259`
+
+  ## Parámetros
+
+  **`IdGrupo`** · INTEGER · Requerido — Identificador del grupo de artículos para el cual se consultan los espacios disponibles.
+
+  ## Notas
+
+  - No requiere body en la solicitud.
+  - La autenticación se hereda de la configuración del entorno.
+  - La URL se codifica automáticamente según la configuración del request.
+}

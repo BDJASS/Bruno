@@ -19,3 +19,34 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## GetProveedores
+
+  **Descripción**: Obtiene la lista de proveedores asociados a un artículo específico.
+
+  **Módulo**: PROVEDOR (HU03 Articulos)
+
+  **Método**: GET
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/ArticuloProveedor/GetProveedores`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  **`IdUsuario`** · STRING · Requerido — Identificador del usuario que realiza la consulta.
+  - Ej: `"meev"`
+
+  **`IdArticulo`** · STRING · Requerido — Código del artículo del cual se desean obtener los proveedores.
+  - Ej: `"044710"`
+
+  ---
+
+  ### Notas
+
+  - Autenticación: heredada del entorno (`auth: inherit`).
+  - La URL se codifica automáticamente (`encodeUrl: true`).
+  - Sin tiempo de espera configurado (`timeout: 0`).
+  - No requiere cuerpo en la petición (`body: none`).
+}

@@ -21,3 +21,42 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Eliminar Fotos
+
+  **Descripción**: Elimina una foto asociada a un artículo, identificada por tipo, nombre de archivo y consecutivo.
+
+  **Módulo**: HU03 Articulos / FOTOS
+
+  **Método**: DELETE
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Fotos/Eliminar`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdArticulo`** · STRING · ✅ — Identificador único del artículo al que pertenece la foto.
+  - Ej: `"000304"`
+
+  **`TipoFoto`** · STRING · ✅ — Tipo o categoría de la foto a eliminar.
+  - Ej: `"principal"`
+
+  **`NombreArchivo`** · STRING · ✅ — Nombre del archivo de imagen que se desea eliminar.
+  - Ej: `"000304.png"`
+
+  **`Consecutivo`** · INTEGER · ✅ — Número consecutivo que identifica la foto dentro del tipo.
+  - Ej: `0`
+
+  ---
+
+  ### Notas
+
+  - **Autenticación**: heredada del entorno (`auth: inherit`).
+  - **Codificación de URL**: activada (`encodeUrl: true`).
+  - **Timeout**: sin límite de tiempo de espera (`timeout: 0`).
+  - No se envía cuerpo en la petición; todos los parámetros van en el Query String.
+}

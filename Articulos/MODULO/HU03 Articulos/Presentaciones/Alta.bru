@@ -28,19 +28,19 @@ body:json {
       "IdArticulo": "125926",
       "Descr": "CAJA 20",
       "Tipo": 2,
-       "Flag" :"C",   
+       "Flag" :"C",
       "Equiv": 1.00
     },
-      
+
        {
       "IdArticulo": "125926",
       "Descr": "CAJA 20",
       "Tipo": 3,
-       "Flag" :"M",   
+       "Flag" :"M",
       "Equiv": 1.00
     }
-      
-    
+
+
     ]
   }
 }
@@ -48,4 +48,48 @@ body:json {
 settings {
   encodeUrl: true
   timeout: 0
+}
+
+docs {
+  ## Alta de Presentaciones de Artículo
+
+  **Descripción**: Crea una o más presentaciones para un artículo específico en el catálogo.
+
+  **Método**: POST
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Presentacion/CrearPresentacion`
+
+  ---
+
+  ### Parámetros de entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdArticulo`** · INTEGER · ✅ — Identificador del artículo al que se le asignan las presentaciones.
+
+  **`IdUsuario`** · STRING · ✅ — Clave del usuario que realiza la operación.
+
+  ---
+
+  ### Body (JSON)
+
+  Arreglo `ttPresentacion` con uno o más objetos de presentación:
+
+  **`IdArticulo`** · STRING · ✅ — Identificador del artículo (debe coincidir con el parámetro de query).
+
+  **`Descr`** · STRING · ✅ — Descripción de la presentación (ej. `"CAJA 20"`).
+
+  **`Tipo`** · INTEGER · ✅ — Tipo de presentación. Valores posibles: `1` Base · `2` Con Flag de compra · `3` Con Flag de manejo.
+
+  **`Flag`** · STRING · ❌ — Indicador especial de la presentación. Ej: `"C"` = Compra · `"M"` = Manejo. Solo aplica para tipos 2 y 3.
+
+  **`Equiv`** · DECIMAL · ✅ — Factor de equivalencia de la presentación respecto a la unidad base.
+
+  ---
+
+  ### Notas
+
+  - Se pueden enviar múltiples presentaciones en un solo llamado incluyendo varios objetos dentro del arreglo `ttPresentacion`.
+  - El campo `Flag` es opcional y solo se usa cuando el tipo de presentación requiere una clasificación adicional (tipos 2 y 3).
+  - El `IdArticulo` debe ser el mismo tanto en los parámetros de query como en cada objeto del body.
 }

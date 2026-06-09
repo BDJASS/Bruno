@@ -5,15 +5,15 @@ meta {
 }
 
 get {
-  url: http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/ConsultaArticulos?Activo=true&BuscaPor=0
+  url: http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/ConsultaArticulos?BuscaPor=4&Filtro=044706
   body: none
   auth: inherit
 }
 
 params:query {
-  Activo: true
-  BuscaPor: 0
-  ~Filtro: 044706
+  BuscaPor: 4
+  Filtro: 044706
+  ~Activo: true
   ~FecIni: 2025-01-01
   ~FecFin: 2025-10-01
 }

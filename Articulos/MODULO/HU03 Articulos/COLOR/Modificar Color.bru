@@ -30,3 +30,43 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Modificar Color
+
+  **Descripción**: Modifica los datos de un color asociado a un artículo existente en el sistema.
+
+  **Método**: PUT
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/ArticuloColor/ModificarColor?IdUsuario=meev`
+
+  ---
+
+  ### Parámetros de entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUsuario`** · STRING · ✅ — Identificador del usuario que realiza la modificación.
+
+  ---
+
+  ### Body (JSON)
+
+  **`ttAltaArtCol`** · ARRAY — Lista de registros de color de artículo a modificar.
+
+  Campos de cada objeto en `ttAltaArtCol`:
+
+  **`IdArticulo`** · STRING — Identificador del artículo al que pertenece el color.
+
+  **`IdColor`** · INTEGER — Identificador numérico del color a modificar.
+
+  **`CveHex`** · STRING — Código hexadecimal del color (ej. `FF0000` para rojo).
+
+  ---
+
+  ### Notas
+
+  - Se debe enviar al menos un objeto dentro del arreglo `ttAltaArtCol`.
+  - El campo `CveHex` debe ser un valor hexadecimal válido de 6 caracteres sin el símbolo `#`.
+  - La URL incluye el parámetro `IdUsuario` tanto en el query string como debe enviarse en el body si es requerido por el servidor.
+}

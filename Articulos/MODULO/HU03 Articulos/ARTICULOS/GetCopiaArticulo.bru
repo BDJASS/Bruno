@@ -1,7 +1,7 @@
 meta {
   name: GetCopiaArticulo
   type: http
-  seq: 4
+  seq: 3
 }
 
 get {
@@ -17,4 +17,37 @@ params:query {
 settings {
   encodeUrl: true
   timeout: 0
+}
+
+docs {
+  ## GetCopiaArticulo
+  
+  **Descripción**: Obtiene una copia de los datos de un artículo existente para ser utilizada como base en el alta de un nuevo artículo.
+  
+  **Método**: GET
+  
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/GetCopiaArticulo?IdArticulo=044401`
+  
+  ---
+  
+  ### Parámetros
+  
+  > ✅ = Requerido · ❌ = Opcional
+  
+  **`IdArticulo`** · STRING · ✅ — Identificador del artículo del cual se desea obtener una copia.
+  - Ej: `"044401"`
+  
+  ---
+  
+  ### Body
+  
+  Esta solicitud no requiere cuerpo (body: none).
+  
+  ---
+  
+  ### Notas
+  
+  - El endpoint forma parte del módulo de **Alta de Artículos**.
+  - Se utiliza para precargar los datos de un artículo existente y facilitar la creación de uno nuevo basado en él.
+  - La URL base del servicio es `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/`.
 }

@@ -19,3 +19,32 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Ficha Tecnica — Eliminar
+
+  **Descripción**: Elimina una ficha técnica asociada a un artículo específico, identificada por su número de secuencia.
+
+  **Módulo**: HU03 Articulos / Ficha Tecnica
+
+  **Método**: DELETE
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Fichas/Eliminar`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  **`IdArticulo`** · STRING · Requerido — Identificador único del artículo al que pertenece la ficha técnica a eliminar.
+
+  **`Secuencia`** · INTEGER · Requerido — Número de secuencia que identifica la ficha técnica específica dentro del artículo.
+
+  ---
+
+  ### Notas
+
+  - Autenticación heredada del entorno (`auth: inherit`).
+  - La URL es codificada automáticamente (`encodeUrl: true`).
+  - Sin tiempo de espera configurado (`timeout: 0`), la petición no expira.
+  - No se envía cuerpo en la petición (`body: none`).
+}

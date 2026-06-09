@@ -19,3 +19,30 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Activa / Desactiva Artículo
+
+  **Descripción:** Activa o desactiva un artículo en el sistema ADOSA según el identificador proporcionado.
+
+  **Método:** POST
+
+  **URL:** `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/ActivarDesactivarArticulo`
+
+  ### Parámetros de entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdArticulo`** · STRING · ✅ — Identificador único del artículo a activar o desactivar.
+
+  **`IdUsuario`** · STRING · ✅ — Identificador del usuario que realiza la operación.
+
+  ### Body
+
+  No aplica — el endpoint no requiere cuerpo en la solicitud.
+
+  ### Notas
+
+  - El endpoint alterna el estado del artículo (activo/inactivo) según su configuración actual en la base de datos.
+  - Se debe proporcionar un `IdUsuario` válido para registrar la auditoría de la operación.
+}

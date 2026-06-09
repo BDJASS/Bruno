@@ -19,3 +19,32 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Get Complementos
+
+  **Descripción**: Obtiene los complementos asociados a un artículo específico para un usuario determinado.
+
+  **Módulo**: HU03 Articulos / Complementos
+
+  **Método**: GET
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/Complementos/GetComplementos?IdArticulo=044711&IdUsuario=meev`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  **`IdArticulo`** · STRING · Requerido — Identificador del artículo del cual se desean obtener los complementos.
+
+  **`IdUsuario`** · STRING · Requerido — Identificador del usuario que realiza la consulta.
+
+  ---
+
+  ### Notas
+
+  - Autenticación: heredada del entorno (`auth: inherit`).
+  - La URL es codificada automáticamente (`encodeUrl: true`).
+  - Sin límite de tiempo de espera configurado (`timeout: 0`).
+  - No requiere cuerpo en la solicitud (`body: none`).
+}

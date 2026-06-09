@@ -18,3 +18,29 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Consultar Lista de Fotos
+
+  **Descripción**: Obtiene la lista de fotos asociadas a un artículo específico, identificado por su ID.
+
+  **Módulo**: HU03 Articulos / FOTOS
+
+  **Método**: GET
+
+  **URL**: `http://192.0.1.9:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Fotos/Listar?IdArticulo=125919`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  **`IdArticulo`** · INTEGER · ✅ — Identificador único del artículo del cual se desea consultar las fotos.
+
+  ---
+
+  ### Notas
+
+  - La autenticación se hereda del nodo padre (`auth: inherit`).
+  - La URL es codificada automáticamente (`encodeUrl: true`).
+  - No se establece tiempo límite de espera (`timeout: 0`).
+}

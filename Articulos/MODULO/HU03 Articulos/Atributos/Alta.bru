@@ -28,3 +28,33 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Alta de Atributo de Artículo
+
+  **Descripción**: Crea un nuevo atributo asociado a un artículo específico en el sistema.
+
+  **Método**: POST
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Atributos/CrearAtributo`
+
+  ### Parámetros de entrada (Query String)
+
+  **`IdUsuario`** · STRING · ✅ — Identificador del usuario que realiza la operación.
+  - Ej: `"meev"`
+
+  ### Body (JSON)
+
+  **`ttAtributo`** · ARRAY — Lista de atributos a crear.
+
+  Campos de cada objeto en `ttAtributo`:
+
+  **`IdArticulo`** · STRING — Clave del artículo al que se asigna el atributo.
+  **`IdAtributo`** · INTEGER — Identificador numérico del atributo a registrar.
+  **`Valor`** · STRING — Valor asignado al atributo del artículo.
+
+  ### Notas
+
+  - El endpoint requiere que se indique `IdUsuario` tanto en el query string como en el cuerpo de la solicitud si aplica.
+  - Se pueden enviar múltiples atributos en el arreglo `ttAtributo` en una sola llamada.
+}

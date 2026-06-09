@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: http://192.0.1.9:8828/RestADOSArt/rest/RestADOSArt/ConsultaArticulos?Activo=true&BuscaPor=0
+  url: http://192.0.1.9:8828/RestADOSArt/rest/RestADOSArt/ConsultaArticulos?Activo=true&BuscaPor=0&Filtro=0
   body: none
   auth: inherit
 }
@@ -13,7 +13,7 @@ get {
 params:query {
   Activo: true
   BuscaPor: 0
-  ~Filtro: 023602
+  Filtro: 0
   ~FecIni: 2025-01-01
   ~FecFin: 2025-10-01
 }

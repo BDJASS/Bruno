@@ -19,3 +19,34 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Get Sustitutos
+
+  **Descripción**: Obtiene la lista de artículos sustitutos asociados a un artículo específico.
+
+  **Módulo**: HU03 Articulos / Sustitutos
+
+  **Método**: GET
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/Sustitutos/GetSustitutos`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  **`IdArticulo`** · STRING · Requerido — Identificador del artículo del cual se desean obtener los sustitutos.
+  - Ej: `044786`
+
+  **`IdUsuario`** · STRING · Requerido — Identificador del usuario que realiza la consulta.
+  - Ej: `meev`
+
+  ---
+
+  ### Notas
+
+  - Autenticación: heredada de la colección (`auth: inherit`).
+  - La URL se codifica automáticamente (`encodeUrl: true`).
+  - Sin tiempo de espera configurado (`timeout: 0`), la petición espera indefinidamente.
+  - No requiere cuerpo en la solicitud (`body: none`).
+}

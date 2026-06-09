@@ -19,3 +19,33 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Presentacion
+
+  **Descripción**: Obtiene el catálogo de presentaciones disponibles para un artículo específico, utilizado como dato maestro en el módulo de insumos.
+
+  **Módulo**: HU03 Articulos / Transformacion / Insumos / Catalogos para Insumos
+
+  **Método**: GET
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/CatalogoArtPres`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  **`IdArticulo`** · STRING · Requerido — Identificador del artículo del cual se desean consultar las presentaciones.
+  - Ej: `054019`
+
+  **`IdPres`** · INTEGER · Opcional — Identificador de la presentación específica a consultar. Enviar `0` para obtener todas las presentaciones del artículo.
+  - Ej: `0` = todas las presentaciones
+
+  ---
+
+  ### Notas
+
+  - Autenticación: heredada del entorno (`auth: inherit`).
+  - La URL se codifica automáticamente (`encodeUrl: true`).
+  - Sin tiempo límite de espera configurado (`timeout: 0`).
+}

@@ -18,3 +18,24 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Consulta de Atributos de Artículo
+
+  **Descripción:** Consulta los atributos asociados a un artículo específico mediante su identificador.
+
+  **Método:** GET
+
+  **URL:** `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Atributos/ConsultarAtributo`
+
+  ### Parámetros
+
+  **`IdArticulo`** · STRING · Requerido — Identificador único del artículo cuyos atributos se desean consultar.
+  - Ej: `044711`
+
+  ### Notas
+
+  - No requiere body en la solicitud.
+  - La autenticación es heredada de la colección padre.
+  - La codificación de URL está habilitada.
+}

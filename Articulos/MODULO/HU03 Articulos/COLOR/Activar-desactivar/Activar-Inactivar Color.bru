@@ -20,3 +20,37 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Activar / Inactivar Color
+
+  **Descripción:** Activa o desactiva un color asociado a un artículo específico en el sistema.
+
+  **Módulo:** COLOR — HU03 Artículos
+
+  **Método:** POST
+
+  **URL:** `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/ArticuloColor/ActivarDesactivarColor`
+
+  ---
+
+  ## Parámetros (Query String)
+
+  **`IdUsuario`** · STRING · Requerido — Identificador del usuario que ejecuta la acción.
+  - Ej: `"meev"`
+
+  **`IdColor`** · INTEGER · Requerido — Identificador del color que se desea activar o desactivar.
+  - Ej: `4`
+
+  **`IdArticulo`** · STRING · Requerido — Código del artículo al que pertenece el color.
+  - Ej: `"001005"`
+
+  ---
+
+  ## Notas
+
+  - No requiere body; todos los datos se envían como parámetros en la URL (Query String).
+  - La autenticación se hereda de la colección padre (`auth: inherit`).
+  - La codificación de URL está habilitada (`encodeUrl: true`).
+  - Sin límite de tiempo de espera configurado (`timeout: 0`).
+}

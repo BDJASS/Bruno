@@ -39,3 +39,62 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Modificar Proveedor de Artículo
+
+  **Descripción**: Modifica la información de un proveedor asociado a un artículo existente en el sistema.
+
+  **Módulo**: PROVEDOR — HU03 Artículos
+
+  **Método**: PUT
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/ArticuloProveedor/ModificarProveedor`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  **`IdUsuario`** · STRING · Requerido — Identificador del usuario que realiza la operación.
+  - Ej: `"meev"`
+
+  **`IdArticulo`** · STRING · Requerido — Clave del artículo al que pertenece el proveedor a modificar.
+  - Ej: `"001005"`
+
+  ---
+
+  ### Body (JSON)
+
+  El cuerpo de la petición debe contener el objeto `ttAltaArtProv` con los siguientes campos:
+
+  **`IdArticulo`** · STRING — Clave del artículo.
+
+  **`IdProv`** · INTEGER — Identificador del proveedor.
+
+  **`IdPres`** · INTEGER — Identificador de la presentación del artículo.
+
+  **`LMC`** · DECIMAL — Lote mínimo de compra.
+
+  **`Empaque`** · STRING — Descripción o cantidad del empaque del artículo.
+
+  **`PrecioProv`** · DECIMAL — Precio del proveedor para el artículo.
+
+  **`FecPrecio`** · STRING (fecha `YYYY-MM-DD`) — Fecha de vigencia del precio del proveedor.
+
+  **`Referencia`** · STRING — Referencia interna o del proveedor para el artículo. Puede ser vacío.
+
+  **`IdMoneda`** · INTEGER — Identificador de la moneda en que se expresa el precio.
+
+  **`Desc1`** · DECIMAL — Primer descuento aplicable (porcentaje).
+
+  **`Desc2`** · DECIMAL — Segundo descuento aplicable (porcentaje).
+
+  ---
+
+  ### Notas
+
+  - La autenticación se hereda del entorno configurado en Bruno (`auth: inherit`).
+  - La URL se codifica automáticamente (`encodeUrl: true`).
+  - El tiempo de espera de la petición está configurado sin límite (`timeout: 0`).
+  - El campo `ttAltaArtProv` es un arreglo que permite enviar uno o más registros de proveedor en una sola llamada.
+}

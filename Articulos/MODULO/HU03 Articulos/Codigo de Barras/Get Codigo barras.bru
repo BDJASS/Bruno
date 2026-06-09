@@ -18,3 +18,23 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Get Codigo barras
+
+  **Descripción**: Obtiene la lista de códigos de barras asociados a un artículo específico.
+
+  **Método**: GET
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/CodigoDeBarras/ListarCodigo?IdArticulo=044711`
+
+  ### Parámetros
+
+  **`IdArticulo`** · STRING · Requerido — Identificador del artículo del cual se desean obtener los códigos de barras.
+  - Ej: `044711`
+
+  ### Notas
+
+  - No requiere cuerpo en la solicitud (body: none).
+  - La autenticación se hereda de la configuración del entorno (auth: inherit).
+}

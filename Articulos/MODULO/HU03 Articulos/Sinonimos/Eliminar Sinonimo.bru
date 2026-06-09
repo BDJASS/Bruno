@@ -20,3 +20,34 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Eliminar Sinonimo
+
+  **Descripción**: Elimina un sinónimo asociado a un artículo específico en el sistema.
+
+  **Módulo**: Sinonimos — HU03 Articulos
+
+  **Método**: DELETE
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/Sinonimos/EliminarSinonimo`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  **`IdArticulo`** · STRING · Requerido — Identificador del artículo al cual pertenece el sinónimo a eliminar.
+
+  **`IdUsuario`** · STRING · Requerido — Identificador del usuario que realiza la operación.
+
+  **`Sinonimo`** · STRING · Requerido — Valor del sinónimo que se desea eliminar del artículo.
+
+  ---
+
+  ### Notas
+
+  - Autenticación: heredada del entorno (`auth: inherit`).
+  - La URL se codifica automáticamente (`encodeUrl: true`).
+  - Sin tiempo de espera límite (`timeout: 0`).
+  - No requiere cuerpo en la solicitud (`body: none`).
+}

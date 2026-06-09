@@ -1,7 +1,7 @@
 meta {
   name: Modificar
   type: http
-  seq: 6
+  seq: 5
 }
 
 put {
@@ -53,4 +53,62 @@ body:json {
 settings {
   encodeUrl: true
   timeout: 0
+}
+
+docs {
+  ## Modificar Artículo
+  
+  **Descripción**: Modifica los datos generales de un artículo existente en el catálogo.
+  
+  **Método**: PUT
+  
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/General/ModificarArticulo?IdUsuario=meev`
+  
+  ---
+  
+  ### Parámetros de entrada (Query String)
+  
+  > ✅ = Requerido · ❌ = Opcional
+  
+  **`IdUsuario`** · STRING · ✅ — Identificador del usuario que realiza la modificación.
+  
+  ---
+  
+  ### Body (ttEdicionArticulo)
+  
+  **`IdArticulo`** · STRING — Clave única del artículo a modificar.
+  **`IdGrupo`** · INTEGER — Identificador del grupo al que pertenece el artículo.
+  **`Descr`** · STRING — Descripción o nombre del artículo.
+  **`Generico`** · BOOLEAN — `true` = artículo genérico; `false` = artículo específico.
+  **`IdMarca`** · INTEGER — Identificador de la marca del artículo.
+  **`Modelo`** · STRING — Modelo del artículo.
+  **`Medidas`** · STRING — Dimensiones del artículo (ej. "10x20 cm").
+  **`Peso`** · DECIMAL — Peso del artículo en la unidad configurada.
+  **`Resto`** · STRING — Observación adicional 1 del artículo.
+  **`Resto2`** · STRING — Observación adicional 2 del artículo.
+  **`Procedencia`** · STRING — Origen del artículo (ej. "NACIONAL", "IMPORTADO").
+  **`IdProv`** · INTEGER — Identificador del proveedor asociado al artículo.
+  **`IdCatego`** · STRING — Clave de la categoría del artículo.
+  **`PorcIva`** · DECIMAL — Porcentaje de IVA aplicable al artículo.
+  **`Base`** · BOOLEAN — `true` = artículo base; `false` = no es artículo base.
+  **`Serie`** · BOOLEAN — `true` = maneja número de serie; `false` = no maneja serie.
+  **`Pedimento`** · BOOLEAN — `true` = requiere pedimento de importación; `false` = no requiere.
+  **`MarMay`** · DECIMAL — Porcentaje de margen mayoreo.
+  **`MarPub`** · DECIMAL — Porcentaje de margen público.
+  **`PorcDst`** · DECIMAL — Porcentaje de descuento aplicable.
+  **`IdNavega`** · INTEGER — Identificador de la navegación o categoría web del artículo.
+  **`Name`** · STRING — Nombre extendido o comercial del artículo.
+  **`IdClavePS`** · STRING — Clave del producto o servicio (catálogo SAT).
+  **`Insumos`** · BOOLEAN — `true` = el artículo es un insumo; `false` = no es insumo.
+  **`Concatenar`** · BOOLEAN — `true` = concatenar descripción; `false` = no concatenar.
+  **`Gramaje`** · DECIMAL — Gramaje del artículo (aplica para papel u otros materiales).
+  **`Ancho`** · DECIMAL — Ancho del artículo en la unidad configurada.
+  
+  ---
+  
+  ### Notas
+  
+  - El campo `IdArticulo` debe corresponder a un artículo previamente registrado; de lo contrario el servicio retornará un error.
+  - El parámetro `IdClavePS` debe coincidir con una clave válida del catálogo de productos y servicios del SAT.
+  - Los campos `Base`, `Serie`, `Pedimento`, `Generico`, `Insumos` y `Concatenar` son de tipo booleano; enviar `true` o `false` en minúsculas.
 }

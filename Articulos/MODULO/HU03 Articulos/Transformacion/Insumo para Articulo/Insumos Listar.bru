@@ -18,3 +18,30 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Insumos Listar
+
+  **Descripción**: Obtiene el listado de insumos asociados a un artículo específico mediante su identificador.
+
+  **Módulo**: HU03 Articulos / Transformacion / Insumo para Articulo
+
+  **Método**: GET
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Insumos/Articulo?IdArticulo=001667`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  **`IdArticulo`** · STRING · Requerido — Identificador único del artículo del cual se desean consultar los insumos.
+  - Ej: `"001667"`
+
+  ---
+
+  ### Notas
+
+  - Autenticación: heredada del entorno (`auth: inherit`).
+  - La URL se codifica automáticamente (`encodeUrl: true`).
+  - Sin tiempo de espera configurado (`timeout: 0`).
+}

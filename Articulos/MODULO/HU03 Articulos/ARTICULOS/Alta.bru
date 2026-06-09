@@ -1,7 +1,7 @@
 meta {
   name: Alta
   type: http
-  seq: 5
+  seq: 4
 }
 
 post {
@@ -17,7 +17,7 @@ params:query {
 body:json {
   {
     "ttAltaArticulo": [
-      { 
+      {
         "CodigoPreAlta":0,
         "IdArticulo":125918,
         "IdGrupo": 10,
@@ -57,4 +57,179 @@ body:json {
 settings {
   encodeUrl: true
   timeout: 0
+}
+
+docs {
+  ## Alta de Artículo — `CrearArticulo`
+
+  **Programa**: `art-0003.p` · Procedure: `CrearArticulo`
+  **Descripción**: Da de alta un nuevo artículo en el sistema. Valida grupo, marca, proveedor, categoría, clave SAT y ruta de navegación antes de crear el registro. Si el folio solicitado ya existe, busca automáticamente el siguiente espacio disponible en el grupo (XX01–XX99). El artículo se crea como **inactivo** por defecto hasta que se complete su configuración.
+
+  **Método**: POST
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/General/AltaArticulo`
+
+  ---
+
+  ### Parámetros de entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUsuario`** · STRING · ✅ — Clave del usuario que ejecuta el alta. Debe existir en el catálogo de usuarios.
+  - Ej: `"meev"`
+
+  ---
+
+  ### Body — `ttAltaArticulo` (ARRAY)
+
+  > ✅ = Requerido · ❌ = Opcional · ⚠️ = Recibido pero ignorado por el programa (Ticket 2292)
+
+  **`CodigoPreAlta`** · INTEGER · ❌ — Código de pre-alta autorizada a convertir. `0` = alta normal sin pre-alta.
+  - Si es `> 0`: el programa valida que la pre-alta exista y tenga estatus **3 (Autorizada)**. Copia presentaciones, colores, códigos de barras, precio proveedor y fotos al artículo nuevo. Marca la pre-alta con estatus **5 (Convertida)**.
+  - Ej: `0`
+
+  **`IdArticulo`** · STRING(6) · ✅ — Folio del artículo. Debe tener exactamente **6 caracteres** (ej. `"125918"`).
+  - Si el folio ya existe, el sistema busca automáticamente el siguiente consecutivo libre en el grupo (prefijo de 4 dígitos + sufijo 01–99).
+  - Si el grupo está lleno (99 artículos), retorna error.
+
+  **`IdGrupo`** · INTEGER · ✅ — ID del grupo al que pertenece el artículo. Debe existir y estar activo.
+  - Ej: `10`
+
+  **`Descr`** · STRING · ✅ — Descripción corta del artículo (nombre principal). No puede estar vacía.
+  - Ej: `"ARTICULO DE PRUEBA REST"`
+
+  **`Generico`** · BOOLEAN · ❌ — `true` = artículo genérico; `false` = artículo específico.
+
+  **`IdMarca`** · INTEGER · ❌ — ID de la marca. Si se envía distinto de `0`, debe existir en el catálogo de marcas.
+  - Ej: `5`
+
+  **`Modelo`** · STRING · ❌ — Modelo o referencia interna del artículo.
+  - Ej: `"MOD-2025"`
+
+  **`Medidas`** · STRING · ❌ — Dimensiones físicas del artículo.
+  - Ej: `"10x20 cm"`
+
+  **`Peso`** · DECIMAL · ❌ — Peso del artículo en kilogramos.
+  - Ej: `1.25`
+
+  **`Resto`** · STRING · ❌ — Observación / nota libre (línea 1).
+  - Ej: `"Observacion 1"`
+
+  **`Resto2`** · STRING · ❌ — Observación / nota libre (línea 2).
+  - Ej: `"Observacion 2"`
+
+  **`Procedencia`** · STRING · ❌ — Origen del artículo.
+  - Ej: `"NACIONAL"` · `"IMPORTADO"`
+
+  **`IdProv`** · INTEGER · ❌ — ID del proveedor. Si se envía distinto de `0`, debe existir en el catálogo de proveedores.
+  - Ej: `3`
+
+  **`IdCatego`** · STRING · ❌ — Clave de categoría. Si se envía distinto de `"0"`, debe existir en el catálogo de categorías.
+  - Ej: `"RP"`
+
+  **`PorcIva`** · DECIMAL · ❌ — Porcentaje de IVA. Valores permitidos: `0` o `16`. Cualquier otro valor retorna error.
+  - Ej: `16`
+
+  **`Base`** · BOOLEAN · ⚠️ — Campo recibido pero **ignorado**. El programa siempre asigna `TRUE` (Ticket 2292).
+
+  **`Serie`** · BOOLEAN · ❌ — `true` = el artículo maneja número de serie; `false` = no aplica.
+
+  **`Pedimento`** · BOOLEAN · ❌ — `true` = requiere pedimento de importación; `false` = no aplica.
+
+  **`MarMay`** · DECIMAL · ❌ — Porcentaje de margen de mayoreo.
+  - Ej: `10`
+
+  **`MarPub`** · DECIMAL · ❌ — Porcentaje de margen de precio público.
+  - Ej: `11`
+
+  **`PorcDst`** · DECIMAL · ❌ — Porcentaje de descuento aplicable.
+  - Ej: `5`
+
+  **`IdNavega`** · INTEGER · ❌ — ID de ruta de navegación (categoría web/árbol de catálogo). Si se envía distinto de `0`, debe existir en la tabla `Navegacion`.
+  - Ej: `2`
+
+  **`DescrExt`** · STRING · ❌ — Descripción extendida del artículo (campo `Name` en la BD).
+  - Ej: `"Articulo extendido REST"`
+
+  **`IdClavePS`** · STRING · ❌ — Clave de producto/servicio del catálogo SAT (CFDI). Si se envía, debe existir en la tabla `ClaveProdServ`.
+  - Ej: `"01010101"`
+
+  **`Insumos`** · BOOLEAN · ❌ — `true` = es un insumo de producción; `false` = artículo comercial.
+
+  **`Concatenar`** · BOOLEAN · ⚠️ — Campo recibido pero **ignorado**. El programa siempre asigna `TRUE` (Ticket 2292).
+
+  **`Gramaje`** · DECIMAL · ❌ — Gramaje del artículo (papel u otros materiales). Si se envía `> 0`, crea registro en `ArtGramaje`.
+  - Ej: `120`
+
+  **`Ancho`** · DECIMAL · ❌ — Ancho del artículo en cm. Si se envía `> 0`, crea registro en `ArtGramaje`.
+  - Ej: `30`
+
+  **`DescrWeb`** · STRING · ❌ — Descripción del artículo para la plataforma web.
+  - Ej: `"Ejemplo de WEB"`
+
+  **`Caracteristicas`** · STRING (CLOB) · ❌ — Características técnicas o comerciales del artículo. Se almacena como campo LOB en la BD.
+  - Ej: `"Este ejemplo es de una caracteristica"`
+
+  ---
+
+  ### Response (output)
+
+  El servicio retorna dos parámetros de salida:
+
+  **`pIdError`** · BOOLEAN — `false` = operación exitosa · `true` = ocurrió un error de validación o proceso.
+
+  **`pRespuesta`** · STRING — Si `pIdError = false`: contiene el **folio del artículo creado** (IdArticulo definitivo asignado). Si `pIdError = true`: contiene el mensaje de error.
+
+  #### Ejemplo de respuesta exitosa
+  ```
+  pIdError   = false
+  pRespuesta = "125918"   ← folio del artículo creado
+  ```
+
+  ---
+
+  ### Códigos de respuesta / Validaciones
+
+  | pIdError | pRespuesta | Causa |
+  |----------|-----------|-------|
+  | `true` | `"Usuario Incorrecto"` | El `IdUsuario` no existe en el catálogo |
+  | `true` | `"No se recibieron datos ."` | El arreglo `ttAltaArticulo` llegó vacío |
+  | `true` | `"El campo X no puede ser NULL."` | Algún campo de la tabla tiene valor `null` |
+  | `true` | `"PreAlta Codigo X no existe."` | `CodigoPreAlta > 0` pero no se encontró en `PreArt` |
+  | `true` | `"PreAlta Codigo X ya fue convertida a Articulo."` | La pre-alta tiene estatus 5 (ya procesada) |
+  | `true` | `"PreAlta Codigo X no esta Autorizada (Estatus: X)."` | La pre-alta no tiene estatus 3 (Autorizada) |
+  | `true` | `"Campo obligatorio invalido: IdArticulo debe tener 6 caracteres"` | `IdArticulo` es null, `"0"` o no tiene 6 chars |
+  | `true` | `"ERROR: Grupo XXXX esta lleno (99 articulos). No hay espacios disponibles."` | Los 99 consecutivos del grupo ya están ocupados |
+  | `true` | `"Campo obligatorio faltante: IdGrupo"` | `IdGrupo` es `0` o null |
+  | `true` | `"Campo obligatorio faltante: Descr (Descripcion)"` | `Descr` está vacío o null |
+  | `true` | `"Grupo X no existe"` | El `IdGrupo` no existe en el catálogo |
+  | `true` | `"Grupo X esta inactivo"` | El grupo existe pero `Activo = false` |
+  | `true` | `"Marca X no existe"` | `IdMarca` no está en el catálogo de marcas |
+  | `true` | `"Proveedor X no existe"` | `IdProv` no está en el catálogo de proveedores |
+  | `true` | `"Categoria X no existe"` | `IdCatego` no está en el catálogo de categorías |
+  | `true` | `"Clave de producto/servicio SAT inexistente: X"` | `IdClavePS` no existe en `ClaveProdServ` |
+  | `true` | `"Porcentaje de IVA invalido. Valores permitidos: 0 o 16"` | `PorcIva` tiene un valor distinto de `0` o `16` |
+  | `true` | `"Ruta de navegacion inexistente: X"` | `IdNavega` no existe en la tabla `Navegacion` |
+  | `false` | `"<IdArticulo>"` | Alta exitosa — retorna el folio creado |
+
+  ---
+
+  ### Comportamiento por defecto al crear
+
+  El artículo se crea con los siguientes valores fijos independientemente del body enviado:
+
+  - `Activo = FALSE` — inactivo hasta completar configuración
+  - `Inv = TRUE` — maneja inventario (Ticket 2292)
+  - `Base = TRUE` — base pedido en puntos de inventario (Ticket 2292)
+  - `Concatenar (Pegar) = TRUE` — concatenar descripción (Ticket 2292)
+  - `IdTipoArt = "N"` — tipo "Nuevo"
+  - `FecReg = TODAY` — fecha de registro = día de alta
+  - `PorcIva = 16` si no se envía o es null
+
+  ---
+
+  ### Notas adicionales
+
+  - Se registra bitácora automática en `CambioArc` (Tipo `"A"` = Alta, programa `"art-0003.p"`).
+  - Si `CodigoPreAlta > 0`, se copian además las fotos desde `/usr2/sea/prefotos/` hacia `/usr2/sea/fotos/` (fuera de transacción, no es reversible).
+  - Auth heredada del entorno (`auth: inherit`). Timeout sin límite (`timeout: 0`).
 }

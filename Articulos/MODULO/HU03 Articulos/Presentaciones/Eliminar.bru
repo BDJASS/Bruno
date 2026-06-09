@@ -20,3 +20,28 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Eliminar Presentación de Artículo
+
+  **Descripción**: Elimina una presentación asociada a un artículo específico en el sistema.
+
+  **Método**: DELETE
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Presentacion/EliminarPresentacion`
+
+  ### Parámetros
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdArticulo`** · STRING · ✅ — Identificador del artículo al que pertenece la presentación a eliminar.
+
+  **`IdUsuario`** · STRING · ✅ — Identificador del usuario que realiza la operación.
+
+  **`IdPres`** · INTEGER · ✅ — Identificador de la presentación que se desea eliminar.
+
+  ### Notas
+
+  - La operación es irreversible; una vez eliminada la presentación no puede recuperarse.
+  - Se deben proporcionar los tres parámetros obligatoriamente para que la eliminación se ejecute correctamente.
+}

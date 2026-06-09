@@ -28,3 +28,50 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Alta Restricción de Almacén
+
+  **Descripción:** Crea una nueva restricción de almacén para un artículo específico, asociando el artículo con un almacén determinado.
+
+  **Módulo:** HU03 Articulos / Almacen Restricciones
+
+  **Método:** POST
+
+  **URL:** `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Almacen/CrearRestriccion`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  **`IdUsuario`** · STRING · Requerido — Identificador del usuario que realiza la operación.
+  - Ej: `"meev"`
+
+  ---
+
+  ### Body (JSON)
+
+  El body debe contener un objeto con la tabla temporal `ttAltaRestriccion`:
+
+  **`ttAltaRestriccion`** · ARRAY — Lista de restricciones de almacén a crear.
+
+  Cada objeto del arreglo contiene:
+
+  **`IdArticulo`** · STRING — Clave del artículo al que se le asignará la restricción de almacén.
+  - Ej: `"027129"`
+
+  **`IdColor`** · INTEGER — Identificador del color asociado al artículo. Usar `0` si no aplica color.
+  - Ej: `0`
+
+  **`IdAlm`** · STRING — Clave del almacén que se restringirá para el artículo.
+  - Ej: `"03A"`
+
+  ---
+
+  ### Notas
+
+  - La autenticación es heredada (`auth: inherit`) del entorno o colección padre.
+  - La codificación de URL está habilitada (`encodeUrl: true`).
+  - El timeout está configurado en `0` (sin límite de tiempo de espera).
+  - El parámetro `IdUsuario` se envía tanto en el query string como se puede incluir directamente en la URL.
+}

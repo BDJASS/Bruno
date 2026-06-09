@@ -20,3 +20,34 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Activar / Desactivar Presentación
+
+  **Descripción:** Activa o desactiva una presentación específica de un artículo en el catálogo de Adosa.
+
+  **Módulo:** HU03 Articulos / Presentaciones
+
+  **Método:** PUT
+
+  **URL:** `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Presentacion/ActivarDesactivarPresentacion`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  **`IdArticulo`** · STRING · Requerido — Identificador del artículo al que pertenece la presentación.
+
+  **`IdUsuario`** · STRING · Requerido — Identificador del usuario que realiza la operación.
+
+  **`IdPres`** · INTEGER · Requerido — Identificador de la presentación que se desea activar o desactivar.
+
+  ---
+
+  ### Notas
+
+  - La autenticación se hereda del entorno configurado (`auth: inherit`).
+  - La URL se codifica automáticamente (`encodeUrl: true`).
+  - No se aplica timeout a la solicitud (`timeout: 0`).
+  - El cuerpo de la solicitud es de tipo JSON, aunque los datos principales se envían como parámetros de Query String.
+}

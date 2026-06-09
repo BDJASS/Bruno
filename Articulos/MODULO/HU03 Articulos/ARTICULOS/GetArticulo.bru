@@ -1,21 +1,41 @@
 meta {
   name: GetArticulo
   type: http
-  seq: 3
+  seq: 2
 }
 
 get {
-  url: http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/GetArticulo?IdUsuario=sge&IdArticulo=044711
+  url: http://192.0.1.9:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/GetArticulo?IdUsuario=sge&IdArticulo=137822
   body: none
   auth: inherit
 }
 
 params:query {
   IdUsuario: sge
-  IdArticulo: 044711
+  IdArticulo: 137822
 }
 
 settings {
   encodeUrl: true
   timeout: 0
+}
+
+docs {
+  ## GetArticulo
+  
+  **Descripción:** Obtiene la información detallada de un artículo específico a partir de su identificador.
+  
+  **Método:** GET
+  
+  **URL:** `http://192.0.1.9:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/GetArticulo`
+  
+  ### Parámetros
+  
+  **`IdUsuario`** · STRING · Identificador del usuario que realiza la consulta.
+  **`IdArticulo`** · INTEGER · Identificador único del artículo a consultar.
+  
+  ### Notas
+  
+  - No requiere body en la petición.
+  - La autenticación se hereda de la configuración del entorno (auth: inherit).
 }

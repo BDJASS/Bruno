@@ -1,7 +1,7 @@
 meta {
   name: Catalogo Procesos
   type: http
-  seq: 2
+  seq: 1
 }
 
 get {
@@ -17,4 +17,31 @@ params:query {
 settings {
   encodeUrl: true
   timeout: 0
+}
+
+docs {
+  ## Catalogo Procesos
+
+  **Descripción:** Obtiene el catálogo de procesos de transformación disponibles, permitiendo consultar un proceso específico o todos los procesos registrados.
+
+  **Módulo:** HU03 Articulos / Transformacion / Procesos
+
+  **Método:** GET
+
+  **URL:** `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/CatalogoProcesos?IdProceso=0`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  **`IdProceso`** · INTEGER · Requerido — Identificador del proceso a consultar. Enviar `0` para obtener todos los procesos del catálogo.
+
+  ---
+
+  ### Notas
+
+  - Autenticación: heredada del entorno (`auth: inherit`).
+  - La URL se codifica automáticamente (`encodeUrl: true`).
+  - Sin tiempo de espera configurado (`timeout: 0`), la petición no expira.
+  - No requiere cuerpo en la solicitud (`body: none`).
 }

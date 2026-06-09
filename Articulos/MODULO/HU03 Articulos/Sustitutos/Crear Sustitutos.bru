@@ -23,10 +23,51 @@ body:json {
       }
     ]
   }
-  
+
 }
 
 settings {
   encodeUrl: true
   timeout: 0
+}
+
+docs {
+  ## Crear Sustituto
+
+  **Descripción**: Crea un artículo sustituto asociado a un artículo existente en el sistema ADOSA.
+
+  **Módulo**: HU03 Articulos / Sustitutos
+
+  **Método**: POST
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/Sustitutos/CrearSustituto`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  **`IdUsuario`** · STRING · Requerido — Identificador del usuario que realiza la operación.
+  - Ej: `"meev"`
+
+  ---
+
+  ### Body (JSON)
+
+  **`ttAltaSustituto`** · ARRAY — Lista de relaciones artículo-sustituto a crear.
+
+  Cada objeto dentro del arreglo contiene:
+
+  **`IdArticulo`** · STRING — Código del artículo principal al que se le asignará el sustituto.
+  - Ej: `"032116"`
+
+  **`IdSust`** · STRING — Código del artículo que actuará como sustituto.
+  - Ej: `"032136"`
+
+  ---
+
+  ### Notas
+
+  - La autenticación se hereda de la colección padre (`auth: inherit`).
+  - La URL se codifica automáticamente (`encodeUrl: true`).
+  - El timeout está configurado en `0` (sin límite de espera).
 }

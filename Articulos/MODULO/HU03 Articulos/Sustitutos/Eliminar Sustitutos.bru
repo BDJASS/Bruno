@@ -20,3 +20,34 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Eliminar Sustitutos
+
+  **Descripción**: Elimina un artículo sustituto asociado a un artículo específico, dado el usuario que realiza la operación.
+
+  **Módulo**: HU03 Articulos / Sustitutos
+
+  **Método**: DELETE
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/Sustitutos/EliminarSustituto`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  **`IdArticulo`** · STRING · Requerido — Identificador del artículo principal al que pertenece el sustituto.
+
+  **`IdUsuario`** · STRING · Requerido — Clave del usuario que realiza la eliminación.
+
+  **`Sustituto`** · STRING · Requerido — Identificador del artículo sustituto que se desea eliminar.
+
+  ---
+
+  ### Notas
+
+  - Autenticación: heredada del entorno (`auth: inherit`).
+  - La URL se codifica automáticamente (`encodeUrl: true`).
+  - Sin timeout configurado (`timeout: 0`).
+  - No requiere cuerpo en la solicitud (`body: none`).
+}

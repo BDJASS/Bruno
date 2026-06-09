@@ -19,3 +19,24 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## GetColores
+
+  **Descripción:** Obtiene la lista de colores asociados a un artículo específico.
+
+  **Método:** GET
+
+  **URL:** `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/ArticuloColor/GetColores?IdArticulo=044714&IdUsuario=meev`
+
+  ### Parámetros
+
+  **`IdArticulo`** · STRING · Requerido — Identificador del artículo del cual se desean obtener los colores.
+
+  **`IdUsuario`** · STRING · Requerido — Identificador del usuario que realiza la consulta.
+
+  ### Notas
+
+  - El endpoint no requiere cuerpo en la solicitud (body: none).
+  - La autenticación se hereda de la configuración del entorno (auth: inherit).
+}

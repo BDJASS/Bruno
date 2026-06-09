@@ -1,20 +1,47 @@
 meta {
   name: Procesos Listar
   type: http
-  seq: 3
+  seq: 2
 }
 
 get {
-  url: http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Procesos/Listar?IdArticulo=001667
+  url: http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Procesos/Listar?IdArticulo=154202
   body: none
   auth: inherit
 }
 
 params:query {
-  IdArticulo: 001667
+  IdArticulo: 154202
 }
 
 settings {
   encodeUrl: true
   timeout: 0
+}
+
+docs {
+  ## Procesos Listar
+
+  **Descripción**: Obtiene el listado de procesos asociados a un artículo específico mediante su identificador.
+
+  **Módulo**: HU03 Artículos / Transformación / Procesos
+
+  **Método**: GET
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Procesos/Listar`
+
+  ---
+
+  ## Parámetros (Query String)
+
+  **`IdArticulo`** · INTEGER · Requerido — Identificador único del artículo del cual se desea obtener el listado de procesos.
+  - Ej: `154202`
+
+  ---
+
+  ## Notas
+
+  - La autenticación se hereda del contexto padre (`auth: inherit`).
+  - La codificación de URL está habilitada (`encodeUrl: true`).
+  - Sin tiempo de espera configurado (`timeout: 0`), la solicitud esperará indefinidamente hasta recibir respuesta.
 }

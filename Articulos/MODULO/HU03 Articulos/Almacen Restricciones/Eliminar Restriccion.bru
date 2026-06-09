@@ -21,3 +21,31 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Eliminar Restriccion
+
+  **Descripción**: Elimina la restricción de almacén asociada a un artículo y color específicos para un usuario determinado.
+
+  **Método**: DELETE
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Almacen/EliminarRestriccion`
+
+  ## Parámetros
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUsuario`** · STRING · ✅ — Identificador del usuario que realiza la operación.
+
+  **`IdArticulo`** · STRING · ✅ — Código del artículo al que pertenece la restricción a eliminar.
+
+  **`IdColor`** · STRING · ✅ — Identificador del color del artículo. Usar `0` si no aplica color.
+
+  **`IdAlm`** · STRING · ✅ — Clave del almacén cuya restricción se desea eliminar.
+
+  ## Notas
+
+  - No requiere cuerpo en la petición (body: none).
+  - La autenticación se hereda de la colección padre.
+  - La operación es irreversible; una vez eliminada la restricción no puede recuperarse desde este endpoint.
+}

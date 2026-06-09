@@ -20,3 +20,37 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Eliminar Linea de Nota
+
+  **Descripción**: Elimina una línea específica de nota asociada a un artículo, identificada por su número de secuencia.
+
+  **Módulo**: HU03 Articulos / Notas
+
+  **Método**: DELETE
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/Notas/EliminarLinea`
+
+  ---
+
+  ## Parámetros (Query String)
+
+  **`IdArticulo`** · STRING · Requerido — Identificador del artículo al que pertenece la nota.
+  - Ej: `040114`
+
+  **`IdUsuario`** · STRING · Requerido — Identificador del usuario que realiza la operación.
+  - Ej: `meev`
+
+  **`Secuencia`** · INTEGER · Requerido — Número de secuencia de la línea de nota a eliminar.
+  - Ej: `4`
+
+  ---
+
+  ## Notas
+
+  - **Autenticación**: heredada del entorno (`auth: inherit`).
+  - **Codificación de URL**: habilitada (`encodeUrl: true`).
+  - **Timeout**: sin límite de tiempo configurado (`timeout: 0`).
+  - No requiere cuerpo de solicitud (`body: none`).
+}

@@ -5,16 +5,43 @@ meta {
 }
 
 get {
-  url: http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Insumos/Listar?IdArticulo=030512
+  url: http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Insumos/Listar?IdArticulo=154202
   body: none
   auth: inherit
 }
 
 params:query {
-  IdArticulo: 030512
+  IdArticulo: 154202
 }
 
 settings {
   encodeUrl: true
   timeout: 0
+}
+
+docs {
+  ## Insumos Listar
+
+  **Descripción**: Obtiene el listado de insumos asociados a un artículo específico mediante su identificador.
+
+  **Módulo**: HU03 Articulos / Transformacion / Insumos
+
+  **Método**: GET
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Insumos/Listar`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  **`IdArticulo`** · INTEGER · Requerido — Identificador único del artículo del cual se desean obtener los insumos.
+  - Ej: `154202`
+
+  ---
+
+  ### Notas
+
+  - Autenticación: heredada del entorno (`auth: inherit`).
+  - La URL es codificada automáticamente (`encodeUrl: true`).
+  - Sin tiempo de espera configurado (`timeout: 0`).
 }

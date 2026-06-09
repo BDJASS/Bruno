@@ -28,3 +28,41 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Eliminar Atributo
+
+  **Descripción**: Elimina un atributo asociado a un artículo específico en el sistema.
+
+  **Método**: DELETE
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Atributos/EliminarAtributo`
+
+  ---
+
+  ### Parámetros de entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUsuario`** · STRING · ✅ — Identificador del usuario que realiza la operación.
+
+  ---
+
+  ### Body (JSON)
+
+  **`ttAtributo`** · ARRAY — Lista de atributos a eliminar. Cada elemento contiene:
+
+  **`IdArticulo`** · STRING — Clave o identificador del artículo al que pertenece el atributo.
+
+  **`IdAtributo`** · INTEGER — Identificador numérico del atributo que se desea eliminar.
+
+  **`Valor`** · STRING — Valor actual del atributo (requerido para identificar el registro a eliminar).
+
+  ---
+
+  ### Notas
+
+  - La autenticación es heredada (`auth: inherit`) del entorno o colección padre.
+  - Se deben enviar los tres campos dentro de `ttAtributo` para identificar correctamente el atributo a eliminar.
+  - La codificación de URL está habilitada (`encodeUrl: true`).
+}

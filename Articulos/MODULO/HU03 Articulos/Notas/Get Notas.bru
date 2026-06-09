@@ -19,3 +19,31 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Get Notas
+
+  **Descripción**: Obtiene las notas asociadas a un artículo específico para un usuario determinado.
+
+  **Módulo**: HU03 Articulos / Notas
+
+  **Método**: GET
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/Notas/GetNotas?IdArticulo=040114&IdUsuario=meev`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  **`IdArticulo`** · STRING · Requerido — Identificador del artículo del cual se desean obtener las notas.
+
+  **`IdUsuario`** · STRING · Requerido — Identificador del usuario que realiza la consulta.
+
+  ---
+
+  ### Notas
+
+  - La autenticación se hereda de la colección padre (`auth: inherit`).
+  - La URL se codifica automáticamente (`encodeUrl: true`).
+  - Sin límite de tiempo de espera configurado (`timeout: 0`).
+}

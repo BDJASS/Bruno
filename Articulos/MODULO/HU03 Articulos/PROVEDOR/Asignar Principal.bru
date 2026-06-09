@@ -19,3 +19,28 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Asignar Principal
+
+  **Descripción**: Asigna un proveedor como principal para un artículo específico.
+
+  **Método**: POST
+
+  **URL**: http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/ArticuloProveedor/AsignarPrincipal?IdUsuario=meev&IdArticulo=001005
+
+  ### Parámetros
+
+  **`IdUsuario`** · STRING · Identificador del usuario que realiza la operación.
+
+  **`IdArticulo`** · STRING · Código del artículo al cual se le asignará el proveedor principal.
+
+  ### Body
+
+  No aplica — este endpoint no envía cuerpo en la solicitud.
+
+  ### Notas
+
+  - El endpoint utiliza el método POST sin body; la información se envía únicamente mediante parámetros en la URL (query string).
+  - Se requiere autenticación heredada del entorno configurado en Bruno.
+}

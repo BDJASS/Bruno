@@ -22,3 +22,42 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Cambio de Código de Barras
+
+  **Descripción**: Actualiza el código de barras asociado a un artículo según su presentación y color.
+
+  **Método**: PUT
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/CodigoDeBarras/ActualizarCodigo`
+
+  ---
+
+  ### Parámetros de entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdArticulo`** · STRING · ✅ — Identificador del artículo al que se le modificará el código de barras.
+
+  **`IdPres`** · INTEGER · ✅ — Identificador de la presentación del artículo.
+
+  **`IdColor`** · INTEGER · ✅ — Identificador del color del artículo.
+
+  **`CodigoBarras`** · STRING · ✅ — Nuevo código de barras que se asignará al artículo.
+
+  **`IdUsuario`** · STRING · ✅ — Identificador del usuario que realiza la modificación.
+
+  ---
+
+  ### Body
+
+  Esta petición no envía body.
+
+  ---
+
+  ### Notas
+
+  - La operación es de tipo PUT, por lo que sobreescribe el código de barras existente para la combinación de artículo, presentación y color indicados.
+  - Se requieren todos los parámetros para identificar de forma unívoca el registro a actualizar.
+}

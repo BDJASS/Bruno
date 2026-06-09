@@ -23,10 +23,53 @@ body:json {
       }
     ]
   }
-  
+
 }
 
 settings {
   encodeUrl: true
   timeout: 0
+}
+
+docs {
+  ## Crear Complemento
+
+  **Descripción**: Registra un nuevo complemento asociado a un artículo mediante el envío de los identificadores correspondientes.
+
+  **Módulo**: HU03 Articulos / Complementos
+
+  **Método**: POST
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/Complementos/CrearComplemento`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  **`IdUsuario`** · STRING · Requerido — Identificador del usuario que realiza la operación.
+  - Ej: `"meev"`
+
+  ---
+
+  ### Body (JSON)
+
+  Objeto raíz con la tabla temporal `ttAltaComplemento`:
+
+  **`ttAltaComplemento`** · ARRAY — Lista de registros para crear el complemento.
+
+  Campos por registro:
+
+  **`IdArticulo`** · STRING — Identificador del artículo al que se le asignará el complemento.
+  - Ej: `"044704"`
+
+  **`IdComp`** · STRING — Identificador del artículo que actúa como complemento.
+  - Ej: `"069031"`
+
+  ---
+
+  ### Notas
+
+  - Autenticación: heredada del entorno (`auth: inherit`).
+  - La URL está configurada con codificación de caracteres activa (`encodeUrl: true`).
+  - Sin límite de tiempo de espera (`timeout: 0`).
 }

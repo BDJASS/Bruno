@@ -31,3 +31,50 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Ficha Técnica — Subir archivo
+
+  **Descripción:** Sube el archivo de ficha técnica de un artículo en formato Base64, permitiendo asociar un documento PDF y un enlace externo al artículo indicado.
+
+  **Módulo:** HU03 Articulos / Ficha Tecnica
+
+  **Método:** POST
+
+  **URL:** ``http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Fichas/Subir``
+
+  ---
+
+  ### Parámetros (Query String)
+
+  **``IdArticulo``** · STRING · Requerido — Identificador único del artículo al que se asociará la ficha técnica.
+  - Ej: ``001667``
+
+  **``IdUser``** · STRING · Requerido — Identificador del usuario que realiza la operación.
+  - Ej: ``meev``
+
+  ---
+
+  ### Body (JSON)
+
+  Objeto raíz con el arreglo ``ttFichaUpload``:
+
+  **``ttFichaUpload``** · ARRAY — Lista con un objeto que contiene la información del archivo a subir.
+
+  Campos del objeto dentro de ``ttFichaUpload``:
+
+  **``NombreArchivo``** · STRING — Nombre del archivo incluyendo su extensión (ej. ``ficha-tecnica-producto.pdf``).
+
+  **``Enlace``** · STRING — URL o enlace externo relacionado con la ficha técnica del artículo.
+
+  **``DocumentoBase64``** · STRING (Base64) — Contenido del documento PDF codificado en Base64. Puede ser un string de gran tamaño (~184 KB o más).
+
+  ---
+
+  ### Notas
+
+  - La autenticación se hereda del nodo padre (``auth: inherit``).
+  - La URL incluye codificación de parámetros activada (``encodeUrl: true``).
+  - El timeout está configurado en ``0`` (sin límite de tiempo), recomendado dado el tamaño del campo ``DocumentoBase64``.
+  - El campo ``DocumentoBase64`` debe contener el PDF completo codificado; archivos grandes pueden impactar el rendimiento de la petición.
+}

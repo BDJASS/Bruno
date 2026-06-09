@@ -39,3 +39,58 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## AltaProveedor
+
+  **Descripción**: Registra un nuevo proveedor asociado a un artículo, incluyendo precio, presentación, descuentos y moneda.
+
+  **Módulo**: PROVEDOR — HU03 Articulos
+
+  **Método**: POST
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/ArticuloProveedor/AltaProveedor`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  **`IdUsuario`** · STRING · Requerido — Identificador del usuario que realiza la operación.
+
+  **`IdArticulo`** · STRING · Requerido — Clave del artículo al que se le dará de alta el proveedor.
+
+  ---
+
+  ### Body (JSON) — ttAltaArtProv
+
+  **`IdArticulo`** · STRING — Clave del artículo.
+
+  **`IdProv`** · INTEGER — Identificador del proveedor.
+
+  **`IdPres`** · INTEGER — Identificador de la presentación del artículo.
+
+  **`LMC`** · DECIMAL — Lista de máxima compra.
+
+  **`Empaque`** · STRING — Descripción o cantidad del empaque.
+
+  **`PrecioProv`** · DECIMAL — Precio del proveedor para el artículo.
+
+  **`FecPrecio`** · STRING (fecha `YYYY-MM-DD`) — Fecha de vigencia del precio del proveedor.
+
+  **`Referencia`** · STRING — Referencia interna o del proveedor (puede enviarse vacío).
+
+  **`IdMoneda`** · INTEGER — Identificador de la moneda en que se expresa el precio.
+
+  **`Desc1`** · DECIMAL — Porcentaje del primer descuento aplicable.
+
+  **`Desc2`** · DECIMAL — Porcentaje del segundo descuento aplicable.
+
+  ---
+
+  ### Notas
+
+  - La autenticación se hereda de la colección padre (`auth: inherit`).
+  - La URL se codifica automáticamente (`encodeUrl: true`).
+  - El campo `Referencia` acepta cadena vacía cuando no aplica.
+  - El timeout está configurado en `0` (sin límite de espera).
+}

@@ -20,3 +20,33 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Eliminar Color
+
+  **Descripción**: Elimina la asociación de un color con un artículo específico en el sistema.
+
+  **Método**: DELETE
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/ArticuloColor/EliminarColor?IdUsuario=meev&IdColor=2&IdArticulo=001005`
+
+  ---
+
+  ### Parámetros de entrada (Query String)
+
+  > ✅ = Requerido
+
+  **`IdUsuario`** · STRING · ✅ — Identificador del usuario que realiza la operación.
+
+  **`IdColor`** · INTEGER · ✅ — Identificador del color a eliminar.
+
+  **`IdArticulo`** · STRING · ✅ — Identificador del artículo al que pertenece el color.
+
+  ---
+
+  ### Notas
+
+  - Este endpoint no requiere cuerpo (body) en la solicitud.
+  - La eliminación es definitiva; se recomienda verificar los datos antes de ejecutar.
+  - El parámetro `IdArticulo` debe corresponder a un artículo existente en el sistema.
+}

@@ -18,3 +18,31 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Color — Catálogo de Colores por Artículo
+
+  **Descripción:** Obtiene el catálogo de colores disponibles asociados a un artículo específico.
+
+  **Módulo:** HU03 Artículos / Transformación / Insumos / Catálogos para Insumos
+
+  **Método:** GET
+
+  **URL:** `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/CatalogoArtCol`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  **`IdArticulo`** · STRING · Requerido — Identificador del artículo del cual se desea consultar el catálogo de colores.
+  - Ej: `"054019"`
+
+  ---
+
+  ### Notas
+
+  - Autenticación: heredada de la colección padre (`auth: inherit`).
+  - La URL se codifica automáticamente (`encodeUrl: true`).
+  - Sin tiempo de espera configurado (`timeout: 0`), la petición esperará indefinidamente.
+  - No requiere body en la solicitud.
+}

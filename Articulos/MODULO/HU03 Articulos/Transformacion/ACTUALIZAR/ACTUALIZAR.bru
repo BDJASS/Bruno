@@ -62,3 +62,52 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## ACTUALIZAR — Transformación de Artículo
+
+  **Descripción:** Actualiza los insumos y procesos asociados a la transformación de un artículo existente.
+
+  **Método:** POST
+
+  **URL:** `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Transformacion/Actualizar`
+
+  ---
+
+  ### Parámetros de entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdArticulo`** · STRING · ✅ — Identificador del artículo a actualizar
+  **`IdUser`** · STRING · ✅ — Identificador del usuario que realiza la operación
+
+  ---
+
+  ### Body (JSON)
+
+  #### ttInsumoAlta — Arreglo de insumos a actualizar
+
+  **`IdInsumo`** · STRING — Clave del insumo
+  **`IdColor`** · INTEGER — Identificador del color del insumo
+  **`IdPres`** · INTEGER — Identificador de la presentación del insumo
+  **`Fraccion`** · DECIMAL — Fracción o cantidad utilizada del insumo
+  **`CostoBase`** · DECIMAL — Costo base del insumo
+  **`CostoActual`** · DECIMAL — Costo actual del insumo
+  **`FechaBase`** · STRING (YYYY-MM-DD) — Fecha de referencia del costo base
+
+  #### ttProcesoAlta — Arreglo de procesos a actualizar
+
+  **`IdProceso`** · STRING — Clave del proceso de transformación
+  **`Fraccion`** · DECIMAL — Fracción o tiempo asignado al proceso
+  **`CostoBase`** · DECIMAL — Costo base del proceso
+  **`CostoActual`** · DECIMAL — Costo actual del proceso
+  **`FechaBase`** · STRING (YYYY-MM-DD) — Fecha de referencia del costo base
+
+  ---
+
+  ### Notas
+
+  - Se pueden enviar múltiples insumos en `ttInsumoAlta` y múltiples procesos en `ttProcesoAlta` en una sola llamada.
+  - El campo `IdArticulo` debe corresponder a un artículo previamente registrado en el sistema.
+  - El timeout está configurado en 0 (sin límite de espera).
+}

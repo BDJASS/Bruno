@@ -18,3 +18,30 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Ficha Técnica - Listar
+
+  **Descripción**: Obtiene el listado de fichas técnicas asociadas a un artículo específico.
+
+  **Módulo**: HU03 Articulos / Ficha Tecnica
+
+  **Método**: GET
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Fichas/Listar`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  **`IdArticulo`** · STRING · Requerido — Identificador único del artículo del cual se desean obtener las fichas técnicas.
+  - Ej: `"001667"`
+
+  ---
+
+  ### Notas
+
+  - Autenticación: heredada del entorno (`auth: inherit`).
+  - La URL se codifica automáticamente (`encodeUrl: true`).
+  - Sin tiempo límite de espera configurado (`timeout: 0`).
+}

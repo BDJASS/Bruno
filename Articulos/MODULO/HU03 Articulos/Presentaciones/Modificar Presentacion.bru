@@ -33,3 +33,48 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Modificar Presentacion
+
+  **Descripción**: Modifica los datos de una presentación existente asociada a un artículo en el catálogo.
+
+  **Módulo**: HU03 Articulos / Presentaciones
+
+  **Método**: PUT
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Presentacion/ModificarPresentacion`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  **`IdUsuario`** · STRING · ✅ — Identificador del usuario que realiza la modificación.
+
+  ---
+
+  ### Body (JSON)
+
+  El cuerpo debe enviarse como un objeto JSON con el arreglo `ttPresentacion`.
+
+  **`ttPresentacion`** · ARRAY — Lista de presentaciones a modificar.
+
+  Campos de cada objeto dentro de `ttPresentacion`:
+
+  **`IdArticulo`** · STRING — Clave única del artículo al que pertenece la presentación.
+  **`IdPres`** · INTEGER — Identificador numérico de la presentación.
+  **`Descr`** · STRING — Descripción o nombre de la presentación (ej. `"CAJA 20"`).
+  **`Tipo`** · INTEGER — Tipo de presentación.
+  **`Equiv`** · DECIMAL — Factor de equivalencia o cantidad equivalente de la presentación.
+  **`Flag`** · STRING — Indicador de operación; `"M"` = Modificar.
+  **`Activo`** · BOOLEAN — `true` = presentación activa; `false` = presentación inactiva.
+
+  ---
+
+  ### Notas
+
+  - La autenticación se hereda del contexto padre (`auth: inherit`).
+  - La URL incluye codificación de parámetros activada (`encodeUrl: true`).
+  - El campo `Equiv` aparece duplicado en el ejemplo del body; se tomará el último valor declarado (`12.00`).
+  - Sin límite de tiempo de espera configurado (`timeout: 0`).
+}

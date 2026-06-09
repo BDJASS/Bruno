@@ -30,3 +30,39 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Alta Colores
+
+  **Descripción:** Registra un nuevo color asociado a un artículo en el catálogo de colores.
+
+  **Método:** POST
+
+  **URL:** `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/ArticuloColor/AltaColor?IdUsuario=meev`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  **`IdUsuario`** · STRING · ✅ — Identificador del usuario que realiza la operación.
+
+  ---
+
+  ### Body (JSON)
+
+  **`ttAltaArtCol`** · ARRAY — Lista de colores a registrar. Cada objeto contiene:
+
+  **`IdArticulo`** · STRING — Clave del artículo al que se asocia el color.
+
+  **`IdColor`** · INTEGER — Identificador numérico del color a dar de alta.
+
+  **`CveHex`** · STRING — Código hexadecimal del color (sin el símbolo `#`).
+
+  ---
+
+  ### Notas
+
+  - El body debe enviarse como `application/json`.
+  - Se pueden incluir múltiples registros dentro del arreglo `ttAltaArtCol`.
+  - El parámetro `IdUsuario` es requerido tanto en el query string como implícitamente en la autenticación heredada.
+}

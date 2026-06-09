@@ -19,3 +19,34 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Eliminar Proveedor
+
+  **Descripción**: Elimina la relación entre un proveedor y un artículo específico en el sistema ADOSA.
+
+  **Módulo**: HU03 Articulos / PROVEDOR
+
+  **Método**: DELETE
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/ArticuloProveedor/EliminarProveedor`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  **`IdUsuario`** · STRING · Requerido — Identificador del usuario que realiza la operación.
+  - Ej: `meev`
+
+  **`IdArticulo`** · STRING · Requerido — Código del artículo al que pertenece el proveedor que se desea eliminar.
+  - Ej: `001004`
+
+  ---
+
+  ### Notas
+
+  - No requiere body; el valor de `body` es `none`.
+  - La autenticación se hereda del nodo padre (`auth: inherit`).
+  - La codificación de URL está habilitada (`encodeUrl: true`).
+  - Sin límite de tiempo de espera configurado (`timeout: 0`).
+}

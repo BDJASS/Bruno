@@ -20,3 +20,36 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Info Inactivacion
+
+  **Descripción**: Obtiene la información de inactivación de un color asociado a un artículo, para determinar si puede ser activado o desactivado.
+
+  **Módulo**: COLOR / Activar-desactivar
+
+  **Método**: GET
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/ArticuloColor/GetInfoInactivacion`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  **`IdUsuario`** · STRING · Requerido — Identificador del usuario que realiza la consulta.
+  - Ej: `"meev"`
+
+  **`IdColor`** · INTEGER · Requerido — Identificador del color a consultar.
+  - Ej: `4`
+
+  **`IdArticulo`** · STRING · Requerido — Código del artículo al que pertenece el color.
+  - Ej: `"001005"`
+
+  ---
+
+  ### Notas
+
+  - Autenticación: heredada del nodo padre (`auth: inherit`).
+  - La URL se codifica automáticamente (`encodeUrl: true`).
+  - Sin tiempo de espera definido (`timeout: 0`).
+}

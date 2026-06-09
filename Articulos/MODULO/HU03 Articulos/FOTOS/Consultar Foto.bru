@@ -21,3 +21,28 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Consultar Foto de Artículo
+
+  **Descripción:** Obtiene la imagen/foto asociada a un artículo específico según el tipo de foto y color indicados.
+
+  **Método:** GET
+
+  **URL:** `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Fotos/Obtener`
+
+  ### Parámetros
+
+  **`IdArticulo`** · STRING · Requerido — Identificador único del artículo del que se desea obtener la foto.
+
+  **`TipoFoto`** · STRING · Requerido — Tipo de foto a consultar (ej. `color`, `catalogo`, etc.).
+
+  **`IdColor`** · INTEGER · Requerido — Identificador del color asociado a la foto del artículo.
+
+  **`Consecutivo`** · INTEGER · Opcional — Número consecutivo de la foto cuando existen múltiples imágenes. Por defecto `0`.
+
+  ### Notas
+
+  - El parámetro `Consecutivo` está deshabilitado por defecto (prefijo `~`); activarlo si se requiere consultar una foto específica dentro de un conjunto.
+  - La respuesta esperada es la imagen o los datos binarios/URL de la foto del artículo solicitado.
+}

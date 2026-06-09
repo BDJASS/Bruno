@@ -20,3 +20,34 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  ## Eliminar Complemento
+
+  **Descripción**: Elimina un complemento asociado a un artículo específico, identificado por su código de complemento y usuario solicitante.
+
+  **Módulo**: HU03 Articulos / Complementos
+
+  **Método**: DELETE
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/Complementos/EliminarComplemento`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  **`IdArticulo`** · STRING · Requerido — Identificador del artículo al que pertenece el complemento a eliminar.
+
+  **`IdUsuario`** · STRING · Requerido — Identificador del usuario que realiza la operación de eliminación.
+
+  **`IdComplemento`** · STRING · Requerido — Identificador del complemento que se desea eliminar.
+
+  ---
+
+  ### Notas
+
+  - Autenticación heredada del entorno (`auth: inherit`).
+  - La URL se codifica automáticamente (`encodeUrl: true`).
+  - Sin tiempo de espera configurado (`timeout: 0`), la solicitud esperará indefinidamente hasta recibir respuesta.
+  - No requiere cuerpo en la petición (`body: none`).
+}

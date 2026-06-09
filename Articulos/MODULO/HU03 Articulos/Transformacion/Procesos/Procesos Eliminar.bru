@@ -1,7 +1,7 @@
 meta {
   name: Procesos Eliminar
   type: http
-  seq: 5
+  seq: 3
 }
 
 delete {
@@ -18,4 +18,35 @@ params:query {
 settings {
   encodeUrl: true
   timeout: 0
+}
+
+docs {
+  ## Procesos Eliminar
+
+  **Descripción**: Elimina un proceso asociado a un artículo específico, identificado por su ID de artículo y número de secuencia.
+
+  **Módulo**: HU03 Articulos / Transformacion / Procesos
+
+  **Método**: DELETE
+
+  **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Procesos/Eliminar`
+
+  ---
+
+  ### Parámetros (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdArticulo`** · STRING · ✅ — Identificador único del artículo al que pertenece el proceso a eliminar.
+
+  **`Secuencia`** · INTEGER · ✅ — Número de secuencia del proceso que se desea eliminar.
+
+  ---
+
+  ### Notas
+
+  - Autenticación: heredada del entorno (`auth: inherit`).
+  - La URL se codifica automáticamente (`encodeUrl: true`).
+  - Sin tiempo límite de espera configurado (`timeout: 0`).
+  - No requiere cuerpo en la solicitud (`body: none`).
 }
