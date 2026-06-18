@@ -1,0 +1,247 @@
+info:
+  name: REPORTE GENERAL PRINCIPAL
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/MargenesPorCliente?FechaInicial=2026-05-12&FechaFinal=2026-06-11&Reporte=1&IdUser=olds&Margen=1
+  params:
+    - name: FechaInicial
+      value: 2026-05-12
+      type: query
+    - name: FechaFinal
+      value: 2026-06-11
+      type: query
+    - name: Reporte
+      value: "1"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+    - name: Margen
+      value: "1"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  # Servicio REST — Márgenes por Cliente · Grid General
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Reporte 01 — Márgenes por Cliente (modo Grid General)**
+  Llamada estándar para poblar el **grid principal** de márgenes por cliente: retorna en `ttMargen` un renglón por cliente con sus ventas, descuentos, costo y margen del periodo. En este modo `ttDetalle` siempre viene vacío.
+  Programa servidor: `ventas-rep001.p` | Basado en: `vtac0090.p`
+
+  > 📌 Para el clic **DETALLE** sobre un renglón del grid, ver el documento
+  > `ventas-rep001-MargenesPorCliente-DetalleCliente.md` (mismo endpoint, otros parámetros).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/MargenesPorCliente
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`FechaInicial`** · DATE · ✅ — Fecha inicial del periodo
+  - Formato: `YYYY-MM-DD` · Ej: `2026-05-12`
+
+  **`FechaFinal`** · DATE · ✅ — Fecha final del periodo
+  - Formato: `YYYY-MM-DD` · Ej: `2026-06-11`
+
+  **`Reporte`** · INT · ✅ — Tipo de reporte
+  - Para el grid general enviar siempre `1` (Resumido)
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta el reporte
+  - Ej: `"olds"`
+
+  **`Margen`** · INT · ❌ — Base de cálculo del margen
+  - `1` Sobre costo · `2` Sobre venta
+  - Si se omite, el servicio asume `1` (Sobre costo)
+
+  > ℹ️ El resto de los parámetros del servicio (`Zonas`, `Condicion`, `Ordenado`,
+  > `Seleccionar`, `Selectivo`, filtros de descuento, etc.) **se omiten** en esta
+  > llamada — el backend les aplica valores por defecto: General / Todos /
+  > Alfabético / sin filtros. La referencia completa de parámetros está en
+  > `ventas-rep001-MargenesPorCliente.md`.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/MargenesPorCliente
+      ?FechaInicial=2026-05-12
+      &FechaFinal=2026-06-11
+      &Reporte=1
+      &IdUser=olds
+      &Margen=1
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "OK",
+    "dsOutput": {
+      "ttMargen": [
+        {
+          "IdCliente": 575,
+          "RazSoc": "DISTRIBUIDORA EJEMPLO SA DE CV",
+          "Iniciales": "JGR",
+          "Sel": "NORTE",
+          "IdZona": 3,
+          "Limite": 50000,
+          "Plazo": 30,
+          "Factor": 0.0,
+          "FletePag": false,
+          "DesCtdo": 2.0,
+          "DescPP1": "2.5,1.5",
+          "DPromPago": 28.4,
+          "DPromCart": 32.1,
+          "Importe": 148250.00,
+          "Descto": 7412.50,
+          "PorDes": 5.00,
+          "Neto": 140837.50,
+          "Costo": 112670.00,
+          "Dif": 28167.50,
+          "ImpFlete": 0.00,
+          "Margen": 19.99
+        }
+      ],
+      "ttDetalle": []
+    }
+  }
+  ```
+
+  > **Nota:** En el modo grid (`Reporte=1`) `ttDetalle` **siempre** se retorna vacío.
+
+  ### Campos de `ttMargen` (1 registro por cliente — renglón del grid)
+
+  **`IdCliente`** · INT — Clave del cliente *(usar este valor para el clic DETALLE)*
+  **`RazSoc`** · STRING — Razón social
+  **`Iniciales`** · STRING — Iniciales del vendedor asignado
+  **`Sel`** · STRING — Etiqueta del criterio de selección (zona, giro, etc.)
+  **`IdZona`** · INT — Clave de zona del cliente
+  **`Limite`** · INT — Límite de crédito
+  **`Plazo`** · INT — Plazo de crédito en días
+  **`Factor`** · DECIMAL — Factor fijo de descuento
+  **`FletePag`** · BOOLEAN — `true` = cliente paga flete
+  **`DesCtdo`** · DECIMAL — Porcentaje de descuento contado
+  **`DescPP1`** · STRING — Descuentos pronto pago en formato `"pp1,pp2"`
+  **`DPromPago`** · DECIMAL — Días promedio de pago (1 decimal)
+  **`DPromCart`** · DECIMAL — Días promedio de cartera (1 decimal)
+  **`Importe`** · DECIMAL — Importe bruto de ventas del periodo
+  **`Descto`** · DECIMAL — Total de descuentos aplicados
+  **`PorDes`** · DECIMAL — Porcentaje de descuento promedio
+  **`Neto`** · DECIMAL — Importe neto (Importe − Descto)
+  **`Costo`** · DECIMAL — Costo total de los artículos vendidos
+  **`Dif`** · DECIMAL — Diferencia Neto − Costo
+  **`ImpFlete`** · DECIMAL — Importe de flete cargado
+  **`Margen`** · DECIMAL — % de margen según parámetro `Margen` (sobre costo o sobre venta)
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Enviar Usuario",
+    "dsOutput": {
+      "ttMargen": [],
+      "ttDetalle": []
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdUser` vacío o no enviado | `IdError: true` — `"Enviar Usuario"` |
+  | `FechaInicial` no enviada | Default: hoy − 30 días *(enviarla siempre desde el front)* |
+  | `FechaFinal` no enviada | Default: hoy *(enviarla siempre desde el front)* |
+  | `Reporte` fuera de rango `1-2` o no enviado | Se normaliza a `1` (Resumido) |
+  | `Margen` fuera de rango `1-2` o no enviado | Se normaliza a `1` (Sobre costo) |
+  | Parámetros de filtro no enviados | Defaults: General / Todos / Alfabético / sin filtros |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+  Adjuntar screenshot de la herramienta de prueba (Bruno / Postman / curl) mostrando:
+  - URL completa con parámetros
+  - Status HTTP `200 OK`
+  - Cuerpo de respuesta con al menos un registro en `ttMargen`
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | 2026-06-11 | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Uso en el grid:** Cada registro de `ttMargen` es un renglón del grid. El campo `IdCliente` debe conservarse en el renglón porque es el valor que se envía en `SeleccionarLista` al hacer clic en **DETALLE**.
+  2. **Periodo y margen consistentes:** Guardar en el estado del front los valores de `FechaInicial`, `FechaFinal` y `Margen` usados para poblar el grid — la llamada de DETALLE debe enviar **exactamente los mismos** para que las cifras cuadren con el renglón.
+  3. **Margen sobre costo vs. sobre venta:**
+     - `Margen=1` → `((Neto − Costo) / Costo) × 100`
+     - `Margen=2` → `((Neto − Costo) / Neto) × 100`
+  4. **Rendimiento:** Con `Reporte=1` el servicio omite el llenado de `ttDetalle`. No usar `Reporte=2` para poblar el grid general — el tiempo de respuesta crece considerablemente al desglosar todos los documentos de todos los clientes.
+  5. **Clientes excluidos:** El reporte excluye automáticamente los clientes internos.
+  6. **Autenticación:** El servicio corre sobre OpenEdge PASOE. Si el ambiente requiere autenticación Bearer, incluir el header `Authorization: Bearer <token>`.

@@ -1,0 +1,7 @@
+info:
+  name: HU07 -  CRON
+  type: folder
+  seq: 7
+
+request:
+  auth: inherit

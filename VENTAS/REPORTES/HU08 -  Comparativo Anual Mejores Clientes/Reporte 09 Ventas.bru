@@ -1,0 +1,42 @@
+meta {
+  name: Reporte 09 Ventas
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/ComparativoAnualMejoresClientes?IdUser=olds&Ejercicio=2026&Final=2026&Mes=03&CantCte=0&TipoCte=1&Seleccion=1&Lista=
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdUser: olds
+  Ejercicio: 2026
+  Final: 2026
+  Mes: 03
+  CantCte: 0
+  TipoCte: 1
+  Seleccion: 1
+  Lista:
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  **Reporte 09 — Comparativo Anual de Mejores Clientes**
+  Programa: `ventas-rep009.p` | Basado en: `cxcc1390.p`
+
+  **Parámetros:**
+  - `IdUser` ✅ — Usuario que ejecuta el reporte
+  - `Ejercicio` ✅ — Año piloto de ordenamiento (entre Final-4 y Final)
+  - `Final` ✅ — Año más reciente del comparativo (≤ año actual)
+  - `Mes` ✅ — Mes de corte (1–12)
+  - `CantCte` ❌ — Top N clientes; 0 = todos
+  - `TipoCte` ✅ — 1 General · 2 Solo locales · 3 Solo foráneos
+  - `Seleccion` ✅ — 1 Gral · 2 Zona · 3 Resp · 4 Vend · 5 Agente · 6 Ruta · 7 Giro · 8 Cliente · 9 Lista
+  - `Lista` ⚠️ — CSV según Seleccion; vacío cuando Seleccion=1
+}

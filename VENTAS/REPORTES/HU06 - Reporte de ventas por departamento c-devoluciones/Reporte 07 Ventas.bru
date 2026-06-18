@@ -1,0 +1,28 @@
+meta {
+  name: Reporte 07 Ventas
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/VentasPorProvPorVend?IdUser=olds&Seleccion=3&Lista=2033&ListaVend=&FechaInicial=2026-02-24&FechaFinal=2026-03-26&Reporte=1&Desglose=1&CantMin=0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdUser: olds
+  Seleccion: 3
+  Lista: 2033
+  ListaVend:
+  FechaInicial: 2026-02-24
+  FechaFinal: 2026-03-26
+  Reporte: 1
+  Desglose: 1
+  CantMin: 0
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

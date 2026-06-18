@@ -1,0 +1,225 @@
+info:
+  name: 3) Reporte Por Cliente
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/PorCliente?IdUser=olds&FechaInicial=2026-03-06&FechaFinal=2026-06-12
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: FechaInicial
+      value: 2026-03-06
+      type: query
+    - name: FechaFinal
+      value: 2026-06-12
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  # Servicio REST — Pedidos EXPO acumulado por Cliente
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedidos EXPO acumulado por Cliente (ExpoPorCliente)**
+  Retorna un renglón por cliente con los pedidos EXPO capturados en el rango de fechas: número de pedidos, subtotal del pedido (sin IVA) y subtotal facturado (sin IVA). Incluye además un registro de totales generales. Es la consulta que respalda la card **"Total de Clientes"** del dashboard EXPO. El listado de clientes se devuelve ordenado por subtotal de pedido en forma descendente.
+  Programa servidor: `vtac1372.p` | Basado en: `vtac1372.p` (FLC, 7-Mar-2025)
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/PorCliente
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`FechaInicial`** · DATE (YYYY-MM-DD) · ❌ — Fecha inicial del rango de pedidos
+  - Ej: `"2026-03-06"` · Vacío = `06-Mar-2026` (inicio EXPO 2026)
+
+  **`FechaFinal`** · DATE (YYYY-MM-DD) · ❌ — Fecha final del rango de pedidos
+  - Ej: `"2026-06-12"` · Vacío = fecha de hoy (`TODAY`)
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta (auditoría)
+  - Ej: `"olds"` · Vacío o nulo = error controlado
+
+  > ℹ️ **Relación con el dashboard EXPO:** Este servicio se abre al hacer clic en la card **"Total de Clientes"** del grid principal `/Ventas/Expo/Pedidos`. Para que el total de clientes cuadre con el dashboard, **se deben enviar las MISMAS `FechaInicial` y `FechaFinal`** con que se cargó el dashboard. Si se omiten, ambos servicios aplican los mismos defaults (`06-Mar-2026` … `HOY`), pero el front debe propagar explícitamente el rango activo para evitar descuadres.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/PorCliente
+      ?FechaInicial=2026-03-06&FechaFinal=2026-06-12&IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "3 cliente(s) con pedidos EXPO.",
+    "dsExpoCliente": {
+      "ttCliente": [
+        {
+          "Renglon": 1,
+          "IdCliente": 10458,
+          "RazonSocial": "PAPELERIA DEL NORTE SA DE CV",
+          "NumPed": 8,
+          "SubTotal": 152340.50,
+          "SubTotFac": 148900.00
+        },
+        {
+          "Renglon": 2,
+          "IdCliente": 20871,
+          "RazonSocial": "DISTRIBUIDORA ESCOLAR DEL BAJIO",
+          "NumPed": 5,
+          "SubTotal": 98760.00,
+          "SubTotFac": 60120.25
+        },
+        {
+          "Renglon": 3,
+          "IdCliente": 30912,
+          "RazonSocial": "COMERCIALIZADORA OFFICE PLUS",
+          "NumPed": 2,
+          "SubTotal": 34500.00,
+          "SubTotFac": 0.00
+        }
+      ],
+      "ttTotales": [
+        {
+          "NumClientes": 3,
+          "NumPed": 15,
+          "SubTotal": 285600.50,
+          "SubTotFac": 209020.25
+        }
+      ]
+    }
+  }
+  ```
+
+  ### Campos de `ttCliente`
+
+  > Un renglón por cliente con pedidos EXPO en el rango. Ordenados por `SubTotal` descendente.
+
+  **`Renglon`** · INT — Consecutivo del renglón (1, 2, 3 …) según el orden por subtotal descendente
+  **`IdCliente`** · INT — Clave del cliente
+  **`RazonSocial`** · STRING — Razón social del cliente; vacío si no se localiza el `Cliente`
+  **`NumPed`** · INT — Número de pedidos EXPO del cliente en el rango
+  **`SubTotal`** · DECIMAL — Importe acumulado **pedido** sin IVA (suma de `Pedido.SubTotal`)
+  **`SubTotFac`** · DECIMAL — Importe acumulado **facturado** sin IVA (subtotal de la remisión o factura asociada)
+
+  ### Campos de `ttTotales`
+
+  > Un único registro con los totales generales de todos los clientes.
+
+  **`NumClientes`** · INT — Total de clientes con pedidos EXPO (= cantidad de renglones de `ttCliente`)
+  **`NumPed`** · INT — Total general de pedidos
+  **`SubTotal`** · DECIMAL — Total general del importe **pedido** sin IVA
+  **`SubTotFac`** · DECIMAL — Total general del importe **facturado** sin IVA
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Se requiere usuario (pIdUser).",
+    "dsExpoCliente": {
+      "ttCliente": [],
+      "ttTotales": []
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdUser` vacío o no enviado | `IdError: true` — `"Se requiere usuario (pIdUser)."` |
+  | `FechaInicial` > `FechaFinal` | `IdError: true` — `"La fecha inicial es mayor a la fecha final."` |
+  | `FechaInicial` no enviada | Se asume `06-Mar-2026` (inicio EXPO) |
+  | `FechaFinal` no enviada | Se asume la fecha de hoy (`TODAY`) |
+  | Pedido cancelado, con resto o de otra captura | No se acumula (filtro fijo, ver Observaciones) |
+  | Error en proceso | `IdError: true` — `"Error en EXPO por cliente: <mensaje>"` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+  Adjuntar screenshot de la herramienta de prueba (Bruno / Postman / curl) mostrando:
+  - URL completa con `FechaInicial`, `FechaFinal` e `IdUser`
+  - Status HTTP `200 OK`
+  - Cuerpo de respuesta con al menos un registro en `ttCliente` y el registro de `ttTotales`
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | 2026-06-14 | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Consistencia con el dashboard EXPO:** El front debe abrir esta consulta desde la card "Total de Clientes" del grid `/Ventas/Expo/Pedidos` enviando exactamente las mismas `FechaInicial` y `FechaFinal` con que se cargó el dashboard. Solo así el `NumClientes` de `ttTotales` coincide con el conteo de clientes mostrado en la card.
+  2. **Filtro fijo de pedidos:** Solo se acumulan pedidos que cumplen: captura EXPO (`Pedido.Id-Captura = "0104"`), no marcados para cancelación (`Pedido.SolCanc = FALSE`) y sin resto pendiente (`Pedido.Resto = 0`), dentro del rango `FecReg` entre `FechaInicial` y `FechaFinal`.
+  3. **Importe facturado (`SubTotFac`):** Se resuelve por pedido cuando `Pedido.Id-Factura` no está vacío. Si `Pedido.Id-Cond = 0` se toma el subtotal de `Remision`; si `Pedido.Id-Cond > 0` se toma el subtotal de `Factura`. Si el pedido aún no tiene factura/remisión asociada, su aporte a `SubTotFac` es `0`.
+  4. **Importes sin IVA:** Tanto `SubTotal` (pedido) como `SubTotFac` (facturado) son subtotales **sin IVA**, con 2 decimales.
+  5. **Orden de salida:** `ttCliente` se devuelve ordenado por `SubTotal` descendente; el campo `Renglon` refleja ese orden y sirve como clave única para el front.
+  6. **Totales:** El registro único de `ttTotales` agrega `NumPed`, `SubTotal` y `SubTotFac` de todos los clientes; `NumClientes` equivale al número de renglones de `ttCliente`.
+  7. **Auditoría:** Cada ejecución registra una entrada vía `programas/auditoria.p` con el usuario, módulo `VENTAS`, acción `Expo`, programa `vtac1372`, método `GET` y el endpoint `/Ventas/Expo/PorCliente`.
+  8. **Autenticación:** El servicio corre sobre OpenEdge PASOE. Si el ambiente requiere autenticación Bearer, incluir el header `Authorization: Bearer <token>`.

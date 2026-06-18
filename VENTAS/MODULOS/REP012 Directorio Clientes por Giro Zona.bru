@@ -1,0 +1,67 @@
+meta {
+  name: REP012 Directorio Clientes por Giro Zona
+  type: http
+  seq: 12
+}
+
+get {
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/DireccionesDeClientePorGiroZona?Giro=TODOS&Zona=TODAS&ListVend=TODOS&IdUser=olds
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Giro: TODOS
+  Zona: TODAS
+  ListVend: TODOS
+  IdUser: olds
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  **Reporte 12 — Directorio de Clientes por Giro y Zona**
+  Programa: `ventas-rep012.p` | Basado en: `cxcc0300.p`
+
+  Retorna el directorio de clientes activos con dirección completa, giro comercial,
+  ramo, vendedor asignado y última compra (crédito o contado).
+  Ordenado por Estado → Ciudad → Vendedor.
+
+  **Parámetros:**
+  - `Giro` (string): CSV de claves de giro formato `999`. `"TODOS"` = sin filtro.
+    Ej: `TODOS`, `001,005,012`
+  - `Zona` (string): CSV de claves de zona formato `999`. `"TODAS"` = sin filtro.
+    Ej: `TODAS`, `001,003`
+  - `ListVend` (string): CSV de claves de vendedor formato `xxxx`. `"TODOS"` = sin filtro.
+    Ej: `TODOS`, `0100,0200,GRC1`
+  - `IdUser` (string, REQUERIDO): Clave del usuario que ejecuta el reporte.
+    Ej: `olds`
+
+  **Ejemplo — todos sin filtro:**
+  ```
+  GET .../DireccionesDeClientePorGiroZona?Giro=TODOS&Zona=TODAS&ListVend=TODOS&IdUser=olds
+  ```
+
+  **Ejemplo — por giro y zona específicos:**
+  ```
+  GET .../DireccionesDeClientePorGiroZona?Giro=001,005&Zona=003&ListVend=TODOS&IdUser=olds
+  ```
+
+  **Campos de respuesta (ttCliente):**
+  - `IdCliente` — Clave del cliente
+  - `RazonSocial` — Nombre o razón social
+  - `IdVendedor` — Clave del vendedor asignado
+  - `CalleNo` — Calle y número
+  - `Colonia` — Colonia
+  - `Ciudad` — Nombre de la ciudad
+  - `Estado` — Nombre del estado
+  - `IdGiro` — Clave del giro comercial
+  - `DescrGiro` — Descripción del giro (vacío si no existe)
+  - `IdRamo` — Clave del ramo
+  - `UltCompra` — Última compra: "DD/MM/YY  CRE" (crédito) o "DD/MM/YY  CON" (contado)
+
+  **Error si IdUser vacío:**
+  `{ "IdError": true, "Respuesta": "Agregar Usuario" }`
+}

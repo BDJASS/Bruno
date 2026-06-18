@@ -1,0 +1,32 @@
+meta {
+  name: Reporte 10 Ofertas
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/OfertasVigentes?IdOfer=enero
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdOfer: enero
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  **Reporte 10 — Consulta de Artículos en Oferta**
+  Programa: `ventas-rep010.p` | Basado en: `cnfa0590.p`
+
+  Retorna los artículos registrados en una oferta específica, incluyendo presentación,
+  color, porcentajes de descuento, vigencia y estatus activo.
+
+  **Parámetros:**
+  - `IdOfer` ❌ — Clave de la oferta. Vacío = todas las ofertas.
+    Ej: `ENERO`, `PROMO1`, `VERANO24`
+}

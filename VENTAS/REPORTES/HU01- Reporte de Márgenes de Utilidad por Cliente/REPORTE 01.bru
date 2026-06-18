@@ -1,0 +1,40 @@
+meta {
+  name: REPORTE 01
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/MargenesPorCliente?FechaInicial=2026-02-21&FechaFinal=2026-03-23&Reporte=1&IdUser=olds&Zonas=1&Condicion=1&Ordenado=1&SubDist=1&Seleccionar=1&Selectivo=2&Margen=1&ImporteVentas=0&DescPP1=0&DescPP2=0&PlazoCredito=0&PlazoPPP=0&Factor=0&PorcFlete=0&DesCtdo=0&DiasPromedio=0&DiasCartera=0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FechaInicial: 2026-02-21
+  FechaFinal: 2026-03-23
+  Reporte: 1
+  IdUser: olds
+  Zonas: 1
+  Condicion: 1
+  Ordenado: 1
+  SubDist: 1
+  Seleccionar: 1
+  Selectivo: 2
+  Margen: 1
+  ImporteVentas: 0
+  DescPP1: 0
+  DescPP2: 0
+  PlazoCredito: 0
+  PlazoPPP: 0
+  Factor: 0
+  PorcFlete: 0
+  DesCtdo: 0
+  DiasPromedio: 0
+  DiasCartera: 0
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

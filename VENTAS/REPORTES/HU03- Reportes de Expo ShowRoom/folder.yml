@@ -1,0 +1,293 @@
+﻿info:
+  name: HU03- Reportes de Expo ShowRoom
+  type: folder
+  seq: 3
+
+request:
+  auth: inherit
+
+docs:
+  content: |
+    # Servicio REST — Reembolso por Proveedor EXPO 2025
+
+    ---
+
+    ## 1. Título del Servicio
+
+    **Reporte 03H — Reembolso por Proveedor EXPO**
+    Calcula la bonificación que cada proveedor debe reembolsar por los pedidos EXPO
+    (Id-Captura `0104`) dentro de un rango de fechas, usando costos históricos y los
+    descuentos pactados por proveedor, con excepciones por artículo definidas en listas `EEXPO`.
+    Retorna detalle por artículo/color/presentación (`ttDetalle`) y resumen por proveedor (`ttResumen`).
+
+    Programa servidor: `ventas-rep003h.p` | Basado en: `vtac1375.p`
+
+    ---
+
+    ## 2. Método HTTP
+
+    ```
+    GET
+    ```
+
+    ---
+
+    ## 3. URL Completa
+
+    ```
+    http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/ReembolsoPedExpo2025
+    ```
+
+    **Ejemplo completo:**
+    ```
+    http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/ReembolsoPedExpo2025?IdUser=olds&FechaInicial=2025-03-07&FechaFinal=2026-03-25&IdProv=0&IdCliente=0&Seleccion=1
+    ```
+
+    ---
+
+    ## 4. Parámetros de Entrada (Query String)
+
+    > ✅ = Requerido · ❌ = Opcional · Valores `0` en filtros numéricos = sin filtro (todos).
+
+    **`FechaInicial`** · DATE · ✅ — Fecha inicial del periodo a consultar
+    - Formato: `YYYY-MM-DD` · Ej: `2025-03-07`
+
+    **`FechaFinal`** · DATE · ✅ — Fecha final del periodo a consultar
+    - Formato: `YYYY-MM-DD` · Ej: `2026-03-25`
+
+    **`IdProv`** · INT · ❌ — Filtro por proveedor
+    - `0` = Todos los proveedores · `>0` = proveedor específico
+    - Proveedor genérico (`Id-Prov = 999`) siempre excluido
+
+    **`IdCliente`** · INT · ❌ — Filtro por cliente
+    - `0` = Todos los clientes · `>0` = cliente específico
+
+    **`Seleccion`** · INT · ✅ — Modo de salida del reporte
+    - `1` Detallado — retorna `ttDetalle` + `ttResumen`
+    - `2` Resumido  — retorna solo `ttResumen`; `ttDetalle` vacío
+
+    **`IdUser`** · STRING · ✅ — Usuario que ejecuta el reporte
+    - Vacío o ausente → error `"Enviar Usuario"`
+
+    ---
+
+    ## 5. Lógica del Proceso
+
+    El procedimiento trabaja en cinco fases internas:
+
+    ### Fase 1 — Pre-carga de excepciones por artículo (listas EEXPO)
+    Se leen todas las listas cuyo nombre inicia con `EEXPO` (tabla `ListaArt`).
+    Para cada artículo en esas listas se extrae el porcentaje de descuento especial
+    que está codificado en el nombre de la lista (los 2 dígitos antes del último carácter).
+    Ejemplo: lista `EEXPO30X` → descuento de `30 %` para los artículos que la integran.
+
+    Estos descuentos tienen **prioridad** sobre el descuento general del proveedor.
+
+    ### Fase 2 — Iteración de pedidos EXPO
+    Se recorren todos los `Pedido` con:
+    - `FecReg` dentro del rango solicitado
+    - `Id-Captura = "0104"` (canal EXPO)
+    - `Resto = 0` y `SolCanc = FALSE`
+
+    Por cada renglón de detalle (`DetPedido`) se aplican los siguientes pasos:
+
+    | Paso | Condición de exclusión |
+    |------|------------------------|
+    | Filtro cliente | `pIdCliente > 0` y pedido no es del cliente → `NEXT` |
+    | Filtro proveedor | `pIdProv > 0` y renglón no es del proveedor → `NEXT` |
+    | Proveedor genérico | `Id-Prov = 999` → siempre excluido |
+    | Sin descuento vigente | No existe `DescProv` activo en la fecha del pedido → `NEXT` |
+
+    **Costo histórico (`NCosto`):**
+    Se busca el `HCosto` más reciente con `FecReg ≤ FechaInicial` del parámetro.
+    Si no existe, se toma el más antiguo posterior a `FechaInicial` (fallback).
+    ```
+    NCosto = HCosto.Costo × ArtPres.Equiv
+    ```
+
+    **Porcentaje de descuento (`PDesc`):**
+    ```
+    PDesc = ttExcep.PDesc   (si el artículo tiene excepción EEXPO)
+            DescProv.Descto (en otro caso)
+    ```
+
+    **Costo promoción:**
+    ```
+    CostoPromo = NCosto × (1 − PDesc / 100)
+    ```
+
+    Los registros se acumulan en `ttDetalle` agrupados por `IdProv + IdArticulo + IdColor + IdPres`.
+    `PUnit` se acumula como suma ponderada (`PUnit × CantPed`) para promediarse en Fase 3.
+
+    ### Fase 3 — Post-proceso de ttDetalle
+    Con todos los registros acumulados se calculan los campos finales:
+    ```
+    BonifUnit  = NCosto − CostoPromo
+    PorcBonif  = ROUND(BonifUnit / NCosto × 100, 2)
+    BonifTotal = ROUND(BonifUnit × Cant, 2)
+    PUnit      = ROUND(ΣPUnit / Cant, 4)           ← promedio ponderado
+    ```
+
+    ### Fase 4 — Construcción de ttResumen
+    Se agrupa `ttDetalle` por proveedor:
+    ```
+    TotBonif += BonifTotal
+    TotPUnit += PUnit × Cant
+    ```
+
+    ### Fase 5 — Aplicación del modo de salida
+    - `Seleccion = 1` → se retornan ambas temp-tables sin cambios
+    - `Seleccion = 2` → se vacía `ttDetalle` antes de retornar; solo llega `ttResumen`
+
+    ---
+
+    ## 6. Response — Campos de ttDetalle
+
+    > Retornado cuando `Seleccion = 1`. Un registro por combinación Proveedor / Artículo / Color / Presentación.
+
+    **`IdProv`** · INTEGER — Id del proveedor
+    **`NomProv`** · STRING — Nombre del proveedor
+    **`IdArticulo`** · STRING — Clave del artículo
+    **`Descr`** · STRING — Descripción del artículo
+    **`IdColor`** · INTEGER — Id del color
+    **`AbrevColor`** · STRING — Abreviatura del color (`Kolor.Abrev`)
+    **`IdPres`** · INTEGER — Id de la presentación
+    **`NomPres`** · STRING — Descripción de la presentación (`ArtPres.Descr`)
+    **`Cant`** · DECIMAL(2) — Cantidad total de piezas pedidas en el periodo
+    **`NCosto`** · DECIMAL(4) — Costo normal: `HCosto.Costo × ArtPres.Equiv`
+    **`PDesc`** · DECIMAL(2) — Porcentaje de descuento aplicado (EEXPO o DescProv)
+    **`CostoPromo`** · DECIMAL(4) — Costo con descuento: `NCosto × (1 − PDesc/100)`
+    **`BonifUnit`** · DECIMAL(4) — Bonificación unitaria: `NCosto − CostoPromo`
+    **`PorcBonif`** · DECIMAL(2) — Porcentaje de bonificación: `BonifUnit / NCosto × 100`
+    **`BonifTotal`** · DECIMAL(2) — Bonificación total: `BonifUnit × Cant`
+    **`PUnit`** · DECIMAL(4) — Precio unitario promedio ponderado del periodo
+
+    ---
+
+    ## 7. Response — Campos de ttResumen
+
+    > Siempre retornado (para `Seleccion = 1` y `2`). Un registro por proveedor.
+
+    **`IdProv`** · INTEGER — Id del proveedor
+    **`NomProv`** · STRING — Nombre del proveedor
+    **`TotBonif`** · DECIMAL(2) — Total de bonificación del proveedor en el periodo
+    **`TotPUnit`** · DECIMAL(2) — Suma ponderada de precios unitarios (`Σ PUnit × Cant`)
+
+    ---
+
+    ## 8. Response — Campos estándar
+
+    **`IdError`** · BOOLEAN — `false` = proceso exitoso; `true` = ocurrió un error
+    **`Respuesta`** · STRING — `"OK"` en éxito, o mensaje de error descriptivo
+
+    ---
+
+    ## 9. Ejemplos de Respuesta
+
+    ### Éxito — Seleccion=1 (Detallado)
+
+    ```json
+    {
+      "IdError": false,
+      "Respuesta": "OK",
+      "ttDetalle": [
+        {
+          "IdProv": 42,
+          "NomProv": "PROVEEDOR EJEMPLO SA DE CV",
+          "IdArticulo": "ART001",
+          "Descr": "PLAYERA CUELLO REDONDO",
+          "IdColor": 3,
+          "AbrevColor": "NGR",
+          "IdPres": 1,
+          "NomPres": "PIEZA",
+          "Cant": 120.00,
+          "NCosto": 85.5000,
+          "PDesc": 12.00,
+          "CostoPromo": 75.2400,
+          "BonifUnit": 10.2600,
+          "PorcBonif": 12.00,
+          "BonifTotal": 1231.20,
+          "PUnit": 145.8000
+        }
+      ],
+      "ttResumen": [
+        {
+          "IdProv": 42,
+          "NomProv": "PROVEEDOR EJEMPLO SA DE CV",
+          "TotBonif": 1231.20,
+          "TotPUnit": 17496.00
+        }
+      ]
+    }
+    ```
+
+    ### Éxito — Seleccion=2 (Resumido)
+
+    ```json
+    {
+      "IdError": false,
+      "Respuesta": "OK",
+      "ttDetalle": [],
+      "ttResumen": [
+        {
+          "IdProv": 42,
+          "NomProv": "PROVEEDOR EJEMPLO SA DE CV",
+          "TotBonif": 1231.20,
+          "TotPUnit": 17496.00
+        }
+      ]
+    }
+    ```
+
+    ### Error — Usuario no enviado
+
+    ```json
+    {
+      "IdError": true,
+      "Respuesta": "Enviar Usuario",
+      "ttDetalle": [],
+      "ttResumen": []
+    }
+    ```
+
+    ### Resultado vacío — Sin pedidos en el periodo
+
+    ```json
+    {
+      "IdError": false,
+      "Respuesta": "OK",
+      "ttDetalle": [],
+      "ttResumen": []
+    }
+    ```
+
+    ---
+
+    ## 10. Observaciones Técnicas
+
+    **Pedidos EXPO:** Solo se consideran pedidos con `Id-Captura = "0104"`, `Resto = 0` y
+    `SolCanc = FALSE`. Pedidos cancelados o con resto pendiente quedan excluidos.
+
+    **Proveedor genérico excluido:** Renglones con `Id-Prov = 999` siempre se omiten,
+    independientemente del filtro `IdProv`.
+
+    **Costo histórico:** Se usa el `HCosto` más reciente con `FecReg ≤ FechaInicial`.
+    Si no existe registro anterior, se toma el más antiguo posterior (fallback).
+    Si tampoco existe, `NCosto = 0` y el renglón genera `BonifTotal = 0`.
+
+    **Listas EEXPO:** Los artículos incluidos en listas cuyo nombre comienza con `EEXPO`
+    tienen un descuento especial que **sobreescribe** el porcentaje de `DescProv`.
+    El porcentaje se lee de los 2 caracteres del nombre de la lista en la posición
+    `LENGTH - 4` (Ej.: `EEXPO30X` → `30 %`).
+
+    **Agrupación en ttDetalle:** Los pedidos del mismo proveedor / artículo / color /
+    presentación se acumulan en un solo registro. `PUnit` se promedia de forma
+    ponderada (`Σ PUnit×Cant / Cant`).
+
+    **Sin descuento vigente:** Si no existe un `DescProv` activo en la fecha del pedido
+    (`FecIni ≤ FecReg ≤ FecFin`), el renglón se omite completamente.
+
+    **ttResumen siempre construido:** La tabla de resumen se construye a partir de
+    `ttDetalle` antes de que se evalúe `Seleccion`. Por tanto, aunque `Seleccion = 2`
+    vacíe `ttDetalle`, `ttResumen` siempre contiene los totales correctos.
+  type: text/markdown

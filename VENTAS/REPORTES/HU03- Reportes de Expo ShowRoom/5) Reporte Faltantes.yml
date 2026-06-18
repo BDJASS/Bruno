@@ -1,0 +1,220 @@
+info:
+  name: 5) Reporte Faltantes
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/Faltantes?IdUser=olds&FechaInicial=2026-03-06&FechaFinal=2026-06-12
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: FechaInicial
+      value: 2026-03-06
+      type: query
+    - name: FechaFinal
+      value: 2026-06-12
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  # Servicio REST — Faltantes (BackOrder) de Pedidos EXPO por Proveedor
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Faltantes (BackOrder) de Pedidos EXPO por Proveedor (GetExpoFaltantes)**
+  Retorna el resumen de **faltantes (back order)** de los pedidos EXPO agrupado por proveedor: por cada proveedor entrega los renglones con faltante (`NumReng`) y el importe faltante sin IVA (`Importe`), además del comprador asignado. Incluye también un registro de totales globales (pedidos, proveedores, cantidad en piezas e importe faltante). Es el detalle de la card **"Faltantes"** del dashboard EXPO (`/Ventas/Expo/Pedidos`).
+  Se considera faltante el surtido pendiente de pedidos EXPO (`CantEnt < CantPed`, estatus `< 5`, último resto). **Todos los importes son sin IVA.**
+  Programa servidor: `vtac1380.p` | Basado en: `vtac1380.p` (FLC, 13-Abr-2026) — solo la vista por proveedor; las vistas por artículo/pedido del programa original no se exponen en este servicio.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/Faltantes
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`FechaInicial`** · DATE · ❌ — Fecha inicial del rango (`Pedido.FecReg >=`)
+  - Formato `YYYY-MM-DD` · Ej: `"2026-03-06"`
+  - Vacío/omitido = `06-Mar-2026` (inicio EXPO 2026)
+
+  **`FechaFinal`** · DATE · ❌ — Fecha final del rango (`Pedido.FecReg <=`)
+  - Formato `YYYY-MM-DD` · Ej: `"2026-06-12"`
+  - Vacío/omitido = `TODAY` (fecha del servidor)
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta (auditoría)
+  - Ej: `"olds"` · Obligatorio: si va vacío/nulo el servicio retorna error controlado
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/Faltantes
+      ?FechaInicial=2026-03-06&FechaFinal=2026-06-12&IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "37 pedido(s) con faltante en 12 proveedor(es).",
+    "dsExpoFaltantes": {
+      "ttBOProveedor": [
+        {
+          "Renglon": 1,
+          "IdComp": "5",
+          "Comprador": "JUAN PEREZ LOPEZ",
+          "IdProv": 1801,
+          "NomProv": "GRUPO SCRIBE SA DE CV",
+          "NumReng": 14,
+          "Importe": 85420.50
+        },
+        {
+          "Renglon": 2,
+          "IdComp": "3",
+          "Comprador": "MARIA GOMEZ RUIZ",
+          "IdProv": 2045,
+          "NomProv": "BIC DE MEXICO SA DE CV",
+          "NumReng": 9,
+          "Importe": 41200.00
+        }
+      ],
+      "ttTotales": [
+        {
+          "NumPedidos": 37,
+          "NumProveedores": 12,
+          "CantFaltante": 5840.00,
+          "ImporteFaltante": 312540.75
+        }
+      ]
+    }
+  }
+  ```
+
+  ### Campos de `ttBOProveedor` (resumen por proveedor)
+
+  > Un renglón por proveedor con surtido pendiente, **ordenado por importe faltante descendente**.
+
+  **`Renglon`** · INT — Número consecutivo de renglón (1, 2, 3…), refleja el orden por importe descendente
+  **`IdComp`** · STRING — Clave del comprador asignado al proveedor (`Prov.Id-Comp`); vacío si no hay proveedor
+  **`Comprador`** · STRING — Nombre del comprador (`Comprador.Nombre`); vacío si no se localiza
+  **`IdProv`** · INT — Clave del proveedor (`DetPedido.Id-Prov`)
+  **`NomProv`** · STRING — Nombre del proveedor (`Prov.Nombre`); vacío si no se localiza
+  **`NumReng`** · INT — Cantidad de renglones de detalle con faltante para ese proveedor
+  **`Importe`** · DECIMAL — Importe faltante **sin IVA** del proveedor: Σ `((CantPed − CantEnt) × PUnit)`
+
+  ### Campos de `ttTotales` (totales globales — un solo registro)
+
+  **`NumPedidos`** · INT — Total de pedidos EXPO con faltante en el rango
+  **`NumProveedores`** · INT — Total de proveedores con faltante (= número de renglones de `ttBOProveedor`)
+  **`CantFaltante`** · DECIMAL — Cantidad faltante total **en piezas**: Σ `(CantPed − CantEnt)`
+  **`ImporteFaltante`** · DECIMAL — Importe faltante total **sin IVA**: Σ `((CantPed − CantEnt) × PUnit)`
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Se requiere usuario (pIdUser).",
+    "dsExpoFaltantes": {
+      "ttBOProveedor": [],
+      "ttTotales": []
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdUser` vacío o nulo | `IdError: true` — `"Se requiere usuario (pIdUser)."` |
+  | `FechaInicial` mayor a `FechaFinal` | `IdError: true` — `"La fecha inicial es mayor a la fecha final."` |
+  | `FechaInicial` omitida | Toma default `06-Mar-2026` (inicio EXPO 2026) |
+  | `FechaFinal` omitida | Toma default `TODAY` (fecha del servidor) |
+  | Sin pedidos con faltante en el rango | `IdError: false` — totales en `0`, `ttBOProveedor` vacío |
+  | Error en proceso | `IdError: true` — `"Error en faltantes EXPO: <detalle OE>"` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+  Adjuntar screenshot de la herramienta de prueba (Bruno / Postman / curl) mostrando:
+  - URL completa con `FechaInicial`, `FechaFinal` e `IdUser`
+  - Status HTTP `200 OK`
+  - Cuerpo de respuesta con `ttBOProveedor` y el registro de `ttTotales`
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | 2026-06-14 | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Concepto de faltante (back order):** Se consideran los pedidos EXPO (`Pedido.Id-Captura = "0104"`, no solicitados a cancelar) con surtido pendiente: estatus `< 5` y al menos un renglón de detalle con `DetPedido.CantEnt < DetPedido.CantPed`. La cantidad faltante de cada renglón es `(CantPed − CantEnt)` y su importe es `(CantPed − CantEnt) × PUnit`.
+  2. **Último resto:** Solo se toma el **último resto** de cada pedido (se descarta el pedido si existe otro `b-Pedido` con `Resto` mayor). Tanto el filtro de detalle como el acumulado usan `DetPedido.Resto = Pedido.Resto`.
+  3. **Valores sin IVA:** Todos los importes (`ttBOProveedor.Importe`, `ttTotales.ImporteFaltante`) se calculan con `PUnit` y **no incluyen IVA**.
+  4. **Relación con la card "Faltantes" del grid principal:** Este servicio es el detalle de la card **"Faltantes"** que se abre desde el grid principal `/Ventas/Expo/Pedidos`. El campo `ttResumen.FaltanteCantidad` de `/Ventas/Expo/Pedidos` corresponde exactamente a `ttTotales.ImporteFaltante` de este servicio (mismo importe faltante sin IVA).
+  5. **Ordenamiento:** `ttBOProveedor` viene ordenado por importe faltante descendente; `Renglon` numera ese orden. El front no necesita reordenar para mostrar el ranking.
+  6. **`ttTotales` siempre presente:** El registro de `ttTotales` se crea siempre (incluso sin faltantes), con los contadores e importes en `0`. `NumProveedores` coincide con la cantidad de renglones de `ttBOProveedor`.
+  7. **Unidades:** `ttTotales.CantFaltante` está en **piezas** (suma de cantidades); `Importe`/`ImporteFaltante` están en **dinero sin IVA**. No mezclar ambas magnitudes.
+  8. **Auditoría:** Cada llamada registra auditoría (`programas/auditoria.p`) con el usuario, el módulo `VENTAS/Expo`, programa `vtac1380` y el resumen `BO:<#pedidos> Del:<FechaInicial>`.
+  9. **Autenticación:** El servicio corre sobre OpenEdge PASOE. Si el ambiente requiere autenticación Bearer, incluir el header `Authorization: Bearer <token>`.

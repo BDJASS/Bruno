@@ -1,11 +1,11 @@
 meta {
-  name: CLIENTE PROD
+  name: CLIENTE DESARROLLO
   type: http
-  seq: 2
+  seq: 1
 }
 
 get {
-  url: http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/VentasPorClienteComparativo?Fecha=2026-03-06&IdEstado=019
+  url: http://192.0.:8853/RestADOSAVentas/rest/RestADOSAVentas/VentasPorClienteComparativo?Fecha=2026-03-06&IdEstado=019
   body: none
   auth: inherit
 }
@@ -13,8 +13,8 @@ get {
 params:query {
   Fecha: 2026-03-06
   IdEstado: 019
-  ~IdVendedor: 0
   ~IdCliente: 33757
+  ~IdVendedor: 019
 }
 
 settings {

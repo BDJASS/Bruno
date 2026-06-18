@@ -1,0 +1,242 @@
+info:
+  name: 4) Reporte Sin Pago
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/ContadoSinPago?IdUser=olds&FechaInicial=2026-03-06&FechaFinal=2026-06-12
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: FechaInicial
+      value: 2026-03-06
+      type: query
+    - name: FechaFinal
+      value: 2026-06-12
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  # Servicio REST — Pedidos EXPO de Contado sin Pago
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedidos EXPO de Contado sin Pago (ExpoContadoSinPago)**
+  Retorna los pedidos EXPO de **contado** (`Id-Cond = 0`) ya **facturados** (estatus 5) que **no registran pago**, con su anticipo disponible, indicador de pago en EXPO y forma de pago. Es el detalle de la card **"Clientes sin Pago"** del dashboard EXPO (grid principal `/Ventas/Expo/Pedidos`).
+  **Importante:** a diferencia de los demás reportes EXPO (que manejan montos **sin IVA**), los montos de este servicio son **CON IVA**.
+  Programa servidor: `vtac1374.p` | Basado en: `vtac1374.p` (FLC, 14-Mar-2026)
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/ContadoSinPago
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`FechaInicial`** · DATE · ❌ — Fecha inicial del rango de registro del pedido (`Pedido.FecReg`)
+  - Formato `YYYY-MM-DD` · Ej: `"2026-03-06"`
+  - Vacío / ausente = `06-Mar-2026` (inicio EXPO 2026)
+
+  **`FechaFinal`** · DATE · ❌ — Fecha final del rango de registro del pedido
+  - Formato `YYYY-MM-DD` · Ej: `"2026-06-12"`
+  - Vacío / ausente = **HOY** (`TODAY` del servidor)
+
+  **`Cliente`** · INT · ❌ — Filtro por clave de cliente (`Pedido.Id-Cliente`)
+  - `0` o ausente = **todos** los clientes · Ej: `1503`
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta (auditoría)
+  - Ej: `"olds"`
+
+  > ℹ️ Esta card se abre desde el grid principal del dashboard EXPO (`/Ventas/Expo/Pedidos`). El front debe enviar **las mismas** `FechaInicial` y `FechaFinal` seleccionadas en el dashboard para que el detalle cuadre con el monto mostrado en la card "Clientes sin Pago".
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/ContadoSinPago
+      ?FechaInicial=2026-03-06&FechaFinal=2026-06-12&IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "12 pedido(s) de contado sin pago.",
+    "dsExpoSinPago": {
+      "ttPedidoSP": [
+        {
+          "Renglon": 1,
+          "IdPedido": "EXPO-0001523",
+          "Resto": 0,
+          "FecReg": "2026-03-10",
+          "Tot": 11600.00,
+          "IdCliente": 1503,
+          "RazonSocial": "PAPELERIA DEL NORTE SA DE CV",
+          "Ciudad": "MONTERREY, NUEVO LEON",
+          "IdEntrega": 2,
+          "Entrega": "OCURRE EN CEDIS",
+          "Pagado": false,
+          "IdFactura": "A-0045210",
+          "FecFac": "2026-03-10",
+          "TotFac": 11600.00,
+          "Acuse": "ACU-000812",
+          "PagoExpo": true,
+          "FormaPago": "EFECTIVO"
+        }
+      ],
+      "ttTotales": [
+        {
+          "NumPedidos": 12,
+          "NumClientes": 9,
+          "Tot": 145800.00,
+          "TotFac": 145800.00
+        }
+      ]
+    }
+  }
+  ```
+
+  ### Campos de `ttPedidoSP`
+
+  > Un renglón por cada pedido de contado facturado sin pago. **Todos los montos son CON IVA.**
+
+  **`Renglon`** · INT — Consecutivo del renglón (1, 2, 3…); índice único primario
+  **`IdPedido`** · STRING — Clave del pedido (`Pedido.Id-Pedido`)
+  **`Resto`** · INT — Número de resto / parcialidad del pedido (`Pedido.Resto`)
+  **`FecReg`** · DATE — Fecha de registro del pedido (`Pedido.FecReg`)
+  **`Tot`** · DECIMAL — Total del pedido **con IVA** (`Pedido.Tot`)
+  **`IdCliente`** · INT — Clave del cliente (`Pedido.Id-Cliente`)
+  **`RazonSocial`** · STRING — Razón social del cliente (`Pedido.RazonSocial`)
+  **`Ciudad`** · STRING — Ciudad y estado del cliente; formato `"Ciudad, Estado"` (vacío si no se resuelve)
+  **`IdEntrega`** · INT — Clave del tipo de entrega (`Pedido.Id-Entrega`)
+  **`Entrega`** · STRING — Descripción del tipo de entrega (`Entrega.Descr`); vacío si no existe
+  **`Pagado`** · BOOLEAN — `false` = pedido sin pago (siempre `false` en este reporte; pedidos contado pagados se excluyen)
+  **`IdFactura`** · STRING — Clave de la factura / remisión asociada (`Pedido.Id-Factura`); vacío si no facturado
+  **`FecFac`** · DATE — Fecha de facturación (`Pedido.FecFac`)
+  **`TotFac`** · DECIMAL — Total facturado **con IVA** (`Remision.Tot`); `0` si no hay documento
+  **`Acuse`** · STRING — Id de acuse del anticipo del cliente cuyo saldo disponible **alcanza** para cubrir el documento; vacío si ningún anticipo lo cubre
+  **`PagoExpo`** · BOOLEAN — `true` = existe un pago registrado en el módulo EXPO para este pedido (`Expo.Pagado = TRUE`); `false` = sin pago EXPO
+  **`FormaPago`** · STRING — Forma de pago del registro EXPO (solo si `PagoExpo = true`); valores: `EFECTIVO` · `TARJETA CRE` · `TARJETA DEB` · `TRANSFERENCIA` · `CHEQUE`; vacío si no hay pago EXPO
+
+  ### Campos de `ttTotales`
+
+  > Un solo renglón con los acumulados del rango consultado.
+
+  **`NumPedidos`** · INT — Total de pedidos listados
+  **`NumClientes`** · INT — Número de clientes distintos en el listado
+  **`Tot`** · DECIMAL — Suma de `Tot` (total de pedidos, **con IVA**)
+  **`TotFac`** · DECIMAL — Suma de `TotFac` (total facturado, **con IVA**)
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Se requiere usuario (pIdUser).",
+    "dsExpoSinPago": {
+      "ttPedidoSP": [],
+      "ttTotales": []
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdUser` vacío o no enviado | `IdError: true` — `"Se requiere usuario (pIdUser)."` |
+  | `FechaInicial` > `FechaFinal` | `IdError: true` — `"La fecha inicial es mayor a la fecha final."` |
+  | `FechaInicial` ausente | Default `06-Mar-2026` (inicio EXPO 2026) |
+  | `FechaFinal` ausente | Default `HOY` (servidor) |
+  | `Cliente` ausente o `0` | Se listan todos los clientes |
+  | Pedido contado con remisión ya pagada (`Remision.Pagada = TRUE`) | No aparece |
+  | Error en proceso | `IdError: true` — `"Error en EXPO contado sin pago: <detalle>"` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+  Adjuntar screenshot de la herramienta de prueba (Bruno / Postman / curl) mostrando:
+  - URL completa con `FechaInicial`, `FechaFinal` e `IdUser`
+  - Status HTTP `200 OK`
+  - Cuerpo de respuesta con al menos un registro en `ttPedidoSP` y el renglón de `ttTotales`
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | 2026-06-14 | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Montos CON IVA:** A diferencia del resto de reportes EXPO (que manejan montos **sin IVA**), tanto `Tot`/`TotFac` de `ttPedidoSP` como los acumulados de `ttTotales` vienen **con IVA**. El front no debe volver a aplicar IVA sobre estos importes.
+  2. **Origen — card "Clientes sin Pago":** Este servicio es el detalle de la card "Clientes sin Pago" del dashboard EXPO (`/Ventas/Expo/Pedidos`). Para que el monto del detalle cuadre con la card, el front debe propagar **las mismas** `FechaInicial` y `FechaFinal` del dashboard.
+  3. **Criterio de selección:** Solo entran pedidos con `Id-Captura = "0104"` (EXPO), no cancelados (`SolCanc = FALSE`), de contado (`Id-Cond = 0`), facturados (`Id-Estatus = 5`) y no pagados (`Pedido.Pagado = FALSE`). Si la remisión asociada ya está pagada (`Remision.Pagada = TRUE`), el pedido se descarta.
+  4. **`Acuse` (anticipo que alcanza):** Se recorren los anticipos vigentes del cliente (no cancelados, `Id-Cliente > 11`) y se reporta el `Id-Acuse` cuyo saldo disponible (`ImpAnticipo − ImpAplicado − ImpContado`) **supera** el importe a comparar — el total de la remisión si existe, o el total del pedido en caso contrario. Sirve para identificar pedidos cuyo pago podría liquidarse con un anticipo ya capturado.
+  5. **`PagoExpo` y `FormaPago`:** `PagoExpo = true` indica que existe un registro de pago en el módulo EXPO (`Expo.Pagado = TRUE`) para el pedido. `FormaPago` traduce el código `Expo.FeFormaPago`: `01`→`EFECTIVO`, `04`→`TARJETA CRE`, `28`→`TARJETA DEB`, `03`→`TRANSFERENCIA`, `02`→`CHEQUE`. Un pedido puede aparecer sin pago contabilizado (`Pedido.Pagado = FALSE`) pero **sí** con pago capturado en EXPO (`PagoExpo = true`): ese es justamente el caso de interés de la card.
+  6. **Totales y clientes distintos:** `ttTotales` trae un único renglón. `NumClientes` cuenta clientes distintos (no pedidos) presentes en el listado.
+  7. **Ordenamiento:** El listado se entrega ordenado por `Id-Cliente` y luego por `Tot` ascendente.
+  8. **Auditoría:** Cada ejecución registra una entrada de auditoría (`programas/auditoria.p`) con el usuario, el conteo de pedidos sin pago y la fecha inicial.
+  9. **Autenticación:** El servicio corre sobre OpenEdge PASOE. Si el ambiente requiere autenticación Bearer, incluir el header `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

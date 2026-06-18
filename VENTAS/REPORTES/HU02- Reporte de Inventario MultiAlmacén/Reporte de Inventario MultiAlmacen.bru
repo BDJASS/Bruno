@@ -1,0 +1,33 @@
+meta {
+  name: Reporte de Inventario MultiAlmacen
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/InventarioMultiAlmacen?Opciones=1&Seleccion=&Categorias=&Articulo=&Orden=1&ReportePor=1&IncExist=1&UnidadesEn=1&Resagados=1&TipoArt=1&SelTipoArt=&Temporada=1&Comprador=&IdUser=olds
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Opciones: 1
+  Seleccion:
+  Categorias:
+  Articulo:
+  Orden: 1
+  ReportePor: 1
+  IncExist: 1
+  UnidadesEn: 1
+  Resagados: 1
+  TipoArt: 1
+  SelTipoArt:
+  Temporada: 1
+  Comprador:
+  IdUser: olds
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

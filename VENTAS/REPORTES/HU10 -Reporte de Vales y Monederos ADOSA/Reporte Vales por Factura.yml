@@ -1,0 +1,215 @@
+info:
+  name: Reporte Vales por Factura
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/ValesPorFactura?FechaInicial=2026-01-01&FechaFinal=2026-04-01&Vendedor=&Condicion=1
+  params:
+    - name: FechaInicial
+      value: 2026-01-01
+      type: query
+    - name: FechaFinal
+      value: 2026-04-01
+      type: query
+    - name: Vendedor
+      value: ""
+      type: query
+    - name: Condicion
+      value: "1"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Vales por Factura
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Reporte 11A — Vales (Monederos) ADOSA por Factura**
+  Retorna el detalle de vales/monederos generados por factura, incluyendo montos aplicados, pendientes, pagados, descuentos/devoluciones y saldo de factura.
+  Programa servidor: `ventas-rep011.p` | Procedure: `GetValesFactura` | Basado en: `vtac0745.p`
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/ValesPorFactura
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`FechaInicial`** · DATE · ✅ — Fecha de inicio del periodo de consulta
+  - Formato: `YYYY-MM-DD` · Default si nulo: `TODAY - 30`
+
+  **`FechaFinal`** · DATE · ✅ — Fecha de fin del periodo de consulta
+  - Formato: `YYYY-MM-DD` · Default si nulo: `TODAY`
+  - No puede ser menor que `FechaInicial`
+
+  **`Vendedor`** · STRING · ❌ — Folio del vendedor a filtrar
+  - Vacío = todos los vendedores
+  - Se valida que el vendedor exista en la tabla `Vendedor`
+
+  **`Condicion`** · INT · ❌ — Tipo de condición de pago a filtrar
+  - `1` Todos (default) · `2` Solo Contado (excluye registros con `Plazo > 0`)
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/ValesPorFactura
+      ?FechaInicial=2026-01-01
+      &FechaFinal=2026-04-01
+      &Vendedor=
+      &Condicion=1
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "125 registros encontrados.",
+    "dsOutput": {
+      "ttValesFac": [
+        {
+          "IdFactura": "FAC-00125678",
+          "Fecha": "2026-01-15",
+          "IdVendedor": "0025",
+          "Iniciales": "JGR",
+          "IdCliente": 1025,
+          "RazonSocial": "DISTRIBUIDORA EJEMPLO SA DE CV",
+          "TotFac": 15800.50,
+          "CantMonederos": 3,
+          "ImpAplicado": 9500.00,
+          "ImpPend": 2300.50,
+          "MontoPagado": 12500.00,
+          "MontoDesc": 800.00,
+          "SaldoFactura": 2500.50,
+          "Cond": "CRE",
+          "Plazo": 30
+        }
+      ]
+    }
+  }
+  ```
+
+  ### Campos de `ttValesFac`
+
+  **`IdFactura`** · STRING — Clave de la factura asociada al vale
+  **`Fecha`** · DATE — Fecha de registro del vale (`Vale.FecReg`)
+  **`IdVendedor`** · STRING — Clave del vendedor de la factura
+  **`Iniciales`** · STRING — Iniciales del vendedor
+  **`IdCliente`** · INT — Clave del cliente de la factura
+  **`RazonSocial`** · STRING — Razón social del cliente (tomada de `Factura.RazonSocial`)
+  **`TotFac`** · DECIMAL — Total de la factura (`Factura.Tot`)
+  **`CantMonederos`** · INT — Cantidad de monederos/vales asociados a la factura
+  **`ImpAplicado`** · DECIMAL — Importe total de monederos ya aplicados (`FecApl <> ?`)
+  **`ImpPend`** · DECIMAL — Importe total de monederos pendientes de aplicar (`FecApl = ?`)
+  **`MontoPagado`** · DECIMAL — Monto total pagado a la factura (MovCliente + HistMovCte con TipoPago o Id-MC = 90)
+  **`MontoDesc`** · DECIMAL — Monto total de descuentos/devoluciones (MovCliente + HistMovCte sin TipoPago)
+  **`SaldoFactura`** · DECIMAL — Saldo pendiente: `TotFac - MontoPagado - MontoDesc`, ajustado si hay diferencia entre TotFac y monederos
+  **`Cond`** · STRING — Condición de venta: `"CON"` = Contado · `"CRE"` = Crédito
+  **`Plazo`** · INT — Plazo de crédito en días; `0` = contado
+
+  > Solo se incluyen facturas **no canceladas** (`FecCanc = ?`).
+  > Se excluyen vales que comienzan con `"TC"` (tarjetas de crédito).
+  > Cuando `Condicion = 2`, se excluyen registros con `Plazo > 0`.
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "La fecha final no debe ser menor a la fecha inicial.",
+    "dsOutput": {
+      "ttValesFac": []
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Mensaje de error |
+  |-----------|-----------------|
+  | `FechaFinal < FechaInicial` | `La fecha final no debe ser menor a la fecha inicial.` |
+  | `Vendedor` no existe en tabla `Vendedor` | `Numero de vendedor inexistente, favor de verificar.` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+  Adjuntar screenshot de la herramienta de prueba (Postman / Bruno / curl) mostrando:
+  - URL completa con parámetros
+  - Status HTTP `200 OK`
+  - Cuerpo de respuesta con al menos un registro en `ttValesFac`
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | 2026-04-01 | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Lógica de recolección:** Se recorre `Vale` por rango de fechas, unido con `FIRST Factura` (no cancelada), agrupando `BREAK BY Vale.Id-Factura`. Solo se procesa el primer vale por factura; los monederos se cuentan por separado via buffer `bfMonedero`.
+  2. **Pagos (MontoPagado):** Se acumulan de `MovCliente` y `HistMovCte` con `RefSaldo = Id-Factura` y `Id-MC > 3`. Se consideran pagos los movimientos que tengan `TipoPago` registrado o cuyo `Id-MC = 90`.
+  3. **Descuentos/Devoluciones (MontoDesc):** Movimientos con `Id-MC > 3` que NO tengan `TipoPago` ni sean `Id-MC = 90`.
+  4. **Ajuste de SaldoFactura:** Si el saldo es positivo y hay diferencia entre `TotFac` y la suma de `ImpAplicado + ImpPend`, se resta esa diferencia del saldo.
+  5. **Filtro de vendedor:** Se aplica post-recolección (el Vale no tiene vendedor directo; se obtiene de la Factura).
+  6. **Filtro de condición:** `Condicion = 2` excluye registros con `Plazo > 0` (solo muestra contado).
+  7. **Autenticación:** El servicio corre sobre OpenEdge PASOE. Si el ambiente requiere autenticación Bearer, incluir el header `Authorization: Bearer <token>`.

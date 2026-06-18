@@ -1,0 +1,268 @@
+info:
+  name: 1) Reporte Pedidos Expo
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/Pedidos?IdUser=olds&FechaInicial=2026-03-06&FechaFinal=2026-06-12
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: FechaInicial
+      value: 2026-03-06
+      type: query
+    - name: FechaFinal
+      value: 2026-06-12
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  # Servicio REST — Reporte de Pedidos EXPO Cintermex
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Reporte de Pedidos EXPO Cintermex (GetPedidosExpo)**
+  Grid principal del dashboard EXPO. Retorna los pedidos EXPO capturados en el periodo (grid `ttPedido`), los totales del grid (`ttTotales`) y un registro resumen (`ttResumen`) con los indicadores que alimentan las **tarjetas (cards)** del dashboard. Cada card enlaza a su reporte de detalle correspondiente.
+  Programa servidor: `vtac1370.p` | Basado en: `vtac1370.p` (FLC, 7-Mar-2025)
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/Pedidos
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`FechaInicial`** · DATE · ❌ — Inicio del periodo, formato `YYYY-MM-DD`
+  - Default: `2026-03-06` (inicio EXPO 2026) si se omite
+
+  **`FechaFinal`** · DATE · ❌ — Fin del periodo, formato `YYYY-MM-DD`
+  - Default: hoy (`TODAY`) si se omite
+
+  **`Cliente`** · INT · ❌ — Filtro de cliente para el grid `ttPedido`
+  - `0` o ausente = todos los clientes
+  - > ℹ️ Este filtro **solo afecta al grid** `ttPedido` / `ttTotales`. El resumen de cards (`ttResumen`) siempre se calcula general (sin filtro de cliente) para que cuadre con los reportes de detalle.
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta (auditoría)
+  - Ej: `"olds"`
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  Sin filtro de cliente (todos):
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/Pedidos
+      ?FechaInicial=2026-03-06&FechaFinal=2026-06-12&IdUser=olds
+  ```
+
+  Con filtro de cliente:
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/Pedidos
+      ?FechaInicial=2026-03-06&FechaFinal=2026-06-12&Cliente=1801&IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  El resultado es un **DATASET** `dsPedidosExpo` que envuelve las tres temp-tables:
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "37 pedido(s) EXPO en el periodo.",
+    "dsPedidosExpo": {
+      "ttPedido": [
+        {
+          "Renglon": 1,
+          "IdPedido": "P0001234",
+          "FecReg": "2026-03-07",
+          "SubTotal": 15400.50,
+          "IdCliente": 1801,
+          "RazonSocial": "DISTRIBUIDORA DEL NORTE SA DE CV",
+          "Ciudad": "MONTERREY, NUEVO LEON",
+          "IdEntrega": 2,
+          "Entrega": "OCURRE",
+          "CondVta": "CONTADO",
+          "Pagado": true,
+          "IdFactura": "FA0005678",
+          "SubTotFac": 15400.50,
+          "Embarcado": true,
+          "IdLiga": "0",
+          "IdTran": 12
+        }
+      ],
+      "ttTotales": [
+        {
+          "NumPedidos": 37,
+          "SubTotal": 542300.75,
+          "SubTotFac": 498120.00
+        }
+      ],
+      "ttResumen": [
+        {
+          "FecIni": "2026-03-06",
+          "FecFin": "2026-06-12",
+          "TotClientes": 24,
+          "TotProveedores": 58,
+          "ClientesSinPago": 3,
+          "TotBonificaciones": 38450.20,
+          "FaltanteCantidad": 12780.00
+        }
+      ]
+    }
+  }
+  ```
+
+  ### Campos de `ttPedido` (grid principal)
+
+  **`Renglon`** · INT — Consecutivo del renglón en el grid (clave única, ordenado por `Id-Pedido`)
+  **`IdPedido`** · STRING — Clave del pedido (`Pedido.Id-Pedido`)
+  **`FecReg`** · DATE — Fecha de registro del pedido
+  **`SubTotal`** · DECIMAL — Subtotal del pedido (sin IVA)
+  **`IdCliente`** · INT — Clave del cliente
+  **`RazonSocial`** · STRING — Razón social del cliente capturada en el pedido
+  **`Ciudad`** · STRING — Ciudad y estado del cliente (`"Ciudad, EstadoNomCto"`); vacío si no se resuelve
+  **`IdEntrega`** · INT — Clave del tipo de entrega
+  **`Entrega`** · STRING — Descripción del tipo de entrega; vacío si no existe
+  **`CondVta`** · STRING — Descripción de la condición de venta; vacío si no existe
+  **`Pagado`** · BOOLEAN — `true` = pedido de contado (`Id-Cond = 0`) pagado; `false` = a crédito o no pagado
+  **`IdFactura`** · STRING — Clave de factura o remisión ligada; vacío si no facturado
+  **`SubTotFac`** · DECIMAL — Subtotal facturado/remisionado del pedido (sin IVA); `0` si no facturado
+  **`Embarcado`** · BOOLEAN — `true` = pedido embarcado (`Id-Estatus >= 6`); `false` = no embarcado
+  **`IdLiga`** · STRING — Id de liga del pedido (`Pedido.Id-Liga` convertido a texto)
+  **`IdTran`** · INT — Id de transacción del pedido (`Pedido.Id-Tran`)
+
+  ### Campos de `ttTotales` (pie del grid)
+
+  > Un solo registro con los totales del grid `ttPedido`. Respeta el filtro `Cliente`.
+
+  **`NumPedidos`** · INT — Cantidad de pedidos del grid (= renglones en `ttPedido`)
+  **`SubTotal`** · DECIMAL — Suma de `ttPedido.SubTotal`
+  **`SubTotFac`** · DECIMAL — Suma de `ttPedido.SubTotFac`
+
+  ### Campos de `ttResumen` (indicadores para las cards del dashboard)
+
+  > Un solo registro. **Siempre se calcula general (sin filtro de `Cliente`)** para que cada indicador cuadre con su reporte de detalle. Cada campo enlaza a la card / endpoint indicado.
+
+  **`FecIni`** · DATE — Fecha inicial efectiva del periodo (la usada en el cálculo)
+  **`FecFin`** · DATE — Fecha final efectiva del periodo
+  **`TotClientes`** · INT — Clientes distintos con pedidos EXPO en el periodo · card → `/Ventas/Expo/PorCliente`
+  **`TotProveedores`** · INT — Proveedores distintos en pedidos EXPO del periodo · card → `/Ventas/Expo/PorProveedor`
+  **`ClientesSinPago`** · INT — Clientes de contado sin pago registrado · card → `/Ventas/Expo/ContadoSinPago`
+  **`TotBonificaciones`** · DECIMAL — Total de bonificaciones a cargo del proveedor (sin IVA) · card → `/Ventas/Expo/Bonificaciones`
+  **`FaltanteCantidad`** · DECIMAL — **IMPORTE faltante sin IVA** (backorder), NO cantidad de piezas · card → `/Ventas/Expo/Faltantes`
+  - ⚠️ Pese a su nombre, este campo es un **importe** (`Σ (CantPed − CantEnt) × PUnit`), no un conteo de piezas. Cuadra con `ttTotales.ImporteFaltante` del endpoint `/Ventas/Expo/Faltantes`.
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Se requiere usuario (pIdUser).",
+    "dsPedidosExpo": {
+      "ttPedido": [],
+      "ttTotales": [],
+      "ttResumen": []
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdUser` vacío o no enviado | `IdError: true` — `"Se requiere usuario (pIdUser)."` |
+  | `FechaInicial` mayor a `FechaFinal` | `IdError: true` — `"La fecha inicial es mayor a la fecha final."` |
+  | `FechaInicial` ausente | Se asume `2026-03-06` (inicio EXPO 2026) |
+  | `FechaFinal` ausente | Se asume hoy (`TODAY`) |
+  | `Cliente` ausente o `0` | Grid sin filtro de cliente (todos) |
+  | Pedido no EXPO (`Id-Captura <> "0104"`) | No aparece en el grid ni en el resumen |
+  | Pedido con solicitud de cancelación (`SolCanc = TRUE`) | No aparece |
+  | Pedido parcial (`Resto <> 0`) en el grid | No aparece en el grid |
+  | Error en proceso | `IdError: true` — `"Error en pedidos EXPO: <mensaje> (OE:<num>)"` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+  Adjuntar screenshot de la herramienta de prueba (Bruno / Postman / curl) mostrando:
+  - URL completa con `FechaInicial`, `FechaFinal` e `IdUser`
+  - Status HTTP `200 OK`
+  - Cuerpo de respuesta con `dsPedidosExpo` y al menos un registro en `ttPedido`, `ttTotales` y `ttResumen`
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | 2026-06-14 | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **DATASET de salida:** La respuesta envuelve las tablas en `dsPedidosExpo` → `{ ttPedido, ttTotales, ttResumen }`. El front debe leer cada tabla dentro del nodo `dsPedidosExpo`, no en la raíz.
+  2. **Filtro de cliente solo en el grid:** `Cliente` filtra únicamente `ttPedido` y `ttTotales`. El resumen `ttResumen` se calcula **siempre general** para que los indicadores de las cards cuadren con sus reportes de detalle aunque el grid esté filtrado.
+  3. **Cards del dashboard:** Cada campo de `ttResumen` corresponde a una tarjeta que, al hacer clic, abre el reporte de detalle: `TotClientes → /Ventas/Expo/PorCliente`, `TotProveedores → /Ventas/Expo/PorProveedor`, `ClientesSinPago → /Ventas/Expo/ContadoSinPago`, `TotBonificaciones → /Ventas/Expo/Bonificaciones`, `FaltanteCantidad → /Ventas/Expo/Faltantes`.
+  4. **`FaltanteCantidad` es importe, no piezas:** Pese a su nombre, devuelve el **importe faltante sin IVA** (`Σ (CantPed − CantEnt) × PUnit`) de los pedidos pendientes (`Id-Estatus < 5`, sin resto previo). Es el mismo valor que `ttTotales.ImporteFaltante` del endpoint `/Ventas/Expo/Faltantes`.
+  5. **Definición de pedido EXPO:** Un pedido se considera EXPO cuando `Id-Captura = "0104"`. El grid además exige `SolCanc = FALSE` y `Resto = 0`.
+  6. **`SubTotFac` (subtotal facturado):** Se resuelve contra `Remision` cuando `Id-Cond = 0` o contra `Factura` cuando `Id-Cond > 0`, validando que la factura/remisión empiece con el pedido (`Pedidos BEGINS Id-Pedido`). Si no hay factura ligada, queda en `0`.
+  7. **Bonificaciones de proveedor:** `TotBonificaciones` suma `(NCosto − Costo) × Cant` sobre partidas de pedidos EXPO y ventas EXPO directas (`Expo`/`DetExpo` sin pedido) con descuento de proveedor vigente (`DescProv`). El porcentaje de descuento se toma de la lista de excepciones `EEXPO26` (`ListaArt`/`DetListaArt`) si el artículo está en ella, o de `DescProv.Descto` en caso contrario.
+  8. **Proveedores distintos:** `TotProveedores` cuenta proveedores únicos tomados de dos pasadas: partidas de pedidos del periodo y partidas facturadas (`CantFac > 0`) de facturas/remisiones no canceladas. Las partidas sin proveedor (`Id-Prov = 0`) se ignoran.
+  9. **Auditoría:** Cada ejecución registra una entrada vía `programas/auditoria.p` con el módulo `VENTAS`, acción `Expo`, programa `vtac1370`, método `GET` y ruta `/Ventas/Expo/Pedidos`.
+  10. **Autenticación:** El servicio corre sobre OpenEdge PASOE. Si el ambiente requiere autenticación Bearer, incluir el header `Authorization: Bearer <token>`.
