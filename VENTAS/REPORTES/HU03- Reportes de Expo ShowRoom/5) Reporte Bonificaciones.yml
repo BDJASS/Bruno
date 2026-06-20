@@ -5,16 +5,13 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/Bonificaciones?IdUser=olds&FechaInicial=2026-03-06&FechaFinal=2026-06-12
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/Bonificaciones?IdUser=olds&Anio=2026
   params:
     - name: IdUser
       value: olds
       type: query
-    - name: FechaInicial
-      value: 2026-03-06
-      type: query
-    - name: FechaFinal
-      value: 2026-06-12
+    - name: Anio
+      value: "2026"
       type: query
   auth: inherit
 
@@ -24,15 +21,22 @@ settings:
   followRedirects: true
   maxRedirects: 5
 
-docs: |-
-  # Servicio REST — Bonificación a cargo del Proveedor (Pedidos EXPO)
+docs: |
+  # Servicio REST — Bonificaciones EXPO a cargo del Proveedor
 
   ---
 
   ## 1. Título del Servicio
 
-  **Bonificación a cargo del Proveedor en Pedidos EXPO (ExpoBonificaciones)**
-  Calcula la bonificación (reembolso) que cada proveedor debe a la empresa por los descuentos aplicados en la venta EXPO: es la **diferencia entre el costo normal del artículo y el costo promocional** resultante de aplicar el descuento del proveedor (`DescProv`) o la excepción de descuento por lista `EEXPO26`. Retorna tres bloques en un solo dataset: detalle por proveedor/artículo, resumen por proveedor y total general. Es el reporte detrás de la card **"Total de Bonificaciones"** del dashboard EXPO. **Todos los montos son SIN IVA.**
+  **Bonificaciones EXPO a cargo del Proveedor**
+  Calcula la bonificación (reembolso) que cada proveedor debe cubrir por los descuentos
+  EXPO de un año completo: la diferencia entre el costo normal (`HCosto`) y el costo
+  promocional resultante de aplicar el descuento del proveedor (`DescProv`) o la
+  excepción por lista `EEXPO26`. Considera tanto pedidos EXPO (Id-Captura `0104`) como
+  ventas EXPO directas (tabla `Expo`). Retorna detalle por artículo (`ttBonifDet`),
+  resumen por proveedor (`ttBonifProv`) y un total general (`ttTotales`). Todos los
+  montos son SIN IVA. Es el reporte de la card "Total de Bonificaciones" del dashboard EXPO.
+
   Programa servidor: `vtac1375.p` | Basado en: `vtac1375.p` (FLC, 05-Abr-2025)
 
   ---
@@ -51,209 +55,304 @@ docs: |-
   http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/Bonificaciones
   ```
 
+  **Ejemplo completo:**
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/Bonificaciones?IdUser=olds&Anio=2026&Proveedor=0&Cliente=0
+  ```
+
   ---
 
   ## 4. Parámetros de Entrada (Query String)
 
-  > ✅ = Requerido · ❌ = Opcional · Las fechas usan formato `YYYY-MM-DD`.
+  > ✅ = Requerido · ❌ = Opcional · Valores `0` en filtros numéricos = sin filtro (todos).
 
-  **`FechaInicial`** · DATE · ❌ — Fecha inicial del rango a evaluar (campo `Pedido.FecReg` / `Expo.FecReg`)
-  - Default: `2026-03-06` (inicio EXPO 2026) si se omite
+  **`Anio`** · INT · ✅ — Año a consultar
+  - OBLIGATORIO, 4 dígitos (rango `1000`–`9999`) · Ej: `2026`
+  - Procesa el año completo: del `01/01` al `31/12`
+  - Omitido o `0` → `"Se requiere el año (Anio)."`
+  - No es de 4 dígitos → `"El año debe ser de 4 dígitos (AAAA), ej: 2026."`
 
-  **`FechaFinal`** · DATE · ❌ — Fecha final del rango a evaluar
-  - Default: día de hoy (`TODAY`) si se omite
+  **`Proveedor`** · INT · ❌ — Filtro por proveedor
+  - `0` = Todos los proveedores · `>0` = proveedor específico
 
-  **`Proveedor`** · INT · ❌ — Filtro por clave de proveedor
-  - `0` o ausente = todos los proveedores
+  **`Cliente`** · INT · ❌ — Filtro por cliente
+  - `0` = Todos los clientes · `>0` = cliente específico
 
-  **`Cliente`** · INT · ❌ — Filtro por clave de cliente
-  - `0` o ausente = todos los clientes
-
-  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta (auditoría)
-  - Ej: `"olds"`
-
-  > ℹ️ Esta card se abre desde la card **"Total de Bonificaciones"** del grid principal `/Ventas/Expo/Pedidos`. El front debe enviar **las mismas** `FechaInicial` y `FechaFinal` que tiene seleccionadas el dashboard EXPO, para que el total coincida con el mostrado en la card.
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta
+  - Vacío o ausente → `"Se requiere usuario (pIdUser)."`
 
   ---
 
-  ## 5. Body
+  ## 5. Lógica del Proceso
 
-  No aplica. Método `GET`.
+  El procedimiento `GetExpoBonificaciones` trabaja en cuatro fases internas:
+
+  ### Fase 1 — Pre-carga de excepciones por artículo (listas EEXPO26)
+  Se leen todas las listas cuyo nombre (`ListaArt.Descrip`) inicia con `EEXPO26`
+  junto con su detalle (`DetListaArt`). Para cada artículo se extrae el porcentaje
+  de descuento especial codificado en el nombre de la lista: los 2 dígitos en la
+  posición `LENGTH(TRIM(Descrip)) - 4`.
+  Ejemplo: lista `EEXPO26-30X` → descuento de `30 %` para los artículos que la integran.
+
+  Estos descuentos tienen **prioridad** sobre el descuento general del proveedor.
+
+  ### Fase 2 — Acumular partidas de PEDIDOS EXPO
+  Se recorren todos los `Pedido` con `USE-INDEX Idx-FecPed` (que lidera por `FecReg`,
+  para acotar el barrido al año solicitado) con:
+  - `FecReg` entre `01/01` y `31/12` del año
+  - `Id-Captura = "0104"` (canal EXPO)
+  - `Resto = 0` y `SolCanc = FALSE`
+
+  Por cada renglón de detalle (`DetPedido`) se aplican estos pasos:
+
+  | Paso | Condición de exclusión |
+  |------|------------------------|
+  | Filtro cliente | `pCliente > 0` y pedido no es del cliente → `NEXT` |
+  | Filtro proveedor | `pProveedor > 0` y renglón no es del proveedor → `NEXT` |
+  | Sin descuento vigente | No existe `DescProv` activo en `FecReg` del pedido → `NEXT` |
+
+  **Costo normal (`NCosto`):**
+  Se busca el `HCosto` más reciente del artículo/proveedor con `FecReg ≤ 01/01` del año.
+  Si no existe, se toma el más antiguo posterior a esa fecha (fallback).
+  ```
+  NCosto = HCosto.Costo × ArtPres.Equiv
+  ```
+
+  **Porcentaje de descuento (`PDesc`):**
+  ```
+  PDesc = ttwExcep.PDesc   (si el artículo tiene excepción EEXPO26)
+          DescProv.Descto  (en otro caso)
+  ```
+
+  **Costo promoción:**
+  ```
+  Costo = NCosto × (1 − PDesc / 100)
+  ```
+
+  Las partidas se acumulan en la temp-table de trabajo `ttwDatos`, agrupadas por
+  `IdProv + IdArticulo + IdColor + IdPres`. La cantidad se suma por cada coincidencia
+  (`Cant += DetPedido.CantPed`).
+
+  ### Fase 3 — Acumular ventas EXPO directas (tabla Expo)
+  Misma lógica de la Fase 2 aplicada a las ventas EXPO sin pedido:
+  - `Expo` con `FecReg` dentro del año, `Cancelado = FALSE` e `Id-Pedido = ""`
+  - Detalle en `DetExpo`; filtros de cliente/proveedor y validación de descuento idénticos
+  - Las cantidades (`DetExpo.CantPed`) se acumulan en los mismos registros `ttwDatos`
+
+  ### Fase 4 — Generar detalle, resumen y total
+  Se recorre `ttwDatos` con `BREAK BY IdProv BY IdArticulo BY IdColor` y por cada
+  registro se calcula:
+  ```
+  BonifUnit (l-DescUnit) = NCosto − Costo
+  Valor     (l-Valor)    = BonifUnit × Cant
+  PorcBonif (l-Porc)     = (NCosto ≠ 0) ? BonifUnit / NCosto × 100 : 0
+  ```
+  Se crea un renglón en `ttBonifDet` por combinación y se acumula el subtotal del
+  proveedor. En `LAST-OF(IdProv)` se crea el registro de `ttBonifProv` con ese subtotal.
+  Al final se crea el único registro de `ttTotales` con el conteo de proveedores,
+  conteo de artículos y la suma total de bonificación. La operación se registra en
+  `programas/auditoria.p`.
 
   ---
 
-  ## 6. Headers
+  ## 6. Response — Campos de ttBonifDet
 
-  | Header         | Valor                                  |
-  |----------------|----------------------------------------|
-  | `Accept`       | `application/json`                     |
-  | `Content-Type` | `application/json` *(opcional en GET)* |
+  > Detalle por artículo. Un registro por combinación Proveedor / Artículo / Color / Presentación.
 
-  ---
-
-  ## 7. Ejemplo de Request
-
-  ```
-  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/Bonificaciones
-      ?FechaInicial=2026-03-06&FechaFinal=2026-06-12&IdUser=olds
-  ```
-
-  Con filtros opcionales por proveedor y/o cliente:
-
-  ```
-  GET .../Ventas/Expo/Bonificaciones
-      ?FechaInicial=2026-03-06&FechaFinal=2026-06-12&IdUser=olds&Proveedor=1801&Cliente=4521
-  ```
+  **`Renglon`** · INTEGER — Consecutivo único del renglón de detalle
+  **`IdProv`** · INTEGER — Id del proveedor
+  **`NomProv`** · STRING — Nombre del proveedor (`Prov.Nombre`)
+  **`IdArticulo`** · STRING — Clave del artículo
+  **`Descr`** · STRING — Descripción del artículo (`Articulo.Descr`)
+  **`AbrevColor`** · STRING — Abreviatura del color (`Kolor.Abrev`); vacío = sin color
+  **`Cant`** · DECIMAL(2) — Cantidad total de piezas en el periodo (acumulada)
+  **`Pres`** · STRING — Descripción de la presentación (`ArtPres.Descr`)
+  **`CostoNormal`** · DECIMAL(2) — Costo normal: `HCosto.Costo × ArtPres.Equiv` (sin IVA)
+  **`CostoPromo`** · DECIMAL(2) — Costo con descuento: `CostoNormal × (1 − PDesc/100)` (sin IVA)
+  **`BonifUnit`** · DECIMAL(2) — Bonificación unitaria: `CostoNormal − CostoPromo`
+  **`PorcBonif`** · DECIMAL(2) — Porcentaje de bonificación: `BonifUnit / CostoNormal × 100`
+  **`Valor`** · DECIMAL(2) — Bonificación total sin IVA: `BonifUnit × Cant`
 
   ---
 
-  ## 8. Ejemplo de Response
+  ## 7. Response — Campos de ttBonifProv
+
+  > Resumen por proveedor. Un registro por proveedor.
+
+  **`Renglon`** · INTEGER — Consecutivo único del renglón de resumen
+  **`IdProv`** · INTEGER — Id del proveedor
+  **`NomProv`** · STRING — Nombre del proveedor (`Prov.Nombre`)
+  **`Valor`** · DECIMAL(2) — Total de bonificación del proveedor en el periodo (sin IVA)
+
+  ---
+
+  ## 8. Response — Campos de ttTotales
+
+  > Un único registro con los totales generales de la consulta.
+
+  **`NumProveedores`** · INTEGER — Número de proveedores con bonificación
+  **`NumArticulos`** · INTEGER — Número de renglones de detalle (artículos)
+  **`TotBonificacion`** · DECIMAL(2) — Suma total de bonificación de todos los proveedores (sin IVA)
+
+  ---
+
+  ## 9. Response — Campos estándar
+
+  **`IdError`** · BOOLEAN — `false` = proceso exitoso; `true` = ocurrió un error
+  **`Respuesta`** · STRING — Mensaje descriptivo (resumen en éxito, o mensaje de error)
+
+  ---
+
+  ## 10. Ejemplos de Respuesta
+
+  ### Éxito — Con bonificaciones
 
   ```json
   {
     "IdError": false,
-    "Respuesta": "12 proveedor(es) con bonificacion.",
-    "dsExpoBonif": {
-      "ttBonifDet": [
-        {
-          "Renglon": 1,
-          "IdProv": 1801,
-          "NomProv": "GRUPO SCRIBE SA DE CV",
-          "IdArticulo": "AB1234",
-          "Descr": "CUADERNO PROFESIONAL 100 HOJAS",
-          "AbrevColor": "AZL",
-          "Cant": 480.00,
-          "Pres": "CAJA",
-          "CostoNormal": 120.00,
-          "CostoPromo": 102.00,
-          "BonifUnit": 18.00,
-          "PorcBonif": 15.00,
-          "Valor": 8640.00
-        }
-      ],
-      "ttBonifProv": [
-        {
-          "Renglon": 1,
-          "IdProv": 1801,
-          "NomProv": "GRUPO SCRIBE SA DE CV",
-          "Valor": 25430.00
-        }
-      ],
-      "ttTotales": [
-        {
-          "NumProveedores": 12,
-          "NumArticulos": 348,
-          "TotBonificacion": 184250.00
-        }
-      ]
-    }
+    "Respuesta": "2 proveedor(es) con bonificacion.",
+    "ttBonifDet": [
+      {
+        "Renglon": 1,
+        "IdProv": 1801,
+        "NomProv": "GRUPO SCRIBE SA DE CV",
+        "IdArticulo": "AB1234",
+        "Descr": "CUADERNO PROFESIONAL 100 HOJAS",
+        "AbrevColor": "AZL",
+        "Cant": 480.00,
+        "Pres": "CAJA",
+        "CostoNormal": 120.00,
+        "CostoPromo": 102.00,
+        "BonifUnit": 18.00,
+        "PorcBonif": 15.00,
+        "Valor": 8640.00
+      },
+      {
+        "Renglon": 2,
+        "IdProv": 2045,
+        "NomProv": "DISTRIBUIDORA GLOBAL SA",
+        "IdArticulo": "PL0099",
+        "Descr": "PLUMA GEL PUNTO FINO",
+        "AbrevColor": "NGR",
+        "Cant": 1200.00,
+        "Pres": "PIEZA",
+        "CostoNormal": 8.50,
+        "CostoPromo": 5.95,
+        "BonifUnit": 2.55,
+        "PorcBonif": 30.00,
+        "Valor": 3060.00
+      }
+    ],
+    "ttBonifProv": [
+      {
+        "Renglon": 1,
+        "IdProv": 1801,
+        "NomProv": "GRUPO SCRIBE SA DE CV",
+        "Valor": 8640.00
+      },
+      {
+        "Renglon": 2,
+        "IdProv": 2045,
+        "NomProv": "DISTRIBUIDORA GLOBAL SA",
+        "Valor": 3060.00
+      }
+    ],
+    "ttTotales": [
+      {
+        "NumProveedores": 2,
+        "NumArticulos": 2,
+        "TotBonificacion": 11700.00
+      }
+    ]
   }
   ```
 
-  ### Campos de `ttBonifDet` (detalle por proveedor + artículo)
+  ### Error — Año no enviado
 
-  > Un renglón por combinación proveedor + artículo + color + presentación. Las cantidades de las partidas iguales se acumulan en `Cant`.
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Se requiere el año (Anio).",
+    "ttBonifDet": [],
+    "ttBonifProv": [],
+    "ttTotales": []
+  }
+  ```
 
-  **`Renglon`** · INT — Consecutivo único del renglón de detalle (clave primaria)
-  **`IdProv`** · INT — Clave del proveedor
-  **`NomProv`** · STRING — Nombre del proveedor (`Prov.Nombre`); vacío si no se encuentra
-  **`IdArticulo`** · STRING — Clave del artículo
-  **`Descr`** · STRING — Descripción del artículo (`Articulo.Descr`); vacío si no se encuentra
-  **`AbrevColor`** · STRING — Abreviatura del color (`Kolor.Abrev`); vacío = sin color (`IdColor = 0`)
-  **`Cant`** · DECIMAL — Cantidad total pedida/vendida de la partida (acumulada)
-  **`Pres`** · STRING — Descripción de la presentación (`ArtPres.Descr`); vacío si no se encuentra
-  **`CostoNormal`** · DECIMAL — Costo normal unitario del artículo, SIN IVA (`HCosto` × `ArtPres.Equiv`)
-  **`CostoPromo`** · DECIMAL — Costo promocional unitario tras aplicar el descuento, SIN IVA (`CostoNormal × (100 − %Desc) / 100`)
-  **`BonifUnit`** · DECIMAL — Bonificación unitaria = `CostoNormal − CostoPromo`
-  **`PorcBonif`** · DECIMAL — Porcentaje de bonificación = `BonifUnit / CostoNormal × 100`; `0` si `CostoNormal = 0`
-  **`Valor`** · DECIMAL — Valor total de la bonificación del renglón = `BonifUnit × Cant` (SIN IVA)
-
-  ### Campos de `ttBonifProv` (resumen por proveedor)
-
-  **`Renglon`** · INT — Consecutivo único del proveedor (clave primaria)
-  **`IdProv`** · INT — Clave del proveedor
-  **`NomProv`** · STRING — Nombre del proveedor
-  **`Valor`** · DECIMAL — Suma de `ttBonifDet.Valor` de todos los renglones del proveedor (SIN IVA)
-
-  ### Campos de `ttTotales` (total general — un solo renglón)
-
-  **`NumProveedores`** · INT — Cantidad de proveedores con bonificación (renglones en `ttBonifProv`)
-  **`NumArticulos`** · INT — Cantidad de renglones de detalle (renglones en `ttBonifDet`)
-  **`TotBonificacion`** · DECIMAL — Total general de bonificación a cargo de proveedores (SIN IVA). Es el valor que se muestra en la card **"Total de Bonificaciones"** del dashboard EXPO
-
-  ### Response de error controlado
+  ### Error — Usuario no enviado
 
   ```json
   {
     "IdError": true,
     "Respuesta": "Se requiere usuario (pIdUser).",
-    "dsExpoBonif": {
-      "ttBonifDet": [],
-      "ttBonifProv": [],
-      "ttTotales": []
-    }
+    "ttBonifDet": [],
+    "ttBonifProv": [],
+    "ttTotales": []
+  }
+  ```
+
+  ### Resultado vacío — Sin pedidos ni ventas EXPO en el año
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "0 proveedor(es) con bonificacion.",
+    "ttBonifDet": [],
+    "ttBonifProv": [],
+    "ttTotales": [
+      {
+        "NumProveedores": 0,
+        "NumArticulos": 0,
+        "TotBonificacion": 0.00
+      }
+    ]
   }
   ```
 
   ---
 
-  ## 9. Validaciones del Servicio
+  ## 11. Observaciones Técnicas
 
-  | Condición | Comportamiento |
-  |-----------|----------------|
-  | `IdUser` vacío o no enviado | `IdError: true` — `"Se requiere usuario (pIdUser)."` |
-  | `FechaInicial` > `FechaFinal` | `IdError: true` — `"La fecha inicial es mayor a la fecha final."` |
-  | `FechaInicial` ausente | Se asume `2026-03-06` (inicio EXPO 2026) |
-  | `FechaFinal` ausente | Se asume el día de hoy (`TODAY`) |
-  | `Proveedor` ausente o `0` | Se incluyen todos los proveedores |
-  | `Cliente` ausente o `0` | Se incluyen todos los clientes |
-  | Partida sin descuento de proveedor vigente (`DescProv`) en la fecha | No genera bonificación (se omite) |
-  | Error en proceso | `IdError: true` — `"Error en bonificaciones EXPO: <mensaje>"` |
+  **Periodo por año completo:** El servicio reemplazó los parámetros `FechaInicial` /
+  `FechaFinal` (DATE) por un único parámetro `Anio` (INTEGER). Internamente deriva
+  `pFecIni = DATE(1,1,Anio)` y `pFecFin = DATE(12,31,Anio)`, procesando siempre el
+  año completo del `01/01` al `31/12`.
 
-  ---
+  **Búsqueda acotada por índice:** La iteración de pedidos usa `USE-INDEX Idx-FecPed`,
+  que lidera por `FecReg`, para acotar eficientemente el barrido al año solicitado.
 
-  ## 10. Evidencia de Ejecución
+  **Pedidos EXPO:** Solo se consideran pedidos con `Id-Captura = "0104"`, `Resto = 0`
+  y `SolCanc = FALSE`. Pedidos cancelados o con resto pendiente quedan excluidos.
 
-  *Pendiente de captura por parte del equipo de QA.*
-  Adjuntar screenshot de la herramienta de prueba (Bruno / Postman / curl) mostrando:
-  - URL completa con `FechaInicial`, `FechaFinal` e `IdUser`
-  - Status HTTP `200 OK`
-  - Cuerpo de respuesta con al menos un registro en `ttBonifDet`, `ttBonifProv` y `ttTotales`
+  **Ventas EXPO directas:** Además de los pedidos, se incluyen las ventas EXPO directas
+  (tabla `Expo`) con `Cancelado = FALSE` e `Id-Pedido = ""` (ventas sin pedido asociado).
+  Sus cantidades se acumulan en los mismos registros de trabajo que los pedidos.
 
-  ---
+  **Costo normal (HCosto):** Se usa el `HCosto` más reciente del artículo/proveedor con
+  `FecReg ≤ 01/01` del año. Si no existe registro anterior, se toma el más antiguo
+  posterior (fallback). Si tampoco existe, `NCosto = 0` y el renglón genera `Valor = 0`.
+  El costo se multiplica por `ArtPres.Equiv` para expresarlo en la presentación.
 
-  ## 11. Fecha de Prueba
+  **Listas EEXPO26:** Los artículos incluidos en listas cuyo nombre comienza con
+  `EEXPO26` tienen un descuento especial que **sobreescribe** el porcentaje de
+  `DescProv`. El porcentaje se lee de los 2 caracteres del nombre de la lista en la
+  posición `LENGTH(TRIM(Descrip)) - 4` (Ej.: `EEXPO26-30X` → `30 %`).
 
-  | Ambiente | Fecha      | Ejecutado por |
-  |----------|------------|---------------|
-  | DEV      | 2026-06-14 | *(pendiente)* |
+  **Sin descuento vigente:** Si no existe un `DescProv` activo en la fecha del
+  documento (`FecIni ≤ FecReg ≤ FecFin`), el renglón se omite completamente.
 
-  ---
+  **Agrupación:** Los documentos del mismo proveedor / artículo / color / presentación
+  se acumulan en un solo registro de detalle, sumando las cantidades de pedidos y
+  ventas directas.
 
-  ## 12. Resultado
+  **Sin IVA:** Todos los importes de bonificación (`CostoNormal`, `CostoPromo`,
+  `BonifUnit`, `Valor`, `TotBonificacion`) se calculan sin IVA.
 
-  | Estado              | Descripción                                                       |
-  |---------------------|-------------------------------------------------------------------|
-  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+  **Mensaje OK:** Al terminar sin error, `Respuesta` regresa
+  `"<N> proveedor(es) con bonificacion."`, donde `<N>` es `ttTotales.NumProveedores`.
 
-  ---
+  **Auditoría:** Cada ejecución registra la operación en `programas/auditoria.p` con
+  módulo `VENTAS`, acción `Expo`, programa `vtac1375` y método `GET`.
 
-  ## 13. Observaciones Técnicas
-
-  1. **Concepto de bonificación:** La bonificación es el reembolso que el proveedor debe a la empresa por el descuento promocional EXPO. Por cada artículo se compara el **costo normal** (último `HCosto` del proveedor vigente a la fecha inicial) contra el **costo promocional** (costo normal menos el porcentaje de descuento). La diferencia, multiplicada por la cantidad pedida/vendida, es el valor de la bonificación. Todos los importes son **SIN IVA**.
-
-  2. **Origen del porcentaje de descuento:** Para cada artículo el porcentaje se toma, en este orden: (a) si el artículo está en la lista de **excepciones `EEXPO26`** (`ListaArt.Descrip BEGINS "EEXPO26"`), se usa el porcentaje codificado en la descripción de la lista; (b) en otro caso, el descuento vigente del proveedor en `DescProv` (`DescProv.Descto`) válido para la fecha del documento.
-
-  3. **Dos fuentes de datos:** El servicio acumula partidas de **dos orígenes**: (a) **Pedidos** EXPO (`Pedido` con `Id-Captura = "0104"`, `Resto = 0`, no solicitados para cancelación) con su `DetPedido`; y (b) **ventas EXPO directas** sin pedido asociado (`Expo` no cancelado con `Id-Pedido = ""`) con su `DetExpo`. En ambos casos solo entran partidas cuyo proveedor tiene `DescProv` vigente.
-
-  4. **Agrupación del detalle:** Las partidas se agrupan por proveedor + artículo + color + presentación; cantidades repetidas se suman en `Cant`. El detalle (`ttBonifDet`) viene ordenado por proveedor, artículo y color.
-
-  5. **Costo y equivalencia:** El `CostoNormal` se calcula como `HCosto.Costo × ArtPres.Equiv` para expresarlo en la presentación de la partida. Si no se encuentra `HCosto` a la fecha inicial, se busca el primero posterior; si no hay equivalencia, se usa `0`.
-
-  6. **Relación con el dashboard EXPO:** Esta vista se abre desde la card **"Total de Bonificaciones"** del grid principal `/Ventas/Expo/Pedidos`. El front debe propagar las **mismas** `FechaInicial` y `FechaFinal` del dashboard para que `ttTotales.TotBonificacion` coincida con el monto de la card.
-
-  7. **Mensaje OK:** Cuando el proceso termina sin error, `Respuesta` regresa `"<N> proveedor(es) con bonificacion."`, donde `<N>` es el número de proveedores con bonificación (`ttTotales.NumProveedores`).
-
-  8. **Auditoría:** Cada ejecución registra una entrada de auditoría (`programas/auditoria.p`) con módulo `VENTAS`, acción `Expo`, programa `vtac1375`, método `GET` y el total de bonificación calculado.
-
-  9. **Autenticación:** El servicio corre sobre OpenEdge PASOE. Si el ambiente requiere autenticación Bearer, incluir el header `Authorization: Bearer <token>`.
+  **Manejo de errores:** Cualquier excepción `Progress.Lang.Error` se captura y se
+  devuelve como `IdError: true` con `Respuesta = "Error en bonificaciones EXPO: <detalle>"`.

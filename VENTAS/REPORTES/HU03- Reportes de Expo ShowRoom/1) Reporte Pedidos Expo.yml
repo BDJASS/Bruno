@@ -5,16 +5,13 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/Pedidos?IdUser=olds&FechaInicial=2026-03-06&FechaFinal=2026-06-12
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/Pedidos?IdUser=olds&Anio=2026
   params:
     - name: IdUser
       value: olds
       type: query
-    - name: FechaInicial
-      value: 2026-03-06
-      type: query
-    - name: FechaFinal
-      value: 2026-06-12
+    - name: Anio
+      value: "2026"
       type: query
   auth: inherit
 
@@ -24,15 +21,21 @@ settings:
   followRedirects: true
   maxRedirects: 5
 
-docs: |-
-  # Servicio REST — Reporte de Pedidos EXPO Cintermex
+docs: |
+  # Servicio REST — Pedidos EXPO Cintermex (reporte principal)
 
   ---
 
   ## 1. Título del Servicio
 
-  **Reporte de Pedidos EXPO Cintermex (GetPedidosExpo)**
-  Grid principal del dashboard EXPO. Retorna los pedidos EXPO capturados en el periodo (grid `ttPedido`), los totales del grid (`ttTotales`) y un registro resumen (`ttResumen`) con los indicadores que alimentan las **tarjetas (cards)** del dashboard. Cada card enlaza a su reporte de detalle correspondiente.
+  **vtac1370 — Pedidos EXPO Cintermex (reporte principal)**
+  Retorna el grid de pedidos EXPO (canal `Id-Captura = "0104"`) del año solicitado,
+  los totales del grid y una tabla resumen (`ttResumen`) con los indicadores de los
+  demás reportes EXPO que alimentan las _cards_ del tablero: total de clientes,
+  total de proveedores, clientes contado sin pago, total de bonificaciones e importe
+  faltante (backorder). Solo el grid (`ttPedido`) puede filtrarse por cliente; el
+  resumen siempre se calcula general.
+
   Programa servidor: `vtac1370.p` | Basado en: `vtac1370.p` (FLC, 7-Mar-2025)
 
   ---
@@ -51,218 +54,321 @@ docs: |-
   http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/Pedidos
   ```
 
+  **Ejemplo completo:**
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/Pedidos?IdUser=olds&Anio=2026&Cliente=0
+  ```
+
   ---
 
   ## 4. Parámetros de Entrada (Query String)
 
-  > ✅ = Requerido · ❌ = Opcional
+  > ✅ = Requerido · ❌ = Opcional · Valores `0` en filtros numéricos = sin filtro (todos).
 
-  **`FechaInicial`** · DATE · ❌ — Inicio del periodo, formato `YYYY-MM-DD`
-  - Default: `2026-03-06` (inicio EXPO 2026) si se omite
-
-  **`FechaFinal`** · DATE · ❌ — Fin del periodo, formato `YYYY-MM-DD`
-  - Default: hoy (`TODAY`) si se omite
+  **`Anio`** · INT · ✅ — Año a consultar. Se procesa el año completo del `01/01` al `31/12`
+  - Debe ser de 4 dígitos (rango `1000`–`9999`) · Ej: `2026`
+  - Omitido o `0` → error `"Se requiere el año (Anio)."`
+  - Fuera de 4 dígitos → error `"El año debe ser de 4 dígitos (AAAA), ej: 2026."`
 
   **`Cliente`** · INT · ❌ — Filtro de cliente para el grid `ttPedido`
-  - `0` o ausente = todos los clientes
-  - > ℹ️ Este filtro **solo afecta al grid** `ttPedido` / `ttTotales`. El resumen de cards (`ttResumen`) siempre se calcula general (sin filtro de cliente) para que cuadre con los reportes de detalle.
+  - `0` = Todos los clientes · `>0` = cliente específico
+  - Solo filtra el grid; el resumen `ttResumen` siempre se calcula general (sin filtro)
 
-  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta (auditoría)
-  - Ej: `"olds"`
-
-  ---
-
-  ## 5. Body
-
-  No aplica. Método `GET`.
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta
+  - Vacío o ausente → error `"Se requiere usuario (pIdUser)."`
 
   ---
 
-  ## 6. Headers
+  ## 5. Lógica del Proceso
 
-  | Header         | Valor                                  |
-  |----------------|----------------------------------------|
-  | `Accept`       | `application/json`                     |
-  | `Content-Type` | `application/json` *(opcional en GET)* |
+  El procedimiento `GetPedidosExpo` deriva el periodo del año solicitado
+  (`pFecIni = 01/01/Anio`, `pFecFin = 31/12/Anio`) y trabaja en dos bloques.
+
+  ### Bloque 1 — Grid principal (lógica de vtac1370.p)
+
+  Se recorren todos los `Pedido` con:
+  - `FecReg` dentro del año (`pFecIni ≤ FecReg ≤ pFecFin`)
+  - `Id-Captura = "0104"` (canal EXPO)
+  - `SolCanc = FALSE` y `Resto = 0`
+
+  La búsqueda usa `USE-INDEX Idx-FecPed` (índice que lidera con `FecReg`) para acotar
+  el año de forma eficiente, ordenando por `Id-Pedido`.
+
+  Por cada pedido aceptado:
+
+  | Paso | Acción |
+  |------|--------|
+  | Filtro cliente | `pCliente > 0` y `Id-Cliente <> pCliente` → `NEXT` |
+  | Ciudad | `Cliente → Ciudad → Estado` → `"Ciudad, Estado"` |
+  | Entrega / Cond. | `FIND Entrega` y `FIND CondVta` por sus ids |
+
+  **Subtotal facturado (`SubTotFac`):** depende de la condición de venta:
+  - `Id-Factura <> ""` y `Id-Cond = 0` → se toma `Remision.SubTotal` (si `Remision.Pedidos BEGINS Id-Pedido`)
+  - `Id-Factura <> ""` y `Id-Cond > 0` → se toma `Factura.SubTotal` (si `Factura.Pedidos BEGINS Id-Pedido`)
+
+  **Banderas calculadas:**
+  ```
+  Pagado    = (Id-Cond = 0 ? Pedido.Pagado : FALSE)
+  Embarcado = (Id-Estatus >= 6)
+  ```
+
+  Cada pedido genera un registro `ttPedido` (con `Renglon` consecutivo) y acumula
+  `SubTotal` y `SubTotFac` en `ttTotales`.
+
+  ### Bloque 2 — Resumen para cards (siempre general, sin filtro de cliente)
+
+  Recalcula, sobre el mismo periodo y siempre sin filtro de cliente, los indicadores
+  que alimentan las _cards_ de los demás reportes EXPO:
+
+  - **2a — Clientes y proveedores distintos** (`vtac1372` / `vtac1371` loop 1): se recorren
+    los pedidos EXPO del periodo; cada `Id-Cliente` distinto cuenta para `TotClientes` y
+    cada `DetPedido.Id-Prov` distinto (≠ 0) cuenta para `TotProveedores`.
+  - **2b — Proveedores con cantidades facturadas** (`vtac1371` loop 2): se agregan más
+    proveedores a partir de pedidos con factura/remisión vigente (no cancelada) y
+    `DetPedido.CantFac > 0`.
+  - **2c — Clientes contado sin pago** (`vtac1374`): pedidos con `Id-Cond = 0`,
+    `Id-Estatus = 5` y `Pagado = FALSE` cuyo `Remision.Pagada` no sea `TRUE`; cada
+    `Id-Cliente` distinto suma a `ClientesSinPago`.
+  - **2d — Faltante / backorder** (`vtac1380`): pedidos con `Id-Estatus < 5` sin renglón
+    resto mayor; por cada `DetPedido` con `CantEnt < CantPed` se acumula
+    `FaltanteCantidad += (CantPed − CantEnt) × PUnit` (importe faltante s/IVA).
+  - **2e — Total de bonificaciones** (`vtac1375`): ver detalle abajo.
+
+  **Bonificaciones (`TotBonificaciones`):**
+  1. Se precargan las excepciones de descuento por artículo desde listas
+     `EEXPO26` (`ListaArt.Descrip BEGINS "EEXPO26"`); el porcentaje se lee de
+     `SUBSTRING(Descrip, LENGTH − 4, 2)`.
+  2. Se acumulan partidas de pedidos EXPO (`DetPedido`) y de ventas EXPO directas
+     (`Expo`/`DetExpo` con `Id-Pedido = ""`), exigiendo en ambos casos un `DescProv`
+     vigente en la fecha (`FecIni ≤ FecReg ≤ FecFin`); si no existe → `NEXT`.
+  3. Por combinación `IdProv + IdArticulo + IdColor + IdPres` se calcula el costo
+     normal con el `HCosto` más reciente con `FecReg ≤ pFecIni` (fallback al más
+     antiguo posterior) por `ArtPres.Equiv`, y el costo promoción:
+  ```
+  NCosto     = HCosto.Costo × ArtPres.Equiv
+  PDesc      = ttwExcep.PDesc (si hay excepción EEXPO26) | DescProv.Descto
+  Costo      = NCosto × (1 − PDesc/100)
+  TotBonif  += (NCosto − Costo) × Cant
+  ```
+
+  Finalmente se crea el único registro `ttResumen` con `FecIni`/`FecFin` del año y los
+  contadores e importes acumulados. Se registra auditoría vía `programas/auditoria.p`.
 
   ---
 
-  ## 7. Ejemplo de Request
+  ## 6. Response — Campos de ttPedido
 
-  Sin filtro de cliente (todos):
+  > Grid principal. Un registro por pedido EXPO del periodo (filtrable por `Cliente`).
 
-  ```
-  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/Pedidos
-      ?FechaInicial=2026-03-06&FechaFinal=2026-06-12&IdUser=olds
-  ```
-
-  Con filtro de cliente:
-
-  ```
-  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/Pedidos
-      ?FechaInicial=2026-03-06&FechaFinal=2026-06-12&Cliente=1801&IdUser=olds
-  ```
+  **`Renglon`** · INTEGER — Consecutivo del renglón en el grid
+  **`IdPedido`** · STRING — Id del pedido (`Pedido.Id-Pedido`)
+  **`FecReg`** · DATE — Fecha de registro del pedido
+  **`SubTotal`** · DECIMAL(2) — Subtotal del pedido (`Pedido.SubTotal`)
+  **`IdCliente`** · INTEGER — Id del cliente
+  **`RazonSocial`** · STRING — Razón social del pedido
+  **`Ciudad`** · STRING — `"Ciudad, Estado"` del cliente
+  **`IdEntrega`** · INTEGER — Id del tipo de entrega
+  **`Entrega`** · STRING — Descripción de la entrega (`Entrega.Descr`)
+  **`CondVta`** · STRING — Descripción de la condición de venta (`CondVta.Descr`)
+  **`Pagado`** · BOOLEAN — `true` = pagado (solo aplica si `Id-Cond = 0`; en crédito siempre `false`)
+  **`IdFactura`** · STRING — Id de factura o remisión asociada
+  **`SubTotFac`** · DECIMAL(2) — Subtotal facturado (`Remision.SubTotal` o `Factura.SubTotal`)
+  **`Embarcado`** · BOOLEAN — `true` = embarcado (`Id-Estatus >= 6`)
+  **`IdLiga`** · STRING — Id de liga del pedido (`STRING(Pedido.Id-Liga)`)
+  **`IdTran`** · INTEGER — Id de transacción del pedido
 
   ---
 
-  ## 8. Ejemplo de Response
+  ## 7. Response — Campos de ttTotales
 
-  El resultado es un **DATASET** `dsPedidosExpo` que envuelve las tres temp-tables:
+  > Un solo registro. Totales del grid `ttPedido` (respetan el filtro `Cliente`).
+
+  **`NumPedidos`** · INTEGER — Número de pedidos en el grid
+  **`SubTotal`** · DECIMAL(2) — Suma de `Pedido.SubTotal` del grid
+  **`SubTotFac`** · DECIMAL(2) — Suma de subtotales facturados del grid
+
+  ---
+
+  ## 8. Response — Campos de ttResumen
+
+  > Un solo registro. Indicadores para las _cards_ del tablero EXPO.
+  > **Siempre se calcula general**, sin filtro de cliente, para que las cards cuadren
+  > con los reportes de detalle.
+
+  **`FecIni`** · DATE — Inicio del periodo (`01/01/Anio`)
+  **`FecFin`** · DATE — Fin del periodo (`31/12/Anio`)
+  **`TotClientes`** · INTEGER — Clientes distintos del periodo · card `/Ventas/Expo/PorCliente`
+  **`TotProveedores`** · INTEGER — Proveedores distintos del periodo · card `/Ventas/Expo/PorProveedor`
+  **`ClientesSinPago`** · INTEGER — Clientes contado sin pago · card `/Ventas/Expo/ContadoSinPago`
+  **`TotBonificaciones`** · DECIMAL(2) — Total de bonificaciones a cargo del proveedor · card `/Ventas/Expo/Bonificaciones`
+  **`FaltanteCantidad`** · DECIMAL(2) — Importe faltante s/IVA (backorder) · card `/Ventas/Expo/Faltantes`
+
+  ---
+
+  ## 9. Response — Campos estándar
+
+  **`IdError`** · BOOLEAN — `false` = proceso exitoso; `true` = ocurrió un error
+  **`Respuesta`** · STRING — Texto descriptivo (`"N pedido(s) EXPO en el periodo."` en éxito, o mensaje de error)
+
+  ---
+
+  ## 10. Ejemplos de Respuesta
+
+  ### Éxito — Con datos
 
   ```json
   {
     "IdError": false,
-    "Respuesta": "37 pedido(s) EXPO en el periodo.",
-    "dsPedidosExpo": {
-      "ttPedido": [
-        {
-          "Renglon": 1,
-          "IdPedido": "P0001234",
-          "FecReg": "2026-03-07",
-          "SubTotal": 15400.50,
-          "IdCliente": 1801,
-          "RazonSocial": "DISTRIBUIDORA DEL NORTE SA DE CV",
-          "Ciudad": "MONTERREY, NUEVO LEON",
-          "IdEntrega": 2,
-          "Entrega": "OCURRE",
-          "CondVta": "CONTADO",
-          "Pagado": true,
-          "IdFactura": "FA0005678",
-          "SubTotFac": 15400.50,
-          "Embarcado": true,
-          "IdLiga": "0",
-          "IdTran": 12
-        }
-      ],
-      "ttTotales": [
-        {
-          "NumPedidos": 37,
-          "SubTotal": 542300.75,
-          "SubTotFac": 498120.00
-        }
-      ],
-      "ttResumen": [
-        {
-          "FecIni": "2026-03-06",
-          "FecFin": "2026-06-12",
-          "TotClientes": 24,
-          "TotProveedores": 58,
-          "ClientesSinPago": 3,
-          "TotBonificaciones": 38450.20,
-          "FaltanteCantidad": 12780.00
-        }
-      ]
-    }
+    "Respuesta": "2 pedido(s) EXPO en el periodo.",
+    "ttPedido": [
+      {
+        "Renglon": 1,
+        "IdPedido": "E0026001",
+        "FecReg": "2026-02-14",
+        "SubTotal": 18450.00,
+        "IdCliente": 1207,
+        "RazonSocial": "DISTRIBUIDORA DEL NORTE SA DE CV",
+        "Ciudad": "Monterrey, Nuevo León",
+        "IdEntrega": 2,
+        "Entrega": "OCURRE",
+        "CondVta": "CONTADO",
+        "Pagado": true,
+        "IdFactura": "R0045821",
+        "SubTotFac": 18450.00,
+        "Embarcado": true,
+        "IdLiga": "0",
+        "IdTran": 884512
+      },
+      {
+        "Renglon": 2,
+        "IdPedido": "E0026002",
+        "FecReg": "2026-03-02",
+        "SubTotal": 9325.50,
+        "IdCliente": 0,
+        "RazonSocial": "COMERCIALIZADORA EXPO SA",
+        "Ciudad": "Guadalajara, Jalisco",
+        "IdEntrega": 1,
+        "Entrega": "DOMICILIO",
+        "CondVta": "CREDITO 30 DIAS",
+        "Pagado": false,
+        "IdFactura": "F0012044",
+        "SubTotFac": 9325.50,
+        "Embarcado": false,
+        "IdLiga": "0",
+        "IdTran": 884610
+      }
+    ],
+    "ttTotales": [
+      {
+        "NumPedidos": 2,
+        "SubTotal": 27775.50,
+        "SubTotFac": 27775.50
+      }
+    ],
+    "ttResumen": [
+      {
+        "FecIni": "2026-01-01",
+        "FecFin": "2026-12-31",
+        "TotClientes": 38,
+        "TotProveedores": 21,
+        "ClientesSinPago": 4,
+        "TotBonificaciones": 152340.75,
+        "FaltanteCantidad": 8920.40
+      }
+    ]
   }
   ```
 
-  ### Campos de `ttPedido` (grid principal)
+  ### Error — Año no enviado
 
-  **`Renglon`** · INT — Consecutivo del renglón en el grid (clave única, ordenado por `Id-Pedido`)
-  **`IdPedido`** · STRING — Clave del pedido (`Pedido.Id-Pedido`)
-  **`FecReg`** · DATE — Fecha de registro del pedido
-  **`SubTotal`** · DECIMAL — Subtotal del pedido (sin IVA)
-  **`IdCliente`** · INT — Clave del cliente
-  **`RazonSocial`** · STRING — Razón social del cliente capturada en el pedido
-  **`Ciudad`** · STRING — Ciudad y estado del cliente (`"Ciudad, EstadoNomCto"`); vacío si no se resuelve
-  **`IdEntrega`** · INT — Clave del tipo de entrega
-  **`Entrega`** · STRING — Descripción del tipo de entrega; vacío si no existe
-  **`CondVta`** · STRING — Descripción de la condición de venta; vacío si no existe
-  **`Pagado`** · BOOLEAN — `true` = pedido de contado (`Id-Cond = 0`) pagado; `false` = a crédito o no pagado
-  **`IdFactura`** · STRING — Clave de factura o remisión ligada; vacío si no facturado
-  **`SubTotFac`** · DECIMAL — Subtotal facturado/remisionado del pedido (sin IVA); `0` si no facturado
-  **`Embarcado`** · BOOLEAN — `true` = pedido embarcado (`Id-Estatus >= 6`); `false` = no embarcado
-  **`IdLiga`** · STRING — Id de liga del pedido (`Pedido.Id-Liga` convertido a texto)
-  **`IdTran`** · INT — Id de transacción del pedido (`Pedido.Id-Tran`)
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Se requiere el año (Anio).",
+    "ttPedido": [],
+    "ttTotales": [],
+    "ttResumen": []
+  }
+  ```
 
-  ### Campos de `ttTotales` (pie del grid)
-
-  > Un solo registro con los totales del grid `ttPedido`. Respeta el filtro `Cliente`.
-
-  **`NumPedidos`** · INT — Cantidad de pedidos del grid (= renglones en `ttPedido`)
-  **`SubTotal`** · DECIMAL — Suma de `ttPedido.SubTotal`
-  **`SubTotFac`** · DECIMAL — Suma de `ttPedido.SubTotFac`
-
-  ### Campos de `ttResumen` (indicadores para las cards del dashboard)
-
-  > Un solo registro. **Siempre se calcula general (sin filtro de `Cliente`)** para que cada indicador cuadre con su reporte de detalle. Cada campo enlaza a la card / endpoint indicado.
-
-  **`FecIni`** · DATE — Fecha inicial efectiva del periodo (la usada en el cálculo)
-  **`FecFin`** · DATE — Fecha final efectiva del periodo
-  **`TotClientes`** · INT — Clientes distintos con pedidos EXPO en el periodo · card → `/Ventas/Expo/PorCliente`
-  **`TotProveedores`** · INT — Proveedores distintos en pedidos EXPO del periodo · card → `/Ventas/Expo/PorProveedor`
-  **`ClientesSinPago`** · INT — Clientes de contado sin pago registrado · card → `/Ventas/Expo/ContadoSinPago`
-  **`TotBonificaciones`** · DECIMAL — Total de bonificaciones a cargo del proveedor (sin IVA) · card → `/Ventas/Expo/Bonificaciones`
-  **`FaltanteCantidad`** · DECIMAL — **IMPORTE faltante sin IVA** (backorder), NO cantidad de piezas · card → `/Ventas/Expo/Faltantes`
-  - ⚠️ Pese a su nombre, este campo es un **importe** (`Σ (CantPed − CantEnt) × PUnit`), no un conteo de piezas. Cuadra con `ttTotales.ImporteFaltante` del endpoint `/Ventas/Expo/Faltantes`.
-
-  ### Response de error controlado
+  ### Error — Usuario no enviado
 
   ```json
   {
     "IdError": true,
     "Respuesta": "Se requiere usuario (pIdUser).",
-    "dsPedidosExpo": {
-      "ttPedido": [],
-      "ttTotales": [],
-      "ttResumen": []
-    }
+    "ttPedido": [],
+    "ttTotales": [],
+    "ttResumen": []
+  }
+  ```
+
+  ### Resultado vacío — Sin pedidos en el periodo
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "0 pedido(s) EXPO en el periodo.",
+    "ttPedido": [],
+    "ttTotales": [
+      {
+        "NumPedidos": 0,
+        "SubTotal": 0.00,
+        "SubTotFac": 0.00
+      }
+    ],
+    "ttResumen": [
+      {
+        "FecIni": "2026-01-01",
+        "FecFin": "2026-12-31",
+        "TotClientes": 0,
+        "TotProveedores": 0,
+        "ClientesSinPago": 0,
+        "TotBonificaciones": 0.00,
+        "FaltanteCantidad": 0.00
+      }
+    ]
   }
   ```
 
   ---
 
-  ## 9. Validaciones del Servicio
+  ## 11. Observaciones Técnicas
 
-  | Condición | Comportamiento |
-  |-----------|----------------|
-  | `IdUser` vacío o no enviado | `IdError: true` — `"Se requiere usuario (pIdUser)."` |
-  | `FechaInicial` mayor a `FechaFinal` | `IdError: true` — `"La fecha inicial es mayor a la fecha final."` |
-  | `FechaInicial` ausente | Se asume `2026-03-06` (inicio EXPO 2026) |
-  | `FechaFinal` ausente | Se asume hoy (`TODAY`) |
-  | `Cliente` ausente o `0` | Grid sin filtro de cliente (todos) |
-  | Pedido no EXPO (`Id-Captura <> "0104"`) | No aparece en el grid ni en el resumen |
-  | Pedido con solicitud de cancelación (`SolCanc = TRUE`) | No aparece |
-  | Pedido parcial (`Resto <> 0`) en el grid | No aparece en el grid |
-  | Error en proceso | `IdError: true` — `"Error en pedidos EXPO: <mensaje> (OE:<num>)"` |
+  **Pedidos EXPO:** El grid solo considera pedidos con `Id-Captura = "0104"` (canal EXPO),
+  `SolCanc = FALSE` y `Resto = 0`. Pedidos cancelados o con resto pendiente quedan excluidos.
 
-  ---
+  **Cambio de parámetro de periodo:** Antes el servicio recibía `FechaInicial`/`FechaFinal`
+  (DATE). Ahora recibe un único `Anio` (INT, 4 dígitos) y procesa el año completo
+  (`01/01` al `31/12`). Internamente se derivan `pFecIni` y `pFecFin` a partir del año.
 
-  ## 10. Evidencia de Ejecución
+  **Índice de búsqueda:** El grid usa `USE-INDEX Idx-FecPed` (índice que lidera con
+  `FecReg`) para acotar el rango del año de forma eficiente, ordenando la salida por
+  `Id-Pedido`.
 
-  *Pendiente de captura por parte del equipo de QA.*
-  Adjuntar screenshot de la herramienta de prueba (Bruno / Postman / curl) mostrando:
-  - URL completa con `FechaInicial`, `FechaFinal` e `IdUser`
-  - Status HTTP `200 OK`
-  - Cuerpo de respuesta con `dsPedidosExpo` y al menos un registro en `ttPedido`, `ttTotales` y `ttResumen`
+  **Resumen siempre general:** `ttResumen` se calcula sin aplicar el filtro `Cliente`,
+  de modo que los indicadores de las _cards_ cuadran con los reportes de detalle
+  (`PorCliente`, `PorProveedor`, `ContadoSinPago`, `Bonificaciones`, `Faltantes`).
+  Solo `ttPedido` y `ttTotales` respetan el filtro `Cliente`.
 
-  ---
+  **Subtotal facturado:** Se obtiene de `Remision.SubTotal` cuando `Id-Cond = 0` o de
+  `Factura.SubTotal` cuando `Id-Cond > 0`, siempre que el documento referencie el pedido
+  (`Pedidos BEGINS Id-Pedido`). Si no hay documento asociado, `SubTotFac = 0`.
 
-  ## 11. Fecha de Prueba
+  **Bonificaciones (vtac1375):** Combina partidas de pedidos EXPO (`DetPedido`) y de
+  ventas EXPO directas sin pedido (`Expo`/`DetExpo` con `Id-Pedido = ""`), agrupadas por
+  `IdProv + IdArticulo + IdColor + IdPres`. Requiere `DescProv` vigente en la fecha; los
+  artículos en listas `EEXPO26` usan un porcentaje de descuento especial que sobreescribe
+  el de `DescProv`. El costo normal se calcula con el `HCosto` más reciente con
+  `FecReg ≤ pFecIni` (fallback al más antiguo posterior) multiplicado por `ArtPres.Equiv`.
 
-  | Ambiente | Fecha      | Ejecutado por |
-  |----------|------------|---------------|
-  | DEV      | 2026-06-14 | *(pendiente)* |
+  **Faltante / backorder (vtac1380):** Se acumula el importe s/IVA de las cantidades no
+  entregadas (`(CantPed − CantEnt) × PUnit`) sobre pedidos con `Id-Estatus < 5` que no
+  tengan un renglón resto mayor pendiente.
 
-  ---
+  **Auditoría:** Cada ejecución exitosa registra una entrada vía `programas/auditoria.p`
+  con módulo `VENTAS`, recurso `Expo`, acción `GET` y endpoint `/Ventas/Expo/Pedidos`.
 
-  ## 12. Resultado
-
-  | Estado              | Descripción                                                       |
-  |---------------------|-------------------------------------------------------------------|
-  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
-
-  ---
-
-  ## 13. Observaciones Técnicas
-
-  1. **DATASET de salida:** La respuesta envuelve las tablas en `dsPedidosExpo` → `{ ttPedido, ttTotales, ttResumen }`. El front debe leer cada tabla dentro del nodo `dsPedidosExpo`, no en la raíz.
-  2. **Filtro de cliente solo en el grid:** `Cliente` filtra únicamente `ttPedido` y `ttTotales`. El resumen `ttResumen` se calcula **siempre general** para que los indicadores de las cards cuadren con sus reportes de detalle aunque el grid esté filtrado.
-  3. **Cards del dashboard:** Cada campo de `ttResumen` corresponde a una tarjeta que, al hacer clic, abre el reporte de detalle: `TotClientes → /Ventas/Expo/PorCliente`, `TotProveedores → /Ventas/Expo/PorProveedor`, `ClientesSinPago → /Ventas/Expo/ContadoSinPago`, `TotBonificaciones → /Ventas/Expo/Bonificaciones`, `FaltanteCantidad → /Ventas/Expo/Faltantes`.
-  4. **`FaltanteCantidad` es importe, no piezas:** Pese a su nombre, devuelve el **importe faltante sin IVA** (`Σ (CantPed − CantEnt) × PUnit`) de los pedidos pendientes (`Id-Estatus < 5`, sin resto previo). Es el mismo valor que `ttTotales.ImporteFaltante` del endpoint `/Ventas/Expo/Faltantes`.
-  5. **Definición de pedido EXPO:** Un pedido se considera EXPO cuando `Id-Captura = "0104"`. El grid además exige `SolCanc = FALSE` y `Resto = 0`.
-  6. **`SubTotFac` (subtotal facturado):** Se resuelve contra `Remision` cuando `Id-Cond = 0` o contra `Factura` cuando `Id-Cond > 0`, validando que la factura/remisión empiece con el pedido (`Pedidos BEGINS Id-Pedido`). Si no hay factura ligada, queda en `0`.
-  7. **Bonificaciones de proveedor:** `TotBonificaciones` suma `(NCosto − Costo) × Cant` sobre partidas de pedidos EXPO y ventas EXPO directas (`Expo`/`DetExpo` sin pedido) con descuento de proveedor vigente (`DescProv`). El porcentaje de descuento se toma de la lista de excepciones `EEXPO26` (`ListaArt`/`DetListaArt`) si el artículo está en ella, o de `DescProv.Descto` en caso contrario.
-  8. **Proveedores distintos:** `TotProveedores` cuenta proveedores únicos tomados de dos pasadas: partidas de pedidos del periodo y partidas facturadas (`CantFac > 0`) de facturas/remisiones no canceladas. Las partidas sin proveedor (`Id-Prov = 0`) se ignoran.
-  9. **Auditoría:** Cada ejecución registra una entrada vía `programas/auditoria.p` con el módulo `VENTAS`, acción `Expo`, programa `vtac1370`, método `GET` y ruta `/Ventas/Expo/Pedidos`.
-  10. **Autenticación:** El servicio corre sobre OpenEdge PASOE. Si el ambiente requiere autenticación Bearer, incluir el header `Authorization: Bearer <token>`.
+  **Manejo de errores:** El bloque `CATCH` captura cualquier `Progress.Lang.Error`,
+  concatena todos los mensajes con su número OpenEdge y devuelve
+  `IdError = TRUE` con `Respuesta = "Error en pedidos EXPO: ..."`.

@@ -5,13 +5,13 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/ValesAplicadosPorTienda?FechaInicial=2026-01-01&FechaFinal=2026-01-30
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/ValesAplicadosPorTienda?FechaInicial=2026-01-19&FechaFinal=2026-06-19
   params:
     - name: FechaInicial
-      value: 2026-01-01
+      value: 2026-01-19
       type: query
     - name: FechaFinal
-      value: 2026-01-30
+      value: 2026-06-19
       type: query
   auth: inherit
 
