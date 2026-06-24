@@ -1,0 +1,7 @@
+info:
+  name: HU01 Gestion de Cotizacion
+  type: folder
+  seq: 2
+
+request:
+  auth: inherit

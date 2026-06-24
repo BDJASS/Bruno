@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/VentasPorClienteComparativo?Fecha=2026-04-24&IdUbivta=MLO
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/VentasPorClienteComparativo?Fecha=2026-04-24&IdSegmento=D1
   params:
     - name: IdCliente
       value: "0"
@@ -24,6 +24,10 @@ http:
       disabled: true
     - name: IdUbivta
       value: MLO
+      type: query
+      disabled: true
+    - name: IdSegmento
+      value: D1
       type: query
   auth: inherit
 

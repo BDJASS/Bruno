@@ -1,0 +1,193 @@
+info:
+  name: Catalogo vendedor
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: http://192.0.1.14:8813/RestADOSASysAdmin/rest/RestADOSASysAdmin/CatVendedor?IdVendedor=0077&NomVendedor=
+  params:
+    - name: IdVendedor
+      value: "0077"
+      type: query
+    - name: NomVendedor
+      value: ""
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Consulta de Vendedores
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Consulta de Vendedores (Vendedor)**
+  Devuelve los vendedores **activos** filtrando por clave (`Id-Vendedor`, exacta o por coincidencia) o por nombre del empleado (`NomVendedor`). Cada registro se complementa con el nombre del empleado y el almacén prioritario de su ubicación de venta.
+  Programa servidor: `vendedor_p.p` · Procedimiento: `leeVendedor`
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8813/RestADOSASysAdmin/rest/RestADOSASysAdmin/Vendedor
+  ```
+
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdVendedor`** · STRING · ❌ — Clave del vendedor
+  - Búsqueda **exacta** por clave.
+  - Si además se envía `NomVendedor = "*MATCHES*"`, la búsqueda por clave es **por coincidencia** (`*IdVendedor*`).
+
+  **`NomVendedor`** · STRING · ❌ — Nombre del empleado a buscar (coincidencia `*NomVendedor*`)
+  - Solo aplica cuando **no** se envía `IdVendedor` (o es `0`).
+  - Valor especial `"*MATCHES*"`: cambia la búsqueda por clave a coincidencia (ver arriba).
+
+  > Si no se envía ningún filtro válido, la consulta regresa la tabla vacía (`IdError: false`).
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  # Por clave exacta
+  GET .../Vendedor?IdVendedor=42
+
+  # Por clave, coincidencia
+  GET .../Vendedor?IdVendedor=4&NomVendedor=*MATCHES*
+
+  # Por nombre del empleado
+  GET .../Vendedor?NomVendedor=LOPEZ
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "OK",
+    "ttVendedor": [
+      {
+        "IdVendedor": "42",
+        "Iniciales": "JLM",
+        "NomVendedor": "JUAN LOPEZ MARTINEZ",
+        "TipoVen": 1,
+        "IdUbiVta": "03A",
+        "IdAlmPrior": "03A",
+        "porcCom": 2.50,
+        "FecPorc": "2026-01-01",
+        "Gerente": false,
+        "Activo": true
+      }
+    ]
+  }
+  ```
+
+  ### Campos de `ttVendedor` (1 registro por vendedor)
+
+  **`IdVendedor`** · STRING — Clave del vendedor
+  **`Iniciales`** · STRING — Iniciales del empleado asociado al vendedor
+  **`NomVendedor`** · STRING — Nombre del empleado (tabla `Empleado`); vacío si no se localizó
+  **`TipoVen`** · INT — Tipo de vendedor
+  **`IdUbiVta`** · STRING — Ubicación de venta del vendedor
+  **`IdAlmPrior`** · STRING — Almacén prioritario de la ubicación (`AlmPrior` Tipo 1); vacío si no aplica
+  **`porcCom`** · DECIMAL — Porcentaje de comisión
+  **`FecPorc`** · DATE — Fecha del porcentaje de comisión
+  **`Gerente`** · BOOLEAN — `true` = el vendedor es gerente
+  **`Activo`** · BOOLEAN — `true` = vendedor activo (el servicio solo devuelve activos)
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Numero de vendedor invalido.",
+    "ttVendedor": []
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdVendedor` no numérico | `IdError: true` — `"Numero de vendedor invalido."` |
+  | `IdVendedor` > 0 | Búsqueda por clave (exacta, o por coincidencia si `NomVendedor = "*MATCHES*"`) |
+  | `IdVendedor` vacío/`0` y `NomVendedor` con valor | Búsqueda por nombre del empleado (coincidencia) |
+  | Sin filtros válidos | `ttVendedor` vacío (sin error) |
+  | Error inesperado | `IdError: true` — `"Error: <detalle>"` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio ajustado. Pendiente de generar `.pidl`, registrar y probar. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Solo activos:** todas las rutas filtran `Vendedor.Activo` (y `Empleado.Activo` en la búsqueda por nombre).
+  2. **Búsqueda por nombre:** recorre `Empleado` por coincidencia de `Nombre`, ubica su `Vendedor` por `Iniciales` y evita duplicados en la tabla de salida.
+  3. **Complemento final:** para cada vendedor resultante se asigna el `NomVendedor` (de `Empleado`) y el `IdAlmPrior` (de `AlmPrior` con `Tipo = 1` de su `IdUbiVta`).
+  4. **Salida estándar:** `IdError` / `Respuesta` + `TABLE ttVendedor`, con `CATCH` que reporta errores inesperados. Se eliminaron los `MESSAGE` de depuración y el `THROW` de validación del programa original.
+  4.1. **Temp-table:** `ttVendedor` ahora se define **dentro del programa** (ya no desde `{"vendedor.i"}`), con solo las columnas del front. Se quitaron los campos duplicados con guion (`Id-Vendedor`, `id-ubivta`, `porc-com`) y los no usados (`PC`, `QName`, `Vigentes`); el llenado es por `ASSIGN` explícito (sin `BUFFER-COPY`).
+  5. **Exposición:** se ajustó al estándar del repo (`executionMode="single-run"`, `@openapi.openedge.export` en el procedimiento, sin la anotación data-object `@progress.service.resource`). Falta **generar el `.pidl` y registrar el servicio** en `resourceModel.xml` vía PDSOE (igual que `canalventa`).
+  6. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS
