@@ -5,16 +5,13 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/PorProveedor?IdUser=olds&FechaInicial=2026-03-06&FechaFinal=2026-06-12
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/PorProveedor?IdUser=olds&Anio=2026
   params:
     - name: IdUser
       value: olds
       type: query
-    - name: FechaInicial
-      value: 2026-03-06
-      type: query
-    - name: FechaFinal
-      value: 2026-06-12
+    - name: Anio
+      value: "2026"
       type: query
   auth: inherit
 

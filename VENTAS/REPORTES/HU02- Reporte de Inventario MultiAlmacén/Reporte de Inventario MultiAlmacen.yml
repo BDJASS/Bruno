@@ -5,13 +5,13 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/InventarioMultiAlmacen?Opciones=1&Seleccion=002033&Categorias=&Articulo=&Orden=1&ReportePor=1&IncExist=1&UnidadesEn=1&Resagados=1&TipoArt=1&SelTipoArt=&Temporada=1&Comprador=&IdUser=olds
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/InventarioMultiAlmacen?Opciones=7&Seleccion=926&Categorias=&Articulo=&Orden=1&ReportePor=1&IncExist=1&UnidadesEn=1&Resagados=1&TipoArt=1&SelTipoArt=&Temporada=1&Comprador=&IdUser=olds
   params:
     - name: Opciones
-      value: "1"
+      value: "7"
       type: query
     - name: Seleccion
-      value: "002033"
+      value: "926"
       type: query
     - name: Categorias
       value: ""
