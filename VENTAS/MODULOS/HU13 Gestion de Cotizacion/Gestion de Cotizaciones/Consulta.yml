@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Consulta?FecRegIni=2026-06-26&FecRegFin=2026-06-26&Estatus=PendAut
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Consulta?FecRegIni=2026-06-26&FecRegFin=2026-06-26&IdCot=0127577
   params:
     - name: FecRegIni
       value: 2026-06-26
@@ -16,7 +16,6 @@ http:
     - name: IdCot
       value: "0127577"
       type: query
-      disabled: true
     - name: IdCliente
       value: "33997"
       type: query
@@ -28,6 +27,7 @@ http:
     - name: Estatus
       value: PendAut
       type: query
+      disabled: true
   auth: inherit
 
 settings:

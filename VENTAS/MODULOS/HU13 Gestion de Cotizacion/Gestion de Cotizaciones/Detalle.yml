@@ -5,16 +5,16 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Detalle?IdCot=2081760&IdCliente=55921&IdUser=olds
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Detalle?IdCot=V000749&IdCliente=3&IdUser=y
   params:
     - name: IdCot
-      value: "2081760"
+      value: V000749
       type: query
     - name: IdCliente
-      value: "55921"
+      value: "3"
       type: query
     - name: IdUser
-      value: olds
+      value: y
       type: query
   auth: inherit
 

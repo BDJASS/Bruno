@@ -114,15 +114,17 @@ settings:
   maxRedirects: 5
 
 docs: |
-  # Servicio REST — Autorización de Cotización
+  # Servicio REST — Grabado / Alta de Cotización
 
   ---
 
   ## 1. Título del Servicio
 
-  **Autorización de Cotización (Autoriza)**
-  Autoriza una cotización validando el perfil del usuario (tabla `Password`), la vigencia del documento y el margen neto. Según el nivel del usuario y el margen, autoriza o rechaza; cuando el margen neto es ≤ 15 % notifica a dirección por correo.
-  Programa servidor: `vtaa0070.p` · Procedimiento: `AutorizaCotizacion` | Basado en: `vtaa0070.p` / `vtaa0074.i` (AARON, 24-Abr-1998)
+  **Alta de Cotización (Alta)**
+  Crea una cotización a partir del dataset recibido (encabezado + partidas). Genera el folio, valida encabezado y detalle, calcula costos, totales y la autorización, y devuelve la cotización grabada (con su folio asignado).
+  Programa servidor: `cotizacion2.p` · Procedimiento: `creaCotizaciones` | Motor de grabado existente y probado (folio, validaciones, costos, autorización, transacción única).
+
+  > ⚠️ El front de captura (.NET) **calcula importes/IVA/precios** y envía el dataset completo; el servidor valida, asigna folio y graba en una sola transacción.
 
   ---
 
@@ -137,25 +139,177 @@ docs: |
   ## 3. URL Completa
 
   ```
-  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Autoriza
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Cotizacion/Captura/Alta
   ```
 
-  ---
-
-  ## 4. Parámetros de Entrada (Query String)
-
-  > ✅ = Requerido · ❌ = Opcional
-
-  **`IdUser`** · STRING · ✅ — Usuario que autoriza (valida perfil en tabla `Password`)
-  **`Password`** · STRING · ✅ — Password del usuario
-  **`IdCot`** · STRING · ✅ — Folio de la cotización a autorizar
-  **`IdCliente`** · STRING · ✅ — Cliente de la cotización (debe coincidir con el del documento)
+  > El recurso interno es `cot2` / operación `creaCotizaciones`. La ruta amigable (`/Cotizacion/Captura/Alta`) se define en el catálogo de servicios del PASOE.
 
   ---
 
-  ## 5. Body
+  ## 4. Parámetros de Entrada
 
-  No aplica. Los parámetros viajan en el query string del `POST`.
+  No usa Query String. Toda la información viaja en el **Body** (dataset `dsCot2`).
+
+  ---
+
+  ## 5. Body (JSON completo para crear una cotización)
+
+  El body es el dataset `dsCot2` = **`ttCot`** (1 registro, encabezado) + **`ttDetCot`** (N registros, partidas).
+
+  ```json
+  {
+    "dsCot2": {
+      "ttCot": [
+        {
+          "Id-Cot": "",
+          "IdCot": "",
+          "Iniciales": "GLT",
+          "Id-Vendedor": "0077",
+          "IdVendedor": "0077",
+          "Firma": "0077",
+          "Id-Cliente": 35520,
+          "IdCliente": 35520,
+          "id-UbiVta": "COM",
+          "IdUbiVta": "COM",
+          "IdAlm": "02B",
+          "Attn": "LUIS MARRUFO",
+          "RazonSocial": "CONSEJO CIVICO DE INSTITUCIONES DE NUEVO LEON",
+          "Propietario": "SANDRINE DENISE MOLINARD",
+          "RFC": "CIN750705CW0",
+          "Tel": "8189892600",
+          "Fax": "",
+          "CalleNo": "AV DEL ESTADO 208",
+          "Colonia": "TECNOLOGICO",
+          "Id-Ciudad": 118,
+          "IdCiudad": 118,
+          "Estado": "NUEVO LEON",
+          "CP": "64700",
+          "Pais": "MEXICO",
+          "TipoPrecio": "M",
+          "LAB": "M",
+          "DiasEnt": 0,
+          "Plazo": 0,
+          "Vigencia": 10,
+          "PrecioTemp": false,
+          "DescPP": 0,
+          "DescPP2": 0,
+          "PlazoPP": 0,
+          "TipoFactor": "",
+          "Factor": 0,
+          "Notas": ["EJEMPLO DE OBSERVACION", ""],
+          "FtPage": ["", ""],
+          "Id-SolCot": 0,
+          "EspCPM": false,
+          "SubTotal": 97.42,
+          "IVA": 15.5872,
+          "Tot": 113.0072,
+          "Autorizada": true,
+          "Cancelado": false,
+          "Estatus": "",
+          "AutPor": "",
+          "UsuarioAutD": "",
+          "VendNombre": "",
+          "IDPedido": "",
+          "FecReg": "2026-06-26",
+          "FecCap": null,
+          "Hora": "",
+          "PartDetCot": 0
+        }
+      ],
+      "ttDetCot": [
+        {
+          "Id-Cot": "",
+          "IdCot": "",
+          "Id-Seq": 10,
+          "IdSeq": 10,
+          "Tipo": 1,
+          "Id-Articulo": "021118",
+          "IdArticulo": "021118",
+          "Id-color": 2,
+          "IdColor": 2,
+          "sColor": "AZUL",
+          "Id-pres": 4,
+          "IdPres": 4,
+          "Pres": "",
+          "Descr": "BOLIGRAFO P/MED. 1.0MM BIC M-250 923995 DURA+",
+          "Cant": 2,
+          "PUnit": 48.71,
+          "Descto": 0,
+          "PorcIVA": 16,
+          "Iva": 15.5872,
+          "Importe": 97.42,
+          "IndicaPre": "",
+          "Id-Moneda": 0,
+          "IdMoneda": 0,
+          "Id-MonedaCE": 1,
+          "IdMonedaCE": 1,
+          "Costo": 35.41368,
+          "PCosto": 31.3482,
+          "CostoEsp": 0,
+          "PUnitExt": 0,
+          "Factor": 0,
+          "TipoFactor": "",
+          "Mensaje": ""
+        }
+      ]
+    }
+  }
+  ```
+
+  > **JSON real tomado del portal.** Nótese que el front envía **ambas variantes** de los campos clave (con guion `Id-Cot`/`Id-Vendedor`/`Id-color`… y sin guion `IdCot`/`IdVendedor`/`IdColor`…) y la mayoría de los campos del temp-table. Para un **alta nueva** deja `Id-Cot`/`IdCot` **vacíos**: el servidor asigna el folio (en el ejemplo aparece vacío por eso; si se manda un folio, el servidor igual genera uno nuevo).
+
+  ### Campos de `ttCot` (encabezado — 1 registro)
+
+  > ✅ = Requerido · ❌ = Opcional · 🔄 = Lo calcula/asigna el servidor (no enviar)
+
+  **`Iniciales`** · STRING · ✅ — Usuario que captura. Si va vacío → error *"No se mando usuario de la transaccion."*
+  **`IdVendedor`** · STRING · ✅ — Clave del vendedor; debe existir y tener `Empleado`
+  **`IdCliente`** · INT · ✅ — Clave del cliente
+  **`IdUbiVta`** · STRING · ❌ — Ubicación de venta del vendedor
+  **`IdAlm`** · STRING · ❌ — Almacén origen. Si va vacío se usa la ubicación del usuario o `02B`
+  **`Attn`** · STRING · ❌ — Contacto/"Attn" (puede ir vacío; texto libre)
+  **`RazonSocial` `Propietario` `RFC` `Tel`** · STRING · ❌ — Datos del cliente (encabezado de impresión)
+  **`CalleNo` `Colonia` `IdCiudad` `Estado` `CP` `Pais`** · ❌ — Domicilio del cliente
+  **`TipoPrecio`** · STRING · ✅ — `M` / `MX` / `TC` / `II` (afecta presentación y autorización)
+  **`LAB`** · STRING · ❌ — Lugar de entrega (`M` / `E`)
+  **`DiasEnt`** · INT · ❌ — Días de entrega
+  **`Plazo`** · INT · ❌ — Plazo de crédito (días); `0` = contado
+  **`Vigencia`** · INT · ✅ — Días de vigencia. **Máximo `180`** (si excede → error *"Vigencia No Autorizada."*)
+  **`PrecioTemp`** · BOOLEAN · ❌ — `true` = aplica precios de temporada
+  **`DescPP` `DescPP2`** · DECIMAL · ❌ — Descuentos por pronto pago (%). El **combinado no puede exceder `18%`**
+  **`PlazoPP`** · INT · ❌ — Plazo de pronto pago
+  **`TipoFactor`** · STRING · ❌ — `FI` (incremento) · `FD` (descuento, `Factor` ≤ 18) · `FC` (sobre costo, `Factor` ≥ 10) · vacío
+  **`Factor`** · DECIMAL · ❌ — Valor del factor según `TipoFactor`
+  **`Firma`** · STRING · ❌ — Vendedor que firma. Si va vacío el servidor usa `IdVendedor`; si se envía, debe ser vendedor válido
+  **`Notas`** · STRING[2] · ❌ — Notas de la cotización (arreglo de 2)
+  **`Id-SolCot`** · INT · ❌ — Folio de solicitud de cotización (si aplica)
+  **`EspCPM`** · BOOLEAN · ❌ — Bandera de especial
+  **`IdCot`** · 🔄 — **Folio**, lo genera el servidor (tabla `Folio`, `Id-Doc = "COTIZA"`)
+  **`FecReg` `Hora`** · 🔄 — Fecha/hora de registro = servidor (`TODAY`/`TIME`)
+  **`SubTotal` `IVA` `Tot`** · 🔄 — Totales; los **recalcula** el servidor sumando las partidas
+  **`Autorizada` `Estatus`** · 🔄 — Las determina el servidor (ver sección 10)
+
+  ### Campos de `ttDetCot` (partidas — N registros)
+
+  > Una partida de artículo usa `Tipo = 1` (dispara validación de existencia, costo, etc.).
+
+  **`IdSeq`** · INT · ✅ — Secuencia/orden de la partida (orden de impresión)
+  **`Tipo`** · INT · ✅ — `1` = artículo (otros tipos = líneas especiales/comentario)
+  **`IdArticulo`** · STRING · ✅ — Clave del artículo; debe existir y estar activo
+  **`IdColor`** · INT · ✅ — Color (`0` si el artículo no maneja color)
+  **`IdPres`** · INT · ✅ — Presentación
+  **`Descr`** · STRING · ✅ — Descripción de la partida (como se imprime)
+  **`Cant`** · DECIMAL · ✅ — Cantidad. Sin decimales si la presentación no lo permite (`SiDec = false`)
+  **`PUnit`** · DECIMAL · ✅ — Precio unitario (lo calcula el front)
+  **`Descto`** · INT · ❌ — % de descuento de la partida
+  **`PorcIVA`** · DECIMAL · ❌ — % de IVA del artículo
+  **`Iva`** · DECIMAL · ✅ — Importe de IVA de la partida (lo suma el servidor al total)
+  **`Importe`** · DECIMAL · ✅ — Importe de la partida (`Cant × PUnit` con descuento; lo suma el servidor)
+  **`IndicaPre`** · STRING · ✅ — Indicador de precio: `L` (lista) · `D` (manual/descuento) · `C` (contrato) · `*` (especial) · `F` · etc. Afecta la autorización
+  **`IdMoneda`** · INT · ✅ — Moneda de la partida (`1` = MN)
+  **`IdMonedaCE`** · INT · ❌ — Moneda del costo especial (default `1`)
+  **`Costo` `PCosto` `CostoEsp`** · DECIMAL · 🔄 — Si van en `0`, el servidor los calcula (`CostoDetCot`: `HCosto`, equivalencia, oferta, moneda)
+  **`sColor` `Pres`** · STRING · 🔄 — Descriptivos; el servidor asigna `sColor` desde `Kolor`
 
   ---
 
@@ -168,36 +322,62 @@ docs: |
 
   ---
 
-  ## 7. Ejemplo de Request
+  ## 7. Ejemplo de Response (éxito)
 
-  ```
-  POST .../GestionCotizacion/Autoriza?IdUser=jlm&Password=xxxx&IdCot=2084315&IdCliente=55921
-  ```
-
-  ---
-
-  ## 8. Ejemplo de Response
+  El servicio devuelve `IdError`, `Respuesta` y el dataset `dsCot2` con el **folio asignado** en `ttCot.IdCot`.
 
   ```json
   {
     "IdError": false,
-    "Respuesta": "Cotizacion 2084315 autorizada. Margen neto: 22.34%."
+    "Respuesta": "",
+    "dsCot2": {
+      "ttCot": [
+        {
+          "IdCot": "B000123456",
+          "IdCliente": 33997,
+          "IdVendedor": "4785",
+          "FecReg": "2026-06-26",
+          "SubTotal": 9018.70,
+          "IVA": 1442.99,
+          "Tot": 10461.69,
+          "Autorizada": true,
+          "Vigencia": 10
+        }
+      ],
+      "ttDetCot": [
+        {
+          "IdCot": "B000123456",
+          "IdSeq": 1,
+          "IdArticulo": "023602",
+          "IdColor": 1594,
+          "IdPres": 6,
+          "Cant": 10,
+          "PUnit": 901.87,
+          "Importe": 9018.70,
+          "Costo": 720.50
+        }
+      ]
+    }
   }
   ```
 
-  ### Response de error / rechazo
+  ### Response de error controlado
 
   ```json
   {
     "IdError": true,
-    "Respuesta": "Usuario no valido para autorizar cotizaciones con poco margen, solicite autorizacion a gerencia."
+    "Respuesta": "El articulo no se encuentra en el catalogo o esta inactivo: 023602. ",
+    "dsCot2": { "ttCot": [], "ttDetCot": [] }
   }
   ```
 
-  ### Campos de respuesta
+  ---
 
-  **`IdError`** · BOOLEAN — `false` = autorizada; `true` = no se autorizó (validación o error)
-  **`Respuesta`** · STRING — Mensaje de resultado; en éxito incluye el margen neto calculado
+  ## 8. Generación del Folio
+
+  - El folio sale de la tabla `Folio` con `Id-Doc = "COTIZA"` y `Id-Alm = <origen>`.
+  - Origen = `ttCot.IdAlm`; si va vacío, la ubicación del usuario (`Usuario.id-Ubicacion`) o `02B`.
+  - Formato: `Folio.Prefijo + STRING(Folio.Folio,"999999")`. El contador se incrementa de forma exclusiva (reintentos hasta 50).
 
   ---
 
@@ -205,64 +385,77 @@ docs: |
 
   | Condición | Comportamiento |
   |-----------|----------------|
-  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario."` |
-  | `Password` vacío | `IdError: true` — `"Se requiere el password."` |
-  | `IdCot` vacío | `IdError: true` — `"Se requiere la cotizacion."` |
-  | `IdCliente` no numérico o `0` | `IdError: true` — `"Numero de cliente invalido."` |
-  | Usuario/Password sin perfil (Tipo 16/17) | `IdError: true` — `"Usuario o password no valido para autorizar cotizaciones."` |
-  | Cotización inexistente | `IdError: true` — `"No existe la cotizacion."` |
-  | `IdCliente` no corresponde a la cotización | `IdError: true` — `"La cotizacion no corresponde al cliente indicado."` |
-  | Cotización ya autorizada | `IdError: true` — `"La cotizacion ya fue autorizada."` |
-  | Cotización cancelada | `IdError: true` — `"Cotizacion cancelada."` |
-  | Cotización caduca (`FecReg` + vigencia < hoy) | `IdError: true` — `"Cotizacion caduca, no es posible autorizar."` |
-  | Margen neto < 0 y usuario no es dirección (Tipo 9999) | `IdError: true` — `"Cotizacion con margen negativo, solo direccion puede autorizar."` |
-  | Margen neto ≤ 15 % y usuario sin nivel suficiente | `IdError: true` — `"Usuario no valido para autorizar cotizaciones con poco margen, ..."` |
-  | Cotización en uso por otro usuario | `IdError: true` — `"Cotizacion en uso por otro usuario, intente mas tarde."` |
-
-  ### Reglas de autorización por nivel y margen
-
-  > `MargenNeto = ((ΣImporte / ΣCosto) − 1) × 100`, ajustado por `× (1 − DescPP/100)`.
-
-  | Margen neto | Quién puede autorizar |
-  |-------------|-----------------------|
-  | Costo y precio = 0 | Cualquier usuario con perfil válido |
-  | `< 0` (negativo) | Solo dirección (`Password.Tipo = 9999`) |
-  | `> 15 %` | Cualquier usuario con perfil válido (Tipo 16/17) |
-  | `0 % – 15 %` | Solo Tipo 16 o dirección (9999) |
+  | Sin usuario (`Iniciales`) | `IdError: true` — *"No se mando usuario de la transaccion."* |
+  | Vendedor / Empleado inexistente | `IdError: true` — *"Vendedor o Empleado Inexistente."* |
+  | `DescPP`+`DescPP2` combinado > 18% | `IdError: true` — *"Descuentos no pueden exceder al 18%."* |
+  | `Vigencia` > 180 | `IdError: true` — *"Vigencia No Autorizada."* |
+  | `TipoFactor=FD` y `Factor` > 18 | `IdError: true` — *"Factor de Descuento No Autorizado."* |
+  | `TipoFactor=FC` y `Factor` < 10 | `IdError: true` — *"Factor Sobre Costo No Autorizado."* |
+  | Artículo inexistente / inactivo | `IdError: true` — *"El articulo no se encuentra en el catalogo o esta inactivo: <id>."* |
+  | Artículo descontinuado (`Id-Div=INT`) sin existencia | `IdError: true` — *"El articulo esta descontinuado..."* |
+  | Decimales en presentación que no los permite | `IdError: true` — *"No se permiten decimales en esta presentacion: <id>."* |
+  | Detalle vacío o importe total en `0` | `IdError: true` — *"No se encontro detalle de cotizaciones o con importe en cero."* |
+  | Folio no disponible (50 intentos) | `IdError: true` — *"No se pudo conseguir folio para la cotizacion."* |
+  | Todo correcto | `IdError: false`; cotización grabada con folio en `ttCot.IdCot` |
 
   ---
 
-  ## 10. Evidencia de Ejecución
+  ## 10. Regla de Autorización (`Autorizada`)
+
+  El servidor marca la cotización como **No autorizada** (`Autorizada = false`, requiere autorización) cuando se da **cualquiera** de:
+  - `TipoPrecio = "MX"` (precios no vigentes)
+  - Descuento P.P. combinado entre **>5% y ≤18%**
+  - `Vigencia` entre **>15 y ≤180** días
+  - `TipoFactor` activo (`FI`, o `FD ≤18`, o `FC ≥10`)
+  - Alguna partida con precio especial (`IndicaPre = "*"`)
+
+  En caso contrario, `Autorizada = true`.
+
+  > **Excepción por margen:** si quedó como No autorizada pero el margen global de la cotización (`vtad0100.p`) es **≥ 15%**, el servidor la autoriza automáticamente.
+
+  ---
+
+  ## 11. Reglas de Negocio para el Front
+
+  1. **El front calcula** `PUnit`, `Importe` (`Cant × PUnit` con descuento) e `Iva` por partida y manda también `SubTotal`/`IVA`/`Tot` del encabezado; el servidor **vuelve a sumar** los totales desde las partidas (la fuente de verdad es el detalle).
+  2. **Folio y fecha:** para alta nueva enviar `Id-Cot`/`IdCot` **vacíos**; el servidor asigna folio y pone `FecReg = TODAY` (aunque el front mande una fecha).
+  3. **Costos:** si `Costo`/`PCosto` van en `0`, el servidor los calcula; el front normalmente los deja en `0`.
+  4. **Condiciones:** `TipoPrecio`, `Plazo`, `Vigencia`, `DescPP`, `LAB`, `PrecioTemp` provienen del widget Condiciones (ver servicio de carga de cliente).
+  5. **`IndicaPre` por partida:** el front lo fija según cómo se obtuvo el precio (lista, manual, contrato, especial); influye en si la cotización requiere autorización.
+  6. **Respuesta:** al recibir `IdError: false`, mostrar el folio (`ttCot.IdCot`) y si quedó `Autorizada` o pendiente de autorización.
+
+  ---
+
+  ## 12. Evidencia de Ejecución
 
   *Pendiente de captura por parte del equipo de QA.*
 
   ---
 
-  ## 11. Fecha de Prueba
+  ## 13. Fecha de Prueba
 
-  | Ambiente | Fecha      | Ejecutado por |
-  |----------|------------|---------------|
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
   | DEV      | *(pendiente)* | *(pendiente)* |
 
   ---
 
-  ## 12. Resultado
+  ## 14. Resultado
 
   | Estado              | Descripción                                                       |
   |---------------------|-------------------------------------------------------------------|
-  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+  | ⏳ Pendiente prueba | Servicio existente en `cotizacion2.p`. Pendiente de prueba formal del alta vía REST por QA. |
 
   ---
 
-  ## 13. Observaciones Técnicas
+  ## 15. Observaciones Técnicas
 
-  1. **Cálculo del margen neto:** recorre el detalle (`Tipo = 1`) sumando costo×cantidad e importe. Para artículos en moneda extranjera convierte el costo real con `TipoCambio` / `TCReal` / `ArtPres.Equiv`. Aplica el descuento por pronto pago (`DescPP`).
-  2. **Niveles de usuario:** el perfil se valida en la tabla `Password` por `Usuario` + `Password`; `Tipo 16/17` autoriza normal, `Tipo 16`/`9999` autoriza margen bajo, `Tipo 9999` (dirección) autoriza margen negativo.
-  3. **Actualización:** al autorizar marca `Cot.Autorizada = TRUE` y `Cot.AutPor = IdUser` con bloqueo `EXCLUSIVE-LOCK NO-WAIT`.
-  4. **Notificación a dirección:** cuando el margen neto es ≤ 15 % se envía un correo informativo vía `programas/correo02_rest.p` (incluye folio, cliente, vendedor, monto, márgenes, condiciones de venta, días cartera y promedio de pago, usuario y fecha/hora). El envío de correo es **tolerante a fallos**: si falla, no afecta el resultado de la autorización.
-  5. **Control de entorno del correo:** lo maneja `correo02_rest.p` — en producción va a los destinatarios reales (con copia oculta a `desarrollo10@adosa.com.mx`); en desarrollo se redirige a `desarrollo10@adosa.com.mx` con el asunto marcado `"DESARROLLO "`.
-  6. **Notificación omitida del original:** no se replicó la lista de correos condicionada a fechas anteriores a 2020 ni el override de DESARROLLO (obsoletos).
-  7. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+  1. **Servicio de origen:** el alta vive en `cotizacion2.p` / `creaCotizaciones` (recurso `cot2`). Es el motor canónico; no se duplica la lógica de folio, costos, validaciones ni autorización.
+  2. **Dataset `dsCot2`:** `ttCot` (encabezado) + `ttDetCot` (partidas), relacionados por `Id-Cot`. El parámetro es `INPUT-OUTPUT`, por lo que el dataset regresa con el folio y totales asignados.
+  3. **Transacción única:** las partidas (`DetCot`) y el encabezado (`Cot`) se graban dentro de un solo `DO TRANSACTION`; si algo falla, no se graba nada.
+  4. **Doble nombre de campos:** los temp-tables exponen campos con y sin guion (`Id-Cot`/`IdCot`, `Id-Vendedor`/`IdVendedor`, `Id-color`/`IdColor`, `Id-pres`/`IdPres`, `Id-Moneda`/`IdMoneda`, `Id-Seq`/`IdSeq`). El portal real **envía ambas variantes**; lo importante es que la variante **sin guion** (`IdVendedor`, `IdCliente`, `IdArticulo`, `IdColor`, `IdPres`, `IdMoneda`, `IdSeq`) venga correcta, pues es la que el servidor usa como llave y luego copia a la variante con guion. Enviar ambas (como el portal) es lo más seguro.
+  5. **`Id-Fuente = 4`:** el servidor marca la cotización con fuente 4 (canal de captura) y `HorReg = TIME`.
+  6. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
 
   ---
   **Desarrollado por:** SIS10 - JASS
