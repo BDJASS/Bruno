@@ -1,0 +1,219 @@
+info:
+  name: Enviar Correo
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/EnviaCorreo?IdUser=olds
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+  body:
+    type: json
+    data: |
+      {
+        "ttEnvioCot": [
+          {
+           "Correo":"desarrollo10@adosa.com.mx",
+           "IdCot":"2083415",
+           "IdCliente":55921
+          }
+        ]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Envío de Cotización por Correo
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Envío de Cotización por Correo (EnviaCorreo)**
+  Recibe una tabla (`ttEnvioCot`) con uno o varios envíos. Por cada fila arma un correo HTML con la misma información que entregan los servicios de Consulta/Detalle (datos del cliente, información/condiciones de venta y detalle de partidas) y lo envía con `programas/correo02_rest.p`. Valida **todas** las filas antes de enviar: si alguna trae datos vacíos o un correo con formato inválido, aborta sin enviar nada.
+  Programa servidor: `cotcorreo.p` · Procedimiento: `EnviaCotizacionCorreo`
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/EnviaCorreo
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUser`** · STRING · ✅ — Usuario que genera el envío. Su correo (`Usuario.e-mail`) se agrega como **CC**; en desarrollo `correo02_rest.p` limpia el CC, por lo que solo aplica en producción.
+
+  ---
+
+  ## 5. Body
+
+  Tabla `ttEnvioCot` (JSON). Admite **uno o varios** registros; cada uno genera un correo independiente.
+
+  > ✅ = Requerido (todos los campos por fila)
+
+  **`Correo`** · STRING · ✅ — Destinatario(s); varios separados por `,` o `;`
+  **`IdCot`** · STRING · ✅ — Folio de la cotización a enviar
+  **`IdCliente`** · INTEGER · ✅ — Cliente de la cotización (debe coincidir con el del documento)
+
+  ```json
+  {
+    "ttEnvioCot": [
+      {
+        "Correo": "desarrollo10@adosa.com.mx",
+        "IdCot": "2083415",
+        "IdCliente": 55921
+      }
+    ]
+  }
+  ```
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                |
+  |----------------|----------------------|
+  | `Accept`       | `application/json`   |
+  | `Content-Type` | `application/json`   |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST .../GestionCotizacion/EnviaCorreo?IdUser=olds
+  Content-Type: application/json
+
+  {
+    "ttEnvioCot": [
+      {
+        "Correo": "desarrollo10@adosa.com.mx",
+        "IdCot": "2083415",
+        "IdCliente": 55921
+      }
+    ]
+  }
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Correo enviado exitosamente"
+  }
+  ```
+
+  ### Response con errores parciales
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Enviados: 1. Errores: 1 (Cot 2083416: no existe.)."
+  }
+  ```
+
+  ### Campos de respuesta
+
+  **`IdError`** · BOOLEAN — `false` = todos los envíos correctos; `true` = hubo al menos un error o falló una validación
+  **`Respuesta`** · STRING — Mensaje de resultado; en error parcial incluye el conteo de enviados/errores y el detalle por cotización
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  > El bloque de validación previa revisa **todas** las filas antes de enviar; si una falla, no se envía ningún correo.
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | Tabla `ttEnvioCot` vacía | `IdError: true` — `"Debe enviar la tabla con los datos del envio (correo, cotizacion y cliente)."` |
+  | Alguna fila sin `Correo` | `IdError: true` — `"Hay registros sin correo. Verifique la informacion enviada."` |
+  | Alguna fila sin `IdCot` | `IdError: true` — `"Hay registros sin cotizacion. Verifique la informacion enviada."` |
+  | Alguna fila sin `IdCliente` | `IdError: true` — `"Hay registros sin cliente. Verifique la informacion enviada."` |
+  | Correo con formato inválido | `IdError: true` — `"Correo invalido en la cotizacion <IdCot>: '<correo>'."` |
+
+  ### Validaciones por fila (durante el envío)
+
+  | Condición | Resultado de la fila |
+  |-----------|----------------------|
+  | `IdCliente` no numérico o `0` | `"Cot <IdCot>: numero de cliente invalido."` |
+  | Cotización inexistente | `"Cot <IdCot>: no existe."` |
+  | `IdCliente` no corresponde a la cotización | `"Cot <IdCot>: no corresponde al cliente."` |
+  | Falla el envío del correo | `"Cot <IdCot>: fallo el envio de correo."` |
+  | Envío correcto | `"Cot <IdCot> enviada a <correo>"` |
+
+  ### Formato de correo aceptado
+
+  > Por cada destinatario (separados por `,` o `;`) se exige: contener `@` (no al inicio), tener un `.` después del `@` y no contener espacios.
+
+  ---
+
+  ## 10. Contenido del Correo
+
+  El HTML generado incluye tres bloques con la información de la cotización:
+
+  **Datos del Cliente** — Cliente (id + razón social), RFC, teléfono, vendedor, dirección
+  **Información de la Cotización** — Folio, fecha/hora, vencimiento, vigencia, días de entrega, plazo (contado/crédito), LAB, tipo de precio, descuentos P.P. y estatus
+  **Detalle de la Cotización** — Partidas (descripción, color, presentación, cantidad, precio unitario, descuento, importe) y totales (SubTotal, IVA, Total)
+
+  ---
+
+  ## 11. Observaciones Técnicas
+
+  1. **Validación todo-o-nada:** la verificación previa de todas las filas evita envíos parciales por datos mal formados; los errores de negocio por fila (cotización inexistente, cliente que no corresponde, fallo de correo) sí se procesan fila por fila y se reportan en el resumen.
+  2. **Estatus mostrado:** `Cancelada`, `Autorizada` o `Pendiente de autorizar`, derivado de `Cot.Cancelado` / `Cot.Autorizada`.
+  3. **Envío de correo:** vía `programas/correo02_rest.p`. El `IdUser` se agrega como CC; el TO admite varios destinatarios.
+  4. **Control de entorno del correo:** lo maneja `correo02_rest.p` — en producción va a los destinatarios reales (con copia oculta a `desarrollo10@adosa.com.mx`); en desarrollo se redirige a `desarrollo10@adosa.com.mx` con el asunto marcado `"DESARROLLO "` y se limpia el CC.
+  5. **Archivo HTML:** el cuerpo se genera en `/usr3/tmp/cotcorreo_<IdCot>_<TIME>.html` y **no se elimina** (queda para revisión).
+  6. **Asunto:** `"Cotizacion <IdCot> - <RazonSocial>"`.
+  7. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+
+  ## 12. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 13. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 14. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+  **Desarrollado por:** SIS10 - JASS
