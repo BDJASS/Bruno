@@ -1,0 +1,229 @@
+meta {
+  name: Consulta
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Consulta?FecRegIni=2026-06-26&FecRegFin=2026-06-26&IdCot=0127577
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FecRegIni: 2026-06-26
+  FecRegFin: 2026-06-26
+  IdCot: 0127577
+  ~IdCliente: 33997
+  ~IdVendedor: 0077
+  ~Estatus: PendAut
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # Servicio REST — Consulta de Cotizaciones (Grid)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Consulta de Cotizaciones (Consulta)**
+  Grid principal de gestión de cotizaciones. Filtra por folio, vendedor, cliente, RFC y/o rango de fechas y retorna la lista de cotizaciones con sus datos resumidos, ordenada de la **más reciente a la más antigua**.
+  Programa servidor: `cotizacion2.p` · Procedimiento: `leeCotizaciones` | Basado en: `cotizacion2.p` (modo carácter)
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Consulta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · ⚠️ = Requerido condicional
+
+  **`IdCot`** · STRING · ❌ — Folio de la cotización
+  - Si se envía, la búsqueda es **solo por folio** (la cotización es única) y se **ignoran las fechas y los demás filtros**.
+
+  **`IdVendedor`** · STRING · ❌ — Clave del vendedor
+
+  **`IdCliente`** · STRING · ❌ — Clave del cliente
+
+  **`RFC`** · STRING · ❌ — RFC del cliente (búsqueda por coincidencia parcial `*RFC*`)
+
+  **`FecRegIni`** · DATE · ⚠️ — Fecha inicial del rango (formato `yyyy-mm-dd`)
+  - Obligatoria cuando la búsqueda **no** es por folio.
+
+  **`FecRegFin`** · DATE · ⚠️ — Fecha final del rango (formato `yyyy-mm-dd`)
+  - Obligatoria cuando la búsqueda **no** es por folio.
+
+  **`Estatus`** · STRING · ❌ — Filtra por estatus calculado
+  - Valores: `Cancelada` · `Autorizada` · `PendAut` · `Pedido` · `Caduca` · Vacío = todos
+
+  > **Regla 1:** Debe enviarse **al menos uno** de `IdCot`, `IdCliente` o `IdVendedor` (no los tres vacíos).
+  > **Regla 2:** Si **no** se busca por `IdCot`, el rango de fechas (`FecRegIni` y `FecRegFin`) es **obligatorio**.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  # Por cliente con rango de fechas
+  GET .../GestionCotizacion/Consulta?IdCliente=55921&FecRegIni=2026-01-01&FecRegFin=2026-06-20
+
+  # Por folio (ignora fechas)
+  GET .../GestionCotizacion/Consulta?IdCot=2084315
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Consulta generada.",
+    "ttCotLista": [
+      {
+        "IdCot": "2084315",
+        "FecReg": "2026-06-18",
+        "IdCliente": 55921,
+        "RazonSocial": "DISTRIBUIDORA DEL VALLE SA DE CV",
+        "IdVendedor": "JLM",
+        "VendNombre": "JUAN LOPEZ MARTINEZ",
+        "PartDetCot": 5,
+        "Tot": 18450.75,
+        "Vigencia": "2026-07-03",
+        "Estatus": "Autorizada",
+        "IDPedido": "",
+        "Autorizada": true,
+        "Cancelada": false
+      },
+      {
+        "IdCot": "2084190",
+        "FecReg": "2026-06-10",
+        "IdCliente": 55921,
+        "RazonSocial": "DISTRIBUIDORA DEL VALLE SA DE CV",
+        "IdVendedor": "JLM",
+        "VendNombre": "JUAN LOPEZ MARTINEZ",
+        "PartDetCot": 2,
+        "Tot": 3120.00,
+        "Vigencia": "2026-06-25",
+        "Estatus": "Pedido",
+        "IDPedido": "P301455",
+        "Autorizada": true,
+        "Cancelada": false
+      }
+    ]
+  }
+  ```
+
+  ### Campos de `ttCotLista` (1 registro por cotización)
+
+  **`IdCot`** · STRING — Folio de la cotización
+  **`FecReg`** · DATE — Fecha de registro de la cotización
+  **`IdCliente`** · INT — Clave del cliente
+  **`RazonSocial`** · STRING — Razón social del cliente
+  **`IdVendedor`** · STRING — Clave del vendedor
+  **`VendNombre`** · STRING — Nombre del empleado vendedor; vacío si no se localizó
+  **`PartDetCot`** · INT — Número de partidas (detalle con `Tipo` 1 o 2)
+  **`Tot`** · DECIMAL — Total de la cotización
+  **`Vigencia`** · DATE — **Fecha de vencimiento** (`FecReg` + días de vigencia), no el número de días
+  **`Estatus`** · STRING — `Cancelada` · `Autorizada` · `PendAut` · `Pedido` · `Caduca`
+  **`IDPedido`** · STRING — Pedido generado a partir de la cotización; vacío si no aplica
+  **`Autorizada`** · BOOLEAN — `true` = la cotización está autorizada (`Cot.Autorizada`)
+  **`Cancelada`** · BOOLEAN — `true` = la cotización está cancelada (`Cot.Cancelado`)
+
+  > El resultado se entrega ordenado por **fecha y folio descendentes** (la cotización más reciente es el primer registro).
+
+  ### Response de error / sin filtros
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Debe registrar al menos numero de cotizacion, cliente o vendedor.",
+    "ttCotLista": []
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdCot` no numérico | `IdError: true` — `"Numero de cotizacion invalido."` |
+  | `IdVendedor` no numérico | `IdError: true` — `"Numero de vendedor invalido."` |
+  | `IdCliente` no numérico | `IdError: true` — `"Numero de cliente invalido."` |
+  | `FecRegFin` < `FecRegIni` | `IdError: true` — `"La fecha final no puede ser menor a la inicial."` |
+  | `IdCot`, `IdCliente` y `IdVendedor` los tres vacíos | `IdError: true` — `"Debe registrar al menos numero de cotizacion, cliente o vendedor."` |
+  | Sin folio y sin rango de fechas completo | `IdError: true` — `"Debe especificar el rango de fechas (inicial y final)."` |
+  | Búsqueda por folio inexistente | `IdError: true` — `"No existe cotizacion con ese folio: <folio>"` |
+  | Búsqueda por cliente/vendedor sin resultados | `IdError: false` — `ttCotLista` vacío |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Búsqueda por folio vs. por filtros:** cuando se envía `IdCot`, la consulta resuelve directamente por folio (único) e ignora fechas y demás filtros. En cualquier otra búsqueda el rango de fechas es obligatorio para acotar el volumen.
+  2. **Vigencia como fecha:** a diferencia del dato base (días de vigencia), el servicio expone `Vigencia` ya como **fecha de vencimiento** = `FecReg` + días de vigencia.
+  3. **Estatus calculado:** `Cancelada` (cancelado), `Pedido` (existe pedido ligado), `Autorizada`/`PendAut` (según autorización) o `Caduca` (`FecReg` + vigencia < hoy).
+  4. **Orden de salida:** el temp-table usa índice primario `FecReg DESC, IdCot DESC`, por lo que el primer registro es la cotización más reciente.
+  5. **Tabla de salida ligera:** `ttCotLista` solo contiene las columnas del grid; el detalle completo se obtiene con el servicio `Detalle`.
+  6. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS
+}

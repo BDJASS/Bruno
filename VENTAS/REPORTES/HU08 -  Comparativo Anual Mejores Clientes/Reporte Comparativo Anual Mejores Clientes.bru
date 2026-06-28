@@ -1,0 +1,489 @@
+meta {
+  name: Reporte Comparativo Anual Mejores Clientes
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/ComparativoAnualMejoresClientes?Ejercicio=2026&Final=2026&Mes=6&CanCte=20&TipoCte=1&Seleccion=1&Lista=&IdUser=olds
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Ejercicio: 2026
+  Final: 2026
+  Mes: 6
+  CanCte: 20
+  TipoCte: 1
+  Seleccion: 1
+  Lista: 
+  IdUser: olds
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # Servicio REST — Comparativo Anual Mejores Clientes
+
+
+
+  ---
+
+
+
+  ## 1. Título del Servicio
+
+
+
+  **Reporte 09 — Comparativo Anual de Mejores Clientes (Horizontal)**
+
+  Retorna los clientes más importantes por volumen de ventas en los últimos 5 años de forma comparativa, con ranking por año y filtros de selección.
+
+  Programa servidor: `ventas-rep009.p` | Basado en: `cxcc1390.p`
+
+
+
+  ---
+
+
+
+  ## 2. Método HTTP
+
+
+
+  ```
+
+  GET
+
+  ```
+
+
+
+  ---
+
+
+
+  ## 3. URL Completa
+
+
+
+  ```
+
+  http://192.0.1.14:8850/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/ComparativoAnualMejoresClientes
+
+  ```
+
+
+
+  ---
+
+
+
+  ## 4. Parámetros de Entrada (Query String)
+
+
+
+  > ✅ = Requerido · ❌ = Opcional · ⚠️ = Condicional
+
+
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta el reporte
+
+
+
+  **`Ejercicio`** · INT · ✅ — Ejercicio piloto (año de referencia para el ordenamiento)
+
+  - Debe estar entre `Final - 4` y `Final`
+
+  - No puede ser mayor que `Final`
+
+
+
+  **`Final`** · INT · ✅ — Ejercicio final (año más reciente del comparativo)
+
+  - No puede ser mayor al año actual
+
+  - No puede ser menor a `Ejercicio`
+
+
+
+  **`Mes`** · INT · ✅ — Mes de corte para acumular ventas
+
+  - Rango: `1` (enero) al `12` (diciembre)
+
+
+
+  **`CantCte`** · INT · ❌ — Cantidad máxima de clientes a retornar
+
+  - `0` = todos · `N` = limita al top N ordenado por ventas descendente
+
+
+
+  **`TipoCte`** · INT · ✅ — Tipo geográfico de cliente
+
+  - `1` General · `2` Solo locales · `3` Solo foráneos
+
+
+
+  **`Seleccion`** · INT · ✅ — Criterio de selección de clientes
+
+  - `1` General · `2` Zona · `3` Responsable · `4` Vendedor
+
+  - `5` Agente · `6` Ruta de cobro · `7` Giro · `8` Cliente · `9` Lista de clientes
+
+
+
+  **`Lista`** · STRING · ⚠️ — CSV de códigos según el criterio `Seleccion`
+
+  - Requerido cuando `Seleccion` ≠ `1`
+
+  - `Seleccion=2` → CSV de `IdZona` formato `999` · Ej: `"001,003"`
+
+  - `Seleccion=3` → CSV de `IdResp` formato `99`
+
+  - `Seleccion=4` o `5` → CSV de clave de vendedor/agente
+
+  - `Seleccion=6` → CSV de `IdRutaCob`
+
+  - `Seleccion=7` → CSV de `IdGiro` formato `999`
+
+  - `Seleccion=8` → CSV de `IdCliente` formato `999999`
+
+  - `Seleccion=9` → CSV de `IdListaCte` formato `9999`
+
+  - Vacío o sin parámetro cuando `Seleccion=1`
+
+
+
+  ---
+
+
+
+  ## 5. Body
+
+
+
+  No aplica. Método `GET`.
+
+
+
+  ---
+
+
+
+  ## 6. Headers
+
+
+
+  | Header         | Valor                                  |
+
+  |----------------|----------------------------------------|
+
+  | `Accept`       | `application/json`                     |
+
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+
+
+  ---
+
+
+
+  ## 7. Ejemplo de Request
+
+
+
+  ```
+
+  GET http://192.0.1.14:8850/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/ComparativoAnualMejoresClientes
+
+      ?IdUser=olds
+
+      &Ejercicio=2026
+
+      &Final=2026
+
+      &Mes=03
+
+      &CantCte=0
+
+      &TipoCte=1
+
+      &Seleccion=1
+
+      &Lista=
+
+  ```
+
+
+
+  ---
+
+
+
+  ## 8. Ejemplo de Response
+
+
+
+  ```json
+
+  {
+
+    "IdError": false,
+
+    "Respuesta": "OK",
+
+    "dsOutput": {
+
+      "ttEstCte": [
+
+        {
+
+          "IdCliente": 1025,
+
+          "NomCte": "DISTRIBUIDORA EJEMPLO SA DE CV",
+
+          "IdZona": 3,
+
+          "Zona": "NORTE",
+
+          "IdVend": "JGR",
+
+          "IdUbiVta": "MTY",
+
+          "Ventas1": 1850.50,
+
+          "Ventas2": 2100.00,
+
+          "Ventas3": 1975.25,
+
+          "Ventas4": 2340.00,
+
+          "Ventas5": 2580.75,
+
+          "Lugar1": 3,
+
+          "Lugar2": 2,
+
+          "Lugar3": 3,
+
+          "Lugar4": 2,
+
+          "Lugar5": 1,
+
+          "OrdVentas": 2580.75,
+
+          "Limite": 50.00,
+
+          "Plazo": 30,
+
+          "IdGiro": 5,
+
+          "IdResp": 2,
+
+          "IdRutaCob": "R01"
+
+        }
+
+      ]
+
+    }
+
+  }
+
+  ```
+
+
+
+  ### Campos de `ttEstCte`
+
+
+
+  **`IdCliente`** · INT — Clave del cliente
+
+  **`NomCte`** · STRING — Razón social del cliente
+
+  **`IdZona`** · INT — Clave de zona del cliente
+
+  **`Zona`** · STRING — Descripción de la zona (en mayúsculas)
+
+  **`IdVend`** · STRING — Clave del vendedor asignado
+
+  **`IdUbiVta`** · STRING — Ubicación de ventas del vendedor
+
+  **`Ventas1`** · DECIMAL — Ventas acumuladas año `Final - 4` (en miles de pesos)
+
+  **`Ventas2`** · DECIMAL — Ventas acumuladas año `Final - 3` (en miles de pesos)
+
+  **`Ventas3`** · DECIMAL — Ventas acumuladas año `Final - 2` (en miles de pesos)
+
+  **`Ventas4`** · DECIMAL — Ventas acumuladas año `Final - 1` (en miles de pesos)
+
+  **`Ventas5`** · DECIMAL — Ventas acumuladas año `Final` — el más reciente (en miles de pesos)
+
+  **`Lugar1`** · INT — Ranking del cliente en el año `Final - 4`
+
+  **`Lugar2`** · INT — Ranking del cliente en el año `Final - 3`
+
+  **`Lugar3`** · INT — Ranking del cliente en el año `Final - 2`
+
+  **`Lugar4`** · INT — Ranking del cliente en el año `Final - 1`
+
+  **`Lugar5`** · INT — Ranking del cliente en el año `Final`
+
+  **`OrdVentas`** · DECIMAL — Ventas del año `Ejercicio` piloto (campo de ordenamiento)
+
+  **`Limite`** · DECIMAL — Límite de crédito en miles de pesos
+
+  **`Plazo`** · INT — Plazo de crédito en días
+
+  **`IdGiro`** · INT — Clave del giro comercial del cliente
+
+  **`IdResp`** · INT — Clave del responsable asignado
+
+  **`IdRutaCob`** · STRING — Clave de la ruta de cobranza
+
+
+
+  > Los registros se retornan ordenados por `OrdVentas` **descendente** (ventas del ejercicio piloto).
+
+  > Los rankings (`Lugar1`–`Lugar5`) manejan empates: dos clientes con igual venta reciben el mismo número de lugar.
+
+  > Las ventas incluyen contado + crédito con IVA y descuentos, calculadas al mes indicado en `Mes`.
+
+
+
+  ### Response de error controlado
+
+
+
+  ```json
+
+  {
+
+    "IdError": true,
+
+    "Respuesta": "El ejercicio piloto solo puede ser entre 2022 y 2026.",
+
+    "dsOutput": {
+
+      "ttEstCte": []
+
+    }
+
+  }
+
+  ```
+
+
+
+  ---
+
+
+
+  ## 9. Validaciones del Servicio
+
+
+
+  | Condición | Mensaje de error |
+
+  |-----------|-----------------|
+
+  | `Ejercicio = 0` o nulo | `Debe capturar el ejercicio piloto.` |
+
+  | `Final = 0` o nulo | `Debe capturar el ejercicio final.` |
+
+  | `Mes = 0` o nulo | `Debe capturar el Mes.` |
+
+  | `Final > año actual` | `El ejercicio final no puede ser mayor al ejercicio actual.` |
+
+  | `Final < Ejercicio` | `El ejercicio final no puede ser menor al ejercicio base, verifique.` |
+
+  | `Ejercicio > Final` | `El ejercicio piloto no puede ser mayor al ejercicio final.` |
+
+  | `Ejercicio < Final - 4` | `El ejercicio piloto solo puede ser entre {Final-4} y {Final}.` |
+
+  | `Mes < 1` o `Mes > 12` | `El mes debe estar entre 1 y 12.` |
+
+
+
+  ---
+
+
+
+  ## 10. Evidencia de Ejecución
+
+
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  Adjuntar screenshot de la herramienta de prueba (Postman / Insomnia / curl) mostrando:
+
+  - URL completa con parámetros
+
+  - Status HTTP `200 OK`
+
+  - Cuerpo de respuesta con al menos un registro en `ttEstCte`
+
+
+
+  ---
+
+
+
+  ## 11. Fecha de Prueba
+
+
+
+  | Ambiente | Fecha      | Ejecutado por |
+
+  |----------|------------|---------------|
+
+  | DEV      | 2026-03-31 | *(pendiente)* |
+
+
+
+  ---
+
+
+
+  ## 12. Resultado
+
+
+
+  | Estado              | Descripción                                                       |
+
+  |---------------------|-------------------------------------------------------------------|
+
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+
+
+  ---
+
+
+
+  ## 13. Observaciones Técnicas
+
+
+
+  1. **Periodo comparativo fijo:** El servicio siempre cubre exactamente 5 años: desde `Final - 4` hasta `Final`. El parámetro `Ejercicio` solo define cuál de esos 5 años se usa como criterio de ordenamiento.
+
+  2. **Ventas en miles de pesos:** Todos los campos `Ventas1`–`Ventas5`, `OrdVentas` y `Limite` están expresados en miles (`/ 1000`). El front-end no debe volver a dividir.
+
+  3. **Clientes excluidos automáticamente:** Se excluyen clientes con `Id-Cliente <= 12` (internos y de control).
+
+  4. **Parámetro `Lista`:** Solo requerido cuando `Seleccion` ≠ `1`. Con `Seleccion=1` se retornan todos los clientes; `Lista` puede enviarse vacío o sin incluirse.
+
+  5. **`CantCte = 0`:** Retorna todos los clientes que pasen los filtros, sin límite.
+
+  6. **Rankings con empate:** Si dos clientes tienen exactamente la misma venta en un año, ambos reciben el mismo número de lugar y el siguiente lugar se omite (lógica estándar de ranking deportivo).
+
+  7. **`Seleccion=9` — Lista de clientes:** Requiere los IDs de listas predefinidas en la tabla `listacte` / `detlistacte`. El CSV debe contener los `id-listacte` con formato `9999`.
+
+  8. **Autenticación:** El servicio corre sobre OpenEdge PASOE. Si el ambiente requiere autenticación Bearer, incluir el header `Authorization: Bearer <token>`.
+}

@@ -1,0 +1,244 @@
+meta {
+  name: Reporte Existencias
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/ExistenciasArticulos?IdUser=olds
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdUser: olds
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # Servicio REST — Existencias MultiAlmacén por Artículo
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Existencias MultiAlmacén por Artículo (ExistenciasArticulos)**
+  Retorna las existencias de cada artículo desglosadas por almacén (CEDIS, sucursales, FUG, Chihuahua, Saltillo, otros y tránsito), con su total general e indicadores de mínimo/máximo por almacén. El reporte se ejecuta **siempre** con una configuración fija (no recibe filtros): por artículo, todos, orden alfabético, reporte "Todos", solo con existencia, unidades UMI, tipo de artículo `N`.
+  Programa servidor: `bodc0380.p` | Basado en: `bodc0380.p` / `bodc0381.p` / `bodc0380.i` (FLC, 7-Jul-2005)
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/ExistenciasArticulos
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta (auditoría)
+  - Ej: `"olds"`
+
+  > ℹ️ El servicio **no recibe filtros**. Siempre corre con la configuración fija del display de inicio:
+  > Opciones=Artículo · Selección=Todos · Categorías=Todos · Artículos=Todos · Orden=Alfabético · Reporte por=Todos · Inc. Exist.=Con · Unidades=UMI · Resagados=Todos · **Tipo Art=N** · Temporada=Todos · Comprador=Todos.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/ExistenciasArticulos
+      ?IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "1523 registros encontrados.",
+    "ttExistencias": [
+      {
+        "IdArticulo": "AB1234",
+        "Descr": "CUADERNO PROFESIONAL 100 HOJAS",
+        "FecReg": "2024-08-15",
+        "IdGrupo": 12,
+        "NombreGrupo": "CUADERNOS",
+        "IdGiro": 3,
+        "NombreGiro": "PAPELERIA",
+        "IdMarca": 45,
+        "NombreMarca": "SCRIBE",
+        "IdProv": 1801,
+        "NomProv": "GRUPO SCRIBE SA DE CV",
+        "IdColor": 0,
+        "AbrevColor": "",
+        "TipoArt": "N",
+        "UnidDesc": "PZA",
+        "Ex02B": 1200.00,
+        "In02B": "",
+        "Ex03A": 340.00,
+        "In03A": "",
+        "Ex6": 50.00,
+        "In6": "-",
+        "Ex7": 0.00,
+        "In7": "",
+        "Ex8": 80.00,
+        "In8": "",
+        "Ex9": 0.00,
+        "In9": "",
+        "Ex10": 25.00,
+        "In10": "",
+        "ExFUG": 0.00,
+        "Ex12": 100.00,
+        "In12": "",
+        "Ex11": 60.00,
+        "In11": "",
+        "ExOtro": 0.00,
+        "Transito": 200.00,
+        "ExTotal": 2055.00
+      }
+    ]
+  }
+  ```
+
+  ### Campos de `ttExistencias`
+
+  > Datos del artículo
+
+  **`IdArticulo`** · STRING — Clave del artículo
+  **`Descr`** · STRING — Descripción del artículo
+  **`FecReg`** · DATE — Fecha de registro del artículo (`Articulo.Fec-Reg`)
+  **`IdGrupo`** · INT — Clave del grupo del artículo; `0` si no tiene
+  **`NombreGrupo`** · STRING — Descripción del grupo
+  **`IdGiro`** · INT — Clave del giro (proviene del proveedor); `0` si no tiene
+  **`NombreGiro`** · STRING — Descripción del giro
+  **`IdMarca`** · INT — Clave de la marca; `0` si no tiene
+  **`NombreMarca`** · STRING — Descripción de la marca
+  **`IdProv`** · INT — Clave del proveedor del artículo
+  **`NomProv`** · STRING — Nombre del proveedor
+  **`IdColor`** · INT — Clave de color; `0` = artículo sin color
+  **`AbrevColor`** · STRING — Abreviatura del color; vacío si no aplica
+  **`TipoArt`** · STRING — Tipo de artículo (en este reporte siempre `N`)
+  **`UnidDesc`** · STRING — Unidad de la presentación UMI (ej. `"PZA"`, `"CAJA"`)
+
+  > Existencias por almacén (en unidades UMI) · indicador `In*`: `"+"` sobreinventario (existencia > máximo × 1.20) · `"-"` bajo mínimo · `""` dentro de rango
+
+  **`Ex02B`** · DECIMAL — Existencia **CEDIS** (suma de almacenes `02B` + `02A` + `02C`)
+  **`In02B`** · STRING — Indicador min/máx de CEDIS
+  **`Ex03A`** · DECIMAL — Existencia **MATRIZ** (almacén `03A`)
+  **`In03A`** · STRING — Indicador min/máx de MATRIZ
+  **`Ex6`** · DECIMAL — Existencia **P.LIVAS** (almacén `6`)
+  **`In6`** · STRING — Indicador min/máx de P.LIVAS
+  **`Ex7`** · DECIMAL — Existencia **RUIZ C.** (almacén `7`)
+  **`In7`** · STRING — Indicador min/máx de RUIZ C.
+  **`Ex8`** · DECIMAL — Existencia **CUMBRES** (almacén `8`)
+  **`In8`** · STRING — Indicador min/máx de CUMBRES
+  **`Ex9`** · DECIMAL — Existencia **D. DIAZ** (almacén `9`)
+  **`In9`** · STRING — Indicador min/máx de D. DIAZ
+  **`Ex10`** · DECIMAL — Existencia **CANAHUA** (almacén `10`)
+  **`In10`** · STRING — Indicador min/máx de CANAHUA
+  **`ExFUG`** · DECIMAL — Existencia **FUG** (almacén `FUG`)
+  **`Ex12`** · DECIMAL — Existencia **Chihuahua** (almacén `12`)
+  **`In12`** · STRING — Indicador min/máx de Chihuahua
+  **`Ex11`** · DECIMAL — Existencia **Saltillo** (almacén `11`)
+  **`In11`** · STRING — Indicador min/máx de Saltillo
+  **`ExOtro`** · DECIMAL — Existencia en otros almacenes no mapeados
+  **`Transito`** · DECIMAL — Cantidad en tránsito (requisiciones + traspasos en camino)
+  **`ExTotal`** · DECIMAL — Existencia total general (suma de todos + tránsito)
+
+  > Cada renglón es por **artículo + color**: un artículo con varios colores genera varios renglones (distínguelos con `IdColor` / `AbrevColor`). Los datos del artículo (Descr, Grupo, Giro, Marca, etc.) se repiten en cada color.
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Enviar Usuario",
+    "ttExistencias": []
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdUser` vacío o no enviado | `IdError: true` — `"Enviar Usuario"` |
+  | Artículo sin existencia en ningún almacén ni tránsito | No aparece (filtro fijo Inc. Exist.=Con) |
+  | Artículo de tipo distinto a `N` | No aparece (filtro fijo Tipo Art=N) |
+  | Artículo inactivo | No aparece (solo `Articulo.Activo = TRUE`) |
+  | Error en proceso | `IdError: true` — `"Error: <mensaje>"` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+  Adjuntar screenshot de la herramienta de prueba (Bruno / Postman / curl) mostrando:
+  - URL completa con `IdUser`
+  - Status HTTP `200 OK`
+  - Cuerpo de respuesta con al menos un registro en `ttExistencias`
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | 2026-06-13 | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Parámetros fijos:** Este servicio es una versión sin filtros del reporte de existencias multialmacén. Si se requieren filtros (por proveedor, grupo, marca, categoría, etc.), usar el servicio parametrizable `/Ventas/Reporte/InventarioMultiAlmacen` (`ventas-rep002.p`).
+  2. **Unidades UMI:** Todas las existencias se devuelven convertidas a la presentación UMI del artículo (`Ex* = existencia / ArtPres.Equiv`). El campo `UnidDesc` indica la unidad.
+  3. **CEDIS agrupado:** `Ex02B` suma los almacenes `02B`, `02A` y `02C`. El resto de almacenes son individuales; los no mapeados caen en `ExOtro`.
+  4. **Tránsito:** `Transito` incluye requisiciones surtidas en camino (`DetReq` + `ReqAlm` + `EstPedido` con estatus < 7) y traspasos enviados aún no recibidos (`DetSTrasp` sin entrada registrada). Se suma a `ExTotal`.
+  5. **Indicadores min/máx:** `+` cuando la existencia supera el máximo configurado por 20% (`> Maximo × 1.20`); `-` cuando está por debajo del mínimo; vacío en rango normal. Se calculan **antes** de la conversión a UMI.
+  6. **Giro vía proveedor:** El giro proviene del proveedor del artículo (`Prov.Id-Giro → Giro`), no de un campo directo del artículo.
+  7. **Rendimiento:** El servicio recorre todos los artículos activos tipo `N`; el nombre del proveedor se resuelve con caché interno para no golpear `Prov` por cada renglón. Aun así es un barrido completo de catálogo — conviene que el front lo consuma con un indicador de carga.
+  8. **Autenticación:** El servicio corre sobre OpenEdge PASOE. Si el ambiente requiere autenticación Bearer, incluir el header `Authorization: Bearer <token>`.
+}

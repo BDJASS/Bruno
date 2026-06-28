@@ -1,7 +1,0 @@
-info:
-  name: HU09- Ofertas Vigentes
-  type: folder
-  seq: 9
-
-request:
-  auth: inherit

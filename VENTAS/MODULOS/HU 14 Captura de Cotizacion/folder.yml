@@ -1,7 +1,0 @@
-info:
-  name: HU 14 Captura de Cotizacion
-  type: folder
-  seq: 3
-
-request:
-  auth: inherit

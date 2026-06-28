@@ -1,0 +1,180 @@
+meta {
+  name: Lista de Articulos
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Catalogo/ListasArticulos?IdListaArt=0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdListaArt: 0
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # Servicio REST — Catálogo de Listas de Artículos
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Catálogo de Listas de Artículos (GetListasArt)**
+  Retorna el listado completo de la tabla `ListaArt` (Id y Descripción) para ser consumido como catálogo — por ejemplo, para poblar un combo de selección de Lista de Artículos.
+  Programa servidor: `ventas-cat-listaart.p` | Procedure: `GetListasArt`
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8850/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Catalogo/ListasArticulos
+  ```
+
+  > ⚠️ La ruta del recurso (`/Ventas/Catalogo/ListasArticulos`) debe confirmarse contra el mapping del servicio en PASOE.
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`ip-idListaArt`** · INT · ❌ — Clave de la lista de artículos a consultar (`ListaArt.Id-ListaArt`)
+  - `0`, vacío o `?` (null PASOE) = retorna **todas** las listas
+  - `> 0` = filtra exclusivamente por esa lista · Ej: `5`
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ### Consultar todas las listas (sin filtro):
+
+  ```
+  GET http://192.0.1.14:8850/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Catalogo/ListasArticulos
+  ```
+
+  ### Filtrar por una lista específica:
+
+  ```
+  GET http://192.0.1.14:8850/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Catalogo/ListasArticulos
+      ?ip-idListaArt=5
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "3 lista(s) de articulos encontrada(s).",
+    "ttListaArt": [
+      { "IdListaArt": 1, "Descripcion": "LISTA GENERAL" },
+      { "IdListaArt": 5, "Descripcion": "LISTA ESCOLAR" },
+      { "IdListaArt": 8, "Descripcion": "LISTA PROMOCIONES" }
+    ]
+  }
+  ```
+
+  ### Parámetros de salida (control)
+
+  **`IdError`** · BOOLEAN — `true` = ocurrió un error; `false` = ejecución correcta
+  **`Respuesta`** · STRING — Mensaje de resultado (cantidad encontrada) o detalle del error
+
+  ### Campos de `ttListaArt`
+
+  **`IdListaArt`** · INT — Clave de la lista de artículos (`ListaArt.Id-ListaArt`)
+  **`Descripcion`** · STRING — Descripción de la lista (`ListaArt.Descripcion`)
+
+  > Los registros se retornan ordenados alfabéticamente por `Idx-Descripcion` (índice sobre `Descripcion`).
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Error GetListasArt: <detalle> (OE:<num>)",
+    "ttListaArt": []
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `ip-idListaArt` = `0`, vacío o `?` | Retorna **todas** las listas sin filtrar |
+  | `ip-idListaArt` > `0` | Filtra exclusivamente por esa clave de lista |
+  | `ip-idListaArt` con valor inexistente | Retorna `ttListaArt: []` con `IdError: false` y `"0 lista(s) de articulos encontrada(s)."` |
+  | Tabla `ListaArt` sin registros | Retorna `ttListaArt: []` con `IdError: false` y `"0 lista(s) de articulos encontrada(s)."` |
+  | Error de acceso a datos / runtime | `IdError: true` y `Respuesta` con el detalle del error OpenEdge (bloque `CATCH`) |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+  Adjuntar screenshot de la herramienta de prueba (Bruno / Postman / curl) mostrando:
+  - URL completa
+  - Status HTTP `200 OK`
+  - Cuerpo de respuesta con al menos un registro en `ttListaArt`
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | 2026-06-24 | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Fuente de datos:** El servicio recorre directamente la tabla `ListaArt` con `USE-INDEX Idx-Descripcion` para retornar el catálogo ordenado alfabéticamente por descripción.
+  2. **Orden alternativo:** Si se requiere ordenar por clave, cambiar a `USE-INDEX Idx-ListaArt` (índice primario único sobre `Id-ListaArt`).
+  3. **EMPTY TEMP-TABLE:** Se limpia `ttListaArt` al inicio para evitar acumulación de registros en ejecuciones repetidas dentro de la misma sesión del agente PASOE.
+  4. **Autenticación:** El servicio corre sobre OpenEdge PASOE. Si el ambiente requiere autenticación Bearer, incluir el header `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS
+}

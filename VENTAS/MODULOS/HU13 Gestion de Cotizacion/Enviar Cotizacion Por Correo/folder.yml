@@ -1,7 +1,0 @@
-info:
-  name: Enviar Cotizacion Por Correo
-  type: folder
-  seq: 4
-
-request:
-  auth: inherit

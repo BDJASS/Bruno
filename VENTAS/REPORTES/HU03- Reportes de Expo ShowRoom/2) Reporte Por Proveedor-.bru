@@ -1,0 +1,298 @@
+meta {
+  name: 2) Reporte Por Proveedor	
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/PorProveedor?IdUser=olds&Anio=2026
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdUser: olds
+  Anio: 2026
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # Servicio REST — Ventas EXPO por Proveedor
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Ventas EXPO por Proveedor**
+  Acumula las ventas EXPO (Id-Captura `0104`) de un año completo agrupadas por proveedor.
+  Por cada proveedor retorna el número de renglones de pedido, el subtotal pedido (sin IVA)
+  y el subtotal facturado (sin IVA), más un registro de totales generales.
+  Es el detalle de la card "Total de Proveedores" del dashboard EXPO.
+
+  Retorna detalle por proveedor (`ttProveedor`) y un registro de totales (`ttTotales`).
+
+  Programa servidor: `vtac1371.p` | Basado en: `vtac1371.p` (FLC, 7-Mar-2025, modo carácter)
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/PorProveedor
+  ```
+
+  **Ejemplo completo:**
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Expo/PorProveedor?IdUser=olds&Anio=2026
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · El año se procesa completo (01/01 – 31/12).
+
+  **`Anio`** · INT · ✅ — Año a consultar
+  - Obligatorio, 4 dígitos (rango `1000`–`9999`) · Ej: `2026`
+  - Procesa el año completo: del `01/01` al `31/12`
+  - Omitido o `0` → error `"Se requiere el año (Anio)."`
+  - No es de 4 dígitos → error `"El año debe ser de 4 dígitos (AAAA), ej: 2026."`
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta (auditoría)
+  - Ej: `"olds"` · Vacío o ausente → error `"Se requiere usuario (pIdUser)."`
+
+  ---
+
+  ## 5. Lógica del Proceso
+
+  El procedimiento `GetExpoPorProveedor` trabaja en tres fases internas, acumulando
+  sobre una temp-table de trabajo (`ttwDatos`) indexada por proveedor.
+
+  Tras validar los parámetros, el periodo se deriva del año solicitado:
+  ```
+  pFecIni = DATE(1, 1, Anio)      ← 01/01/AAAA
+  pFecFin = DATE(12, 31, Anio)    ← 31/12/AAAA
+  ```
+
+  ### Fase 1 — Acumular importe pedido (por renglón de pedido)
+  Se recorren los `Pedido` con:
+  - `FecReg` dentro del año (`pFecIni ≤ FecReg ≤ pFecFin`)
+  - `Id-Captura = "0104"` (canal EXPO)
+  - `SolCanc = FALSE` y `Resto = 0`
+
+  La lectura usa `USE-INDEX Idx-FecPed` (que lidera con `FecReg`) para acotar por año
+  sin barrer por `Id-Pedido`. Por cada renglón de detalle (`DetPedido` del mismo
+  `Id-Pedido` y `Resto`):
+
+  | Paso | Condición de exclusión |
+  |------|------------------------|
+  | Renglón sin proveedor | `Id-Prov = 0` → `NEXT` |
+
+  Cada renglón válido acumula en `ttwDatos` (creando el registro del proveedor si no existe):
+  ```
+  NumPed   += 1                  ← número de renglones de pedido
+  SubTotal += DetPedido.Importe  ← importe pedido sin IVA
+  ```
+
+  ### Fase 2 — Acumular importe facturado
+  Se recorren de nuevo los `Pedido` del año EXPO (`Id-Captura = "0104"`, `SolCanc = FALSE`)
+  que tengan documento de facturación (`Id-Factura <> ""`). Según la condición del pedido:
+  - `Id-Cond = 0` → documento es **Remisión**; se omite si está cancelada
+    (`Remision.FecCanc <> ?` y `PorIdRemision = ""`)
+  - `Id-Cond <> 0` → documento es **Factura**; se omite si está cancelada
+    (`Factura.FecCanc <> ?` y `PorIdFactura = ""`)
+
+  Se recorre **una sola vez** el detalle del documento facturado (`DetRemis` o
+  `DetFactura`) y cada renglón se liga a su renglón de pedido con un `FIND` indexado
+  (`DetPedido.Reng = RengPed`). Se omite el renglón cuando:
+  - No existe el `DetPedido` ligado
+  - `DetPedido.CantFac <= 0`
+  - `DetPedido.Id-Prov = 0`
+  - El artículo / color / presentación del documento no coincide con el del pedido
+
+  Los renglones válidos acumulan:
+  ```
+  TotFac += DetRemis.Importe   (o DetFactura.Importe)   ← importe facturado sin IVA
+  ```
+
+  ### Fase 3 — Generar salida ordenada
+  Se recorre `ttwDatos` ordenado por `SubTotal DESCENDING`. Por cada proveedor se busca
+  su nombre en `Prov` y se crea un registro `ttProveedor` con un `Renglon` consecutivo.
+  En paralelo se acumulan los totales generales y, al final, se crea el único registro
+  `ttTotales`.
+
+  Finalmente se registra la auditoría (`programas/auditoria.p`) y se arma la respuesta
+  de éxito: `"<N> proveedor(es) con pedidos EXPO."`.
+
+  ---
+
+  ## 6. Response — Campos de ttProveedor
+
+  > Un registro por proveedor, ordenados por `SubTotal` descendente.
+
+  **`Renglon`** · INTEGER — Número de renglón consecutivo (1 = mayor importe pedido)
+  **`IdProv`** · INTEGER — Clave del proveedor (`DetPedido.Id-Prov`)
+  **`NomProv`** · STRING — Nombre del proveedor (`Prov.Nombre`); vacío si no se encuentra
+  **`NumReng`** · INTEGER — Número de renglones/partidas de pedido del proveedor
+  **`SubTotal`** · DECIMAL(2) — Importe pedido sin IVA (`Σ DetPedido.Importe`)
+  **`SubTotFac`** · DECIMAL(2) — Importe facturado sin IVA (`Σ DetRemis/DetFactura.Importe`)
+
+  ---
+
+  ## 7. Response — Campos de ttTotales
+
+  > Siempre un único registro con los acumulados generales del periodo.
+
+  **`NumProveedores`** · INTEGER — Total de proveedores incluidos (= renglones en `ttProveedor`)
+  **`NumReng`** · INTEGER — Total de renglones/partidas de pedido de todos los proveedores
+  **`SubTotal`** · DECIMAL(2) — Suma total del importe pedido sin IVA
+  **`SubTotFac`** · DECIMAL(2) — Suma total del importe facturado sin IVA
+
+  ---
+
+  ## 8. Response — Campos estándar
+
+  **`IdError`** · BOOLEAN — `false` = proceso exitoso; `true` = ocurrió un error
+  **`Respuesta`** · STRING — Mensaje descriptivo del resultado o del error
+
+  ---
+
+  ## 9. Ejemplos de Respuesta
+
+  ### Éxito — con resultados
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "37 proveedor(es) con pedidos EXPO.",
+    "ttProveedor": [
+      {
+        "Renglon": 1,
+        "IdProv": 1801,
+        "NomProv": "GRUPO SCRIBE SA DE CV",
+        "NumReng": 142,
+        "SubTotal": 985430.50,
+        "SubTotFac": 612300.00
+      },
+      {
+        "Renglon": 2,
+        "IdProv": 905,
+        "NomProv": "BIC DE MEXICO SA DE CV",
+        "NumReng": 88,
+        "SubTotal": 543120.75,
+        "SubTotFac": 543120.75
+      }
+    ],
+    "ttTotales": [
+      {
+        "NumProveedores": 37,
+        "NumReng": 1024,
+        "SubTotal": 8451230.40,
+        "SubTotFac": 6120880.10
+      }
+    ]
+  }
+  ```
+
+  ### Error — Año no enviado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Se requiere el año (Anio).",
+    "ttProveedor": [],
+    "ttTotales": []
+  }
+  ```
+
+  ### Error — Año con formato inválido
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "El año debe ser de 4 dígitos (AAAA), ej: 2026.",
+    "ttProveedor": [],
+    "ttTotales": []
+  }
+  ```
+
+  ### Error — Usuario no enviado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Se requiere usuario (pIdUser).",
+    "ttProveedor": [],
+    "ttTotales": []
+  }
+  ```
+
+  ### Resultado vacío — Sin pedidos EXPO en el año
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "0 proveedor(es) con pedidos EXPO.",
+    "ttProveedor": [],
+    "ttTotales": [
+      {
+        "NumProveedores": 0,
+        "NumReng": 0,
+        "SubTotal": 0.00,
+        "SubTotFac": 0.00
+      }
+    ]
+  }
+  ```
+
+  ---
+
+  ## 10. Observaciones Técnicas
+
+  **Pedidos EXPO:** Solo se consideran pedidos con `Id-Captura = "0104"` (canal EXPO),
+  `SolCanc = FALSE` y `Resto = 0`. Los pedidos cancelados o con resto pendiente quedan
+  excluidos del acumulado de importe pedido.
+
+  **Cambio de periodo:** El servicio dejó de recibir `FechaInicial`/`FechaFinal` (DATE).
+  Ahora recibe un único parámetro `Anio` y procesa internamente el año completo
+  (`01/01` al `31/12`), derivando `pFecIni = DATE(1,1,Anio)` y `pFecFin = DATE(12,31,Anio)`.
+
+  **Índice de búsqueda:** La iteración inicial de pedidos usa `USE-INDEX Idx-FecPed`
+  (que lidera con `FecReg`) para acotar la lectura por año en el motor de base de datos,
+  en lugar de barrer por `Id-Pedido`. El orden de acumulación no afecta el resultado.
+
+  **Renglones sin proveedor:** Los renglones de detalle con `Id-Prov = 0` no se incluyen
+  en el reporte (no tienen proveedor asignado) ni suman a los totales.
+
+  **Importe facturado (Fase 2):** El documento de facturación se determina por `Id-Cond`:
+  `0` = Remisión (`DetRemis`), distinto de `0` = Factura (`DetFactura`). Se descartan los
+  documentos cancelados y los renglones cuyo artículo / color / presentación no coincida
+  con el del pedido o cuya `CantFac <= 0`. El cruce se hace con un `FIND` indexado por
+  `RengPed`, recorriendo el detalle del documento una sola vez.
+
+  **Orden de salida:** `ttProveedor` se entrega ordenado por `SubTotal` descendente y el
+  campo `Renglon` se asigna consecutivamente en ese orden (1 = mayor importe pedido).
+
+  **Totales siempre presentes:** Se crea siempre un registro en `ttTotales`, incluso cuando
+  no hay proveedores con pedidos EXPO (en cuyo caso todos sus campos valen `0`).
+  `NumProveedores` equivale a la cantidad de renglones de `ttProveedor`.
+
+  **Auditoría:** Cada ejecución registra una entrada vía `programas/auditoria.p` con el
+  módulo `VENTAS`, acción `Expo`, programa `vtac1371` y el endpoint `/Ventas/Expo/PorProveedor`.
+
+  **Manejo de errores:** Las excepciones se capturan en un bloque `CATCH` que concatena
+  todos los mensajes de OpenEdge con su número (`OE:nnn`) y los retorna en `Respuesta`
+  con el prefijo `"Error en EXPO por proveedor: "` e `IdError = true`.
+}

@@ -1,0 +1,25 @@
+meta {
+  name: REPORTE VENTAS DESARROLLO
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/VentasPorClienteComparativo?Fecha=2026-06-27
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~IdCliente: 0
+  ~IdVendedor: 0
+  Fecha: 2026-06-27
+  ~IdEstado: 
+  ~IdUbivta: MLO
+  ~IdSegmento: D1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

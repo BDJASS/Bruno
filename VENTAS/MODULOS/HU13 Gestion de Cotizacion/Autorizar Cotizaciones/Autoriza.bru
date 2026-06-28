@@ -1,0 +1,178 @@
+meta {
+  name: Autoriza
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Autoriza?IdCot=2083156&IdCliente=12591&IdUser=olds&Password=olds
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdCot: 2083156
+  IdCliente: 12591
+  IdUser: olds
+  Password: olds
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # Servicio REST — Autorización de Cotización
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Autorización de Cotización (Autoriza)**
+  Autoriza una cotización validando el perfil del usuario (tabla `Password`), la vigencia del documento y el margen neto. Según el nivel del usuario y el margen, autoriza o rechaza; cuando el margen neto es ≤ 15 % notifica a dirección por correo.
+  Programa servidor: `vtaa0070.p` · Procedimiento: `AutorizaCotizacion` | Basado en: `vtaa0070.p` / `vtaa0074.i` (AARON, 24-Abr-1998)
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Autoriza
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUser`** · STRING · ✅ — Usuario que autoriza (valida perfil en tabla `Password`)
+  **`Password`** · STRING · ✅ — Password del usuario
+  **`IdCot`** · STRING · ✅ — Folio de la cotización a autorizar
+  **`IdCliente`** · STRING · ✅ — Cliente de la cotización (debe coincidir con el del documento)
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Los parámetros viajan en el query string del `POST`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                |
+  |----------------|----------------------|
+  | `Accept`       | `application/json`   |
+  | `Content-Type` | `application/json`   |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST .../GestionCotizacion/Autoriza?IdUser=jlm&Password=xxxx&IdCot=2084315&IdCliente=55921
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Cotizacion 2084315 autorizada. Margen neto: 22.34%."
+  }
+  ```
+
+  ### Response de error / rechazo
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Usuario no valido para autorizar cotizaciones con poco margen, solicite autorizacion a gerencia."
+  }
+  ```
+
+  ### Campos de respuesta
+
+  **`IdError`** · BOOLEAN — `false` = autorizada; `true` = no se autorizó (validación o error)
+  **`Respuesta`** · STRING — Mensaje de resultado; en éxito incluye el margen neto calculado
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario."` |
+  | `Password` vacío | `IdError: true` — `"Se requiere el password."` |
+  | `IdCot` vacío | `IdError: true` — `"Se requiere la cotizacion."` |
+  | `IdCliente` no numérico o `0` | `IdError: true` — `"Numero de cliente invalido."` |
+  | Usuario/Password sin perfil (Tipo 16/17) | `IdError: true` — `"Usuario o password no valido para autorizar cotizaciones."` |
+  | Cotización inexistente | `IdError: true` — `"No existe la cotizacion."` |
+  | `IdCliente` no corresponde a la cotización | `IdError: true` — `"La cotizacion no corresponde al cliente indicado."` |
+  | Cotización ya autorizada | `IdError: true` — `"La cotizacion ya fue autorizada."` |
+  | Cotización cancelada | `IdError: true` — `"Cotizacion cancelada."` |
+  | Cotización caduca (`FecReg` + vigencia < hoy) | `IdError: true` — `"Cotizacion caduca, no es posible autorizar."` |
+  | Margen neto < 0 y usuario no es dirección (Tipo 9999) | `IdError: true` — `"Cotizacion con margen negativo, solo direccion puede autorizar."` |
+  | Margen neto ≤ 15 % y usuario sin nivel suficiente | `IdError: true` — `"Usuario no valido para autorizar cotizaciones con poco margen, ..."` |
+  | Cotización en uso por otro usuario | `IdError: true` — `"Cotizacion en uso por otro usuario, intente mas tarde."` |
+
+  ### Reglas de autorización por nivel y margen
+
+  > `MargenNeto = ((ΣImporte / ΣCosto) − 1) × 100`, ajustado por `× (1 − DescPP/100)`.
+
+  | Margen neto | Quién puede autorizar |
+  |-------------|-----------------------|
+  | Costo y precio = 0 | Cualquier usuario con perfil válido |
+  | `< 0` (negativo) | Solo dirección (`Password.Tipo = 9999`) |
+  | `> 15 %` | Cualquier usuario con perfil válido (Tipo 16/17) |
+  | `0 % – 15 %` | Solo Tipo 16 o dirección (9999) |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Cálculo del margen neto:** recorre el detalle (`Tipo = 1`) sumando costo×cantidad e importe. Para artículos en moneda extranjera convierte el costo real con `TipoCambio` / `TCReal` / `ArtPres.Equiv`. Aplica el descuento por pronto pago (`DescPP`).
+  2. **Niveles de usuario:** el perfil se valida en la tabla `Password` por `Usuario` + `Password`; `Tipo 16/17` autoriza normal, `Tipo 16`/`9999` autoriza margen bajo, `Tipo 9999` (dirección) autoriza margen negativo.
+  3. **Actualización:** al autorizar marca `Cot.Autorizada = TRUE` y `Cot.AutPor = IdUser` con bloqueo `EXCLUSIVE-LOCK NO-WAIT`.
+  4. **Notificación a dirección:** cuando el margen neto es ≤ 15 % se envía un correo informativo vía `programas/correo02_rest.p` (incluye folio, cliente, vendedor, monto, márgenes, condiciones de venta, días cartera y promedio de pago, usuario y fecha/hora). El envío de correo es **tolerante a fallos**: si falla, no afecta el resultado de la autorización.
+  5. **Control de entorno del correo:** lo maneja `correo02_rest.p` — en producción va a los destinatarios reales (con copia oculta a `desarrollo10@adosa.com.mx`); en desarrollo se redirige a `desarrollo10@adosa.com.mx` con el asunto marcado `"DESARROLLO "`.
+  6. **Notificación omitida del original:** no se replicó la lista de correos condicionada a fechas anteriores a 2020 ni el override de DESARROLLO (obsoletos).
+  7. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS
+}
