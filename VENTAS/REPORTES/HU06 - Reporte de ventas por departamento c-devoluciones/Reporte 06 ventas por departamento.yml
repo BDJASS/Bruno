@@ -1,0 +1,264 @@
+info:
+  name: Reporte 06 ventas por departamento
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/DepartamentoDevoluciones?IdUser=olds&FecIni=2026-06-14&FecFin=2026-06-14
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: ListaUbic
+      value: MLA
+      type: query
+      disabled: true
+    - name: FecIni
+      value: 2026-06-14
+      type: query
+    - name: FecFin
+      value: 2026-06-14
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  # Servicio REST — Ventas por Vendedor por Departamento (con Devoluciones)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Reporte 06 — Ventas por Vendedor por Departamento (con Devoluciones)**
+  Retorna, por departamento (ubicación de venta) y vendedor, el resumen de remisiones (contado), facturas (crédito), devoluciones y cancelaciones del periodo, con su venta total y venta neta. Cada departamento incluye además una fila de **totales**.
+  Programa servidor: `ventas-rep007.p` | Basado en: `vtac2020.p`
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/DepartamentoDevoluciones
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`FecIni`** · DATE · ✅ — Fecha inicial del periodo
+  - Formato: `YYYY-MM-DD` · Ej: `2026-06-14`
+  - Si se omite: default `hoy − 31 días`
+
+  **`FecFin`** · DATE · ✅ — Fecha final del periodo
+  - Formato: `YYYY-MM-DD` · Ej: `2026-06-14`
+  - Si se omite: default `hoy − 1 día`
+
+  **`ListaUbic`** · STRING · ❌ — CSV de claves de departamento (`Id-UbiVta`) a incluir
+  - Ej: `"2033"` · `"2033,2040"` · Vacío o ausente = **todos** los departamentos
+
+  **`IdUser`** · STRING · ❌ — Usuario que ejecuta la consulta
+  - Ej: `"olds"` · El servicio lo recibe pero actualmente no lo valida (ver Observaciones)
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/DepartamentoDevoluciones
+      ?IdUser=olds
+      &ListaUbic=2033
+      &FecIni=2026-06-14
+      &FecFin=2026-06-14
+  ```
+
+  ### Todos los departamentos (sin filtro):
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/DepartamentoDevoluciones
+      ?IdUser=olds
+      &FecIni=2026-06-01
+      &FecFin=2026-06-14
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "4 vendedores encontrados.",
+    "ttVentas": [
+      {
+        "IdUbiVta": "2033",
+        "DescrUbiVta": "MOSTRADOR PAPELERIA",
+        "IdVendedor": "0145",
+        "Nombre": "JUAN PEREZ LOPEZ",
+        "NRemision": 12,
+        "TRemision": 18450.50,
+        "NFactura": 3,
+        "TFactura": 9800.00,
+        "NTotal": 15,
+        "TTotal": 28250.50,
+        "NDev": 1,
+        "TDev": 350.00,
+        "NFacCanc": 0,
+        "TFacCanc": 0.00,
+        "TNeto": 27900.50,
+        "EsTotales": false
+      },
+      {
+        "IdUbiVta": "2033",
+        "DescrUbiVta": "MOSTRADOR PAPELERIA",
+        "IdVendedor": "ZZZZ",
+        "Nombre": "TOTALES",
+        "NRemision": 40,
+        "TRemision": 61200.00,
+        "NFactura": 9,
+        "TFactura": 25300.00,
+        "NTotal": 49,
+        "TTotal": 86500.00,
+        "NDev": 3,
+        "TDev": 1200.00,
+        "NFacCanc": 1,
+        "TFacCanc": 850.00,
+        "TNeto": 84450.00,
+        "EsTotales": true
+      }
+    ]
+  }
+  ```
+
+  ### Campos de `ttVentas`
+
+  > Datos de agrupación
+
+  **`IdUbiVta`** · STRING — Clave del departamento / ubicación de venta (`UbiVta.Id-UbiVta`)
+  **`DescrUbiVta`** · STRING — Descripción del departamento
+  **`IdVendedor`** · STRING — Clave del vendedor; en la fila de totales es `"ZZZZ"`
+  **`Nombre`** · STRING — Nombre del empleado vendedor; en la fila de totales es `"TOTALES"`
+
+  > Remisiones (ventas de contado)
+
+  **`NRemision`** · INT — Número de remisiones del periodo
+  **`TRemision`** · DECIMAL — Importe de remisiones (`SubTot − Descuento`)
+
+  > Facturas (ventas a crédito)
+
+  **`NFactura`** · INT — Número de facturas del periodo
+  **`TFactura`** · DECIMAL — Importe de facturas (`SubTot − Descuento`, convertido por tipo de cambio si la moneda no es nacional)
+
+  > Venta total
+
+  **`NTotal`** · INT — Total de documentos (`NRemision + NFactura`)
+  **`TTotal`** · DECIMAL — Importe total (`TRemision + TFactura`)
+
+  > Devoluciones
+
+  **`NDev`** · INT — Número de partidas de devolución del periodo
+  **`TDev`** · DECIMAL — Importe de devoluciones
+
+  > Cancelaciones (documentos emitidos antes del periodo pero cancelados dentro de él)
+
+  **`NFacCanc`** · INT — Número de remisiones/facturas canceladas en el periodo
+  **`TFacCanc`** · DECIMAL — Importe cancelado (`SubTot − Descuento`)
+
+  > Resultado
+
+  **`TNeto`** · DECIMAL — Venta neta (`TTotal − TDev − TFacCanc`)
+  **`EsTotales`** · BOOLEAN — `true` = fila de **totales** del departamento; `false` = fila de detalle por vendedor
+
+  > Cada departamento (`IdUbiVta`) genera **N filas de detalle** (una por vendedor, `EsTotales=false`) seguidas de **1 fila de totales** (`EsTotales=true`). El front debe separar/estilizar la fila de totales usando `EsTotales`.
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Error: [descripción del error]",
+    "ttVentas": []
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `FecIni` no enviada | Default: `hoy − 31 días` |
+  | `FecFin` no enviada | Default: `hoy − 1 día` |
+  | `ListaUbic` vacío o no enviado | Retorna **todos** los departamentos |
+  | `ListaUbic` con valor | Filtra solo los `Id-UbiVta` indicados (CSV) |
+  | Departamento sin vendedores con movimiento | Aparece solo con su fila de totales en ceros |
+  | Error en proceso | `IdError: true` — `"Error: <mensaje>"` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+  Adjuntar screenshot de la herramienta de prueba (Bruno / Postman / curl) mostrando:
+  - URL completa con parámetros
+  - Status HTTP `200 OK`
+  - Cuerpo de respuesta con filas de detalle y la fila de totales en `ttVentas`
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | 2026-06-14 | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Estructura detalle + totales:** La temp-table `ttVentas` mezcla filas de detalle (por vendedor) y filas de totales (por departamento). Usar el campo `EsTotales` para distinguirlas; la fila de totales trae `IdVendedor = "ZZZZ"` y `Nombre = "TOTALES"` (la clave `ZZZZ` la deja al final del índice por departamento).
+  2. **Remisiones de contado:** Solo se cuentan remisiones con `TipoVenta <> 0` y no canceladas. Se descartan tickets duplicados (validación de `numticket` / `foliofiscant` contra remisiones de los 30 días previos).
+  3. **Facturas de crédito:** Solo clientes con `Id-Cliente >= 12` o el cliente `3` (Público General). El importe se convierte a moneda nacional con `TipoCambio` cuando `Id-Moneda > 1`.
+  4. **Devoluciones:** Se suma el `Importe` de cada partida (`DetDev`) de devoluciones no canceladas del periodo.
+  5. **Cancelaciones:** `NFacCanc` / `TFacCanc` consideran documentos **emitidos antes** de `FecIni` pero **cancelados dentro** del periodo (`FecReg < FecIni AND FecCan entre FecIni y FecFin`).
+  6. **Venta neta:** `TNeto = TTotal − TDev − TFacCanc`.
+  7. **`IdUser`:** El servicio recibe el parámetro pero actualmente **no lo valida** ni registra auditoría (a diferencia de otros reportes). Si se requiere validación obligatoria y auditoría, debe agregarse al programa.
+  8. **Autenticación:** El servicio corre sobre OpenEdge PASOE. Si el ambiente requiere autenticación Bearer, incluir el header `Authorization: Bearer <token>`.

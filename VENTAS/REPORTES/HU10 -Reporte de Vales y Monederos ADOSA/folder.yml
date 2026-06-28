@@ -1,0 +1,7 @@
+info:
+  name: HU10 -Reporte de Vales y Monederos ADOSA
+  type: folder
+  seq: 10
+
+request:
+  auth: inherit

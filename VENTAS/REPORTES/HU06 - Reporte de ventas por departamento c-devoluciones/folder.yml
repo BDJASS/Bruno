@@ -1,0 +1,7 @@
+info:
+  name: HU06 - Reporte de ventas por departamento c/devoluciones
+  type: folder
+  seq: 6
+
+request:
+  auth: inherit

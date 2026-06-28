@@ -1,0 +1,159 @@
+info:
+  name: SEGMENTO
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Catalogo/Segmentos
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Catálogo de Segmentos
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Catálogo de Segmentos (GetSegmentos)**
+  Retorna el listado completo de la tabla `Segmento` (Id y Descripción) para ser consumido como catálogo — por ejemplo, para poblar el combo del filtro **Segmento** del servicio `GetVentas`.
+  Programa servidor: `ventas-cat-segmento.p` | Procedure: `GetSegmentos`
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8850/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Catalogo/Segmentos
+  ```
+
+  > ⚠️ La ruta del recurso (`/Ventas/Catalogo/Segmentos`) debe confirmarse contra el mapping del servicio en PASOE.
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  No aplica. El servicio no recibe parámetros — retorna siempre el catálogo completo.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET http://192.0.1.14:8850/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Catalogo/Segmentos
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "4 segmento(s) encontrado(s).",
+    "ttSegmento": [
+      { "IdSegmento": "A",   "Descr": "Distribuidor" },
+      { "IdSegmento": "B",   "Descr": "Mayorista" },
+      { "IdSegmento": "C",   "Descr": "Detallista" },
+      { "IdSegmento": "ESC", "Descr": "Escolar" }
+    ]
+  }
+  ```
+
+  ### Parámetros de salida (control)
+
+  **`IdError`** · BOOLEAN — `true` = ocurrió un error; `false` = ejecución correcta
+  **`Respuesta`** · STRING — Mensaje de resultado (cantidad encontrada) o detalle del error
+
+  ### Campos de `ttSegmento`
+
+  **`IdSegmento`** · STRING — Clave del segmento (`Segmento.Id-Segmento`). Es el valor que se envía como `ip-idSegmento` al filtro de `GetVentas`
+  **`Descr`** · STRING — Descripción del segmento (`Segmento.Descr`)
+
+  > Los registros se retornan ordenados por `Idx-Segmento` (índice primario único sobre `Id-Segmento`).
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Error GetSegmentos: <detalle> (OE:<num>)",
+    "ttSegmento": []
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | Tabla `Segmento` sin registros | Retorna `ttSegmento: []` con `IdError: false` y `"0 segmento(s) encontrado(s)."` |
+  | Error de acceso a datos / runtime | `IdError: true` y `Respuesta` con el detalle del error OpenEdge (bloque `CATCH`) |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+  Adjuntar screenshot de la herramienta de prueba (Bruno / Postman / curl) mostrando:
+  - URL completa
+  - Status HTTP `200 OK`
+  - Cuerpo de respuesta con al menos un registro en `ttSegmento`
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | 2026-06-24 | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Fuente de datos:** El servicio recorre directamente la tabla `Segmento` con `USE-INDEX Idx-Segmento` (índice primario único sobre `Id-Segmento`).
+  2. **EMPTY TEMP-TABLE:** Se limpia `ttSegmento` al inicio para evitar acumulación de registros en ejecuciones repetidas dentro de la misma sesión del agente PASOE.
+  3. **Uso como catálogo:** El `IdSegmento` devuelto coincide exactamente con el valor esperado por el parámetro `ip-idSegmento` del servicio `GetVentas` (`ventas001erp.p`). Ver `ventas001erp-GetVentas-FiltroSegmento.md`.
+  4. **Autenticación:** El servicio corre sobre OpenEdge PASOE. Si el ambiente requiere autenticación Bearer, incluir el header `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

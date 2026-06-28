@@ -1,0 +1,198 @@
+info:
+  name: Cancelar
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Cancela
+  body:
+    type: json
+    data: |-
+      {
+        "ttCancelaCot": [
+          {
+            "IdUser": "olds",
+            "Password": "olds",
+            "IdCot": "2083415",
+            "IdCliente": "55921",
+            "Motivo": "Cliente desistio de la compra"
+          }
+        ]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Cancelación de Cotización
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Cancelación de Cotización (Cancela)**
+  Cancela una cotización validando el usuario/password y que el documento exista, corresponda al cliente y no esté ya cancelado. Si procede, marca la cotización como cancelada y registra **quién** la canceló (`Cot.UsuarioCanc`) y el **motivo** (`Cot.Motivo`, obligatorio).
+  Programa servidor: `vtad0170.p` · Procedimiento: `CancelaCotizacion` | Basado en: `vtad0170.p` / `vtad0171.p` / `vtad0180.i` (AARON, 08-Oct-1998)
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Cancela
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Tabla `ttCancelaCot` en el Body)
+
+  > ✅ = Requerido · ❌ = Opcional · La entrada viaja como **tabla temporal con un solo registro** en el body del `POST`.
+
+  **`IdUser`** · STRING · ✅ — Usuario que cancela (valida en tabla `Password`). Se guarda en `Cot.UsuarioCanc`
+  **`Password`** · STRING · ✅ — Password del usuario
+  **`IdCot`** · STRING · ✅ — Folio de la cotización a cancelar
+  **`IdCliente`** · STRING · ✅ — Cliente de la cotización (debe coincidir con el del documento)
+  **`Motivo`** · STRING · ✅ — Motivo de la cancelación. Se guarda en `Cot.Motivo`
+
+  > Se valida que la tabla venga, que traiga **exactamente un registro** y que **ningún campo** venga nulo/vacío **antes** de consultar la base de datos.
+
+  ---
+
+  ## 5. Body
+
+  ```json
+  {
+    "ttCancelaCot": [
+      {
+        "IdUser": "jlm",
+        "Password": "xxxx",
+        "IdCot": "2084315",
+        "IdCliente": "55921",
+        "Motivo": "Cliente desistio de la compra"
+      }
+    ]
+  }
+  ```
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                |
+  |----------------|----------------------|
+  | `Accept`       | `application/json`   |
+  | `Content-Type` | `application/json`   |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST .../GestionCotizacion/Cancela
+  Content-Type: application/json
+
+  {
+    "ttCancelaCot": [
+      {
+        "IdUser": "jlm",
+        "Password": "xxxx",
+        "IdCot": "2084315",
+        "IdCliente": "55921",
+        "Motivo": "Cliente desistio de la compra"
+      }
+    ]
+  }
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Cotizacion 2084315 cancelada."
+  }
+  ```
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "La cotizacion ya esta cancelada."
+  }
+  ```
+
+  ### Campos de respuesta
+
+  **`IdError`** · BOOLEAN — `false` = cancelada; `true` = no se canceló (validación o error)
+  **`Respuesta`** · STRING — Mensaje de resultado
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | Tabla `ttCancelaCot` no enviada / vacía | `IdError: true` — `"Debe enviar la tabla con los datos de la cancelacion."` |
+  | Más de un registro en la tabla | `IdError: true` — `"Solo se permite cancelar una cotizacion por solicitud."` |
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario."` |
+  | `Password` vacío | `IdError: true` — `"Se requiere el password."` |
+  | `IdCot` vacío | `IdError: true` — `"Se requiere la cotizacion."` |
+  | `IdCliente` vacío | `IdError: true` — `"Se requiere el cliente."` |
+  | `Motivo` vacío | `IdError: true` — `"Se requiere el motivo de la cancelacion."` |
+  | `IdCliente` no numérico o `0` | `IdError: true` — `"Numero de cliente invalido."` |
+  | Usuario/Password no válido | `IdError: true` — `"Usuario o password no valido."` |
+  | Cotización inexistente | `IdError: true` — `"No existe la cotizacion."` |
+  | `IdCliente` no corresponde a la cotización | `IdError: true` — `"La cotizacion no corresponde al cliente indicado."` |
+  | Cotización ya cancelada | `IdError: true` — `"La cotizacion ya esta cancelada."` |
+  | Cotización en uso por otro usuario | `IdError: true` — `"Cotizacion en uso por otro usuario, intente mas tarde."` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Validación de usuario:** se valida que exista un registro en `Password` con `Usuario` + `Password` (el programa original solo verificaba que el password existiera; la versión REST lo ata al usuario).
+  2. **Actualización:** marca `Cot.Cancelado = TRUE` y registra `Cot.UsuarioCanc = IdUser` y `Cot.Motivo = Motivo` con bloqueo `EXCLUSIVE-LOCK NO-WAIT`; si está bloqueada por otro usuario, no cancela y lo informa.
+  3. **Sin cascada:** la cancelación solo afecta el encabezado de la cotización (mismo comportamiento del programa original); no envía correo.
+  4. **Idempotencia:** si la cotización ya está cancelada, el servicio responde con `IdError: true` y no realiza cambios.
+  5. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

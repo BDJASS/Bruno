@@ -1,0 +1,277 @@
+﻿info:
+  name: HU02- Reporte de Inventario MultiAlmacén
+  type: folder
+  seq: 2
+
+request:
+  auth: inherit
+
+docs:
+  content: |
+    # Servicio REST — Inventario Multi Almacén
+
+    ---
+
+    ## 1. Título del Servicio
+
+    **Reporte 02 — Existencias Multi Almacén (Horizontal)**
+    Retorna el inventario de artículos desglosado por almacén en formato horizontal, con indicadores de sobre-stock / bajo-stock y existencias en tránsito.
+    Programa servidor: `ventas-rep002.p` | Basado en: `bodc0380.p / bodc0381.p / bodc0380.i`
+
+    ---
+
+    ## 2. Método HTTP
+
+    ```
+    GET
+    ```
+
+    ---
+
+    ## 3. URL Completa
+
+    ```
+    http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/InventarioMultiAlmacen
+    ```
+
+    ---
+
+    ## 4. Parámetros de Entrada (Query String)
+
+    > ✅ = Requerido · ❌ = Opcional · Vacíos `""` se normalizan al valor por defecto en servidor.
+
+    **`Opciones`** · INT · ✅ — Criterio de agrupación principal
+    - `1` Proveedor · `2` Artículo · `3` Grupo · `4` Familia · `5` Marca · `6` Categoría · `7` Lista Artículos
+
+    **`Seleccion`** · STRING · ❌ — CSV de IDs según `Opciones`
+    - Ej: `"001,002"` · Vacío = todos
+
+    **`Categorias`** · STRING · ❌ — CSV de categorías *(solo aplica con `Opciones=1`)*
+    - Ej: `"CAT1,CAT2"` · Vacío = todas
+
+    **`Articulo`** · STRING · ❌ — Filtro por artículo(s) específico(s)
+    - Ej: `"ART001"` · Vacío = todos
+
+    **`Orden`** · INT · ✅ — Orden de presentación
+    - `1` Alfabético · `2` Numérico
+
+    **`ReportePor`** · INT · ✅ — Alcance del reporte
+    - `1` Altas (con mín/máx o existencia) · `2` Todos · `3` Descontinuados
+
+    **`IncExist`** · INT · ✅ — Filtro de existencia
+    - `1` Todas · `2` Con existencia · `3` Sin existencia · `4` Negativos
+
+    **`UnidadesEn`** · INT · ✅ — Unidad de las cantidades
+    - `1` UMI (inventario) · `2` UDC (compra)
+
+    **`Resagados`** · INT · ✅ — Filtro de resagados
+    - `1` Todos · `2` Solo resagados (`ExTotal > MaxTotal`)
+
+    **`TipoArt`** · INT · ✅ — Filtro por tipo de artículo
+    - `1` Todos · `2` Algunos (requiere `SelTipoArt`)
+
+    **`SelTipoArt`** · STRING · ❌ — CSV de `Id-TipoArt` *(solo cuando `TipoArt=2`)*
+    - Ej: `"A,B,C"` · Vacío cuando `TipoArt=1`
+
+    **`Temporada`** · INT · ✅ — Filtro por temporada
+    - `1` Todos · `2` Algunos (requiere `SelTemporada`)
+
+    **`SelTemporada`** · STRING · ❌ — CSV de códigos de temporada *(solo cuando `Temporada=2`)*
+    - Ej: `"INV26,VER26"` · Vacío cuando `Temporada=1`
+
+    **`Comprador`** · STRING · ❌ — CSV de compradores asignados al artículo
+    - Vacío = todos
+
+    **`IdUser`** · STRING · ✅ — Usuario que ejecuta el reporte
+
+    ---
+
+    ## 5. Body
+
+    No aplica. Método `GET`.
+
+    ---
+
+    ## 6. Headers
+
+    | Header   | Valor              |
+    |----------|--------------------|
+    | `Accept` | `application/json` |
+
+    ---
+
+    ## 7. Ejemplo de Request
+
+    ```
+    GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/InventarioMultiAlmacen
+        ?Opciones=1
+        &Seleccion=
+        &Categorias=
+        &Articulo=
+        &Orden=1
+        &ReportePor=1
+        &IncExist=1
+        &UnidadesEn=1
+        &Resagados=1
+        &TipoArt=1
+        &SelTipoArt=
+        &Temporada=1
+        &Comprador=
+        &IdUser=olds
+    ```
+
+    **Interpretación del request de ejemplo:**
+    - Agrupado por **Proveedor** (`Opciones=1`), todos los artículos
+    - Orden **alfabético**, reporte de **Altas** (con mín/máx o existencia)
+    - **Todas** las existencias, en unidades **UMI**
+    - Sin filtro de resagados, tipo artículo, temporada ni comprador
+
+    ---
+
+    ## 8. Ejemplo de Response
+
+    ```json
+    {
+      "IdError": false,
+      "Respuesta": "OK",
+      "dsOutput": {
+        "ttExistencias": [
+          {
+            "IdArticulo": "ART00123",
+            "Descr": "FOLDER CARTA AZUL C/100",
+            "IdColor": 0,
+            "AbrevColor": "",
+            "TipoArt": "N",
+            "UnidDesc": "PZA",
+            "Ex02B": 150.00,
+            "In02B": "",
+            "Ex03A": 45.00,
+            "In03A": "+",
+            "Ex6": 12.00,
+            "In6": "",
+            "Ex7": 0.00,
+            "In7": "",
+            "Ex8": 8.00,
+            "In8": "-",
+            "Ex9": 0.00,
+            "In9": "",
+            "Ex10": 5.00,
+            "In10": "",
+            "ExFUG": 0.00,
+            "Ex12": 20.00,
+            "In12": "",
+            "Ex11": 10.00,
+            "In11": "",
+            "ExOtro": 0.00,
+            "Transito": 200.00,
+            "ExTotal": 250.00,
+            "GrupoKey": "000001",
+            "GrupoLabel": "ACCO BRANDS MEXICO",
+            "IdProv": 1,
+            "NomProv": "ACCO BRANDS MEXICO SA DE CV",
+            "IdGrupo": 42,
+            "DescrGrupo": "CARPETAS Y FOLDERS",
+            "IdMarca": 15,
+            "DescrMarca": "ACCO"
+          }
+        ]
+      }
+    }
+    ```
+
+    ### Campos de `ttExistencias`
+
+    #### Identificación del artículo
+
+    **`IdArticulo`** · STRING — Clave del artículo
+    **`Descr`** · STRING — Descripción del artículo
+    **`IdColor`** · INT — Clave de color (`0` = sin color / artículo sin desglose)
+    **`AbrevColor`** · STRING — Abreviatura del color
+    **`TipoArt`** · STRING — Tipo de artículo (`N`=Normal · `D`=Descontinuado · `x/f/h`=variantes)
+    **`UnidDesc`** · STRING — Descripción de la unidad de medida (`UMI` o `UDC`)
+
+    #### Existencias por almacén
+
+    Cada almacén tiene un campo de **cantidad** (`ExXX`) y un **indicador** (`InXX`):
+    - `"+"` = sobre-stock (existencia > Máximo × 1.20)
+    - `"-"` = bajo-stock (existencia < Mínimo)
+    - `""` = nivel normal
+
+    | Campo   | Indicador | Almacén             |
+    |---------|-----------|---------------------|
+    | `Ex02B` | `In02B`   | CEDIS (02B+02A+02C) |
+    | `Ex03A` | `In03A`   | MATRIZ              |
+    | `Ex6`   | `In6`     | P. LIVAS            |
+    | `Ex7`   | `In7`     | RUIZ C.             |
+    | `Ex8`   | `In8`     | CUMBRES             |
+    | `Ex9`   | `In9`     | D. DÍAZ             |
+    | `Ex10`  | `In10`    | CANAHUA             |
+    | `ExFUG` | *(sin ind.)* | FUG              |
+    | `Ex12`  | `In12`    | CHIHUAHUA           |
+    | `Ex11`  | `In11`    | SALTILLO            |
+    | `ExOtro`| *(sin ind.)* | Otros almacenes  |
+
+    #### Totales y agrupación
+
+    **`Transito`** · DECIMAL — Unidades en tránsito (`DetReq` + `DetSTrasp` pendientes)
+    **`ExTotal`** · DECIMAL — Existencia total en todos los almacenes
+    **`GrupoKey`** · STRING — Clave del grupo de agrupación (según `Opciones`)
+    **`GrupoLabel`** · STRING — Etiqueta del grupo de agrupación
+    **`IdProv`** · INT — Clave del proveedor principal del artículo
+    **`NomProv`** · STRING — Nombre del proveedor
+    **`IdGrupo`** · INT — Clave del grupo del artículo
+    **`DescrGrupo`** · STRING — Descripción del grupo
+    **`IdMarca`** · INT — Clave de la marca
+    **`DescrMarca`** · STRING — Descripción de la marca
+
+    ### Response de error controlado
+
+    ```json
+    {
+      "IdError": true,
+      "Respuesta": "Error: [descripción del error]",
+      "dsOutput": {
+        "ttExistencias": []
+      }
+    }
+    ```
+
+    ---
+
+    ## 9. Evidencia de Ejecución
+
+    *Pendiente de captura por parte del equipo de QA.*
+    Adjuntar screenshot de la herramienta de prueba (Postman / Insomnia / curl) mostrando:
+    - URL completa con parámetros
+    - Status HTTP `200 OK`
+    - Cuerpo de respuesta con al menos un registro en `ttExistencias`
+
+    ---
+
+    ## 10. Fecha de Prueba
+
+    | Ambiente | Fecha       | Ejecutado por |
+    |----------|-------------|---------------|
+    | DEV      | 2026-03-24  | *(pendiente)* |
+
+    ---
+
+    ## 11. Resultado
+
+    | Estado              | Descripción                                                       |
+    |---------------------|-------------------------------------------------------------------|
+    | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA  |
+
+    ---
+
+    ## 12. Observaciones Técnicas
+
+    1. **Parámetros vacíos:** Los parámetros `Seleccion`, `Categorias`, `Articulo`, `SelTipoArt`, `Comprador` y `SelTemporada` pueden omitirse o enviarse vacíos (`""`). El servidor los normaliza internamente.
+    2. **`Categorias` solo aplica con `Opciones=1`:** El filtro de categorías (`pLista3`) es ignorado para cualquier otro valor de `Opciones`.
+    3. **Indicadores de stock:** Los campos `InXX` son de un solo carácter: `"+"` (sobre-stock), `"-"` (bajo-stock) o `""` (normal). FUG y ExOtro no tienen indicador.
+    4. **Tránsito:** El campo `Transito` acumula las unidades de `DetReq` (requisiciones pendientes de surtir) y `DetSTrasp` (traspasos en camino), no incluye órdenes de compra abiertas.
+    5. **Unidades:** Con `UnidadesEn=1` las cantidades se expresan en UMI (unidad mínima de inventario). Con `UnidadesEn=2` se convierten a UDC (unidad de compra) usando el equivalente del artículo.
+    6. **`ReportePor=1` (Altas):** Solo incluye artículos que tengan mínimo o máximo configurado en al menos un almacén, o que tengan existencia mayor a cero. Reduce significativamente el volumen de datos retornado.
+    7. **`ReportePor=3` (Descontinuados):** Filtra artículos con `TipoArt` en `D`, `x`, `f` o `h`.
+    8. **Volumen de respuesta:** Con `Opciones=2` (todos los artículos), `ReportePor=2` (todos) e `IncExist=1` (todas) el response puede ser muy grande. Se recomienda paginar o aplicar filtros adicionales en producción.
+  type: text/markdown
