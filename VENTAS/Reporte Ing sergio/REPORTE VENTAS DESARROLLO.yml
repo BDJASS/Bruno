@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/VentasPorClienteComparativo?Fecha=2026-04-24&IdSegmento=D1
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/VentasPorClienteComparativo?Fecha=2026-06-27
   params:
     - name: IdCliente
       value: "0"
@@ -16,7 +16,7 @@ http:
       type: query
       disabled: true
     - name: Fecha
-      value: 2026-04-24
+      value: 2026-06-27
       type: query
     - name: IdEstado
       value: ""
@@ -29,6 +29,7 @@ http:
     - name: IdSegmento
       value: D1
       type: query
+      disabled: true
   auth: inherit
 
 settings:

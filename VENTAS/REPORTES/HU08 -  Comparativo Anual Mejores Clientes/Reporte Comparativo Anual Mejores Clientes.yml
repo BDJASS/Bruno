@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/ComparativoAnualMejoresClientes?Ejercicio=2026&Final=2026&Mes=6&CanCte=20&TipoCte=1&Seleccion=1&IdUser=olds
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/ComparativoAnualMejoresClientes?Ejercicio=2026&Final=2026&Mes=6&CanCte=20&TipoCte=1&Seleccion=1&Lista=&IdUser=olds
   params:
     - name: Ejercicio
       value: "2026"
@@ -28,7 +28,6 @@ http:
     - name: Lista
       value: ""
       type: query
-      disabled: true
     - name: IdUser
       value: olds
       type: query

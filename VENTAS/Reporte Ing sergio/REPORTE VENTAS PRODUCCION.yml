@@ -5,14 +5,15 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/VentasPorClienteComparativo?Fecha=2026-04-28&IdUbivta=MLO&IdVendedor=0
+  url: http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/VentasPorClienteComparativo?Fecha=2026-06-27
   params:
     - name: Fecha
-      value: 2026-04-28
+      value: 2026-06-27
       type: query
     - name: IdUbivta
       value: MLO
       type: query
+      disabled: true
     - name: IdCliente
       value: "616"
       type: query
@@ -20,6 +21,7 @@ http:
     - name: IdVendedor
       value: "0"
       type: query
+      disabled: true
     - name: IdEstado
       value: ""
       type: query
