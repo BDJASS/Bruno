@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/VentasPorProvPorVend?IdUser=olds&Seleccion=3&Lista=2033&ListaVend=&FechaInicial=2026-02-24&FechaFinal=2026-03-26&Reporte=1&Desglose=1&CantMin=0
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/VentasPorProvPorVend?IdUser=olds&Seleccion=3&Lista=002033&ListaVend=&FechaInicial=2026-02-24&FechaFinal=2026-03-26&Reporte=1&Desglose=1&CantMin=0
   params:
     - name: IdUser
       value: olds
@@ -14,7 +14,7 @@ http:
       value: "3"
       type: query
     - name: Lista
-      value: "2033"
+      value: "002033"
       type: query
     - name: ListaVend
       value: ""
@@ -41,3 +41,240 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+
+docs: |
+  # Servicio REST — Ventas por Proveedor por Vendedor (REP006)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Ventas por Vendedor (VentasPorProvPorVend)**
+  Acumula las ventas de **Facturas (crédito)** y **Remisiones (contado)** por **vendedor** en un periodo, con filtros por artículo/grupo/proveedor/marca/familia/lista de precios. Opcionalmente entrega el **detalle por artículo** y el **desglose por documento**.
+  Programa servidor: `ventas-rep006.p` · Procedimiento: `GetVentasVendedor` · Basado en: `vtac0630.p`
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/VentasPorProvPorVend
+  ```
+
+  > ⚠️ La cabecera del `.p` menciona `VentasPorVendedor`, pero la ruta **registrada** en `resourceModel.xml` es `/Ventas/Reporte/VentasPorProvPorVend`. Usa esta última.
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · Vacío/nulo se normaliza al valor indicado.
+
+  **`FechaInicial`** · DATE · ✅ — Inicio del periodo (`yyyy-mm-dd`). Nulo = `TODAY`
+  **`FechaFinal`** · DATE · ✅ — Fin del periodo. Nulo = `TODAY`
+  **`Seleccion`** · INTEGER · ❌ — Tipo de filtro de artículos (nulo/`0` = todos)
+  - `1` Artículo · `2` Grupo · `3` Proveedor · `4` Marca · `5` Familia · `6` Lista de Precios
+
+  **`Lista`** · STRING · ❌ — CSV de códigos según `Seleccion` (ej. `"1024,1030"`). Vacío = sin filtro
+  **`ListVend`** · STRING · ❌ — CSV de `Id-Vendedor` formato `xxxx` (ej. `"0077,0100"`). Vacío = todos
+  **`CantMin`** · DECIMAL · ❌ — Importe mínimo de `TotImp` para incluir al vendedor. `0` = sin filtro
+  **`Reporte`** · INTEGER · ❌ — `1` = Detallado (llena `ttDet`) · `2` = Resumido *(default)*
+  **`Desglose`** · INTEGER · ❌ — `1` = Normal *(default)* · `2` = Por documentos (llena `ttDes`)
+  **`IdUser`** · STRING · ❌ — Usuario que ejecuta el reporte
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  # Resumido, todos los vendedores, todo el periodo
+  GET .../Ventas/Reporte/VentasPorProvPorVend?FechaInicial=2026-01-01&FechaFinal=2026-03-31&Reporte=2&Desglose=1
+
+  # Detallado + desglose por documento, filtrando por proveedor (Seleccion=3)
+  GET .../Ventas/Reporte/VentasPorProvPorVend?FechaInicial=2026-01-01&FechaFinal=2026-03-31&Seleccion=3&Lista=001024&Reporte=1&Desglose=2
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "3 vendedor(es) encontrados para el periodo 01/01/2026 - 31/03/2026.",
+    "ttVend": [
+      {
+        "IdVendedor": "0077",
+        "IdUbic": "01",
+        "Nombre": "JUAN PEREZ",
+        "Importe1": 125400.50,
+        "Importe2": 38210.00,
+        "TotImp": 163610.50,
+        "PLista": 171200.00,
+        "CantArt": 1840.0
+      }
+    ],
+    "ttDet": [
+      {
+        "IdVendedor": "0077",
+        "IdUbic": "01",
+        "IdArticulo": "021118",
+        "Descr": "PLUMA GEL NEGRA 0.5MM",
+        "Importe": 4200.00,
+        "PLista": 4500.00,
+        "CantArt": 600.0,
+        "UMI": "PZA"
+      }
+    ],
+    "ttDes": [
+      {
+        "IdVendedor": "0077",
+        "IdUbic": "01",
+        "IdArticulo": "021118",
+        "IdFactura": "0123456",
+        "FecReg": "2026-02-10",
+        "IdCliente": 55921,
+        "RazonSocial": "DISTRIBUIDORA DEL VALLE SA DE CV",
+        "Importe": 1200.00,
+        "CantArt": 200.0,
+        "UMI": "PZA"
+      }
+    ]
+  }
+  ```
+
+  ### Campos de `ttVend` (resumen por vendedor — siempre)
+
+  **`IdVendedor`** · STRING — Clave del vendedor
+  **`IdUbic`** · STRING — Ubicación de venta del vendedor (`Vendedor.Id-UbiVta`)
+  **`Nombre`** · STRING — Nombre (vía `Empleado` por iniciales); si no, la clave
+  **`Importe1`** · DECIMAL — Ventas a **crédito** (Facturas)
+  **`Importe2`** · DECIMAL — Ventas de **contado** (Remisiones)
+  **`TotImp`** · DECIMAL — Total (`Importe1 + Importe2`)
+  **`PLista`** · DECIMAL — Importe a precio de lista (para comparar margen)
+  **`CantArt`** · DECIMAL — Cantidad de artículos en UMI
+
+  ### Campos de `ttDet` (detalle por artículo — solo si `Reporte = 1`)
+
+  **`IdVendedor`** · STRING — Vendedor
+  **`IdUbic`** · STRING — Ubicación
+  **`IdArticulo`** · STRING — Artículo
+  **`Descr`** · STRING — Descripción del artículo
+  **`Importe`** · DECIMAL — Importe vendido del artículo
+  **`PLista`** · DECIMAL — Importe a precio de lista
+  **`CantArt`** · DECIMAL — Cantidad en UMI
+  **`UMI`** · STRING — Unidad mínima de inventario (presentación Tipo 1)
+
+  ### Campos de `ttDes` (desglose por documento — solo si `Desglose = 2`)
+
+  **`IdVendedor`** · STRING — Vendedor
+  **`IdUbic`** · STRING — Ubicación
+  **`IdArticulo`** · STRING — Artículo
+  **`IdFactura`** · STRING — Folio del documento (Factura o Remisión, según el origen)
+  **`FecReg`** · DATE — Fecha del documento
+  **`IdCliente`** · INT — Cliente
+  **`RazonSocial`** · STRING — Razón social (directo del documento)
+  **`Importe`** · DECIMAL — Importe del renglón
+  **`CantArt`** · DECIMAL — Cantidad (de la partida)
+  **`UMI`** · STRING — Unidad mínima de inventario
+
+  ---
+
+  ## 9. Validaciones / Comportamiento
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | Parámetros nulos | Se normalizan (fechas → `TODAY`, `Reporte` → `2`, `Desglose` → `1`, resto vacío/`0`) |
+  | `Seleccion = 0` o `Lista` vacío | No filtra por artículo (entra todo) |
+  | `ListVend` vacío | Todos los vendedores |
+  | `TotImp < CantMin` | El vendedor (y su `ttDet`/`ttDes`) se eliminan del resultado |
+  | Error en proceso | `IdError: true` — `"Error: <mensaje>"` |
+
+  > Nota: este servicio **no** valida que `FechaFinal >= FechaInicial` (a diferencia de otros REP). Si se invierten, el rango queda vacío y devuelve 0 vendedores.
+
+  ---
+
+  ## 10. Origen de los datos / Lógica
+
+  **Crédito (`Importe1`)** — `Factura` (`FecReg` en rango, `FecCancel = ?`, `Id-Cliente > 10` o `= 3`) → `DetFactura`.
+  **Contado (`Importe2`)** — `Remision` (mismas condiciones) → `DetRemis`.
+  **Filtro `Seleccion`** sobre cada partida: `1` artículo, `2` `Articulo.Id-Grupo`, `3` `Det*.Id-Prov`, `4` `Articulo.Id-Marca`, `5` `Grupo.Id-Familia` (vía `FIND Grupo`), `6` `detlistaart.Id-ListaArt` (todos con formato `999999`).
+  **`CantArt`** se convierte a UMI: `ArtPres.Equiv × Cant` (presentación del renglón).
+  **`PLista`** — si `Precio.FecReg < FechaInicial` → `Precio.PMay × Cant`; si no → `HCosto.Costo × ArtPres.Equiv × (1 + ArtPres.MarMay/100) × Cant`.
+
+  ---
+
+  ## 11. Estructura / Implementación
+
+  - **Salida: 3 `OUTPUT TABLE`** (`ttVend`, `ttDet`, `ttDes`) — no es DATASET; el `.pidl` declara tres tablas de salida independientes.
+  - `ttDet` solo se llena con `Reporte = 1`; `ttDes` solo con `Desglose = 2`. En modo resumido ambas salen vacías.
+  - **Endpoint registrado:** `resourceModel.xml` → `/Ventas/Reporte/VentasPorProvPorVend` → `ventas-rep006..GetVentasVendedor` (`GET`), con los 9 query params de la sección 4.
+  - **Despliegue:** compilar `ventas-rep006.p`, asegurar el `.pidl` y la entrada en `resourceModel.xml`, publicar y reciclar el AppServer.
+
+  ---
+
+  ## 12. Rendimiento
+
+  Recorre **toda** la `Factura` y la `Remision` del rango de fechas (usan `Factura.Idx-FecReg` / `Remision.Idx-FecRem`) y, por cada partida, hace varios `FIND` (`Articulo`, `ArtPres` ×2, `Precio`, `HCosto`, y `detlistaart` en `Seleccion=6`). Para **rangos amplios** puede ser pesado.
+
+  Palancas si se requiere acelerar:
+  - Acotar el periodo.
+  - Filtrar por `ListVend` cuando se consulte un vendedor específico (evita acumular todos).
+  - Considerar lectura parcial (`FIELDS`) de `Factura`/`Remision`/`Det*` (solo los campos usados), como se hizo en otros reportes.
+
+  ---
+
+  ## 13. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 14. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 15. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 16. Observaciones Técnicas
+
+  1. **Tres tablas de salida** independientes; el consumidor liga `ttDet`/`ttDes` con `ttVend` por `IdVendedor`.
+  2. **Nombre del vendedor** se resuelve por `Vendedor.Iniciales` → `Empleado.Iniciales` → `Empleado.Nombre`.
+  3. **`PLista`** usa `Precio.PMay` solo si el precio es anterior al periodo; si no, lo estima con costo + margen de mayoreo.
+  4. **Filtro `CantMin`** se aplica al final sobre `TotImp` y limpia los detalles/desgloses huérfanos.
+  5. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS
