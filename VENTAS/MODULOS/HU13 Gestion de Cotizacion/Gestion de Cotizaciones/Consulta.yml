@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Consulta?FecRegIni=2026-06-26&FecRegFin=2026-06-26&IdCot=0127577
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Consulta?FecRegIni=2026-06-26&FecRegFin=2026-06-26
   params:
     - name: FecRegIni
       value: 2026-06-26
@@ -16,6 +16,7 @@ http:
     - name: IdCot
       value: "0127577"
       type: query
+      disabled: true
     - name: IdCliente
       value: "33997"
       type: query
@@ -139,7 +140,10 @@ docs: |
         "Estatus": "Autorizada",
         "IDPedido": "",
         "Autorizada": true,
-        "Cancelada": false
+        "Cancelada": false,
+        "UsuarioCanc": "",
+        "Motivo": "",
+        "MargenBruto": 0
       },
       {
         "IdCot": "2084190",
@@ -154,7 +158,28 @@ docs: |
         "Estatus": "Pedido",
         "IDPedido": "P301455",
         "Autorizada": true,
-        "Cancelada": false
+        "Cancelada": false,
+        "UsuarioCanc": "",
+        "Motivo": "",
+        "MargenBruto": 0
+      },
+      {
+        "IdCot": "2084102",
+        "FecReg": "2026-06-05",
+        "IdCliente": 55921,
+        "RazonSocial": "DISTRIBUIDORA DEL VALLE SA DE CV",
+        "IdVendedor": "JLM",
+        "VendNombre": "JUAN LOPEZ MARTINEZ",
+        "PartDetCot": 3,
+        "Tot": 9870.50,
+        "Vigencia": "2026-06-20",
+        "Estatus": "PendAut",
+        "IDPedido": "",
+        "Autorizada": false,
+        "Cancelada": false,
+        "UsuarioCanc": "",
+        "Motivo": "",
+        "MargenBruto": 12.48
       }
     ]
   }
@@ -175,6 +200,9 @@ docs: |
   **`IDPedido`** · STRING — Pedido generado a partir de la cotización; vacío si no aplica
   **`Autorizada`** · BOOLEAN — `true` = la cotización está autorizada (`Cot.Autorizada`)
   **`Cancelada`** · BOOLEAN — `true` = la cotización está cancelada (`Cot.Cancelado`)
+  **`UsuarioCanc`** · STRING — Usuario que canceló la cotización (`Cot.UsuarioCanc`); vacío si no está cancelada
+  **`Motivo`** · STRING — Motivo de la cancelación (`Cot.Motivo`); vacío si no está cancelada
+  **`MargenBruto`** · DECIMAL — Margen bruto "M1" de la cotización completa (%). **Solo se calcula cuando `Estatus` = `PendAut`**; para cualquier otro estatus se retorna `0`. Mismo cálculo que el servicio `Detalle` (`cotdetalle.p` / autorización `vtaa0076.i`): `M1% = ((Σ Importe / Σ costo×cant) − 1) × 100`, considerando solo partidas `Tipo = 1` y usando `CostoEsp` cuando es > 0
 
   > El resultado se entrega ordenado por **fecha y folio descendentes** (la cotización más reciente es el primer registro).
 
@@ -234,7 +262,8 @@ docs: |
   3. **Estatus calculado:** `Cancelada` (cancelado), `Pedido` (existe pedido ligado), `Autorizada`/`PendAut` (según autorización) o `Caduca` (`FecReg` + vigencia < hoy).
   4. **Orden de salida:** el temp-table usa índice primario `FecReg DESC, IdCot DESC`, por lo que el primer registro es la cotización más reciente.
   5. **Tabla de salida ligera:** `ttCotLista` solo contiene las columnas del grid; el detalle completo se obtiene con el servicio `Detalle`.
-  6. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+  6. **Margen bruto solo en pendientes:** `MargenBruto` se calcula únicamente para cotizaciones con estatus `PendAut` (las que requieren autorización); en el resto viaja en `0`. A diferencia del servicio `Detalle`, aquí no se valida el usuario (`Cotizacion-Margen-Usuarios`) porque la consulta no recibe `iduser`.
+  7. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
 
   ---
   **Desarrollado por:** SIS10 - JASS
