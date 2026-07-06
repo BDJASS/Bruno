@@ -1,0 +1,233 @@
+info:
+  name: Simulador de Margen
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Cotizacion/Captura/SimulaMargen
+  body:
+    type: json
+    data: |-
+      {
+        "dsCotAlta": {
+          "ttEnc": [
+            {
+              "IdCliente": 35520,
+              "Iniciales": "OLDS",
+              "Attn": "LUIS MARRUFO",
+              "TipoPrecio": "M",
+              "LAB": "M",
+              "Plazo": 0,
+              "DiasEnt": 0,
+              "Vigencia": 10,
+              "PrecioTemp": false,
+              "Nota1": "EJEMPLO DE OBSERVACION",
+              "Nota2": "",
+              "DescPP": 0,
+              "DescPP2": 0,
+              "PlazoPP": 0,
+              "Factor": 0,
+              "TipoFactor": ""
+            }
+          ],
+          "ttPart": [
+            {
+              "IdArticulo": "021118",
+              "IdColor": 2,
+              "IdPres": 4,
+              "Descr": "BOLIGRAFO P/MED. 1.0MM BIC M-250 923995 DURA+",
+              "Cant": 2,
+              "PUnit": 48.71,
+              "Descto": 0,
+              "PorcIVA": 16,
+              "IndicaPre": "",
+              "IdMoneda": 0
+            }
+          ]
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Simulación de Margen Bruto (mismo flujo del Alta, sin grabar)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Simulación de Margen Bruto de Cotización en captura (Simulación)**
+  Calcula el **Margen Bruto M1** y el **margen por partida** de una cotización que
+  todavía se está armando en el grid, ejecutando **exactamente el mismo flujo del
+  alta** — mismas validaciones, mismo armado de encabezado/partidas y **el mismo
+  costeo del motor** (`cotizacion2.p` / `CostoDetCot`) — pero **solo en temporales**:
+
+  - **NO** toma folio.
+  - **NO** graba `Cot` / `DetCot`.
+  - **NO** genera auditoría ni correo.
+
+  Programa servidor: `cotaltacot.p` · Procedimiento: `simulaMargenCotizacion`.
+  Costeo en el motor: `cotizacion2.p` · Procedimiento: `simulaCosteoCot` (reutiliza `CostoDetCot`).
+
+  > Sustituye el cálculo replicado de `cotmargen.p`: al costear con el mismo
+  > `CostoDetCot` del grabado, el M1 simulado coincide **por construcción** con el
+  > que mostrará `cotdetalle.p` cuando la cotización se cree. Cualquier cambio
+  > futuro en la regla de costos aplica automáticamente a la simulación.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Cotizacion/Captura/SimulaMargen
+  ```
+
+  > La ruta se asigna al publicar el servicio en PDSOE; se sugiere colgarla del
+  > mismo recurso del alta (`/Cotizacion/Captura/...`).
+
+  ---
+
+  ## 4. Entrada — MISMO JSON del Alta (`dsCotAlta`)
+
+  El body es **idéntico** al de `creaCotizacionLimpia` (ver
+  `cotaltacot-AltaCotizacionLimpia.md`, sección 4): `ttEnc` con el encabezado y
+  `ttPart[]` con las partidas tal como están en el grid. El front puede mandar el
+  payload que ya tiene armado para el alta, sin transformarlo.
+
+  Se aplican **las mismas validaciones del alta** (cliente existente, usuario,
+  `TipoPrecio`, `LAB`, `Vigencia`, artículos activos, cantidades, etc.). Si algo
+  no pasa, regresa el mismo mensaje de error que regresaría el alta.
+
+  > ⚠️ El front **no** manda costos: igual que en el alta, solo puede enviar
+  > `CostoEsp` cuando aplique. El costo normal lo resuelve el motor.
+
+  ---
+
+  ## 5. Regla de seguridad
+
+  Solo usuarios listados en `adosa.URL` con `Parametro = "Cotizacion-Margen-Usuarios"`
+  (default `"olds"`) pueden consultar el margen — misma regla que `cotdetalle.p` y
+  `cotmargen.p`. Usuario no autorizado:
+
+  ```json
+  { "IdError": true, "Respuesta": "Usuario no autorizado para consultar el margen." }
+  ```
+
+  ---
+
+  ## 6. Salida — `IdError`, `Respuesta`, DATASET `dsSimMargen`
+
+  **`IdError`** · BOOLEAN — `false` = cálculo exitoso · `true` = error de validación/autorización
+  **`Respuesta`** · STRING — `"Margen calculado."`, aviso de partidas sin costo, o el error
+
+  ### ttSimResumen (1 registro)
+
+  **`MargenBruto`** · DECIMAL — **M1** de toda la cotización (fórmula `vtaa0076.i`): `((Subtotal / CostoTotal) − 1) × 100`
+  **`Subtotal`** · DECIMAL — Suma de importes de las partidas
+  **`CostoTotal`** · DECIMAL — Suma de `(CostoEsp si > 0, si no Costo) × Cant`
+  **`PartidasTotal`** · INTEGER — Partidas recibidas
+  **`PartidasCosteadas`** · INTEGER — Partidas con costo > 0
+  **`PartidasSinCosto`** · INTEGER — Partidas que entraron con costo 0 (igual que lo hará la consulta real)
+
+  ### ttSimDetalle (1 registro por partida)
+
+  **`Sec`** · INTEGER — Secuencia autogenerada 10, 20, 30…
+  **`IdArticulo`** · STRING — Artículo
+  **`IdPres`** · INTEGER — Presentación
+  **`IdColor`** · INTEGER — Color
+  **`Cant`** · DECIMAL — Cantidad
+  **`Importe`** · DECIMAL — `PUnit × (1 − Descto/100) × Cant`
+  **`Margen`** · DECIMAL — Margen % por partida (fórmula `vtaa0069.i`, con tipo de cambio) — mismo cálculo que `cotdetalle.ttDetCotDet.Margen`
+  **`Costeada`** · BOOLEAN — `false` = sin costo (sin `HCosto` y sin `CostoEsp`); entra al M1 con costo 0
+
+  ### Ejemplo de response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Margen calculado.",
+    "dsSimMargen": {
+      "ttSimResumen": [
+        {
+          "MargenBruto": 32.45,
+          "Subtotal": 12480.00,
+          "CostoTotal": 9422.50,
+          "PartidasTotal": 3,
+          "PartidasCosteadas": 3,
+          "PartidasSinCosto": 0
+        }
+      ],
+      "ttSimDetalle": [
+        { "Sec": 10, "IdArticulo": "030125", "IdPres": 1, "IdColor": 0,
+          "Cant": 100, "Importe": 8500.00, "Margen": 35.10, "Costeada": true },
+        { "Sec": 20, "IdArticulo": "045210", "IdPres": 2, "IdColor": 4,
+          "Cant": 50,  "Importe": 3980.00, "Margen": 27.80, "Costeada": true }
+      ]
+    }
+  }
+  ```
+
+  ---
+
+  ## 7. Cómo garantiza consistencia con el margen real
+
+  | Concepto | Alta real (`creaCotizacionLimpia`) | Simulación (`simulaMargenCotizacion`) |
+  |---|---|---|
+  | Validación y armado | `armaCotizacion` | `armaCotizacion` (el mismo) |
+  | Costeo por partida | `cotizacion2.p` → `CostoDetCot` | `cotizacion2.p` → `simulaCosteoCot` → **`CostoDetCot` (el mismo)** |
+  | Folio / grabado / auditoría | Sí | **No** |
+
+  `simulaCosteoCot` recorre las partidas `Tipo = 1`, ejecuta el `CostoDetCot` del
+  grabado (costo `HCosto × ArtPres.Equiv`, ajuste `ArtOfer`, conversión de moneda)
+  y acumula el M1 con la fórmula de `vtaa0076.i`. Es el mismo camino de código que
+  deja `DetCot.Costo` al crear la cotización.
+
+  > **Importante para el front:** para que el margen simulado coincida con el de la
+  > cotización creada, mandar en la simulación **los mismos** `IdPres`, `Descto`,
+  > `IdMoneda` y `CostoEsp` que se mandarán al alta. Una diferencia en `IdPres`
+  > cambia el costo por el factor `ArtPres.Equiv` (causa típica de diferencias
+  > por artículo).
+
+  ---
+
+  ## 8. Cambios en programas (2026-07-06)
+
+  - **`cotizacion2.p`** — nuevo procedimiento `simulaCosteoCot` (costeo en
+    temporales + M1). No se tocó ninguna línea de `creaCotizaciones` ni de
+    `CostoDetCot`.
+  - **`cotaltacot.p`** — las secciones 1-4 de `creaCotizacionLimpia` se movieron
+    **sin cambio de lógica** al procedimiento interno `armaCotizacion`, compartido
+    por el alta y la simulación. El contrato REST del alta **no cambia** (mismos
+    parámetros, mismo dataset). Nuevo procedimiento REST `simulaMargenCotizacion`
+    y dataset de salida `dsSimMargen`.
+  - **`cotmargen.p`** — queda obsoleto; se recomienda migrar el front a este
+    endpoint y retirarlo después.
+
+  ---
+
+  ## 9. Pasos para publicar (PDSOE)
+
+  1. Recompilar `cotizacion2.p` y `cotaltacot.p` (sin errores → `.r`).
+  2. En el servicio `RestADOSAVentas`, mapear el nuevo procedimiento
+     `simulaMargenCotizacion` de `cotaltacot.p` con verbo **POST**:
+     - `dsCotAlta` → Request body.
+     - `IdError`, `Respuesta`, `dsSimMargen` → Response body.
+  3. Publicar al PAS y probar con el mismo JSON que usa el alta.
+
+  ---
+
+  **Desarrollado por:** SIS10 - JASS

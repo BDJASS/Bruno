@@ -1,0 +1,7 @@
+info:
+  name: Simular Margen  VERSION 2
+  type: folder
+  seq: 4
+
+request:
+  auth: inherit
