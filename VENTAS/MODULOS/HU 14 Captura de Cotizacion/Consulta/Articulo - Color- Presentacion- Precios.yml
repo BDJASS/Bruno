@@ -46,469 +46,269 @@ settings:
   followRedirects: true
   maxRedirects: 5
 
-docs: |-
-  # Servicio REST — Captura de Cotización: Partidas
-
-    
+docs: |
+  # Servicio REST — Captura de Cotización: Partidas (Artículo / Colores / Presentaciones)
 
   ---
-
-    
 
   ## 1. Título del Servicio
 
-    
+  **Captura de Cotización — Partidas (Progresivo)**
+  Servicio **progresivo** para armar una partida de la cotización. Según los parámetros que reciba, retorna en un solo dataset: los datos del artículo, sus colores con existencia y las presentaciones con precios, indicador de precio, precio de contrato y existencias por almacén.
+  Programa servidor: `cotpartida.p` · Procedimiento: `leeArticuloCotiza` | Consulta independiente (`Articulo`, `ArtCol`, `Kolor`, `ArtUbic`, `ArtPres`, `Precios`); el precio del cliente reusa `obtprecdesc.p`.
 
-  **Captura de Cotización — Partidas (armado progresivo)**
+  **Flujo (cómo se va armando):**
+  1. Se envía **`IdArticulo`** → regresa `ttArticulo` (con `TieneColores` y `Multiplo`).
+     - Si `TieneColores = true` → regresa `ttColor` (combo de colores con existencias). **Aún no hay presentaciones.**
+     - Si `TieneColores = false` → regresa directo `ttPresentacion` (con precios).
+  2. El usuario elige un color y se reenvía **`IdArticulo` + `IdColor`** → regresa `ttPresentacion` (con precios).
+  3. El usuario elige presentación y captura **cantidad**; el **importe = cantidad × precio** lo calcula el front, así como la multiplicidad (`Multiplo` + `Equiv`) y el semáforo de existencias (`Existencia` / `ExistenciaTotal`).
 
-  Servicio progresivo para capturar una partida de cotización. Según los parámetros que reciba, retorna en un solo dataset: los datos del artículo (con múltiplo por default), los colores con existencia y las presentaciones con ambos precios (mayoreo simple y precio del cliente), indicador de precio, precio de contrato y existencia en el almacén de surtido.
-
-  Programa servidor: `cotpartida.p` · Procedimiento: `leeArticuloCotiza` | Precio del cliente vía `obtprecdesc.p` (motor de precios, degradable).
-
-    
+  > **Historial de solicitudes del front** (2026-07-02, paridad con call center legado):
+  > Cambio 1 (`IndicaPre`, `PrecioCto`) ✅ · Cambio 2 (`IdAlm` + `Existencia`) ✅ ·
+  > Cambio 3 (`valpresentacion`) — sin efecto, sustituido por `Multiplo` ✅ ·
+  > Cambio 4 (`ExistenciaTotal`, semáforo amarillo/rojo) ✅
 
   ---
-
-    
 
   ## 2. Método HTTP
 
-    
-
   ```
-
   GET
-
   ```
-
-    
 
   ---
-
-    
 
   ## 3. URL Completa
 
-    
-
   ```
-
   http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Cotizacion/Captura/Partidas
-
   ```
-
-    
 
   ---
-
-    
 
   ## 4. Parámetros de Entrada (Query String)
 
-    
+  > ✅ = Requerido · ❌ = Opcional
 
-  > ✅ = Requerido · ❌ = Opcional · Todos viajan como STRING
+  **`IdArticulo`** · STRING · ✅ — Clave del artículo
+  **`IdColor`** · STRING · ❌ — Color elegido. Resuelve las presentaciones cuando el artículo tiene colores · `0`/vacío = sin color
+  **`IdPres`** · STRING · ❌ — Presentación (informativo; no filtra la lista)
+  **`IdCliente`** · STRING · ❌ — Cliente. **Necesario para el precio del cliente** (`PrecioCliente`, `IndicaPre`, `PrecioCto`). Sin él, solo se devuelve el precio mayoreo simple
+  **`IdAlm`** · STRING · ❌ — Almacén de surtido ("Surtir desde", ej. `02B` = CEDIS). Alimenta `Existencia` en `ttColor`/`ttPresentacion` · Default `02B`
+  **`PlazoTV`** · STRING · ❌ — Plazo para tipo de venta (de las Condiciones) · Default `0`
+  **`IdUbiVta`** · STRING · ❌ — Ubicación de venta del vendedor
+  **`Vigencia`** · STRING · ❌ — Días de vigencia (de las Condiciones) · Default `10`
+  **`PrecioTemp`** · STRING · ❌ — Precios de temporada (`SI`/`NO`) · Default `NO`
+  **`PrecCalc`** · STRING · ❌ — Recalcular precios (`SI`/`NO`) · Default `NO`
+  **`TipoPrecio`** · STRING · ❌ — Tipo de precio (`M`/`MX`/`TC`/`EX`) · Default `M`
 
-    
-
-  **`IdArticulo`** · STRING · ✅ — Clave del artículo (debe existir y estar activo)
-
-    
-
-  **`IdColor`** · STRING · ❌ — Color elegido. Si el artículo maneja colores, es necesario para resolver presentaciones y precios
-
-  - Vacío o `0` = sin color (o aún no elegido)
-
-    
-
-  **`IdPres`** · STRING · ❌ — Presentación (reservado; hoy no filtra)
-
-    
-
-  **`IdCliente`** · STRING · ❌ — Cliente; necesario para calcular el precio del cliente (`obtprecdesc.p`)
-
-    
-
-  **`PlazoTV`** · STRING · ❌ — Plazo/tipo de venta (criterio de precio) · Default `0`
-
-    
-
-  **`IdUbiVta`** · STRING · ❌ — Ubicación de venta (criterio de precio)
-
-    
-
-  **`Vigencia`** · STRING · ❌ — Días de vigencia (criterio de precio) · Default `10`
-
-    
-
-  **`PrecioTemp`** · STRING · ❌ — Precios de temporada `SI`/`NO` · Default `NO`
-
-    
-
-  **`PrecCalc`** · STRING · ❌ — Precio calculado `SI`/`NO` · Default `NO`
-
-    
-
-  **`TipoPrecio`** · STRING · ❌ — Tipo de precio · Default `M`
-
-    
-
-  **`IdAlm`** · STRING · ❌ — Almacén de surtido elegido en la cotización ("Surtir desde", ej. `02B` = CEDIS). Alimenta `ttColor.Existencia` y `ttPresentacion.Existencia`
-
-  - Vacío = `02B` (CEDIS, comportamiento por default)
-
-    
+  > Los parámetros de precio provienen del widget **Condiciones** de la cotización. Si no se envían, el servicio aplica los defaults indicados. El front reconsulta al cambiar "Surtir desde" (`IdAlm`).
 
   ---
-
-    
 
   ## 5. Body
 
-    
-
   No aplica. Método `GET`.
 
-    
-
   ---
-
-    
 
   ## 6. Headers
 
-    
-
-  | Header         | Valor                                  |
-
+  | Header         | Valor                                  |
   |----------------|----------------------------------------|
-
-  | `Accept`       | `application/json`                     |
-
+  | `Accept`       | `application/json`                     |
   | `Content-Type` | `application/json` *(opcional en GET)* |
 
-    
-
   ---
-
-    
 
   ## 7. Ejemplo de Request
 
-    
-
   ```
+  # Paso 1: solo artículo (artículo con colores -> regresa colores)
+  GET .../Cotizacion/Captura/Partidas?IdArticulo=017807&IdCliente=26&IdAlm=02B
 
-  GET .../Cotizacion/Captura/Partidas?IdArticulo=021118&IdColor=0&IdCliente=26&PlazoTV=0&Vigencia=10&PrecioTemp=NO&PrecCalc=NO&TipoPrecio=M&IdAlm=02B
-
+  # Paso 2: con color elegido -> regresa presentaciones con precio
+  GET .../Cotizacion/Captura/Partidas?IdArticulo=017807&IdColor=1601&IdCliente=26&IdAlm=02B
   ```
-
-    
 
   ---
-
-    
 
   ## 8. Ejemplo de Response
 
-    
+  ### Paso 1 — Artículo con colores (`TieneColores = true`)
 
   ```json
-
   {
-
-    "IdError": false,
-
-    "Respuesta": "Articulo y presentaciones cargados.",
-
-    "dsCotPartida": {
-
-      "ttArticulo": [
-
-        {
-
-          "IdArticulo": "021118",
-
-          "Descr": "SOBRE BOLSA KRAFT T/CARTA",
-
-          "Generico": "SOBRE BOLSA",
-
-          "PorcIVA": 16,
-
-          "TieneColores": false,
-
-          "IdGrupo": 21,
-
-          "IdMarca": 118,
-
-          "IdFamilia": 2,
-
-          "IdProv": 350,
-
-          "Multiplo": 12.0,
-
-          "ttColor": [],
-
-          "ttPresentacion": [
-
-            {
-
-              "IdArticulo": "021118",
-
-              "IdPres": 4,
-
-              "Descr": "C/12",
-
-              "Abrev": "",
-
-              "Equiv": 12.0,
-
-              "PrecioMay": 48.71,
-
-              "PrecioMayUM": 4.0591666667,
-
-              "PrecioCliente": 41.4,
-
-              "PrecioClienteSinDesc": 48.71,
-
-              "Descto": 0.0,
-
-              "IndicaPre": "F",
-
-              "PrecioCto": 0.0,
-
-              "Existencia": 385948.0,
-
-              "IdMoneda": 0,
-
-              "SimboloMoneda": "",
-
-              "TCambio": 0.0,
-
-              "Costo": 0.0,
-
-              "CostoOrig": 0.0
-
-            }
-
-          ]
-
-        }
-
-      ]
-
-    }
-
+    "IdError": false,
+    "Respuesta": "Articulo con colores; seleccione un color.",
+    "dsCotPartida": {
+      "ttArticulo": [
+        {
+          "IdArticulo": "017807",
+          "Descr": "CARTULINA ...",
+          "Generico": "CARTULINA",
+          "PorcIVA": 16,
+          "TieneColores": true,
+          "IdGrupo": 12,
+          "IdMarca": 5,
+          "IdFamilia": 3,
+          "IdProv": 210,
+          "Multiplo": 12.0,
+          "ttColor": [
+            { "IdArticulo": "017807", "IdColor": 1601, "Descr": "AMARILLO",
+              "ExistenciaCEDIS": 120.0, "Existencia": 120.0, "ExistenciaTotal": 167700.0 }
+          ],
+          "ttPresentacion": []
+        }
+      ]
+    }
   }
-
   ```
 
-    
+  ### Paso 2 — Con color elegido (regresa presentaciones)
 
-  ### Campos de `ttArticulo` (1 registro — datos del artículo)
+  ```json
+  "ttPresentacion": [
+    {
+      "IdArticulo": "021118",
+      "IdPres": 4,
+      "Descr": "C/12",
+      "Abrev": "",
+      "Equiv": 12.0,
+      "PrecioMay": 48.71,
+      "PrecioMayUM": 4.0591666667,
+      "PrecioCliente": 41.4,
+      "PrecioClienteSinDesc": 48.71,
+      "Descto": 0.0,
+      "IndicaPre": "F",
+      "PrecioCto": 0.0,
+      "Existencia": 385948.0,
+      "ExistenciaTotal": 512000.0,
+      "IdMoneda": 0,
+      "SimboloMoneda": "",
+      "TCambio": 0.0,
+      "Costo": 0.0,
+      "CostoOrig": 0.0
+    }
+  ]
+  ```
 
-    
+  ### Campos de `ttArticulo` (1 registro)
 
   **`IdArticulo`** · STRING — Clave del artículo
-
   **`Descr`** · STRING — Descripción del artículo
-
   **`Generico`** · STRING — Descripción genérica
-
   **`PorcIVA`** · INT — Porcentaje de IVA del artículo
+  **`TieneColores`** · BOOLEAN — `true` = el artículo maneja colores; el front abre el **combo de colores**
+  **`IdGrupo` / `IdMarca` / `IdFamilia` / `IdProv`** · INT — Clasificación (para los filtros del Factor global)
+  **`Multiplo`** · DECIMAL — Múltiplo por default para cotizar, en unidad mínima: `Equiv` de la `ArtPres` Tipo 3 con Flag `M` (regla de `valpres.p`). `0` = sin restricción de multiplicidad. El front valida: `Cant × Equiv` debe ser múltiplo de `Multiplo` y calcula la cantidad sugerida
 
-  **`TieneColores`** · BOOLEAN — `true` = el artículo maneja colores; se debe elegir uno para resolver presentaciones
-
-  **`IdGrupo`** · INT — Grupo del artículo
-
-  **`IdMarca`** · INT — Marca del artículo
-
-  **`IdFamilia`** · INT — Familia (del grupo)
-
-  **`IdProv`** · INT — Proveedor del artículo
-
-  **`Multiplo`** · DECIMAL — Múltiplo por default para cotizar, en unidad mínima (`Equiv` de la presentación Tipo 3 con `Flag` `M`, igual que `valpres.p` del call center). `0` = sin restricción de multiplicidad
-
-    
-
-  ### Campos de `ttColor` (1 registro por color activo — solo si `TieneColores`)
-
-    
+  ### Campos de `ttColor` (0..N — colores, anidada en `ttArticulo`)
 
   **`IdArticulo`** · STRING — Clave del artículo
+  **`IdColor`** · INT — Clave del color (se reenvía como `IdColor` al elegir)
+  **`Descr`** · STRING — Nombre del color (tabla `Kolor`)
+  **`ExistenciaCEDIS`** · DECIMAL — Existencia en CEDIS (`02B`), fija — se conserva por compatibilidad
+  **`Existencia`** · DECIMAL — Existencia del color en el **almacén `IdAlm`** (unidad mínima)
+  **`ExistenciaTotal`** · DECIMAL — Existencia del color **sumando todos los almacenes** (regla `valpres.p`; ver sección 10)
 
-  **`IdColor`** · INT — Clave del color
-
-  **`Descr`** · STRING — Descripción del color
-
-  **`ExistenciaCEDIS`** · DECIMAL — Existencia del color en CEDIS (`02B`), unidad mínima. Se conserva por compatibilidad (respaldo del front)
-
-  **`Existencia`** · DECIMAL — Existencia del color en el almacén de surtido `IdAlm`, unidad mínima
-
-    
-
-  ### Campos de `ttPresentacion` (1 registro por presentación Tipo 3 activa)
-
-    
+  ### Campos de `ttPresentacion` (0..N — presentaciones, anidada en `ttArticulo`)
 
   **`IdArticulo`** · STRING — Clave del artículo
-
   **`IdPres`** · INT — Clave de la presentación
-
-  **`Descr`** · STRING — Descripción de la presentación
-
+  **`Descr`** · STRING — Descripción de la presentación (ej. `"C/12"`)
   **`Abrev`** · STRING — Abreviatura
-
-  **`Equiv`** · DECIMAL — Equivalencia en unidad mínima
-
-  **`PrecioMay`** · DECIMAL — Precio mayoreo simple (`Precios.PMay`)
-
-  **`PrecioMayUM`** · DECIMAL — Precio mayoreo por unidad mínima (`PMay / Equiv`)
-
-  **`PrecioCliente`** · DECIMAL — Precio real del cliente (con descuento aplicado)
-
-  **`PrecioClienteSinDesc`** · DECIMAL — Precio del cliente sin descuento
-
-  **`Descto`** · DECIMAL — Porcentaje de descuento del cálculo de precios
-
-  **`IndicaPre`** · STRING — Indicador de precio del motor: `""` = lista; `F` = precio fijo/especial del cliente; `D` = descuento del cálculo de precios; `Z` = descuento recalculado; `X` = precio en moneda extranjera. La letra `C` (contrato) y las marcas `*`/`Y` las asigna el front
-
-  **`PrecioCto`** · DECIMAL — Precio de contrato del cliente para esa presentación; `0` = sin contrato vigente
-
-  **`Existencia`** · DECIMAL — Existencia del artículo (o artículo+color consultado) en el almacén `IdAlm`, unidad mínima — cubre artículos sin color
-
-  **`IdMoneda`** · INT — Moneda del precio del cliente
-
-  **`SimboloMoneda`** · STRING — Símbolo de la moneda
-
-  **`TCambio`** · DECIMAL — Tipo de cambio
-
-  **`Costo`** · DECIMAL — Costo (reservado)
-
-  **`CostoOrig`** · DECIMAL — Costo original (reservado)
-
-    
+  **`Equiv`** · DECIMAL — Equivalencia en unidades mínimas
+  **`PrecioMay`** · DECIMAL — **Precio por presentación** (mayoreo, `Precios.PMay`)
+  **`PrecioMayUM`** · DECIMAL — **Precio por unidad** (`PMay / Equiv`)
+  **`PrecioCliente`** · DECIMAL — Precio del cliente **con descuento** (`obtprecdesc.Precio2`)
+  **`PrecioClienteSinDesc`** · DECIMAL — Precio del cliente **sin descuento** (`obtprecdesc.Precio1`)
+  **`Descto`** · DECIMAL — % de descuento aplicado al cliente
+  **`IndicaPre`** · STRING — **Indicador de precio del motor**: `""` (lista) · `F` (precio fijo/especial del cliente) · `D` (descuento del cálculo) · `Z` (descuento recalculado) · `X` (moneda extranjera). La letra `C` (contrato) y las marcas `*`/`Y` las asigna el **front**
+  **`PrecioCto`** · DECIMAL — **Precio de contrato** del cliente para esa presentación; `0` = sin contrato vigente. Si `> 0`, el front muestra el modal "¿Desea respetar el precio del contrato?"
+  **`Existencia`** · DECIMAL — Existencia del artículo(+color) en el **almacén `IdAlm`** (unidad mínima); se repite en cada presentación para comparar contra `Cant × Equiv`
+  **`ExistenciaTotal`** · DECIMAL — Existencia **sumando todos los almacenes** (regla `valpres.p`; ver sección 10)
+  **`IdMoneda` / `SimboloMoneda` / `TCambio`** — Moneda del precio y tipo de cambio
+  **`Costo` / `CostoOrig`** · DECIMAL — Costos del motor de precios (para cálculos del front autorizado)
 
   ### Response de error controlado
 
-    
-
   ```json
-
   {
-
-    "IdError": true,
-
-    "Respuesta": "No se encontro el articulo 999999.",
-
-    "dsCotPartida": { "ttArticulo": [] }
-
+    "IdError": true,
+    "Respuesta": "No se encontro el articulo 999999.",
+    "dsCotPartida": { "ttArticulo": [], "ttColor": [], "ttPresentacion": [] }
   }
-
   ```
 
-    
-
   ---
-
-    
 
   ## 9. Validaciones del Servicio
 
-    
-
-  | Caso | Comportamiento |
-
-  |------|----------------|
-
-  | `IdArticulo` vacío | `IdError: true` — `"Se requiere el articulo."` |
-
-  | Artículo inexistente o inactivo | `IdError: true` — `"No se encontro el articulo X."` |
-
-  | Artículo con colores y sin `IdColor` | Consulta OK; `Respuesta: "Articulo con colores; seleccione un color."` — retorna `ttArticulo` + `ttColor`, sin presentaciones |
-
-  | Artículo sin colores (o con `IdColor` elegido) | Consulta OK; retorna `ttArticulo` + `ttPresentacion` con precios |
-
-  | `IdCliente` vacío o `0` | Presentaciones solo con precio mayoreo simple (sin precio del cliente, `IndicaPre` y `PrecioCto` vacíos/0) |
-
-  | `IdAlm` vacío | Existencias calculadas contra CEDIS (`02B`) |
-
-  | Motor de precios no desplegado | Degradación silenciosa: solo precio mayoreo simple |
-
-    
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdArticulo` vacío | `IdError: true` — *"Se requiere el articulo."* |
+  | Artículo no encontrado / inactivo | `IdError: true` — *"No se encontro el articulo <id>."* |
+  | Artículo con colores y sin `IdColor` | OK; regresa `ttColor`, `ttPresentacion` vacía. *"seleccione un color"* |
+  | Artículo sin colores | OK; regresa `ttPresentacion` directo |
+  | `IdColor` enviado | OK; regresa `ttPresentacion` con precios |
+  | Sin `IdCliente` | OK; presentaciones solo con precio mayoreo simple |
+  | Sin `IdAlm` | OK; se usa `02B` (CEDIS) como almacén de surtido |
+  | `obtprecdesc.p` no desplegado | OK (degrada); solo precio mayoreo simple |
+  | Presentación sin precio de cliente | OK; conserva el precio mayoreo simple |
 
   ---
 
-    
+  ## 10. Reglas de Negocio para el Front
 
-  ## 10. Evidencia de Ejecución
+  1. **Combo de colores:** si `TieneColores = true`, mostrar `Descr` + existencias. Al elegir, reenviar con `IdColor`.
+  2. **Precios:** `PrecioMay` (por presentación) y `PrecioMayUM` (por unidad); con `IdCliente` también `PrecioCliente` (precio final con descuento).
+  3. **Badge del indicador de precio:** usar `IndicaPre` (`""`/`F`/`D`/`Z`/`X`). La letra `C` la asigna el front cuando el usuario acepta aplicar `PrecioCto`; las marcas `*`/`Y` (precio manual/factor) también son del front.
+  4. **Modal de contrato:** si `PrecioCto > 0`, preguntar "¿Desea respetar el precio del contrato?" (mismo flujo que el legado).
+  5. **Multiplicidad:** validar en front con `Multiplo` + `Equiv` (cantidad sugerida); sustituye al servicio `valpresentacion` del legado.
+  6. **Semáforo de existencias** (contra `requerido = Cant × Equiv`, en unidad mínima):
+     - `requerido ≤ Existencia` (almacén `IdAlm`) → **normal**
+     - `requerido > Existencia` pero `≤ ExistenciaTotal` → **amarillo** (se cubre con traspaso)
+     - `requerido > ExistenciaTotal` (o total = 0) → **rojo** ("No hay existencias en almacenes")
+  7. **Importe:** `cantidad × precio` lo calcula el front.
 
-    
+  ---
+
+  ## 11. Evidencia de Ejecución
 
   *Pendiente de captura por parte del equipo de QA.*
 
-    
+  ---
+
+  ## 12. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | 2026-07-06 (cambios 1, 2 y Multiplo validados por front) | *(pendiente QA formal)* |
 
   ---
 
-    
+  ## 13. Resultado
 
-  ## 11. Fecha de Prueba
-
-    
-
-  | Ambiente | Fecha      | Ejecutado por |
-
-  |----------|------------|---------------|
-
-  | DEV      | *(pendiente)* | *(pendiente)* |
-
-    
-
-  ---
-
-    
-
-  ## 12. Resultado
-
-    
-
-  | Estado              | Descripción                                                       |
-
+  | Estado              | Descripción                                                       |
   |---------------------|-------------------------------------------------------------------|
-
-  | ⏳ Pendiente prueba | Servicio actualizado en DEV. Pendiente de ejecución formal por QA. |
-
-    
+  | ⏳ Pendiente prueba | Cambios 1, 2 y Multiplo validados contra DEV por el front. Cambio 4 (`ExistenciaTotal`) liberado, pendiente de validación. QA formal pendiente. |
 
   ---
 
-    
+  ## 14. Observaciones Técnicas
 
-  ## 13. Observaciones Técnicas
-
-    
-
-  1. **Flujo progresivo:** con solo `IdArticulo` retorna el artículo y, si maneja colores, la lista de colores (sin presentaciones). Al reconsultar con `IdColor` (o si el artículo no maneja colores) retorna las presentaciones con precios.
-
-  2. **Precio del cliente (degradable):** el precio real del cliente se calcula reusando `obtprecdesc.p` (`leePrecios`), el mismo motor de precios del call center (`artprecios2`). Se llama una vez por presentación; si el motor no está desplegado o una presentación falla, esa presentación conserva solo su precio mayoreo simple, sin marcar error.
-
-  3. **Campo `IndicaPre` (paridad con el legado):** se expone tal cual lo regresa el motor de precios: `""` (lista), `F` (precio fijo/especial del cliente), `D` (descuento del cálculo de precios), `Z` (descuento recalculado), `X` (precio en moneda extranjera). La letra `C` (contrato) **no** la regresa el backend: la asigna el front cuando el usuario acepta aplicar el `PrecioCto` (modal "¿Desea respetar el precio del contrato?"). Las marcas `*`/`Y` (precio modificado manualmente o por factor) también son del front.
-
-  4. **Campo `PrecioCto`:** precio de contrato del cliente para la combinación cliente + artículo + presentación, tomado del motor de precios; `0` = sin contrato vigente.
-
-  5. **Existencias por almacén (`IdAlm`):** `ttColor.Existencia` y `ttPresentacion.Existencia` se calculan contra el almacén de surtido recibido en `IdAlm` (default `02B` = CEDIS), leyendo `ArtUbic.Exist` en unidad mínima — la misma base que usa el legado `valpres.p` para el semáforo rojo/amarillo de cantidad (`Cant × Equiv > Existencia`). No se resta comprometido. `ttColor.ExistenciaCEDIS` se conserva (fija a `02B`) porque el front la usa como respaldo.
-
-  6. **Campo `Multiplo`:** replica la regla de `valpres.p` del call center: es el `Equiv` de la presentación Tipo 3 cuyo `Flag` contiene `M` (presentación por default), ignorando registros con `Flag` vacío. `0` = sin restricción. La validación de multiplicidad y la cantidad sugerida las calcula el front, sin llamada extra.
-
-  7. **Presentaciones incluidas:** `ArtPres` con `Tipo = 3`, activas y sin `Flag` `T` (igual que `artpres_p.p`).
-
-  8. **Origen del cambio:** solicitud del front 2026-07-02 (`2026-07-02_solicitud_backend-captura-cotizacion-partidas.md`) para paridad con el call center legado (`capturaCotizaciones.php` / `artprecios2` / `valpres.p`) sin consultar un servicio adicional (`valpresentacion`) en cada captura. Los avisos avanzados de resurtido del legado (MsgWarning) quedan fuera de alcance en esta fase.
-
-  9. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
-
-    
+  1. **Servicio progresivo:** una sola operación (`leeArticuloCotiza`) que devuelve más o menos tablas según los parámetros (artículo / +color). El front (.NET) acumula el estado.
+  2. **Dataset de 3 tablas:** `ttColor` y `ttPresentacion` van **anidadas** dentro de `ttArticulo` (relaciones `NESTED` por `IdArticulo`).
+  3. **Almacén de surtido (`IdAlm`):** default `02B` (CEDIS). `ttColor.ExistenciaCEDIS` se conserva fija a `02B` por compatibilidad; `Existencia` es sensible a `IdAlm`.
+  4. **`ExistenciaTotal` (cambio 4):** procedure `ExistTotalAlmacenes`, réplica de `valpres.p` / `ValidaExistenciaAlmacenes`: almacén origen (`IdAlm`) + `02A`/`02C` cuando el origen es `02B` + almacenes fijos `6,7,8,9,10,03A` (solo existencias positivas). Es el dato que separa el semáforo amarillo del rojo.
+  5. **Presentaciones:** `ArtPres` con `Tipo = 3`, `Activo` y sin Flag `T`. Precio mayoreo simple de `Precios.PMay`.
+  6. **`Multiplo`:** `Equiv` de la `ArtPres` Tipo 3 cuyo Flag contiene `M` (presentación default, regla de `valpres.p`). Con esto el cambio 3 (`valpresentacion`) quedó sin efecto.
+  7. **Precio del cliente (reuso de `obtprecdesc.p`):** se invoca `leePrecios` **una vez por presentación** (ese motor exige `Id-Pres <> 0`). De ahí salen `PrecioCliente`, `Descto`, `IndicaPre`, `PrecioCto`, moneda y T.C.
+  8. **Defaults de criterios de precio:** si llegan vacíos: `PlazoTV=0`, `Vigencia=10`, `PrecioTemp=NO`, `PrecCalc=NO`, `TipoPrecio=M`, `IdColor=0` (los exige `obtprecdesc.p`).
+  9. **Degradación elegante:** si `obtprecdesc.p` no está en el PROPATH o una presentación falla, el servicio no truena: regresa artículo, colores y presentaciones con el precio mayoreo simple.
+  10. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
 
   ---
-
   **Desarrollado por:** SIS10 - JASS
