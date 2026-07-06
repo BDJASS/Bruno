@@ -19,3 +19,84 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  # DatosGenerales — Nuevos campos `IdResp` e `IdSegmento` (GET y PUT)
+  
+  **Módulo:** Gestión de Créditos / CYC
+  **Proyecto:** RestADOSACyc
+  **Programa:** `RestADOSACyc/AppServer/DatosGenerales.p`
+  **Autor:** SIS10 — JASS
+  **Fecha implementación:** 2026-07-06
+  **Estatus:** Implementado ✅
+  
+  ---
+  
+  ## Resumen del cambio
+  
+  Se agregaron dos campos a la temp-table `ttDatosGral` del dataset `dsDatosGral`:
+  
+  **`IdResp`** · INTEGER — Responsable del cliente (`Cliente.Id-Resp`)
+  **`IdSegmento`** · INTEGER — Segmento del cliente (`Cliente.Id-Segmento`)
+  
+  Ambos campos se **devuelven en la consulta (GET)** y se pueden **modificar en la
+  edición (PUT)** con registro de auditoría en `CambioCte`. El resto del servicio
+  no cambia.
+  
+  ---
+  
+  # Documentación 1 — GET Consulta
+  
+  **Endpoint:** `GET /GestionCredito/DatosGenerales/Consulta`
+  **Procedure:** `ConsultarDatosGenerales`
+  
+  ## Parámetros de entrada (Query String)
+  
+  > ✅ = Requerido · ❌ = Opcional
+  
+  **`IdCliente`** · INTEGER · ✅ — Id del cliente a consultar
+  
+  ## Cambio en el response (ttDatosGral)
+  
+  La tabla `ttDatosGral` ahora incluye dos campos adicionales:
+  
+  **`IdResp`** · INTEGER — Responsable asignado al cliente (`Cliente.Id-Resp`)
+  **`IdSegmento`** · INTEGER — Segmento comercial del cliente (`Cliente.Id-Segmento`)
+  
+  ### Ejemplo de response (fragmento de `ttDatosGral`)
+  
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "",
+    "dsDatosGral": {
+      "ttDatosGral": [
+        {
+          "IdCliente": 1053,
+          "IdPais": 1,
+          "IdEstado": "019",
+          "CP": "64000",
+          "Colonia": "CENTRO",
+          "Calle": "JUAREZ",
+          "NumExt": "100",
+          "NumInt": "",
+          "IdRamo": "01",
+          "IdGiro": 12,
+          "Propietario": "JUAN PEREZ",
+          "CURP": "",
+          "Correo": "cliente@dominio.com",
+          "Telefono": "8112345678",
+          "IdCiudad": 39,
+          "IdVendedor": "V01",
+          "IdResp": 33,
+          "IdSegmento": 2
+        }
+      ]
+    }
+  }
+  ```
+  
+  > Las tablas `ttInfoFiscal` y `ttCredito` del dataset no cambian.
+  
+  ---
+}
