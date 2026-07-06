@@ -5,16 +5,16 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Detalle?IdCot=V000749&IdCliente=3&IdUser=y
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Detalle?IdCot=2083315&IdCliente=34561&IdUser=olds
   params:
     - name: IdCot
-      value: V000749
+      value: "2083315"
       type: query
     - name: IdCliente
-      value: "3"
+      value: "34561"
       type: query
     - name: IdUser
-      value: y
+      value: olds
       type: query
   auth: inherit
 
@@ -59,7 +59,7 @@ docs: |
 
   **`IdCliente`** · STRING · ✅ — Clave del cliente de la cotización
   **`IdCot`** · STRING · ✅ — Folio de la cotización
-  **`iduser`** · STRING · ✅ — Usuario que ejecuta la consulta. Determina si se muestra el campo `Margen` del detalle (ver sección 13)
+  **`iduser`** · STRING · ✅ — Usuario que ejecuta la consulta. Determina si se muestran el campo `Margen` del detalle y el `MargenBruto` (M1) de la cotización (ver sección 13)
 
   ---
 
@@ -121,7 +121,8 @@ docs: |
           "Vigencia": 15,
           "Autorizada": true,
           "AutPor": "JLM",
-          "Cancelado": false
+          "Cancelado": false,
+          "MargenBruto": 28.73
         }
       ],
       "ttDetCotDet": [
@@ -171,6 +172,7 @@ docs: |
   **`Autorizada`** · BOOLEAN — `true` = autorizada
   **`AutPor`** · STRING — Usuario que autorizó
   **`Cancelado`** · BOOLEAN — `true` = cancelada
+  **`MargenBruto`** · DECIMAL — Margen bruto (%) de la cotización completa — el "M1" de la autorización de cotizaciones (`vtaa0070.p`). Redondeado a 2 decimales; puede ser negativo. Solo se calcula para usuarios autorizados (ver sección 13); para el resto se retorna `0`
 
   ### Campos de `ttDetCotDet` (1 registro por partida)
 
@@ -207,8 +209,8 @@ docs: |
   | `IdCot` vacío | `IdError: true` — `"Se requiere la cotizacion."` |
   | `IdCot` no numérico o `0` | `IdError: true` — `"Numero de cotizacion invalido."` |
   | `iduser` vacío | `IdError: true` — `"Se requiere el usuario (iduser)."` |
-  | `iduser` no autorizado a ver margen | Consulta OK; `ttDetCotDet.Margen` = `0` en todas las partidas |
-  | `iduser` autorizado | Consulta OK; `ttDetCotDet.Margen` calculado por partida |
+  | `iduser` no autorizado a ver margen | Consulta OK; `ttDetCotDet.Margen` = `0` en todas las partidas y `ttCondVenta.MargenBruto` = `0` |
+  | `iduser` autorizado | Consulta OK; `ttDetCotDet.Margen` calculado por partida y `ttCondVenta.MargenBruto` (M1) calculado |
   | Cliente no encontrado | `ttClienteDet` vacío (sin error) |
   | Cotización sin detalle | `ttDetCotDet` vacío (sin error) |
 
@@ -243,9 +245,10 @@ docs: |
   3. **`Vencimiento` vs `Vigencia`:** `ttCondVenta.Vencimiento` es la **fecha** de vencimiento; `ttCondVenta.Vigencia` son los **días** de vigencia.
   4. **Campo `Margen` (regla por usuario):** el margen por partida solo se calcula y muestra para los usuarios autorizados. La lista se parametriza en la tabla **`adosa.URL`** con `Parametro = "Cotizacion-Margen-Usuarios"` y `Valor` separado por comas (ej. `"olds,sis10"`). Si la parametrización no existe o viene vacía, se usa el valor por defecto **`"olds"`**. Para cualquier otro usuario el campo `Margen` se retorna en `0`. La validación es por coincidencia exacta de usuario (`CAN-DO`).
   5. **Cálculo del `Margen`:** replica la lógica de la autorización de cotizaciones (`vtaa0069.i`): `margen% = ((precioNeto / (costo × tipoCambio)) − 1) × 100`, donde `precioNeto = PUnit × (1 − Descto/100)`, el costo base es `CostoEsp` si es distinto de `0` o `Costo` en caso contrario, y el tipo de cambio sale de `TipoCambio` para `DetCot.Id-Moneda` (1 si no se localiza). El resultado se redondea a 2 decimales con `ROUND`. **El margen puede ser negativo** (ej. `-1.78`) cuando el precio neto es menor al costo — es un valor válido que se retorna tal cual, sin forzar a cero. Si el costo resulta `0`, el margen se deja en `0` para evitar división por cero.
-  6. **Orden del detalle (`ttDetCotDet`):** las partidas se retornan en el mismo orden que muestra la autorización de cotizaciones (`vtaa0070.p`): por **secuencia de impresión** (`USE-INDEX idx-sec` = `Id-Cot` + `Id-Seq`).
-  7. **Dirección:** se arma concatenando calle, colonia, ciudad, estado y C.P. del cliente.
-  8. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+  6. **Campo `MargenBruto` (M1):** replica el "M1" que muestra el resumen de la autorización de cotizaciones (`vtaa0070.p` / `vtaa0076.i`), calculado sobre **toda la cotización** (solo partidas `Tipo = 1`): `costo = Σ((CostoEsp si > 0, si no Costo) × Cant)`, `subtotal = Σ(Importe)` y `M1% = ((subtotal / costo) − 1) × 100`, redondeado a 2 decimales. A diferencia del margen por partida, **no aplica tipo de cambio** (igual que la pantalla original). Si el costo acumulado es `0` o el resultado es indeterminado, se retorna `0`. Aplica la misma regla de usuarios autorizados del punto 4.
+  7. **Orden del detalle (`ttDetCotDet`):** las partidas se retornan en el mismo orden que muestra la autorización de cotizaciones (`vtaa0070.p`): por **secuencia de impresión** (`USE-INDEX idx-sec` = `Id-Cot` + `Id-Seq`).
+  8. **Dirección:** se arma concatenando calle, colonia, ciudad, estado y C.P. del cliente.
+  9. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
 
   ---
   **Desarrollado por:** SIS10 - JASS

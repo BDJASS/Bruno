@@ -1,0 +1,7 @@
+info:
+  name: Mercancia por Recibir Proveedor
+  type: folder
+  seq: 3
+
+request:
+  auth: inherit

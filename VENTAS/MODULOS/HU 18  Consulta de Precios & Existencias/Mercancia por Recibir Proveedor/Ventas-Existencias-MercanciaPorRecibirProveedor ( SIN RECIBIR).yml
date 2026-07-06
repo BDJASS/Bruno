@@ -1,0 +1,210 @@
+info:
+  name: /Ventas/Existencias/MercanciaPorRecibirProveedor ( SIN RECIBIR)
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Existencias/MercanciaPorRecibirProveedor?IdArticulo=044705&IdColor=0
+  params:
+    - name: IdArticulo
+      value: "044705"
+      type: query
+    - name: IdColor
+      value: "0"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Mercancía Por Recibir (Proveedor)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Mercancía Por Recibir Proveedor (MercanciaPorRecibirProv)**
+  Devuelve lo que está **por recibir del proveedor** para un artículo/color: **órdenes de compra (OC) pendientes** (incluyendo *back order*) y los **recibos pendientes de entrada**. Entrega un encabezado con el artículo (una sola fila) y el detalle por documento.
+  Programa servidor: `artporrecibirprov_p.p` · Procedimiento: `leeArtporrecibirprov`
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa (propuesta)
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Existencias/MercanciaPorRecibirProv
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdArticulo`** · STRING · ✅ — Clave del artículo (numérica). Inválido = `0`/no numérico
+  **`IdColor`** · STRING · ❌ — Clave del color. Vacío/nulo = todos los colores del artículo
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Existencias/MercanciaPorRecibirProv?IdArticulo=021118&IdColor=2
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Consulta generada.",
+    "dsArtPorRecibirProv": {
+      "ttArtInfo": [
+        {
+          "IdArticulo": "021118",
+          "ArtDescr": "PLUMA GEL NEGRA 0.5MM"
+        }
+      ],
+      "ttArtPorRecibirProv": [
+        {
+          "Color": "NEGRO",
+          "IdProv": 1024,
+          "Nombre": "PAPELERA NACIONAL SA",
+          "IdAlmEnv": "02B",
+          "ARecibir": 40.0,
+          "PresDescr": "CAJA",
+          "FecReg": "2026-06-20",
+          "FecRec": "2026-07-05",
+          "IdDoc": 88123,
+          "Msg": "PEND"
+        }
+      ]
+    }
+  }
+  ```
+
+  ### Campos de `ttArtInfo` (1 fila — encabezado)
+
+  **`IdArticulo`** · STRING — Clave del artículo
+  **`ArtDescr`** · STRING — Descripción del artículo
+
+  ### Campos de `ttArtPorRecibirProv` (detalle, 1 fila por documento)
+
+  **`Color`** · STRING — **(primera columna)** Descripción del color (`Kolor.Descr`) del renglón. Vacío en la fila resumen `REC.PDTES.`
+  **`IdProv`** · INT — Clave del proveedor
+  **`Nombre`** · STRING — Nombre del proveedor (o `"REC.PDTES."` para recibos pendientes de entrada)
+  **`IdAlmEnv`** · STRING — Almacén de envío/recepción
+  **`ARecibir`** · DECIMAL — Cantidad por recibir (en presentación)
+  **`PresDescr`** · STRING — Presentación (unidad de compra o UMI, según el documento)
+  **`FecReg`** · DATE — Fecha de registro de la OC
+  **`FecRec`** · DATE — Fecha estimada de recepción
+  **`IdDoc`** · INT — Folio de la orden de compra
+  **`Msg`** · STRING — `PEND` = pendiente · `B.O.` = back order
+
+  ### Response sin pendientes
+
+  Cuando el artículo no tiene nada por recibir, **no se devuelve el encabezado**: `ttArtInfo` también viene vacío (se limpia antes de responder).
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "No existen articulos por recibir.",
+    "dsArtPorRecibirProv": { "ttArtInfo": [], "ttArtPorRecibirProv": [] }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdArticulo` no numérico o `0` | `IdError: true` — `"Numero de articulo invalido."` |
+  | `IdColor` no numérico | `IdError: true` — `"Numero de color invalido."` |
+  | Sin órdenes de compra pendientes | `IdError: true` — `"No existen articulos por recibir."` · **`ttArtInfo` y `ttArtPorRecibirProv` vienen vacíos** |
+
+  ---
+
+  ## 10. Origen de los datos
+
+  **Órdenes de compra pendientes** — `DetOC` (artículo+color, con saldo por recibir y no cancelada) → `OC` (activa, no recibida o con *back order* vivo, fecha ≤ hoy). La cantidad por recibir se convierte a presentación con `ArtPres.Equiv` (UMI o unidad de compra según `DetOC.Unidad`); proveedor desde `Prov`.
+  **Recibos pendientes de entrada** — `DetRecibo` + `Recibo` (sin entrada de control, `Id-EC = ""`): si hay saldo, agrega una fila resumen con `Nombre = "REC.PDTES."`.
+
+  ---
+
+  ## 11. Estructura / Implementación
+
+  > Servicio ajustado para entregar un **DATASET** con encabezado + detalle.
+
+  - **Salida `DATASET dsArtPorRecibirProv`** con dos temp-tables: `ttArtInfo` (encabezado, 1 fila) y `ttArtPorRecibirProv` (detalle).
+  - El **artículo y su descripción** se exponen **una sola vez** en el encabezado.
+  - Del detalle se **eliminaron** `IdArticulo`, `ArtDescr` (movidos al encabezado), `IdPres` y `sColor`; se quitó la búsqueda `FIND Kolor` que solo alimentaba `sColor`.
+  - **Implementación / despliegue (pendiente):**
+    1. **Definir/publicar** el recurso REST `MercanciaPorRecibirProv` en `resourceModel.xml` mapeado a `artporrecibirprov_p..leeArtporrecibirprov` (verbo `GET`).
+    2. **Generar el `.pidl`** del servicio (salida tipo DATASET).
+    3. **Recompilar** `artporrecibirprov_p.p` y **reciclar el AppServer**.
+
+  ---
+
+  ## 12. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 13. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 14. Resultado
+
+  | Estado              | Descripción                                                                 |
+  |---------------------|-----------------------------------------------------------------------------|
+  | ⏳ Pendiente publicar | Programa listo (DATASET). Falta exponer el recurso REST + `.pidl` y desplegar. |
+
+  ---
+
+  ## 15. Observaciones Técnicas
+
+  1. **Salida tipo DATASET:** `dsArtPorRecibirProv` = `ttArtInfo` + `ttArtPorRecibirProv`. Al publicar, el `.pidl` debe declarar el parámetro de salida como DATASET (no TABLE).
+  2. **Orden del detalle:** índice primario `FecReg DESC, IdDoc DESC` → primero lo más reciente.
+  3. **`IdColor` opcional:** si no se envía, considera todos los colores del artículo (`DetOC`/`DetRecibo` sin filtro de color).
+  4. **Sin pendientes = error controlado:** cuando no hay OC pendientes el servicio responde `IdError: true` con `"No existen articulos por recibir."`. En este caso se **vacía también el encabezado `ttArtInfo`**, por lo que la respuesta no trae ninguna tabla de información (ambas vacías).
+  5. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

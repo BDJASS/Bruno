@@ -1,0 +1,226 @@
+info:
+  name: /Ventas/Existencias/MercanciaPorRecibirInterno
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Existencias/MercanciaPorRecibirInterno?IdArticulo=044705&IdColor=0&IdAlm=12
+  params:
+    - name: IdArticulo
+      value: "044705"
+      type: query
+    - name: IdColor
+      value: "0"
+      type: query
+    - name: IdAlm
+      value: "12"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Mercancía Por Recibir (Interno)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Mercancía Por Recibir Interno (MercanciaPorRecibirInterno)**
+  Devuelve lo que está **por recibir de origen interno** para un artículo/color en un almacén: **requisiciones entre almacenes** (abiertas) y **solicitudes de traspaso** pendientes. Entrega un encabezado con el artículo (una sola fila) y el detalle por documento.
+  Programa servidor: `artporrecibirinterno_p.p` · Procedimiento: `leeArtporrecibirinterno`
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Existencias/MercanciaPorRecibirInterno
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdArticulo`** · STRING · ✅ — Clave del artículo (numérica). Inválido = `0`/no numérico
+  **`IdColor`** · STRING · ❌ — Clave del color. Vacío/nulo = `0`
+  **`IdAlm`** · STRING · ✅ — Almacén destino que recibe
+  - `02B` CEDIS · `03A` · `FUG` · otros
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Existencias/MercanciaPorRecibirInterno?IdArticulo=021118&IdColor=2&IdAlm=02B
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Consulta generada.",
+    "dsArtPorRecibirInterno": {
+      "ttArtInfo": [
+        {
+          "IdArticulo": "021118",
+          "ArtDescr": "PLUMA GEL NEGRA 0.5MM"
+        }
+      ],
+      "ttArtPorRecibirInterno": [
+        {
+          "IdReq": "B045123",
+          "Resto": 1,
+          "Estatus": "INI SURT",
+          "FecReg": "2026-06-25",
+          "IdAlmOri": "03A",
+          "IdAlm": "02B",
+          "Solic": "JUAN PEREZ",
+          "Tot": 50.0,
+          "Pend": 30.0,
+          "PresDescr": "CAJA"
+        }
+      ]
+    }
+  }
+  ```
+
+  ### Campos de `ttArtInfo` (1 fila — encabezado)
+
+  **`IdArticulo`** · STRING — Clave del artículo
+  **`ArtDescr`** · STRING — Descripción del artículo
+
+  ### Campos de `ttArtPorRecibirInterno` (detalle, 1 fila por documento)
+
+  **`IdReq`** · STRING — Folio de la requisición (o de la solicitud de traspaso)
+  **`Resto`** · INT — Resto/secuencia; `99` indica que el origen es **solicitud de traspaso**
+  **`Estatus`** · STRING — Etapa del documento (ver tabla abajo)
+  **`FecReg`** · DATE — Fecha de registro del documento
+  **`IdAlmOri`** · STRING — Almacén de origen (de donde sale la mercancía)
+  **`IdAlm`** · STRING — Almacén destino (que recibe)
+  **`Solic`** · STRING — Nombre del solicitante
+  **`Tot`** · DECIMAL — Cantidad total del documento (en presentación)
+  **`Pend`** · DECIMAL — Cantidad pendiente por recibir (unidades de inventario)
+  **`PresDescr`** · STRING — Presentación del renglón
+
+  ### Valores de `Estatus`
+
+  | Código | Etiqueta |
+  |--------|----------|
+  | `0` | `ORIGINAL` |
+  | `1` | `INI SURT` |
+  | `2` | `FIN SURT` |
+  | `3` | `INI EMP` |
+  | `4` | `FIN EMP` |
+  | `5` | `STRASP` |
+  | `6` | `EMBARQUE` |
+  | `≥7` | `RECIBIDA` |
+
+  > Las requisiciones se consideran abiertas con `EstPedido.Estatus < 7`. Las filas de solicitud de traspaso salen siempre como `STRASP`.
+
+  ### Response de error
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Numero de articulo invalido.",
+    "dsArtPorRecibirInterno": { "ttArtInfo": [], "ttArtPorRecibirInterno": [] }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdArticulo` no numérico o `0` | `IdError: true` — `"Numero de articulo invalido."` |
+  | `IdColor` no numérico | `IdError: true` — `"Numero de color invalido."` |
+  | `IdAlm` vacío/nulo | `IdError: true` — `"Almacen invalido."` |
+  | Consulta sin pendientes | `IdError: false` — `ttArtPorRecibirInterno` vacío |
+
+  ---
+
+  ## 10. Origen de los datos
+
+  **Requisiciones internas** — `DetReq` (artículo+color) → `ReqAlm` (`Id-Req`+`Resto`, no cancelada, `Id-Ubic = IdAlm`) → `EstPedido` (`Estatus < 7`). El detalle se ordena por `FecReg` y `IdReq` descendentes (más reciente primero).
+  **Solicitudes de traspaso** — `DetSTrasp` (artículo+color, `CantPres > 0`) → `sTrasp` (`Id-AlmDest = IdAlm`), solo las que aún no tienen entrada (`etrasp`) y sin requisición ligada.
+
+  ---
+
+  ## 11. Estructura / Implementación
+
+  > Servicio ajustado para entregar un **DATASET** con encabezado + detalle.
+
+  - **Salida `DATASET dsArtPorRecibirInterno`** con dos temp-tables: `ttArtInfo` (encabezado, 1 fila) y `ttArtPorRecibirInterno` (detalle).
+  - El **artículo y su descripción** se resuelven **una sola vez** en el encabezado (antes se buscaban en cada fila con `FIND Articulo`).
+  - Del detalle se **eliminaron** `IdArticulo`, `ArtDescr` (movidos al encabezado), `IdPres` y `sColor`; se quitó la búsqueda `FIND Kolor` que solo alimentaba `sColor`.
+  - **Implementación / despliegue:** al cambiar de `TABLE` a `DATASET` cambia el contrato → **regenerar el `.pidl`**, **recompilar** `artporrecibirinterno_p.p` y **reciclar el AppServer**.
+
+  ---
+
+  ## 12. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 13. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 14. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 15. Observaciones Técnicas
+
+  1. **Salida tipo DATASET:** `dsArtPorRecibirInterno` = `ttArtInfo` + `ttArtPorRecibirInterno`. Requiere `.pidl` regenerado (TABLE → DATASET).
+  2. **Orden del detalle:** índice primario `FecReg DESC, IdReq DESC, Resto DESC` → primero lo más reciente.
+  3. **Presentación por renglón:** `PresDescr` se resuelve por `ArtPres` del renglón (`DetReq.Id-Pres` / `DetSTrasp.Id-Pres`), no a nivel artículo.
+  4. **Pendiente latente (no corregido):** en el bloque de solicitudes de traspaso, `Pend` se calcula con `DetReq.CantSurt`, buffer que no pertenece a ese loop (queda con el último valor del loop de requisiciones). Si se requiere `Pend` correcto para traspasos, debe recalcularse con datos de `DetSTrasp`.
+  5. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

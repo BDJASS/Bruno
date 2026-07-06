@@ -1,0 +1,232 @@
+info:
+  name: /tipocambios
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/tipocambios?IdMoneda=3&ctTipoPrecio=TC
+  params:
+    - name: IdMoneda
+      value: "3"
+      type: query
+    - name: ctFecha
+      value: 30-06-2026
+      type: query
+      disabled: true
+    - name: ctTipoPrecio
+      value: TC
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Tipos de Cambio por Moneda y Fecha
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Tipos de Cambio por Moneda (tipocambios)**
+  Retorna los tipos de cambio registrados, filtrables por moneda y/o fecha. En modo normal lista los registros de la tabla `TipoCambio`. En modo `TC` (requiere moneda) devuelve **dos renglones** para esa moneda: el tipo de cambio de **Sistema** (primer registro de `TipoCambio`) y el **Real** (último registro de `TCReal`), equivalente al comportamiento de `vtaa0005.p`.
+  Programa servidor: `tipocambio_p.p` · Procedimiento: `leeTipocambios` | Esquema: `tipocambio.i` (temp-table `ttTipoCambio`)
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/tipocambios
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · ⚠️ = Requerido condicional
+
+  **`IdMoneda`** · STRING (numérico) · ❌ — Clave de la moneda
+  - `0` o vacío = **todas** las monedas · Cualquier otro valor = filtra esa moneda
+  - ⚠️ Obligatorio cuando `ctTipoPrecio = "TC"` (sin moneda no se devuelve nada)
+
+  **`ctFecha`** · STRING · ❌ — Fecha del tipo de cambio en formato `yyyy-mm-dd`
+  - Ej: `"2026-06-26"` · Vacío = sin filtro de fecha (todas las fechas)
+
+  **`ctTipoPrecio`** · STRING · ❌ — Modo de consulta
+  - Vacío = consulta normal sobre `TipoCambio`
+  - `"TC"` = devuelve **Sistema + Real** para la moneda indicada (no distingue mayúsculas)
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  **Consulta normal — una moneda, una fecha:**
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/tipocambios
+      ?IdMoneda=2&ctFecha=2026-06-26&ctTipoPrecio=
+  ```
+
+  **Modo TC — Sistema + Real de una moneda:**
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/tipocambios
+      ?IdMoneda=2&ctTipoPrecio=TC
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  **Consulta normal:**
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "1 tipo(s) de cambio encontrado(s).",
+    "ttTipoCambio": [
+      {
+        "FecReg": "2026-06-26",
+        "Importe": 18.4500,
+        "Id-Moneda": 2,
+        "IdMoneda": 2,
+        "Nombre": "DOLAR AMERICANO",
+        "Simbolo": "USD",
+        "Tipo": ""
+      }
+    ]
+  }
+  ```
+
+  **Modo TC (Sistema + Real):**
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "2 tipo(s) de cambio encontrado(s).",
+    "ttTipoCambio": [
+      {
+        "FecReg": "2026-06-26",
+        "Importe": 18.4500,
+        "Id-Moneda": 2,
+        "IdMoneda": 2,
+        "Nombre": "DOLAR AMERICANO",
+        "Simbolo": "USD",
+        "Tipo": "Sistema"
+      },
+      {
+        "FecReg": "2026-06-26",
+        "Importe": 18.6200,
+        "Id-Moneda": 2,
+        "IdMoneda": 2,
+        "Nombre": "DOLAR AMERICANO",
+        "Simbolo": "USD",
+        "Tipo": "Real"
+      }
+    ]
+  }
+  ```
+
+  ### Campos de `ttTipoCambio`
+
+  **`FecReg`** · DATE — Fecha del tipo de cambio (`yyyy-mm-dd`)
+  **`Importe`** · DECIMAL — Valor del tipo de cambio para esa moneda y fecha
+  **`Id-Moneda`** · INT — Clave de la moneda (campo original de la base con guion)
+  **`IdMoneda`** · INT — Clave de la moneda (campo "limpio" para consumo REST; mismo valor que `Id-Moneda`)
+  **`Nombre`** · STRING — Nombre de la moneda (de `Moneda.Nombre`)
+  **`Simbolo`** · STRING — Símbolo de la moneda (de `Moneda.Simbolo`)
+  **`Tipo`** · STRING — Origen del renglón: `"Sistema"` o `"Real"` en modo `TC`; **vacío** en consulta normal
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Numero de moneda invalido.",
+    "ttTipoCambio": []
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdMoneda` no numérico | `IdError: true` — `"Numero de moneda invalido."` |
+  | `ctFecha` con formato inválido | `IdError: true` — `"Fecha invalida."` |
+  | `ctTipoPrecio` distinto de `""` y `"TC"` | `IdError: true` — `"Tipo de Precio invalido: <valor>."` |
+  | `ctTipoPrecio="TC"` sin `IdMoneda` (o `0`) | Sin error; `ttTipoCambio` vacío — `"0 tipo(s) de cambio encontrado(s)."` |
+  | Moneda inexistente en `Moneda` (modo TC) | Sin error; `ttTipoCambio` vacío |
+  | Sin coincidencias | Sin error; `ttTipoCambio` vacío — `"0 tipo(s) de cambio encontrado(s)."` |
+  | Error en proceso | `IdError: true` — `"Error en consulta de tipos de cambio: <mensaje>"` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+  Adjuntar screenshot de la herramienta de prueba (Bruno / Postman / curl) mostrando:
+  - URL completa con los parámetros de query
+  - Status HTTP `200 OK`
+  - Cuerpo de respuesta con al menos un registro en `ttTipoCambio`
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | 2026-06-30 | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Campo `Id-Moneda` con guion:** El temp-table conserva el campo original `Id-Moneda` (con guion) y añade `IdMoneda` (sin guion) con el mismo valor. Para consumo desde el front se recomienda usar `IdMoneda`, ya que el guion puede complicar el mapeo en algunos clientes JSON.
+  2. **Modo normal vs. `TC`:** En modo normal (`ctTipoPrecio` vacío) se recorre `TipoCambio` con los filtros de moneda y fecha; el campo `Tipo` viene vacío. En modo `TC` se ignoran los filtros de fecha y se devuelven exactamente hasta dos renglones por moneda: `Sistema` (FIND FIRST `TipoCambio`) y `Real` (FIND LAST `TCReal`).
+  3. **`TC` requiere moneda:** El bloque `TC` solo se ejecuta cuando `IdMoneda > 0`. Si se envía `TC` sin moneda (o con `0`), la respuesta es exitosa pero vacía.
+  4. **`ctTipoPrecio` no distingue mayúsculas:** Se valida con `CAPS()`, por lo que `"tc"`, `"Tc"` y `"TC"` son equivalentes.
+  5. **Filtro de fecha opcional:** En modo normal, si `ctFecha` viene vacío se devuelven todas las fechas de la(s) moneda(s) seleccionada(s), ordenadas por el índice primario (`Id-Moneda` ASC, `FecReg` DESC).
+  6. **Nombre y símbolo:** Provienen de la tabla `Moneda`; si la moneda no existe en `Moneda`, esos campos quedan vacíos pero el renglón del tipo de cambio se devuelve igual (solo en modo normal).
+  7. **Convención REST:** El servicio sigue el patrón `IdError` (LOGICAL) + `Respuesta` (CHARACTER) + temp-table, alineado con el resto de servicios de `RestADOSAVentas`.
+  8. **Autenticación:** El servicio corre sobre OpenEdge PASOE. Si el ambiente requiere autenticación Bearer, incluir el header `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

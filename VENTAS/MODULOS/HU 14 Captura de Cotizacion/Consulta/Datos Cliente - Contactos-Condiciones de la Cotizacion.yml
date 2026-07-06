@@ -5,10 +5,10 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Cotizacion/Captura/Consulta?IdCliente=35253
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Cotizacion/Captura/Consulta?IdCliente=34561
   params:
     - name: IdCliente
-      value: "35253"
+      value: "34561"
       type: query
   auth: inherit
 

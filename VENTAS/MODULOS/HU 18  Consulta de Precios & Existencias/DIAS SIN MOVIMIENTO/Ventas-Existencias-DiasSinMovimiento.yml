@@ -1,0 +1,171 @@
+info:
+  name: /Ventas/Existencias/DiasSinMovimiento
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Existencias/DiasSinMovimiento?IdArticulo=044705
+  params:
+    - name: IdArticulo
+      value: "044705"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Días sin Movimiento de un Artículo
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Días sin Movimiento (Artículo)**
+  Recibe un artículo y devuelve los días transcurridos desde su último movimiento de inventario (`TODAY − Movim.FecReg`).
+  Programa servidor: `artdiasmov.p` · Procedimiento: `GetDiasUltimoMov`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Articulo/DiasSinMovimiento
+  ```
+
+  > La ruta amigable se define en el catálogo del PASOE; internamente es `artdiasmov.p` / `GetDiasUltimoMov`.
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdArticulo`** · STRING · ✅ — Clave del artículo a consultar
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Articulo/DiasSinMovimiento?IdArticulo=021118
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ### Con movimientos
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "104 dias sin movimiento.",
+    "DiasSinMov": 104
+  }
+  ```
+
+  ### Sin movimientos registrados
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "El articulo no tiene movimientos registrados.",
+    "DiasSinMov": 0
+  }
+  ```
+
+  ### Campos de Response
+
+  **`IdError`** · BOOLEAN — `true` si ocurrió un error
+  **`Respuesta`** · STRING — Mensaje de resultado / error
+  **`DiasSinMov`** · INT — Días transcurridos desde el último movimiento (`TODAY − Movim.FecReg`); `0` si no hay movimientos
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Se requiere el articulo.",
+    "DiasSinMov": 0
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdArticulo` vacío | `IdError: true` — *"Se requiere el articulo."* |
+  | Artículo sin movimientos | `IdError: false`; `DiasSinMov = 0` — *"El articulo no tiene movimientos registrados."* |
+  | Con movimientos | `IdError: false`; `DiasSinMov` calculado |
+
+  ---
+
+  ## 10. Notas para el Front
+
+  1. `DiasSinMov` ya viene **calculado en el servidor** (no hay que restar fechas en el front).
+  2. Distingue **0 con movimiento** vs **sin movimientos**: usa `Respuesta` (o valida si necesitas tratarlos distinto). Cuando no hay movimientos, `DiasSinMov = 0`.
+  3. Semáforo sugerido (igual que la pantalla original de Consulta de Existencias): `≤ 30` verde · `≤ 90` amarillo · `> 90` rojo.
+
+  ---
+
+  ## 11. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 12. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 13. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio nuevo. Pendiente de compilar y probar por QA. |
+
+  ---
+
+  ## 14. Observaciones Técnicas
+
+  1. **Origen del dato:** `FIND LAST Movim WHERE Movim.Id-Articulo = <IdArticulo>` usando `USE-INDEX idx3` (`Id-Articulo + FecReg`), que devuelve el movimiento más reciente directo (rápido).
+  2. **Cálculo:** `DiasSinMov = TODAY − Movim.FecReg`.
+  3. **Equivalencia con el front anterior:** en `consultaExistencias.php` este valor se calculaba en JavaScript (`hoy − FecUltimo`); ahora el cálculo vive en el servidor.
+  4. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

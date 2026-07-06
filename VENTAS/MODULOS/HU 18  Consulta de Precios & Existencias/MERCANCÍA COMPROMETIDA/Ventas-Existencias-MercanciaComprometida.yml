@@ -1,0 +1,230 @@
+info:
+  name: /Ventas/Existencias/MercanciaComprometida
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Existencias/MercanciaComprometida?IdArticulo=021118&IdColor=2&IdAlm=02B
+  params:
+    - name: IdArticulo
+      value: "021118"
+      type: query
+    - name: IdColor
+      value: "2"
+      type: query
+    - name: IdAlm
+      value: 02B
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Mercancía Comprometida
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Mercancía Comprometida (MercanciaComprometida)**
+  Devuelve la existencia **comprometida** de un artículo/color en un almacén, agrupada en tres tipos: **Pedidos**, **Requisiciones** y **Órdenes de Producción**. Entrega un encabezado con los datos del artículo (una sola fila) y el detalle del comprometido.
+  Programa servidor: `artcomprometido_p.p` · Procedimiento: `leeArtcomprometido`
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Existencias/MercanciaComprometida
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdArticulo`** · STRING · ✅ — Clave del artículo (numérica). Inválido = `0`/no numérico
+  **`IdColor`** · STRING · ❌ — Clave del color. Vacío/nulo = `0`
+  **`IdAlm`** · STRING · ✅ — Almacén a consultar
+  - `02B` CEDIS · `03A` · `FUG` · otros
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Existencias/MercanciaComprometida?IdArticulo=021118&IdColor=2&IdAlm=02B
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Consulta generada.",
+    "dsArtComprometido": {
+      "ttArtInfo": [
+        {
+          "IdArticulo": "021118",
+          "ArtDescr": "PLUMA GEL NEGRA 0.5MM",
+          "IdColor": 2,
+          "Kolor": "NEGRO"
+        }
+      ],
+      "ttArtComprometido": [
+        {
+          "Tipo": 1,
+          "DesTipo": "Comprometido de Pedidos",
+          "FecReg": "2026-06-27",
+          "CantCom": 12.0,
+          "CantBO": 0.0,
+          "PresDescr": "PZA",
+          "IdPedido": "2969310",
+          "RazonSocial": "PUBLICO EN GENERAL.",
+          "IdVendedor": "0100",
+          "VendNombre": "INTERNET SITIO WEB"
+        }
+      ]
+    }
+  }
+  ```
+
+  ### Campos de `ttArtInfo` (1 fila — encabezado)
+
+  **`IdArticulo`** · STRING — Clave del artículo
+  **`ArtDescr`** · STRING — Descripción del artículo
+  **`IdColor`** · INT — Clave del color consultado
+  **`Kolor`** · STRING — Descripción/abreviatura del color
+
+  ### Campos de `ttArtComprometido` (detalle, 1 fila por comprometido)
+
+  **`Tipo`** · INT — `1` Pedidos · `2` Requisiciones · `3` Órdenes de Producción
+  **`DesTipo`** · STRING — Descripción del tipo
+  **`FecReg`** · DATE — Fecha de registro del documento que compromete
+  **`CantCom`** · DECIMAL — Cantidad comprometida (Pedidos y Requisiciones)
+  **`CantBO`** · DECIMAL — Cantidad en *back order* (solo Pedidos)
+  **`PresDescr`** · STRING — Presentación (tipo 1 activa del artículo)
+  **`IdPedido`** · STRING — Folio del pedido (solo Tipo 1)
+  **`RazonSocial`** · STRING — Cliente del pedido (solo Tipo 1)
+  **`IdVendedor`** · STRING — Vendedor del pedido (solo Tipo 1)
+  **`VendNombre`** · STRING — Nombre del vendedor (solo Tipo 1)
+
+  > Los campos de Pedido (`IdPedido`, `RazonSocial`, `IdVendedor`, `VendNombre`, `CantBO`) solo se llenan en las filas `Tipo = 1`; en Requisiciones y Órdenes salen vacíos/`0`.
+
+  ### Response de error
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Numero de articulo invalido.",
+    "dsArtComprometido": { "ttArtInfo": [], "ttArtComprometido": [] }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdArticulo` no numérico o `0` | `IdError: true` — `"Numero de articulo invalido."` |
+  | `IdColor` no numérico | `IdError: true` — `"Numero de color invalido."` |
+  | `IdAlm` vacío/nulo | `IdError: true` — `"Almacen invalido."` |
+  | Consulta sin comprometidos | `IdError: false` — `ttArtComprometido` vacío |
+
+  ---
+
+  ## 10. Origen de los datos (por tipo)
+
+  **Tipo 1 — Pedidos** — `DetPedido` (artículo+color), filtrando por almacén/prefijo de pedido; cliente y vendedor desde `Pedido` → `Cliente` / `Vendedor` → `Empleado`.
+  **Tipo 2 — Requisiciones** — `DetReq` (artículo+color) → `ReqAlm` (destino = `IdAlm`) → `EstPedido` (estatus abierto `< 5`).
+  **Tipo 3 — Órdenes de Producción** — `OrdenProd` (artículo+color+almacén origen) → `DetOrdenProd` (Tipo > 2), excluyendo las que ya tienen reporte de producción (`RepProd`).
+
+  ---
+
+  ## 11. Mejora de rendimiento (2026-06-28)
+
+  > Optimización aplicada para resolver la lentitud reportada en la consulta.
+
+  **Problema:** el bloque de **Requisiciones** arrancaba recorriendo **toda la tabla `EstPedido`** (`Id-Pedido BEGINS <letra> AND Estatus < 5`) y aplicaba el filtro de artículo hasta el final, por lo que el dato más selectivo (el artículo) no reducía el escaneo.
+
+  **Solución:** se **invirtió el orden del join** para arrancar desde `DetReq`, que tiene índice **`Idx-ArtCol` (Id-Articulo, Id-color)**:
+
+  ```
+  ANTES:  EstPedido (escaneo grande) → ReqAlm → DetReq (filtro artículo al final)
+  AHORA:  DetReq (índice por artículo) → ReqAlm (Id-Req) → EstPedido (Id-Pedido, Estatus<5)
+  ```
+
+  - Se lee **solo las líneas de requisición del artículo**, no toda `EstPedido`.
+  - Se eliminó el pre-filtro por prefijo de `Id-Pedido` (redundante con `ReqAlm.Id-Dest = IdAlm`).
+  - **No se requirió crear índices**: todos los necesarios ya existían (`DetReq.Idx-ArtCol`, `DetPedido.Idx-Articulo`, `OrdenProd.Idx-ArtCol`).
+
+  **Mejoras adicionales de la misma entrega:**
+  - **Estructura lean**: el artículo, su descripción, color y presentación se resuelven **una sola vez** en el encabezado `ttArtInfo`, en lugar de buscarse en cada fila de cada loop.
+  - Se eliminó un `FIND ArtPres` duplicado en el loop de Pedidos y la búsqueda de `Empleado` que solo alimentaba campos descartados.
+
+  ---
+
+  ## 12. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 13. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 14. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 15. Observaciones Técnicas
+
+  1. **Salida tipo DATASET:** `dsArtComprometido` contiene dos temp-tables — `ttArtInfo` (encabezado, 1 fila) y `ttArtComprometido` (detalle). Requiere `.pidl` regenerado al cambiar de TABLE a DATASET.
+  2. **Presentación:** `PresDescr` corresponde a la presentación activa Tipo 1 del artículo (es la misma para los tres tipos).
+  3. **Requisiciones abiertas:** se consideran solo las de `EstPedido.Estatus < 5` cuyo `ReqAlm.Id-Dest` coincide con `IdAlm`.
+  4. **Órdenes de Producción:** se excluyen las que ya tienen `RepProd` (reporte de producción) asociado.
+  5. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

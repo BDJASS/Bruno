@@ -1,0 +1,115 @@
+info:
+  name: Catalogo Articulo NO autocomplete
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/CatalogoArticulo?IdArticulo=0
+  params:
+    - name: IdArticulo
+      value: "0"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # CatalogoArticulo — REST API
+
+  **Servidor:** `http://192.0.1.14:8828`
+  **Base URL:** `/RestADOSArt/rest/RestADOSArt/CatalogoArticulo`
+  **Programa:** `catalogos.p`
+  **Procedure:** `GetArticulo`
+  **Modo:** `single-run`
+
+  ---
+
+  ## Endpoints
+
+  | # | Método | Endpoint            | Procedure     |
+  |---|--------|---------------------|---------------|
+  | 1 | GET    | `/CatalogoArticulo` | `GetArticulo` |
+
+  ---
+
+  ## 1. GET — Consultar Artículos
+
+  Catálogo de consulta de artículos **activos** (`Articulo.Activo = TRUE`). Regresa una
+  versión reducida del artículo (id, descripción, modelo y tipo) pensada para poblar
+  combos, listados y búsquedas en el front-end.
+
+  ```
+  GET .../CatalogoArticulo?IdArticulo=0
+  ```
+
+  ### Parámetros de entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdArticulo`** · STRING · ❌ — Filtra por artículo específico
+  - `"0"` o ausente = **todos** los artículos activos (modo catálogo)
+  - Id específico = solo ese artículo (ej. `IdArticulo=030125`)
+
+  ### Respuesta exitosa
+
+  ```json
+  {
+    "ttArticulo": [
+      {
+        "IdArticulo": "030125",
+        "Descr": "CUADERNO PROFESIONAL RAYA 100 HOJAS",
+        "Modelo": "CP-100R",
+        "Tipo": "A"
+      },
+      {
+        "IdArticulo": "045210",
+        "Descr": "MARCADOR PERMANENTE NEGRO",
+        "Modelo": "MP-01N",
+        "Tipo": "A"
+      }
+    ]
+  }
+  ```
+
+  ### Campos de respuesta (ttArticulo)
+
+  **`IdArticulo`** · STRING — Id del artículo (`Articulo.Id-Articulo`)
+  **`Descr`** · STRING — Descripción del artículo
+  **`Modelo`** · STRING — Modelo del artículo
+  **`Tipo`** · STRING — Tipo de artículo (`Articulo.Id-TipoArt`); su descripción se obtiene del endpoint `CatalogoTipoArt` (`GetTipoArt`)
+
+  ---
+
+  ## Comportamiento
+
+  - **Solo artículos activos** — el filtro `Articulo.Activo = TRUE` es fijo; los artículos
+    dados de baja **nunca** se incluyen en la respuesta, aunque se pidan por Id.
+  - Si se envía un `IdArticulo` que no existe (o está inactivo), la tabla `ttArticulo`
+    regresa **vacía**; no se genera error.
+  - Lectura con `NO-LOCK` — no genera bloqueos sobre la tabla `Articulo`.
+  - El resultado no lleva un orden garantizado por el servicio; si el front-end requiere
+    orden alfabético debe ordenar por `Descr`.
+
+  ---
+
+  ## Notas técnicas
+
+  - Lógica basada en los programas de consulta `cnff0150.p` / `cnff0160.p`.
+  - Este GET **no** expone los parámetros `IdError` / `Respuesta`: la salida es únicamente
+    la tabla `ttArticulo`. El caso "no encontrado" se detecta en el consumidor cuando la
+    tabla llega vacía.
+  - **Volumen** — en modo catálogo (`IdArticulo=0`) regresa el total de artículos activos
+    de la tabla `Articulo`; considerar caché del lado del consumidor si se invoca con
+    mucha frecuencia.
+  - El mismo programa `catalogos.p` expone los demás catálogos del módulo de artículos:
+    `GetGrupo`, `GetMarca`, `GetDiv`, `GetGiro`, `GetCatego`, `GetFamilia`, `GetTipoArt`,
+    `GetClaveProdServ`, `GetKolor` y `GetNavegacion`.
+
+  ---
+
+  **Desarrollado por:** SIS10 - JASS

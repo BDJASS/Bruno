@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/MargenesPorCategoriaDivision?IdUser=olds&FechaInicial=2026-05-14&FechaFinal=2026-06-13&Seleccionar=1&Lista=&ConAsociados=false
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/MargenesPorCategoriaDivision?IdUser=olds&FechaInicial=2026-05-14&FechaFinal=2026-06-13&Seleccionar=4&Lista=2&ConAsociados=false
   params:
     - name: IdUser
       value: olds
@@ -17,10 +17,10 @@ http:
       value: 2026-06-13
       type: query
     - name: Seleccionar
-      value: "1"
+      value: "4"
       type: query
     - name: Lista
-      value: ""
+      value: "2"
       type: query
     - name: ConAsociados
       value: "false"

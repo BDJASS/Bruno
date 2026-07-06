@@ -1,0 +1,266 @@
+info:
+  name: Simulador de Margen
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Cotizacion/Captura/MargenBruto
+  body:
+    type: json
+    data: |-
+      {
+        "dsMargenSim": {
+          "ttMEnc": [
+            { "Iniciales": "olds", "IdCliente": 34561 }
+          ],
+          "ttMPart": [
+            { "IdArticulo": "159545", "IdColor": 0, "IdPres": 4,
+              "Cant": 10, "PUnit": 828.39, "Descto": 0,
+              "IdMoneda": 0, "CostoEsp": 0 },
+            { "IdArticulo": "096337", "IdColor": 0, "IdPres": 4,
+              "Cant": 1, "PUnit": 2152.82, "Descto": 0,
+              "IdMoneda": 0, "CostoEsp": 0 },
+            { "IdArticulo": "096326", "IdColor": 5, "IdPres": 4,
+              "Cant": 1, "PUnit": 1973.67, "Descto": 0,
+              "IdMoneda": 0, "CostoEsp": 0 }
+          ]
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Captura de Cotización: Margen Bruto Simulado (M1)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Captura de Cotización — Margen Bruto Simulado (M1 en tiempo real)**
+  Recibe el listado de partidas tal como está el grid de captura (cotización **aún no creada**) y calcula el mismo Margen Bruto "M1" que mostrará la consulta del detalle cuando la cotización se cree. Es el equivalente REST del flujo modo carácter "crear folio temporal → ir a la consulta a ver el M1", pero **sin crear el folio ni persistir nada**.
+  Programa servidor: `cotmargen.p` · Procedimiento: `calculaMargenBruto` | Servicio de cálculo puro (no graba).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Cotizacion/Captura/MargenBruto
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  No aplica. Todo viaja en el body (dataset `dsMargenSim`).
+
+  ---
+
+  ## 5. Body
+
+  Dataset `dsMargenSim` con encabezado (`ttMEnc`, 1 registro) y partidas (`ttMPart`, 1 registro por línea del grid).
+
+  ### Campos de `ttMEnc`
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`Iniciales`** · CHARACTER · ✅ — Usuario que consulta. Debe estar autorizado para ver margen (ver sección 13)
+  **`IdCliente`** · INTEGER · ❌ — Cliente de la cotización en captura; solo informativo
+
+  ### Campos de `ttMPart` (una por partida del grid)
+
+  **`IdArticulo`** · CHARACTER · ✅ — Clave del artículo
+  **`IdColor`** · INTEGER · ❌ — Color elegido; `0` = sin color
+  **`IdPres`** · INTEGER · ✅ — Presentación elegida (determina el costo: `HCosto × Equiv`)
+  **`Cant`** · DECIMAL · ✅ — Cantidad capturada (> 0)
+  **`PUnit`** · DECIMAL · ✅ — Precio unitario del grid (puede venir modificado manualmente / por factor)
+  **`Descto`** · INTEGER · ❌ — Porcentaje de descuento de la partida
+  **`IdMoneda`** · INTEGER · ❌ — Moneda de la partida; `> 1` convierte el costo con `TipoCambio`
+  **`CostoEsp`** · DECIMAL · ❌ — Costo especial, **el mismo dato que se manda al alta** (`cotaltacot`). Si `> 0` sustituye al costo derivado
+
+  ### Ejemplo de body
+
+  ```json
+  {
+    "dsMargenSim": {
+      "ttMEnc": [
+        { "Iniciales": "olds", "IdCliente": 26 }
+      ],
+      "ttMPart": [
+        { "IdArticulo": "021118", "IdColor": 0, "IdPres": 4,
+          "Cant": 10, "PUnit": 41.40, "Descto": 0,
+          "IdMoneda": 0, "CostoEsp": 0 },
+        { "IdArticulo": "045210", "IdColor": 3, "IdPres": 1,
+          "Cant": 5, "PUnit": 120.00, "Descto": 10,
+          "IdMoneda": 0, "CostoEsp": 0 }
+      ]
+    }
+  }
+  ```
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST .../Cotizacion/Captura/MargenBruto
+  Content-Type: application/json
+
+  (body de la sección 5)
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Margen calculado.",
+    "dsMargenRes": {
+      "ttMResumen": [
+        {
+          "MargenBruto": 28.73,
+          "Subtotal": 954.00,
+          "CostoTotal": 741.10,
+          "PartidasTotal": 2,
+          "PartidasCosteadas": 2,
+          "PartidasSinCosto": 0
+        }
+      ],
+      "ttMDetalle": [
+        {
+          "Sec": 10,
+          "IdArticulo": "021118",
+          "IdPres": 4,
+          "IdColor": 0,
+          "Cant": 10.0,
+          "Importe": 414.00,
+          "Margen": 32.45,
+          "Costeada": true,
+          "Mensaje": ""
+        },
+        {
+          "Sec": 20,
+          "IdArticulo": "045210",
+          "IdPres": 1,
+          "IdColor": 3,
+          "Cant": 5.0,
+          "Importe": 540.00,
+          "Margen": 25.10,
+          "Costeada": true,
+          "Mensaje": ""
+        }
+      ]
+    }
+  }
+  ```
+
+  ### Campos de `ttMResumen` (1 registro — el dato principal)
+
+  **`MargenBruto`** · DECIMAL — El "M1" (%) de toda la cotización en captura, redondeado a 2 decimales. **Puede ser negativo**. Misma fórmula que la autorización de cotizaciones (`vtaa0076.i`)
+  **`Subtotal`** · DECIMAL — `Σ (Cant × PUnit × (1 − Descto/100))` de las partidas válidas
+  **`CostoTotal`** · DECIMAL — `Σ (costo base × Cant)` de las partidas válidas
+  **`PartidasTotal`** · INT — Partidas recibidas
+  **`PartidasCosteadas`** · INT — Partidas con costo resuelto
+  **`PartidasSinCosto`** · INT — Partidas sin costo o inválidas (ver `ttMDetalle.Mensaje`)
+
+  ### Campos de `ttMDetalle` (eco por partida, en el orden recibido)
+
+  **`Sec`** · INT — Secuencia 10, 20, 30… en el orden del grid
+  **`IdArticulo`** · STRING — Clave del artículo
+  **`IdPres`** · INT — Presentación
+  **`IdColor`** · INT — Color
+  **`Cant`** · DECIMAL — Cantidad
+  **`Importe`** · DECIMAL — Importe neto de la línea
+  **`Margen`** · DECIMAL — Margen (%) de la línea (fórmula de `vtaa0069.i`, con tipo de cambio) — el mismo que muestra `cotdetalle.Margen`. Puede ser negativo
+  **`Costeada`** · BOOLEAN — `false` = no se pudo resolver costo (o línea inválida); ver `Mensaje`
+  **`Mensaje`** · STRING — Aviso de la línea (vacío si todo OK)
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Usuario no autorizado para consultar el margen.",
+    "dsMargenRes": { "ttMResumen": [], "ttMDetalle": [] }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | Sin `ttMEnc` | `IdError: true` — `"Falta el encabezado (ttMEnc)."` |
+  | `Iniciales` vacío | `IdError: true` — `"Se requiere Iniciales (usuario)."` |
+  | Usuario no autorizado | `IdError: true` — `"Usuario no autorizado para consultar el margen."` |
+  | Sin partidas | `IdError: true` — `"No se recibieron partidas (ttMPart)."` |
+  | Partida sin artículo / inexistente / inactivo / `Cant ≤ 0` | Línea **excluida** de las sumas, marcada `Costeada: false` con `Mensaje`; el cálculo continúa |
+  | Partida válida sin costo (sin `HCosto` ni `CostoEsp`) | Entra al subtotal con costo `0` (igual que hará la consulta real) y se cuenta en `PartidasSinCosto` |
+  | Ninguna partida costeada | Consulta OK con `Respuesta: "Ninguna partida se pudo costear; M1 no representativo."` |
+  | Costo total `0` | `MargenBruto = 0` (evita división por cero) |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **No persiste nada:** es un servicio de cálculo puro. No crea folio, no toca `Cot`/`DetCot`. Se puede llamar tantas veces como se quiera durante la captura (recomendado: al agregar/editar partida o cantidad, con debounce en el front — no por tecla).
+  2. **Regla de usuarios (misma que `cotdetalle`):** solo usuarios en la tabla **`adosa.URL`** con `Parametro = "Cotizacion-Margen-Usuarios"` (`Valor` separado por comas; default `"olds"`) pueden consultar. Usuario no autorizado recibe `IdError: true` sin cálculo — a diferencia de `cotdetalle` (que regresa `0`), aquí todo el servicio es margen, así que se rechaza explícito.
+  3. **Consistencia con la consulta real — costo:** el costo por partida se resuelve con la **misma regla que el motor de grabado** (`cotizacion2.p` / `CostoDetCot`, que corre al crear la cotización vía `cotaltacot`): `HCosto.Costo × ArtPres.Equiv` (proveedor del artículo; sin `ArtPres` queda `HCosto.Costo`), ajuste por oferta `ArtOfer` activa cuando `Descto` coincide con `PorcMay` y `PorcPro > 0`, y conversión `÷ TipoCambio.Importe` (o `Moneda.TpoCamb`) si `IdMoneda > 1`. Si el front manda `CostoEsp > 0`, ese sustituye al costo derivado — igual que en `DetCot`.
+  4. **Consistencia con la consulta real — fórmula:** el M1 replica `vtaa0076.i` (el "M1" de la autorización `vtaa0070.p` y el `MargenBruto` de `cotdetalle`): `M1% = ((Σ Importe / Σ costoBase × Cant) − 1) × 100`, donde `costoBase = CostoEsp si > 0, si no Costo`. **Sin tipo de cambio en el agregado** (así lo hace la pantalla). El margen por línea sí usa tipo de cambio (`vtaa0069.i`), igual que `cotdetalle.Margen`.
+  5. **Partidas sin costo:** entran al subtotal con costo `0` — deliberadamente, porque así quedará `DetCot` y así lo sumará la consulta real; excluirlas haría que el M1 simulado no coincidiera con el M1 real. El front puede avisar "M1 con N partida(s) sin costo" usando `PartidasSinCosto`.
+  6. **Líneas inválidas** (artículo inexistente/inactivo, cantidad ≤ 0): esas sí se excluyen de las sumas (no existirían en `DetCot`) y se regresan marcadas en `ttMDetalle` — el cálculo no se aborta por una línea mala, para no romper la experiencia de captura.
+  7. **El costo nunca viaja del front ni hacia el front:** el body solo admite `CostoEsp` (mismo dato del alta); la respuesta expone `CostoTotal` agregado y márgenes, nunca costos unitarios. Todo detrás de la regla de usuarios autorizados.
+  8. **`PUnit` manual:** si el capturista modificó el precio (marcas `*`/`Y` del front), el margen se calcula contra ese precio tecleado — igual que la pantalla de autorización calcula sobre `DetCot.PUnit`.
+  9. **Origen del cambio:** necesidad del front (captura de cotizaciones AdosaSys) de ver el M1 en tiempo real durante la captura, sin crear folios temporales como en modo carácter.
+  10. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

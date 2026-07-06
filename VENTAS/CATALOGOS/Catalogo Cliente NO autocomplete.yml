@@ -1,0 +1,188 @@
+info:
+  name: Catalogo Cliente NO autocomplete
+  type: http
+  seq: 5
+
+http:
+  method: GET
+  url: http://192.0.1.14:8813/RestADOSASysAdmin/rest/RestADOSASysAdmin/Cliente?IdCliente=0
+  params:
+    - name: IdCliente
+      value: "0"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # catcliente — Catálogo de Clientes (Id, Razón Social y Activo)
+
+  **Módulo:** SysAdmin / RestADOSASysAdmin
+  **Proyecto:** RestADOSASysAdmin
+  **Autor:** SIS10 — JASS
+  **Fecha implementación:** 2026-07-06
+  **Estatus:** Pendiente de publicar ⏳
+
+  ---
+
+  ## 1. Descripción
+
+  Servicio REST de **solo consulta** que expone el catálogo de clientes de la tabla `Cliente`
+  con únicamente tres campos: identificador, razón social y el lógico de activo.
+
+  Su propósito es servir como **catálogo genérico** para poblar combos, listados y
+  búsquedas de cliente en aplicaciones front-end, sin exponer información sensible
+  del cliente (crédito, saldos, datos fiscales, etc.).
+
+  Solo expone un endpoint:
+
+  - `GET` → Consulta de todos los clientes o de uno en particular. **No modifica datos.**
+
+  ---
+
+  ## 2. Alcance
+
+  - Regresa **todos los clientes** registrados en la tabla `Cliente`, activos e inactivos.
+  - El campo `Activo` se incluye en la respuesta para que el consumidor decida si
+    filtra o muestra los inactivos (p. ej. deshabilitados en un combo).
+  - Lectura con `NO-LOCK`: no genera bloqueos sobre la tabla `Cliente`.
+  - Resultado ordenado alfabéticamente por `RazonSocial` (aprovecha el índice `idx-Razon`).
+
+  ---
+
+  ## 3. Programa implementado
+
+  **Archivo:** `RestADOSASysAdmin/AppServer/catcliente.p`
+  **URL base REST:** `/RestADOSASysAdmin/catcliente`
+
+  ---
+
+  ### 3.1 GET — Consulta del catálogo
+
+  **Endpoint:** `GET /catcliente/GetCliente`
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **Parámetros de entrada (Query String)**
+
+  **`IdCliente`** · INTEGER · ❌ — Filtra a un cliente específico
+  - `0` o sin valor = regresa **todos** los clientes (modo catálogo)
+  - `> 0` = regresa solo el cliente con ese `Id-Cliente`
+
+  **Parámetros de salida**
+
+  **`IdError`** · LOGICAL — `false` = consulta exitosa; `true` = ocurrió un error o el cliente no existe
+  **`Respuesta`** · CHARACTER — `"OK"` en éxito; descripción del error en caso contrario
+  **`ttCliente`** · TABLE — Un registro por cliente
+
+  ---
+
+  ## 4. Campos del response (ttCliente)
+
+  **`IdCliente`** · INTEGER — Id del cliente (`Cliente.Id-Cliente`)
+  **`RazonSocial`** · CHARACTER — Razón social del cliente
+  **`Activo`** · LOGICAL — `true` = cliente activo; `false` = cliente dado de baja
+
+  ### Valores de `Respuesta`
+
+  - `"OK"` — Consulta exitosa (con o sin registros)
+  - `"Cliente no existe: <id>"` — Se pidió un `IdCliente` específico y no está en la tabla (`IdError = true`)
+  - `"Error: <mensaje>"` — Error de ejecución capturado por `CATCH` (`IdError = true`)
+
+  ---
+
+  ## 5. Ejemplos de uso
+
+  ### Catálogo completo
+
+  ```
+  GET /RestADOSASysAdmin/catcliente/GetCliente?IdCliente=0
+  ```
+
+  Respuesta (ejemplo):
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "OK",
+      "ttCliente": {
+        "ttCliente": [
+          { "IdCliente": 1053, "RazonSocial": "ABARROTES EL SOL SA DE CV", "Activo": true },
+          { "IdCliente": 2071, "RazonSocial": "COMERCIAL DEL NORTE SA", "Activo": false },
+          { "IdCliente": 30,   "RazonSocial": "PUBLICO EN GENERAL", "Activo": true }
+        ]
+      }
+    }
+  }
+  ```
+
+  ### Un cliente específico
+
+  ```
+  GET /RestADOSASysAdmin/catcliente/GetCliente?IdCliente=1053
+  ```
+
+  Regresa un solo registro en `ttCliente` con `IdError = false` y `Respuesta = "OK"`.
+
+  ### Cliente inexistente
+
+  ```
+  GET /RestADOSASysAdmin/catcliente/GetCliente?IdCliente=999999
+  ```
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "Cliente no existe: 999999",
+      "ttCliente": { "ttCliente": [] }
+    }
+  }
+  ```
+
+  ---
+
+  ## 6. Pasos para publicar el servicio (PDSOE)
+
+  1. Abrir el proyecto `RestADOSASysAdmin` en Progress Developer Studio.
+  2. Verificar que `catcliente.p` compile sin errores (genera `catcliente.r`).
+  3. En **Servers → Servicios REST**, agregar `catcliente.p` al servicio
+     `RestADOSASysAdminService` (se genera el `.pidl` y se actualiza `resourceModel.xml`).
+  4. Mapear el procedimiento `GetCliente` con verbo **GET**:
+     - `IdCliente` → Query String.
+     - `IdError`, `Respuesta` y `ttCliente` → Response body.
+  5. Publicar el servicio en el servidor de aplicaciones (PAS) y probar con los
+     ejemplos de la sección 5.
+
+  ---
+
+  ## 7. Notas técnicas
+
+  - **Solo lectura** — el programa no contiene POST/PUT/DELETE; no hay riesgo de
+    modificación de datos por este servicio.
+
+  - **Manejo de errores estándar del módulo** — `IdError` / `Respuesta` siguen el mismo
+    patrón que `canalventa.p` y `usuariosmodulo.p`: cualquier excepción de ejecución se
+    captura con `CATCH Progress.Lang.Error` y se devuelve en `Respuesta` con
+    `IdError = true`, sin tirar el servicio.
+
+  - **Temp-table reducida** — la temp-table `ttCliente` define únicamente los 3 campos
+    expuestos. Se usa `ASSIGN` explícito (no `BUFFER-COPY`) para evitar arrastrar
+    cualquier otro campo de la tabla `Cliente` si en el futuro se agregan campos
+    a la temp-table por nombre coincidente.
+
+  - **Volumen** — el modo catálogo regresa la tabla completa de clientes. Si el
+    consumidor solo requiere clientes activos, debe filtrar por `Activo = true`
+    en el front-end, o bien solicitar una variante del servicio con ese filtro.
+
+  - **Orden del resultado** — `BY Cliente.RazonSocial`; los registros llegan listos
+    para mostrarse en un combo/lista alfabética sin reordenar en el cliente.
+
+  ---
+
+  **Desarrollado por:** SIS10 - JASS
