@@ -26,6 +26,7 @@ settings:
   maxRedirects: 5
 
 docs: |
+  SERVICIO DE TIPO DE CAMBIO
   # Servicio REST — Tipos de Cambio por Moneda y Fecha
 
   ---
