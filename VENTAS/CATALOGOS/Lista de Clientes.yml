@@ -1,0 +1,177 @@
+info:
+  name: Lista de Clientes
+  type: http
+  seq: 7
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Catalogo/ListasClientes?IdListaCliente=0
+  params:
+    - name: IdListaCliente
+      value: "0"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Catálogo de Listas de Clientes
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Catálogo de Listas de Clientes (GetListasCliente)**
+  Retorna el listado de la tabla `ListaCte` (Id y Descripción) para ser consumido como catálogo — por ejemplo, para poblar un combo de selección de Lista de Clientes.
+  Programa servidor: `ventas-cat-listacliente.p` | Procedure: `GetListasCliente`
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8850/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Catalogo/ListasClientes
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdListaCte`** · INT · ❌ — Clave de la lista de clientes a consultar (`ListaCte.Id-ListaCte`)
+  - `0`, vacío o `?` (null PASOE) = retorna **todas** las listas
+  - `> 0` = filtra exclusivamente por esa lista · Ej: `5`
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ### Consultar todas las listas (sin filtro):
+
+  ```
+  GET http://192.0.1.14:8850/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Catalogo/ListasClientes
+  ```
+
+  ### Filtrar por una lista específica:
+
+  ```
+  GET http://192.0.1.14:8850/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Catalogo/ListasClientes
+      ?IdListaCte=5
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "3 lista(s) de clientes encontrada(s).",
+    "ttListaCte": [
+      { "IdListaCte": 1, "Descripcion": "LISTA GENERAL" },
+      { "IdListaCte": 5, "Descripcion": "LISTA MAYOREO" },
+      { "IdListaCte": 8, "Descripcion": "LISTA GOBIERNO" }
+    ]
+  }
+  ```
+
+  ### Parámetros de salida (control)
+
+  **`IdError`** · BOOLEAN — `true` = ocurrió un error; `false` = ejecución correcta
+  **`Respuesta`** · STRING — Mensaje de resultado (cantidad encontrada) o detalle del error
+
+  ### Campos de `ttListaCte`
+
+  **`IdListaCte`** · INT — Clave de la lista de clientes (`ListaCte.Id-ListaCte`)
+  **`Descripcion`** · STRING — Descripción de la lista (`ListaCte.Descripcion`)
+
+  > Los registros se retornan ordenados alfabéticamente por `Idx-Descripcion` (índice sobre `Descripcion`).
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Error GetListasArt: <detalle> (OE:<num>)",
+    "ttListaCte": []
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdListaCte` = `0`, vacío o `?` | Retorna **todas** las listas sin filtrar |
+  | `IdListaCte` > `0` | Filtra exclusivamente por esa clave de lista |
+  | `IdListaCte` con valor inexistente | Retorna `ttListaCte: []` con `IdError: false` y `"0 lista(s) de clientes encontrada(s)."` |
+  | Tabla `ListaCte` sin registros | Retorna `ttListaCte: []` con `IdError: false` y `"0 lista(s) de clientes encontrada(s)."` |
+  | Error de acceso a datos / runtime | `IdError: true` y `Respuesta` con el detalle del error OpenEdge (bloque `CATCH`) |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+  Adjuntar screenshot de la herramienta de prueba (Bruno / Postman / curl) mostrando:
+  - URL completa
+  - Status HTTP `200 OK`
+  - Cuerpo de respuesta con al menos un registro en `ttListaCte`
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | 2026-07-07 | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Fuente de datos:** El servicio recorre directamente la tabla `ListaCte` con `USE-INDEX Idx-Descripcion` para retornar el catálogo ordenado alfabéticamente por descripción.
+  2. **Orden alternativo:** Si se requiere ordenar por clave, cambiar a `USE-INDEX Idx-ListaCte` (índice primario único sobre `Id-ListaCte`).
+  3. **EMPTY TEMP-TABLE:** Se limpia `ttListaCte` al inicio para evitar acumulación de registros en ejecuciones repetidas dentro de la misma sesión del agente PASOE.
+  4. **Prefijo del mensaje de error:** El bloque `CATCH` del programa arma el mensaje con el prefijo `"Error GetListasArt:"` (herencia del programa de listas de artículos); el texto correcto sería `"Error GetListasCliente:"`. No afecta la operación, solo la etiqueta del mensaje.
+  5. **Autenticación:** El servicio corre sobre OpenEdge PASOE. Si el ambiente requiere autenticación Bearer, incluir el header `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS
