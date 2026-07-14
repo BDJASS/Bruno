@@ -1,0 +1,228 @@
+info:
+  name: Consulta
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/MetaVendedor/Consulta?Anio=2026&IdVendedor=&Grupo=
+  params:
+    - name: Anio
+      value: "2026"
+      type: query
+    - name: IdVendedor
+      value: ""
+      type: query
+    - name: Grupo
+      value: ""
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Metas por Vendedor (Consulta)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Metas por Vendedor — Consulta**
+  Consulta las metas mensuales de venta (presupuesto ENE–DIC) registradas en la tabla `EstVendedor`, en **cascada**: Grupo/Ubicación (`Id-Ubivta`) → Vendedor → metas del **año consultado y del año anterior**, con el nombre del vendedor y la meta anual calculada. Filtrable por vendedor, año y/o grupo.
+  Programa servidor: `metavendedor.p` · Procedimiento: `leeMetaVendedor` | Versión REST de la pantalla `vtaa0600.p` "Alta de Metas" (modo carácter).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/MetaVendedor/Consulta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdVendedor`** · STRING · ❌ — Clave del vendedor; se normaliza a 4 dígitos con ceros a la izquierda (`104` = `0104`). Si viene, debe existir en el catálogo `Vendedor`
+  - Vacío = todos los vendedores con meta registrada
+
+  **`Anio`** · STRING · ❌ — Año a consultar; el servicio regresa ese año **y el anterior**
+  - Vacío = año actual · No se acepta año mayor al actual
+
+  **`Grupo`** · STRING · ❌ — Grupo/Ubicación de venta (`Id-Ubivta`, catálogo `UbiVta`). Si viene, debe existir
+  - Ej: `"01"` · Vacío = todos los grupos
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/MetaVendedor/Consulta                          (todos, año actual + anterior)
+  GET .../Ventas/MetaVendedor/Consulta?IdVendedor=0104          (un vendedor, año actual + anterior)
+  GET .../Ventas/MetaVendedor/Consulta?IdVendedor=0104&Anio=2025   (2025 + 2024)
+  GET .../Ventas/MetaVendedor/Consulta?Grupo=01                 (todos los vendedores del grupo 01)
+  GET .../Ventas/MetaVendedor/Consulta?Grupo=01&Anio=2026       (grupo 01, años 2026 y 2025)
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  Estructura en cascada: `ttUbicacion` (grupo) → `ttVendedor` → `ttMetaAnio` (una tabla por año: consultado y anterior).
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Consulta generada: 2 vendedor(es), anios 2026 y 2025.",
+      "dsMetaVendedor": {
+        "ttUbicacion": [
+          {
+            "IdUbivta": "01",
+            "Descripcion": "MOSTRADOR MONTERREY",
+            "ttVendedor": [
+              {
+                "IdVendedor": "0104",
+                "NomVendedor": "JUAN PEREZ LOPEZ",
+                "ttMetaAnio": [
+                  {
+                    "Anio": 2026,
+                    "MetaEne": 150000.00,
+                    "MetaFeb": 150000.00,
+                    "MetaMar": 165000.00,
+                    "MetaAbr": 150000.00,
+                    "MetaMay": 170000.00,
+                    "MetaJun": 160000.00,
+                    "MetaJul": 150000.00,
+                    "MetaAgo": 155000.00,
+                    "MetaSep": 160000.00,
+                    "MetaOct": 170000.00,
+                    "MetaNov": 180000.00,
+                    "MetaDic": 200000.00,
+                    "MetaTotal": 1960000.00
+                  },
+                  {
+                    "Anio": 2025,
+                    "MetaEne": 140000.00,
+                    "MetaFeb": 140000.00,
+                    "MetaMar": 150000.00,
+                    "MetaAbr": 140000.00,
+                    "MetaMay": 160000.00,
+                    "MetaJun": 150000.00,
+                    "MetaJul": 140000.00,
+                    "MetaAgo": 145000.00,
+                    "MetaSep": 150000.00,
+                    "MetaOct": 160000.00,
+                    "MetaNov": 170000.00,
+                    "MetaDic": 190000.00,
+                    "MetaTotal": 1835000.00
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  ### Campos de `ttUbicacion` (1 registro por grupo/ubicación)
+
+  **`IdUbivta`** · STRING — Clave del grupo/ubicación de venta (`Vendedor.Id-UbiVta`)
+  **`Descripcion`** · STRING — Descripción del grupo (`UbiVta.Descr`); vacío si la ubicación no existe en catálogo
+
+  ### Campos de `ttVendedor` (anidado en su ubicación; 1 registro por vendedor)
+
+  **`IdVendedor`** · STRING — Clave del vendedor (4 dígitos)
+  **`NomVendedor`** · STRING — Nombre del vendedor (`Vendedor.Iniciales` → `Empleado.Nombre`); vacío si no tiene empleado ligado
+
+  ### Campos de `ttMetaAnio` (anidado en su vendedor; 2 registros: año consultado y anterior, en ese orden — el año faltante se crea automáticamente con metas en `0`)
+
+  **`Anio`** · INT — Año de las metas
+  **`MetaEne` … `MetaDic`** · DECIMAL — Meta mensual de venta de enero a diciembre (`EstVendedor.Presup[1..12]`)
+  **`MetaTotal`** · DECIMAL — Meta anual (suma de los 12 meses, calculada por el servicio)
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "No se encuentra el grupo (Id-Ubivta). Favor de revisar.",
+    "dsMetaVendedor": {}
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdVendedor` no numérico, ≤ 0 o > 9999 | `IdError: true` — `"Clave de vendedor invalida."` |
+  | `IdVendedor` con valor pero inexistente en `Vendedor` | `IdError: true` — `"No se encuentra el vendedor. Favor de revisar."` |
+  | `Grupo` con valor pero inexistente en `UbiVta` | `IdError: true` — `"No se encuentra el grupo (Id-Ubivta). Favor de revisar."` |
+  | `Anio` no numérico, ≤ 0 | `IdError: true` — `"Anio invalido. Favor de revisar."` |
+  | `Anio` mayor al año actual | `IdError: true` — `"Anio invalido; no puede ser mayor al anio actual (AAAA)."` |
+  | `Anio` vacío | Consulta OK; se asume el año actual (y regresa también el anterior) |
+  | Vendedor con registro en **solo uno** de los dos años (consultado o anterior) | Se da de alta automáticamente el año faltante en `EstVendedor` con metas en `0` y se regresa en la respuesta, para mantener el histórico completo (las metas se capturan después con el PUT de modificación) |
+  | Vendedor sin metas en el año consultado ni en el anterior | No se incluye en la respuesta y no se crea nada |
+  | Registros dobles/basura en `EstVendedor` | Se toma el **primer** registro del vendedor-año; los repetidos se omiten |
+  | Sin registros con los filtros | Consulta OK; `Respuesta: "Sin metas registradas con los criterios indicados."` y dataset vacío |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de despliegue y ejecución por QA. |
+
+  ---
+
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

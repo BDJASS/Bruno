@@ -5,13 +5,13 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Consulta/MargenFactura?IdUser=olds&Factura=2100739
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Consulta/MargenFactura?IdUser=olds&Factura=08079CB
   params:
     - name: IdUser
       value: olds
       type: query
     - name: Factura
-      value: "2100739"
+      value: 08079CB
       type: query
   auth: inherit
 

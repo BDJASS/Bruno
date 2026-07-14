@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/VentasPorProvPorVend?IdUser=olds&Seleccion=3&Lista=002033&FechaInicial=2026-04-01&FechaFinal=2026-04-05&Reporte=1&Desglose=1&CantMin=0
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/VentasPorProvPorVend?IdUser=olds&Seleccion=3&Lista=002033&FechaInicial=2026-06-09&FechaFinal=2026-07-09&Reporte=1&Desglose=1&CantMin=0
   params:
     - name: IdUser
       value: olds
@@ -21,10 +21,10 @@ http:
       type: query
       disabled: true
     - name: FechaInicial
-      value: 2026-04-01
+      value: 2026-06-09
       type: query
     - name: FechaFinal
-      value: 2026-04-05
+      value: 2026-07-09
       type: query
     - name: Reporte
       value: "1"

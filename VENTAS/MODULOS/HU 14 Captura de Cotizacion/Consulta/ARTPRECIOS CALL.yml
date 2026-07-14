@@ -1,14 +1,14 @@
 info:
-  name: Articulo / Color/ Presentacion/ Precios
+  name: ARTPRECIOS CALL
   type: http
-  seq: 2
+  seq: 4
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Cotizacion/Captura/Partidas?IdArticulo=096340&IdColor=2&IdPres=4&IdCliente=877&PrecioTemp=no&TipoPrecio=M&Vigencia=75&PrecCalc=no&PlazoTV=75&IdUbiVta=MLO
+  url: http://192.0.1.14:8810/RestADOSA3/rest/RestADOSA/artprecios2?IdArticulo=017807&IdColor=2&IdPres=4&IdCliente=32801&PrecioTemp=no&TipoPrecio=M&Vigencia=75&PrecCalc=no&PlazoTV=75&IdUbiVta=MLO
   params:
     - name: IdArticulo
-      value: "096340"
+      value: "017807"
       type: query
     - name: IdColor
       value: "2"
@@ -17,7 +17,7 @@ http:
       value: "4"
       type: query
     - name: IdCliente
-      value: "877"
+      value: "32801"
       type: query
     - name: PrecioTemp
       value: no

@@ -1,0 +1,207 @@
+info:
+  name: Guardar Meta
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/MetaVendedor/Guarda?Anio=2026&IdUser=olds
+  params:
+    - name: Anio
+      value: "2026"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  body:
+    type: json
+    data: |-
+      {
+          "dsMetaCaptura": {
+            "ttMetaCaptura": [
+              {
+                "IdVendedor": "0104",
+                "MetaEne": 150000.00, "MetaFeb": 150000.00, "MetaMar": 165000.00,
+                "MetaAbr": 150000.00, "MetaMay": 170000.00, "MetaJun": 160000.00,
+                "MetaJul": 150000.00, "MetaAgo": 155000.00, "MetaSep": 160000.00,
+                "MetaOct": 170000.00, "MetaNov": 180000.00, "MetaDic": 200000.00
+              },
+              {
+                "IdVendedor": "0018",
+                "MetaEne": 90000.00, "MetaFeb": 90000.00, "MetaMar": 95000.00,
+                "MetaAbr": 90000.00, "MetaMay": 98000.00, "MetaJun": 92000.00,
+                "MetaJul": 90000.00, "MetaAgo": 91000.00, "MetaSep": 93000.00,
+                "MetaOct": 96000.00, "MetaNov": 99000.00, "MetaDic": 110000.00
+              }
+            ]
+          }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Metas por Vendedor (Guardado Masivo)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Metas por Vendedor — Guardado Masivo**
+  Guarda en una sola llamada las metas mensuales de venta (ENE–DIC) de **varios vendedores** para un año dado. Por cada vendedor hace *upsert* sobre `EstVendedor`: si el registro vendedor-año ya existe se actualizan (`ASSIGN`) las 12 metas; si no existe se da de alta. Las 12 metas son **obligatorias** en cada registro (se rechazan nulas o ausentes). Aplicación atómica: o se guarda todo el lote o nada.
+  Programa servidor: `metavendedor.p` · Procedimiento: `guardaMetaVendedor` | Complemento masivo de la pantalla `vtaa0600.p` "Alta de Metas" (modo carácter).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/MetaVendedor/Guarda
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`Anio`** · STRING · ❌ — Año al que se guardan las metas de **todo** el lote
+  - Vacío = año actual · No se acepta año mayor al actual
+
+  **`IdUser`** · STRING · ✅ — Usuario que realiza la operación (para auditoría)
+
+  ---
+
+  ## 5. Body
+
+  Dataset `dsMetaCaptura` con la tabla `ttMetaCaptura`: un registro por vendedor. **Los 12 meses son obligatorios** en cada registro; un mes ausente o enviado como `null` rechaza el lote completo.
+
+  **`IdVendedor`** · STRING · ✅ — Clave del vendedor; se normaliza a 4 dígitos (`104` = `0104`). Debe existir en el catálogo `Vendedor` y no venir repetido dentro del lote
+  **`MetaEne` … `MetaDic`** · DECIMAL · ✅ — Meta mensual de enero a diciembre; no puede venir nula ni negativa (`0` sí es válido)
+
+  ```json
+  {
+    "request": {
+      "dsMetaCaptura": {
+        "ttMetaCaptura": [
+          {
+            "IdVendedor": "0104",
+            "MetaEne": 150000.00, "MetaFeb": 150000.00, "MetaMar": 165000.00,
+            "MetaAbr": 150000.00, "MetaMay": 170000.00, "MetaJun": 160000.00,
+            "MetaJul": 150000.00, "MetaAgo": 155000.00, "MetaSep": 160000.00,
+            "MetaOct": 170000.00, "MetaNov": 180000.00, "MetaDic": 200000.00
+          },
+          {
+            "IdVendedor": "0230",
+            "MetaEne": 90000.00, "MetaFeb": 90000.00, "MetaMar": 95000.00,
+            "MetaAbr": 90000.00, "MetaMay": 98000.00, "MetaJun": 92000.00,
+            "MetaJul": 90000.00, "MetaAgo": 91000.00, "MetaSep": 93000.00,
+            "MetaOct": 96000.00, "MetaNov": 99000.00, "MetaDic": 110000.00
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST .../Ventas/MetaVendedor/Guarda?Anio=2026&IdUser=jperez
+  Body: (ver sección 5)
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  Sin tabla de salida: en éxito la `Respuesta` solo indica la cantidad de vendedores guardados.
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Metas del anio 2026 guardadas correctamente: 2 vendedor(es)."
+    }
+  }
+  ```
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Vendedor 0104: la meta del mes de MAR es obligatoria y no puede venir nula."
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  Todas las validaciones se ejecutan **antes** de guardar (todo o nada): si un registro del lote falla, no se guarda ninguno.
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `Anio` no numérico o ≤ 0 | `IdError: true` — `"Anio invalido. Favor de revisar."` |
+  | `Anio` mayor al año actual | `IdError: true` — `"Anio invalido; no puede ser mayor al anio actual (AAAA)."` |
+  | Body sin registros | `IdError: true` — `"No se recibio ningun registro de metas (ttMetaCaptura vacio en el body)."` |
+  | Registro sin `IdVendedor` | `IdError: true` — `"Registro N: falta la clave del vendedor (IdVendedor)."` |
+  | `IdVendedor` no numérico, ≤ 0 o > 9999 | `IdError: true` — `"Registro N: clave de vendedor invalida (X)."` |
+  | Vendedor inexistente en catálogo | `IdError: true` — `"Registro N: no se encuentra el vendedor XXXX. Favor de revisar."` |
+  | Vendedor repetido dentro del lote | `IdError: true` — `"El vendedor XXXX viene mas de una vez en el lote; enviarlo una sola vez."` |
+  | Mes ausente o `null` | `IdError: true` — `"Vendedor XXXX: la meta del mes de MMM es obligatoria y no puede venir nula."` |
+  | Mes negativo | `IdError: true` — `"Vendedor XXXX: meta invalida (negativa) para el mes de MMM."` |
+  | Registro bloqueado por otro proceso | `IdError: true` — `"Alguno de los registros esta siendo usado por otro proceso; no se guardo nada. Intente de nuevo."` (rollback del lote completo) |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de despliegue y ejecución por QA. |
+
+  ---
+
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

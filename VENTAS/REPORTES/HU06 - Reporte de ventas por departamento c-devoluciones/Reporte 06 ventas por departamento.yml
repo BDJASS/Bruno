@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/DepartamentoDevoluciones?IdUser=olds&FecIni=2026-04-14&FecFin=2026-04-14
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/DepartamentoDevoluciones?IdUser=olds&FecIni=2026-07-01&FecFin=2026-07-09
   params:
     - name: IdUser
       value: olds
@@ -15,10 +15,10 @@ http:
       type: query
       disabled: true
     - name: FecIni
-      value: 2026-04-14
+      value: 2026-07-01
       type: query
     - name: FecFin
-      value: 2026-04-14
+      value: 2026-07-09
       type: query
   auth: inherit
 
