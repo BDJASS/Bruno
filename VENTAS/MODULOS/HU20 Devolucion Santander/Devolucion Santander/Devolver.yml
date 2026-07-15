@@ -1,0 +1,212 @@
+info:
+  name: Devolver
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Devolucion/Devolver?IdPedido=2951525&IdComercio=9265655278&IdUser=olds
+  params:
+    - name: IdPedido
+      value: "2951525"
+      type: query
+    - name: IdComercio
+      value: "9265655278"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Devolución de Pedido MIT: Devolver
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Devolución de Pedido MIT (Devolver)**
+  Ejecuta la devolución del pago de un pedido en la pasarela **MIT** y graba la respuesta en la bitácora `MITResp`. Regresa el resultado interpretado (`IdError`/`Respuesta`) más la respuesta completa de la pasarela (`ttCancelacion`).
+  Programa servidor: `cancelamit.p` · Procedimiento: `enviaDevolucion` | Migración de `devolucionPedido.php` (recurso original `cancmit`, POST). El cobro/devolución real lo ejecuta `pruebaapi.p`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Devolucion/Devolver
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido a devolver
+  **`IdComercio`** · STRING · ✅ — Comercio de la pasarela MIT; debe existir en la tabla `CancelaMIT`. En el front original va fijo: `9265655278`
+  **`IdUser`** · STRING · ✅ — Usuario que realiza el proceso
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Los parámetros viajan en Query String.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                |
+  |----------------|----------------------|
+  | `Accept`       | `application/json`   |
+  | `Content-Type` | `application/json`   |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST .../Ventas/Devolucion/Devolver?IdPedido=1234567&IdComercio=9265655278
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ### Éxito
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Devolucion aplicada. approved - Referencia: 1234567.",
+    "ttCancelacion": [
+      {
+        "Reference": "1234567",
+        "Response": "approved",
+        "Auth": "123456",
+        "Amount": "245.50",
+        "NbError": "",
+        "CdResponse": "...",
+        "Fecha": "...",
+        "Hora": "...",
+        "Voucher": "...",
+        "VoucherComercio": "...",
+        "VoucherCliente": "..."
+      }
+    ]
+  }
+  ```
+
+  ### Campos principales de `ttCancelacion`
+
+  **`Reference`** · STRING — Referencia de la operación en la pasarela
+  **`Response`** · STRING — Resultado de la pasarela (ej. `approved`)
+  **`Auth`** · STRING — Número de autorización
+  **`Amount`** · STRING — Monto devuelto
+  **`NbError`** · STRING — Mensaje de error de la pasarela; vacío = sin error
+  **`Voucher` / `VoucherComercio` / `VoucherCliente`** · STRING — Comprobantes de la operación
+
+  > La tabla incluye además datos informativos de la transacción (`CdResponse`, `CdError`, `Fecha`, `Hora`, `NbCompany`, `NbMerchant`, `CcType`, `CcNumber` enmascarado, etc.).
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "El pedido 1234567 no cumple con condiciones para devolucion.",
+    "ttCancelacion": []
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdPedido` vacío | `IdError: true` — *"Se requiere el pedido."* |
+  | `IdComercio` vacío | `IdError: true` — *"Se requiere el comercio (IdComercio)."* |
+  | Comercio sin configuración MIT (`CancelaMIT`) | `IdError: true` — *"No existe configuracion MIT para el comercio X."* |
+  | Pedido no cumple condiciones (vendedor/pago/operación) | `IdError: true` — *"El pedido X no cumple con condiciones para devolucion."* |
+  | Monto a devolver ≤ 0 | `IdError: true` — *"El pedido X no tiene monto por devolver."* |
+  | La pasarela no responde | `IdError: true` — *"La pasarela MIT no regreso respuesta para el pedido X."* |
+  | La pasarela regresa error (`NbError`) | `IdError: true`; `Respuesta` = mensaje de la pasarela |
+  | Devolución aplicada | `IdError: false` — *"Devolucion aplicada. `<Response>` - Referencia: `<Reference>`."* |
+
+  ---
+
+  ## 10. Reglas de Negocio — Monto que se devuelve
+
+  Aplica **solo** a pedidos de tienda en línea: `Id-Vendedor = "0100"`, pago vía **SANTANDER** (`PagInfo`) y con número de operación MIT (`MITOperacion <> ""`).
+
+  | Caso | Monto a devolver |
+  |------|------------------|
+  | Pedido cancelado (existe en `CancPed`) | Total pagado (`MITImporte`) |
+  | Pedido con `Id-Estatus < 5` (aún no facturado/surtido) | Total pagado (`MITImporte`) |
+  | Factura/remisión **cancelada** | Total pagado (`MITImporte`) |
+  | Factura vigente **con devoluciones** | Suma de `Devolucion.Tot` (no canceladas) |
+  | Factura vigente **sin devoluciones** | `MITImporte − Remision.Tot` (diferencia pagado vs facturado) |
+
+  > El monto lo calcula el servidor con estas reglas; el front **no** envía monto.
+
+  ---
+
+  ## 11. Uso en el Front
+
+  1. Consultar primero con **GET `Ventas/Devolucion/Consulta`** (documento aparte) para mostrar montos y el total a devolver.
+  2. Al confirmar (botón Devolver/Guardar), llamar este POST.
+  3. Mostrar `Respuesta` al usuario:
+     - `IdError: false` → mensaje de éxito (ya incluye la referencia).
+     - `IdError: true` → mensaje de error ya interpretado; **no** es necesario revisar `NbError` a mano como hacía el PHP.
+
+  ---
+
+  ## 12. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 13. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 14. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio migrado a RestADOSAVentas. Pendiente de compilar y probar por QA. |
+
+  ---
+
+  ## 15. Observaciones Técnicas
+
+  1. **Convención:** devuelve `IdError`/`Respuesta` + `TABLE ttCancelacion`, con manejo de errores por `CATCH`. El resultado de la pasarela viene **interpretado en el servidor** (éxito, o el `NbError` de MIT como mensaje).
+  2. **Pasarela MIT:** la devolución la ejecuta `/usr2/adosa/procs/pruebaapi.p` (ruta absoluta, igual que el original); confirmar que exista en el servidor del PASOE de Ventas.
+  3. **Bitácora:** cada respuesta de la pasarela se graba en la tabla **`MITResp`** (referencia, autorización, montos, vouchers). Se eliminó el archivo de depuración `/usr2/sis6/MITRespCancela<pedido>.err` del original.
+  4. **Correcciones vs original:** se validan casos que antes tronaban o no regresaban nada al front: comercio sin configuración, pedido sin condiciones, monto ≤ 0 y pasarela sin respuesta.
+  5. **Configuración del comercio:** credenciales y URL de la pasarela salen de la tabla `CancelaMIT` por `Id-Comercio`.
+  6. **Tablas:** `Pedido`, `CancPed`, `Remision`, `Devolucion`, `CancelaMIT`, `MITResp`.
+  7. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

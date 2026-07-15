@@ -1,0 +1,187 @@
+info:
+  name: Consulta
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Devolucion/Consulta?IdPedido=2951525
+  params:
+    - name: IdPedido
+      value: "2951525"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Devolución de Pedido MIT: Consulta
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Devolución de Pedido MIT (Consulta)**
+  Recibe el folio del pedido y regresa los datos para armar la vista de devolución: monto pagado vía MIT, total de la factura, devolución anterior y **total a devolver** (calculado con las reglas de negocio).
+  Programa servidor: `cancelamit.p` · Procedimiento: `leePedido` | Migración de `devolucionPedido.php` (recurso original `cancmit`, GET).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Devolucion/Consulta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido a consultar
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Devolucion/Consulta?IdPedido=1234567
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Pedido 1234567 encontrado.",
+    "ttPedido": [
+      {
+        "IdPedido": "1234567",
+        "MITImporte": 1745.80,
+        "MITAmount": 0.00,
+        "TotalFac": 1500.30,
+        "TotalDev": 245.50
+      }
+    ]
+  }
+  ```
+
+  ### Campos de `ttPedido` (1 registro)
+
+  **`IdPedido`** · STRING — Folio del pedido
+  **`MITImporte`** · DECIMAL — Monto pagado vía MIT (lo que el cliente pagó en línea)
+  **`MITAmount`** · DECIMAL — Devolución anterior (última respuesta MIT registrada en `MITResp`)
+  **`TotalFac`** · DECIMAL — Total de la factura/remisión asociada (o total del pedido si no hay)
+  **`TotalDev`** · DECIMAL — **Total a devolver**, calculado con las reglas de la sección 10
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "No se encontro el pedido 1234567 con pago MIT para devolucion.",
+    "ttPedido": []
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdPedido` vacío | `IdError: true` — *"Se requiere el pedido."* |
+  | Pedido inexistente (ni en `Pedido` ni en `CancPed` con pago MIT) | `IdError: true` — *"No se encontro el pedido X con pago MIT para devolucion."* |
+  | Pedido vigente encontrado | `IdError: false` — *"Pedido X encontrado."* |
+  | Pedido cancelado encontrado (`CancPed`) | `IdError: false` — *"Pedido X encontrado (cancelado)."* |
+
+  ---
+
+  ## 10. Reglas de Negocio — Cálculo del `TotalDev`
+
+  Aplica **solo** a pedidos de tienda en línea: `Id-Vendedor = "0100"`, pago vía **SANTANDER** (`PagInfo`) y con número de operación MIT (`MITOperacion <> ""`).
+
+  | Caso | Monto a devolver |
+  |------|------------------|
+  | Pedido cancelado (existe en `CancPed`) | Total pagado (`MITImporte`) |
+  | Pedido con `Id-Estatus < 5` (aún no facturado/surtido) | Total pagado (`MITImporte`) |
+  | Factura/remisión **cancelada** | Total pagado (`MITImporte`) |
+  | Factura vigente **con devoluciones** | Suma de `Devolucion.Tot` (no canceladas) |
+  | Factura vigente **sin devoluciones** | `MITImporte − Remision.Tot` (diferencia pagado vs facturado) |
+
+  ---
+
+  ## 11. Uso en el Front
+
+  Al capturar el pedido, llamar este GET y llenar la pantalla:
+  - Monto pagado → `MITImporte`
+  - Monto factura → `TotalFac`
+  - Devolución anterior → `MITAmount`
+  - Total a devolver → `TotalDev`
+
+  La devolución se ejecuta con el servicio **POST `Ventas/Devolucion/Devolver`** (documento aparte).
+
+  ---
+
+  ## 12. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 13. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 14. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio migrado a RestADOSAVentas. Pendiente de compilar y probar por QA. |
+
+  ---
+
+  ## 15. Observaciones Técnicas
+
+  1. **Convención:** devuelve `IdError`/`Respuesta` + `TABLE ttPedido`, con manejo de errores por `CATCH`.
+  2. **Pedido cancelado:** si el pedido ya no existe en `Pedido`, se busca en `CancPed` (pedidos cancelados) con las mismas condiciones de pago MIT.
+  3. **Devolución anterior:** `MITAmount` sale de `MITResp` (bitácora de respuestas de la pasarela) por pedido.
+  4. **Tablas:** `Pedido`, `CancPed`, `Remision`, `Devolucion`, `MITResp`.
+  5. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

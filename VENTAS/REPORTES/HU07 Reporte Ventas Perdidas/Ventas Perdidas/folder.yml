@@ -1,0 +1,7 @@
+info:
+  name: Ventas Perdidas
+  type: folder
+  seq: 1
+
+request:
+  auth: inherit

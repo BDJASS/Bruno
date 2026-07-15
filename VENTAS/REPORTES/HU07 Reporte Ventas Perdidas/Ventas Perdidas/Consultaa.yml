@@ -1,0 +1,203 @@
+info:
+  name: Consultaa
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/VentasPerdidas/Consulta?FechaIni=2026-01-14&FechaFin=2026-07-14&IdVendedor=&IdUser=olds&IdProv=
+  params:
+    - name: FechaIni
+      value: 2026-01-14
+      type: query
+    - name: FechaFin
+      value: 2026-07-14
+      type: query
+    - name: IdVendedor
+      value: ""
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdProv
+      value: ""
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |+
+  # Servicio REST — Ventas Perdidas: Consulta 
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Ventas Perdidas — Consulta plana a nivel detalle**
+  Regresa **un renglón por cada registro** de `VentaPerdida` en un rango de fechas, con todos los ids y nombres ya resueltos (artículo, proveedor, cliente, vendedor y motivo) más cantidad e importe. Está pensado para que el front arme toda la vista (tablas, agrupados, gráficas) con **una sola llamada**.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/VentasPerdidas/Consulta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · Fechas en formato ISO `aaaa-mm-dd` (ej. `2026-05-12`)
+
+  **`FechaIni`** · DATE · ✅ — Fecha inicial del rango de registro (`Fec-Reg`)
+  **`FechaFin`** · DATE · ✅ — Fecha final del rango; no puede ser menor a `FechaIni`
+  **`IdUser`** · STRING · ✅ — Usuario que consulta; se registra en la auditoría
+  **`IdVendedor`** · STRING · ❌ — Vendedor a filtrar; se rellena a 4 posiciones con ceros. Vacío = todos
+  **`IdProv`** · STRING · ❌ — Proveedor a filtrar (`0` = sin proveedor). Vacío = todos
+
+  ---
+
+  ## 5. Body
+
+  No aplica (GET).
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Reporte/VentasPerdidas/Consulta?FechaIni=2026-07-01&FechaFin=2026-07-14&IdUser=jass&IdVendedor=&IdProv=
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "2 registro(s), importe $8,320.00.",
+    "ttVP": [
+      {
+        "IdVtaPer": 45012,
+        "FecReg": "2026-07-03",
+        "IdArticulo": "021118",
+        "NombreArt": "CUADERNO PROFESIONAL 100H",
+        "IdProv": 1024,
+        "NomProv": "GRUPO PAPELERO XYZ",
+        "IdCliente": 26,
+        "NomCliente": "PAPELERIA LA ESCUELA SA DE CV",
+        "IdVendedor": "0104",
+        "NomVendedor": "JUAN PEREZ",
+        "Cantidad": 120.0,
+        "Importe": 4992.00,
+        "IdMotivo": 2,
+        "Motivo": "Desabasto"
+      },
+      {
+        "IdVtaPer": 45188,
+        "FecReg": "2026-07-10",
+        "IdArticulo": "021118",
+        "NombreArt": "CUADERNO PROFESIONAL 100H",
+        "IdProv": 1024,
+        "NomProv": "GRUPO PAPELERO XYZ",
+        "IdCliente": 51,
+        "NomCliente": "DISTRIBUIDORA DEL NORTE",
+        "IdVendedor": "0210",
+        "NomVendedor": "MARIA LOPEZ",
+        "Cantidad": 80.0,
+        "Importe": 3328.00,
+        "IdMotivo": 1,
+        "Motivo": "Precio"
+      }
+    ]
+  }
+  ```
+
+  ### Campos de `ttVP` (un registro por renglón de venta perdida)
+
+  **`IdVtaPer`** · INTEGER — Folio de la venta perdida (clave única del renglón)
+  **`FecReg`** · DATE — Fecha de registro (`Fec-Reg`)
+  **`IdArticulo`** · CHARACTER — Clave del artículo
+  **`NombreArt`** · CHARACTER — Descripción del artículo (`Articulo.Descr`)
+  **`IdProv`** · INTEGER — Proveedor (`0` = sin proveedor)
+  **`NomProv`** · CHARACTER — Nombre del proveedor (`Prov.Nombre`)
+  **`IdCliente`** · INTEGER — Cliente que solicitó el artículo
+  **`NomCliente`** · CHARACTER — Razón social del cliente (`Cliente.RazonSocial`)
+  **`IdVendedor`** · CHARACTER — Vendedor (4 posiciones)
+  **`NomVendedor`** · CHARACTER — Nombre del vendedor (`Vendedor.Iniciales` → `Empleado.Nombre`)
+  **`Cantidad`** · DECIMAL — Cantidad solicitada que no se pudo surtir
+  **`Importe`** · DECIMAL — Importe de la venta perdida del renglón
+  **`IdMotivo`** · INTEGER — Motivo: `1` = Precio; `2` = Desabasto
+  **`Motivo`** · CHARACTER — Etiqueta del motivo: `"Precio"` (1), `"Desabasto"` (2), `"Otro"` (resto)
+
+  ### Response sin movimientos
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Sin ventas perdidas con los criterios indicados.",
+    "ttVP": []
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `FechaIni`/`FechaFin` vacías o mal formadas | `IdError: true` — `"El rango de fechas de registro es obligatorio (FechaIni y FechaFin, formato aaaa-mm-dd)."` |
+  | `FechaFin < FechaIni` | `IdError: true` — `"La fecha final no puede ser menor a la inicial."` |
+  | `IdVendedor` inexistente | `IdError: true` — `"Folio de vendedor inexistente, verifique..."` |
+  | `IdProv` no numérico / negativo | `IdError: true` — `"Proveedor (IdProv) invalido."` |
+  | Sin registros | `IdError: false` — `ttVP` vacío con `"Sin ventas perdidas..."` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+
