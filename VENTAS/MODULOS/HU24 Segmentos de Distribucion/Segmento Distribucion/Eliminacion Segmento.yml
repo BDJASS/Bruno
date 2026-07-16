@@ -1,0 +1,167 @@
+info:
+  name: Eliminacion Segmento
+  type: http
+  seq: 4
+
+http:
+  method: DELETE
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/SegmentoDistribucion/Baja?IdSegmento=D4x&IdUser=olds
+  params:
+    - name: IdSegmento
+      value: D4x
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+    - name: Confirma
+      value: "false"
+      type: query
+      disabled: true
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Segmentos de Distribución (Baja)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Segmentos de Distribución — Baja**
+  Elimina un segmento de distribución y **todo lo relacionado a él**: desasigna el segmento de todos los clientes que lo tienen (`Cliente.Id-Segmento = ""`), borra todas sus excepciones (`DetSegmento`) y elimina el registro `Segmento` — todo en una sola transacción atómica. Si el segmento tiene clientes asignados, exige confirmación explícita (`Confirma=S`).
+  Programa servidor: `segmentodist.p` · Procedimiento: `bajaSegmento` | Versión REST de la baja de la pantalla `vtaa0250.p` (`vtaa0252.i` + `EliminaSegmento`).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  DELETE
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/SegmentoDistribucion/Baja
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdSegmento`** · STRING · ✅ — Clave del segmento a eliminar (debe existir)
+
+  **`Confirma`** · STRING · ❌ — Confirmación explícita cuando el segmento tiene clientes asignados
+  - `S` / `SI` / `true` = confirmar la baja con clientes · Sin clientes asignados no es necesario
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la operación (para auditoría)
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Todos los parámetros viajan por query string.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  DELETE .../Ventas/SegmentoDistribucion/Baja?IdSegmento=DIST03&IdUser=sis10
+        (sin clientes asignados: elimina directo)
+
+  DELETE .../Ventas/SegmentoDistribucion/Baja?IdSegmento=DIST01&Confirma=S&IdUser=sis10
+        (con clientes asignados: requiere Confirma=S)
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Segmento DIST01 eliminado. Clientes desasignados: 148. Excepciones eliminadas: 5."
+    }
+  }
+  ```
+
+  **`IdError`** · BOOLEAN — `false` = baja exitosa; `true` = error controlado (no se eliminó nada)
+  **`Respuesta`** · STRING — Mensaje con la cantidad de clientes desasignados y excepciones eliminadas
+
+  ### Response que pide confirmación (equivalente al "Desea continuar?" de la pantalla)
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Existe(n) 148 cliente(s) con este segmento de distribucion; al eliminarlo se les quitara el segmento y se borraran todas sus excepciones. Envie Confirma=S para continuar."
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdSegmento` vacío | `IdError: true` — `"Se requiere el segmento (IdSegmento)."` |
+  | `IdSegmento` inexistente | `IdError: true` — `"Segmento inexistente."` |
+  | Clientes asignados y sin `Confirma=S` | `IdError: true` — mensaje con el número de clientes; **no se elimina nada** |
+  | Algún registro bloqueado por otro proceso | `IdError: true` — se deshace **toda** la transacción (`UNDO`), no queda baja parcial |
+  | Baja exitosa | Clientes desasignados + excepciones borradas + segmento eliminado; auditoría (operación `BAJA`) con los conteos |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de despliegue y ejecución por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Origen:** versión REST de la baja de `vtaa0250.p`: `vtaa0252.i` (advertencia + confirmación) y el procedimiento interno `EliminaSegmento` (desasigna clientes, borra `DetSegmento`, borra `Segmento`). El parámetro `Confirma` sustituye al diálogo "Desea continuar?" de la pantalla.
+  2. **Operación destructiva:** la baja es irreversible y en cascada. El front debe mostrar el mensaje de confirmación al usuario y reenviar con `Confirma=S` solo si acepta (patrón de dos pasos).
+  3. **Rendimiento:** localizar los clientes del segmento requiere un barrido de `Cliente` (sin índice por `Id-Segmento`); los `ROWID` se guardan en la primera pasada para desasignar sin volver a barrer. Con muchos clientes asignados la transacción puede ser grande (uso de la lock table del servidor); es el mismo comportamiento de la pantalla original.
+  4. **Atomicidad:** todos los registros se toman con `EXCLUSIVE-LOCK NO-WAIT`; si cualquiera está tomado por otro proceso se deshace todo y se regresa error, sin dejar la sesión esperando candados ni bajas a medias.
+  5. **Operaciones relacionadas:** consulta `segmentodist-SegmentoConsulta.md`, alta `segmentodist-SegmentoAlta.md`, edición `segmentodist-SegmentoModifica.md`.
+  6. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

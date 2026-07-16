@@ -1,0 +1,160 @@
+info:
+  name: Eliminacion
+  type: http
+  seq: 3
+
+http:
+  method: DELETE
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/SegmentoDistribucion/Excepciones/Baja?IdSegmento=D3&IdUser=olds&Reng=1
+  params:
+    - name: IdSegmento
+      value: D3
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+    - name: Reng
+      value: "1"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Excepciones de Segmento de Distribución (Baja)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Excepciones de Segmento de Distribución — Baja**
+  Elimina una excepción de un segmento de distribución (`DetSegmento`), identificada por `IdSegmento + Reng`.
+  Programa servidor: `segmentodist.p` · Procedimiento: `bajaExcepcion` | Versión REST de la opción Baja del browse de excepciones de `vtaa0251.p`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  DELETE
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/SegmentoDistribucion/Excepciones/Baja
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdSegmento`** · STRING · ✅ — Segmento de distribución de la excepción
+
+  **`Reng`** · STRING · ✅ — Renglón de la excepción a eliminar (lo regresa el GET de excepciones)
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la operación (para auditoría)
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Todos los parámetros viajan por query string.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  DELETE .../Ventas/SegmentoDistribucion/Excepciones/Baja?IdSegmento=DIST01&Reng=3&IdUser=sis10
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Excepcion (renglon 3) eliminada del segmento DIST01."
+    }
+  }
+  ```
+
+  **`IdError`** · BOOLEAN — `false` = baja exitosa; `true` = error controlado (no se eliminó nada)
+  **`Respuesta`** · STRING — Mensaje descriptivo del resultado
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "No existe la excepcion (renglon 9) en el segmento DIST01."
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdSegmento` vacío | `IdError: true` — `"Se requiere el segmento (IdSegmento)."` |
+  | `Reng` no numérico o ≤ 0 | `IdError: true` — `"Renglon de excepcion invalido (Reng)."` |
+  | Excepción inexistente (segmento + renglón) | `IdError: true` — `"No existe la excepcion (renglon <N>) en el segmento <X>."` |
+  | Registro bloqueado por otro proceso | `IdError: true` — error controlado sin sesión colgada (`NO-WAIT`) |
+  | Baja exitosa | Registro eliminado; auditoría (operación `BAJA-EXCEPCION`) con el tipo eliminado |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de despliegue y ejecución por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Origen:** versión REST de la opción Baja del browse de excepciones de `vtaa0251.p`. El diálogo de confirmación de la pantalla ("Confirme la baja de la excepción...") queda del lado del front; el servicio elimina directo al ser una baja de un solo renglón, reversible con un alta.
+  2. **Renglones:** los renglones de las demás excepciones **no se renumeran** tras la baja (igual que la pantalla); el consecutivo del siguiente alta parte del último renglón existente + 1.
+  3. **Baja masiva:** al eliminar el segmento completo (`DELETE /Ventas/SegmentoDistribucion/Baja`) todas sus excepciones se borran automáticamente; no es necesario borrarlas una por una.
+  4. **Operaciones relacionadas:** consulta `segmentodist-ExcepcionConsulta.md`, alta `segmentodist-ExcepcionAlta.md`, edición `segmentodist-ExcepcionModifica.md`.
+  5. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

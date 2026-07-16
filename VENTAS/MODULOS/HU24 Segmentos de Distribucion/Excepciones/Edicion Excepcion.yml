@@ -1,0 +1,179 @@
+info:
+  name: Edicion Excepcion
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/SegmentoDistribucion/Excepciones/Modifica?IdSegmento=D2X&Reng=5&IdExcepcion=2033&MargenCosto=50&IdUser=olds
+  params:
+    - name: IdSegmento
+      value: D2X
+      type: query
+    - name: Reng
+      value: "5"
+      type: query
+    - name: IdExcepcion
+      value: "2033"
+      type: query
+    - name: MargenCosto
+      value: "50"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Excepciones de Segmento de Distribución (Modificación)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Excepciones de Segmento de Distribución — Modificación**
+  Actualiza una excepción existente de un segmento de distribución, identificada por `IdSegmento + Reng`: permite cambiar la clave del catálogo (**del mismo tipo**) y/o el margen sobre costo. **El tipo de excepción no es editable**, igual que en la pantalla; para cambiar de tipo hay que dar de baja y de alta.
+  Programa servidor: `segmentodist.p` · Procedimiento: `modificaExcepcion` | Versión REST del cambio de excepciones de `vtaa0251.p` (`vtaa0255.i`).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  PUT
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/SegmentoDistribucion/Excepciones/Modifica
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · Decimales con punto (`8.5`) · Vacío = conserva el valor actual
+
+  **`IdSegmento`** · STRING · ✅ — Segmento de distribución de la excepción
+
+  **`Reng`** · STRING · ✅ — Renglón de la excepción a modificar (lo regresa el GET de excepciones)
+
+  **`IdExcepcion`** · STRING · ❌ — Nueva clave del catálogo, **del mismo tipo** de la excepción; debe existir en él; vacío = conserva la actual
+
+  **`MargenCosto`** · STRING · ❌ — Nuevo margen sobre costo; ≥ 0; vacío = conserva el actual
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la operación (para auditoría)
+
+  > Se requiere **al menos uno** de `IdExcepcion`, `MargenCosto`.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Todos los parámetros viajan por query string.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  PUT .../Ventas/SegmentoDistribucion/Excepciones/Modifica?IdSegmento=DIST01&Reng=2&MargenCosto=11&IdUser=sis10
+        (solo cambia el margen del renglón 2)
+
+  PUT .../Ventas/SegmentoDistribucion/Excepciones/Modifica?IdSegmento=DIST01&Reng=1&IdExcepcion=310&IdUser=sis10
+        (cambia el proveedor de la excepción del renglón 1)
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Excepcion (renglon 2) del segmento DIST01 actualizada."
+    }
+  }
+  ```
+
+  **`IdError`** · BOOLEAN — `false` = cambio exitoso; `true` = error controlado (no se modificó nada)
+  **`Respuesta`** · STRING — Mensaje descriptivo del resultado
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "No existe la excepcion (renglon 9) en el segmento DIST01."
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdSegmento` vacío | `IdError: true` — `"Se requiere el segmento (IdSegmento)."` |
+  | `Reng` no numérico o ≤ 0 | `IdError: true` — `"Renglon de excepcion invalido (Reng)."` |
+  | Excepción inexistente (segmento + renglón) | `IdError: true` — `"No existe la excepcion (renglon <N>) en el segmento <X>."` |
+  | `IdExcepcion` inexistente en el catálogo del tipo | `IdError: true` — `"Proveedor inexistente, verifique..."` (o Categoría / Familia / Marca / Grupo) |
+  | Nueva clave duplica otra excepción del segmento | `IdError: true` — `"Ya existe la excepcion para el segmento <X>. Cambio no procede."` |
+  | `MargenCosto` no numérico o negativo | `IdError: true` — `"Margen sobre costo invalido; capture un valor numerico >= 0."` |
+  | Ningún dato a modificar | `IdError: true` — `"No se recibio ningun dato a modificar (IdExcepcion, MargenCosto vacios)."` |
+  | Registro bloqueado por otro proceso | `IdError: true` — error controlado sin sesión colgada (`NO-WAIT`) |
+  | Cambio exitoso | Actualiza solo lo enviado; auditoría (operación `CAMBIO-EXCEPCION`) |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de despliegue y ejecución por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Origen:** versión REST del cambio de excepciones de `vtaa0251.p` (`vtaa0255.i`), donde el tipo se muestra pero no se edita; solo la clave (validada contra el catálogo del tipo) y el margen. El servicio replica esa regla.
+  2. **Validación agregada:** la pantalla no verifica duplicados al cambiar la clave; el servicio sí lo valida (misma combinación tipo + clave en el segmento, excluyendo el propio renglón) para evitar excepciones repetidas.
+  3. **Operaciones relacionadas:** consulta `segmentodist-ExcepcionConsulta.md`, alta `segmentodist-ExcepcionAlta.md`, baja `segmentodist-ExcepcionBaja.md`.
+  4. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

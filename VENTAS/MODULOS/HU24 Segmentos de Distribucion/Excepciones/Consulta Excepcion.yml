@@ -1,0 +1,186 @@
+info:
+  name: Consulta Excepcion
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/SegmentoDistribucion/Excepciones/Consulta?IdSegmento=D2x
+  params:
+    - name: IdSegmento
+      value: D2x
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Excepciones de Segmento de Distribución (Consulta)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Excepciones de Segmento de Distribución — Consulta**
+  Lista las excepciones (`DetSegmento`) de un segmento de distribución: renglón, tipo (Proveedor / Categoría / Familia / Marca / Grupo), clave y descripción del catálogo correspondiente, y margen sobre costo. Pensado para el **tab "Excepciones"** del mantenimiento de segmentos: siempre se consulta por segmento.
+  Programa servidor: `segmentodist.p` · Procedimiento: `leeExcepciones` | Versión REST del browse de `vtaa0251.p` "Excepciones de segmentos de distribución" (modo carácter).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/SegmentoDistribucion/Excepciones/Consulta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdSegmento`** · STRING · ✅ — Segmento de distribución del que se listan las excepciones (debe existir)
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/SegmentoDistribucion/Excepciones/Consulta?IdSegmento=DIST01
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Consulta generada: 3 excepcion(es).",
+      "ttExcepcion": {
+        "ttExcepcion": [
+          {
+            "IdSegmento": "DIST01",
+            "Reng": 1,
+            "TipoExcepcion": 1,
+            "Tipo": "PROVEEDOR",
+            "IdExcepcion": "245",
+            "Descr": "PAPELERA DEL NORTE SA DE CV",
+            "MargenCosto": 8.00
+          },
+          {
+            "IdSegmento": "DIST01",
+            "Reng": 2,
+            "TipoExcepcion": 4,
+            "Tipo": "MARCA",
+            "IdExcepcion": "37",
+            "Descr": "SCRIBE",
+            "MargenCosto": 10.50
+          },
+          {
+            "IdSegmento": "DIST01",
+            "Reng": 3,
+            "TipoExcepcion": 2,
+            "Tipo": "CATEGORIA",
+            "IdExcepcion": "PAP",
+            "Descr": "PAPELERIA",
+            "MargenCosto": 9.00
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  ### Campos de `ttExcepcion` (1 registro por excepción, ordenado por renglón)
+
+  **`IdSegmento`** · STRING — Segmento de distribución
+  **`Reng`** · INT — Renglón consecutivo de la excepción; es la llave para editar/eliminar (`PUT`/`DELETE`)
+  **`TipoExcepcion`** · INT — `1` = Proveedor · `2` = Categoría · `3` = Familia · `4` = Marca · `5` = Grupo
+  **`Tipo`** · STRING — Nombre del tipo (`PROVEEDOR`, `CATEGORIA`, `FAMILIA`, `MARCA`, `GRUPO`)
+  **`IdExcepcion`** · STRING — Clave en el catálogo del tipo (numérica excepto Categoría)
+  **`Descr`** · STRING — Descripción tomada del catálogo (`Prov.Nombre`, `Catego.Descr`, `Familia.Descr`, `Marca.Descr`, `Grupo.Descr`); vacía si la clave ya no existe
+  **`MargenCosto`** · DECIMAL — Margen sobre el costo de la excepción
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Segmento inexistente.",
+    "ttExcepcion": { "ttExcepcion": [] }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdSegmento` vacío | `IdError: true` — `"Se requiere el segmento (IdSegmento)."` |
+  | `IdSegmento` inexistente | `IdError: true` — `"Segmento inexistente."` |
+  | Segmento sin excepciones | Consulta OK; `Respuesta: "El segmento <X> no tiene excepciones registradas."` y tabla vacía |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de despliegue y ejecución por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Origen:** versión REST del browse de `vtaa0251.p` (opción "Excepciones" de la pantalla `vtaa0250.p`), que en la interfaz nueva se maneja como **tab detalle** del segmento. Las columnas `Tipo`, `IdExcepcion` y `Descr` replican el `PostFind` de la pantalla (resolución contra los catálogos `Prov`, `Catego`, `Familia`, `Marca`, `Grupo`).
+  2. **Llave del renglón:** el par `IdSegmento + Reng` identifica la excepción en las operaciones de edición y baja; el front debe conservar el `Reng` de cada fila.
+  3. **Encabezado del tab:** los datos del segmento (descripción, promedio mínimo, margen general, número de excepciones) se obtienen del GET del maestro `segmentodist-SegmentoConsulta.md` con `IdSegmento` puntual.
+  4. **Operaciones relacionadas:** alta `segmentodist-ExcepcionAlta.md`, edición `segmentodist-ExcepcionModifica.md`, baja `segmentodist-ExcepcionBaja.md`.
+  5. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

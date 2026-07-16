@@ -1,0 +1,175 @@
+info:
+  name: Alta
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/SegmentoDistribucion/Excepciones/Alta?IdSegmento=D2X&IdUser=olds&TipoExcepcion=1&IdExcepcion=2033
+  params:
+    - name: IdSegmento
+      value: D2X
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+    - name: TipoExcepcion
+      value: "1"
+      type: query
+    - name: IdExcepcion
+      value: "2033"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Excepciones de Segmento de Distribución (Alta)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Excepciones de Segmento de Distribución — Alta**
+  Registra una excepción de margen en un segmento de distribución (`DetSegmento`): tipo (Proveedor / Categoría / Familia / Marca / Grupo), clave del catálogo y margen sobre costo. El renglón (`Reng`) se asigna consecutivo automáticamente.
+  Programa servidor: `segmentodist.p` · Procedimiento: `altaExcepcion` | Versión REST del alta de excepciones de `vtaa0251.p` (`vtaa0254.i`).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/SegmentoDistribucion/Excepciones/Alta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · Decimales con punto (`8.5`)
+
+  **`IdSegmento`** · STRING · ✅ — Segmento de distribución (debe existir)
+
+  **`TipoExcepcion`** · STRING · ✅ — Tipo de excepción
+  - `1` Proveedor · `2` Categoría · `3` Familia · `4` Marca · `5` Grupo
+
+  **`IdExcepcion`** · STRING · ✅ — Clave en el catálogo del tipo; debe existir en él
+  - Numérica para tipos 1, 3, 4, 5 · Alfanumérica para tipo 2 (Categoría)
+
+  **`MargenCosto`** · STRING · ❌ — Margen sobre el costo de la excepción; ≥ 0
+  - Vacío = `0`
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la operación (para auditoría)
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Todos los parámetros viajan por query string.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST .../Ventas/SegmentoDistribucion/Excepciones/Alta?IdSegmento=DIST01&TipoExcepcion=1&IdExcepcion=245&MargenCosto=8&IdUser=sis10
+        (excepción por proveedor)
+
+  POST .../Ventas/SegmentoDistribucion/Excepciones/Alta?IdSegmento=DIST01&TipoExcepcion=2&IdExcepcion=PAP&MargenCosto=9&IdUser=sis10
+        (excepción por categoría)
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Excepcion PROVEEDOR 245 registrada en el segmento DIST01 (renglon 4)."
+    }
+  }
+  ```
+
+  **`IdError`** · BOOLEAN — `false` = alta exitosa; `true` = error controlado (no se grabó nada)
+  **`Respuesta`** · STRING — Mensaje con el tipo, la clave y el renglón asignado
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Ya existe la excepcion para el segmento DIST01. Alta no procede."
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdSegmento` vacío o inexistente | `IdError: true` — `"Se requiere el segmento (IdSegmento)."` / `"Segmento inexistente."` |
+  | `TipoExcepcion` fuera de 1–5 | `IdError: true` — `"Tipo de excepcion no valido (1=Proveedor 2=Categoria 3=Familia 4=Marca 5=Grupo)."` |
+  | `IdExcepcion` vacío | `IdError: true` — `"Se requiere la clave de la excepcion (IdExcepcion)."` |
+  | `IdExcepcion` inexistente en el catálogo del tipo | `IdError: true` — `"Proveedor inexistente, verifique..."` (o Categoría / Familia / Marca / Grupo, mismos mensajes de la pantalla) |
+  | `MargenCosto` no numérico o negativo | `IdError: true` — `"Margen sobre costo invalido; capture un valor numerico >= 0."` |
+  | Excepción duplicada (mismo tipo + clave en el segmento) | `IdError: true` — `"Ya existe la excepcion para el segmento <X>. Alta no procede."` (misma validación de `vtaa0254.i`) |
+  | Alta exitosa | Registro creado con `Reng` = último + 1; auditoría (operación `ALTA-EXCEPCION`) |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de despliegue y ejecución por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Origen:** versión REST del alta de excepciones de `vtaa0251.p` (`vtaa0254.i`). Solo el campo del tipo elegido lleva valor en `DetSegmento` (`Id-Prov`, `Id-Catego`, `Id-Familia`, `Id-Marca` o `Id-Grupo`); el resto queda en su valor inicial, igual que la pantalla.
+  2. **Renglón consecutivo:** `Reng` se calcula como el último renglón del segmento + 1 dentro de la transacción, igual que la pantalla. La `Respuesta` regresa el renglón asignado para que el front pueda referenciarlo de inmediato.
+  3. **Operaciones relacionadas:** consulta `segmentodist-ExcepcionConsulta.md`, edición `segmentodist-ExcepcionModifica.md`, baja `segmentodist-ExcepcionBaja.md`.
+  4. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

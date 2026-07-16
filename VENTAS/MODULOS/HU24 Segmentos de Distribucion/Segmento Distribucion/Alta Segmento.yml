@@ -1,0 +1,171 @@
+info:
+  name: Alta Segmento
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/SegmentoDistribucion/Alta?IdSegmento=D9X&IdUser=olds&Descr=Distribucion 9&PromMinimo=75000&MargenGral=11.56
+  params:
+    - name: IdSegmento
+      value: D9X
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+    - name: Descr
+      value: Distribucion 9
+      type: query
+    - name: PromMinimo
+      value: "75000"
+      type: query
+    - name: MargenGral
+      value: "11.56"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Segmentos de Distribución (Alta)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Segmentos de Distribución — Alta**
+  Registra un nuevo segmento de distribución (tabla `Segmento`): clave, descripción, promedio mínimo de compra y margen general.
+  Programa servidor: `segmentodist.p` · Procedimiento: `altaSegmento` | Versión REST del alta de la pantalla `vtaa0250.p` (`vtaa0250.i`).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/SegmentoDistribucion/Alta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · Decimales con punto (`12.5`)
+
+  **`IdSegmento`** · STRING · ✅ — Clave del segmento; se guarda en mayúsculas. No debe existir previamente
+
+  **`Descr`** · STRING · ✅ — Descripción del segmento; se guarda en mayúsculas
+
+  **`PromMinimo`** · STRING · ❌ — Promedio mínimo de compra del cliente; ≥ 0
+  - Vacío = `0`
+
+  **`MargenGral`** · STRING · ❌ — Margen general del segmento para clientes con distribución; ≥ 0
+  - Vacío = `0`
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la operación (se guarda en `Segmento.Iniciales` y en auditoría)
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Todos los parámetros viajan por query string.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST .../Ventas/SegmentoDistribucion/Alta?IdSegmento=DIST03&Descr=DISTRIBUIDORES%20SURESTE&PromMinimo=40000&MargenGral=13.5&IdUser=sis10
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Segmento DIST03 registrado."
+    }
+  }
+  ```
+
+  **`IdError`** · BOOLEAN — `false` = alta exitosa; `true` = error controlado (no se grabó nada)
+  **`Respuesta`** · STRING — Mensaje descriptivo del resultado
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Folio de segmento ya existe, verifique..."
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdSegmento` vacío | `IdError: true` — `"Ingrese el identificador del segmento a dar de alta."` |
+  | `IdSegmento` ya existente | `IdError: true` — `"Folio de segmento ya existe, verifique..."` (mismo mensaje que la pantalla) |
+  | `PromMinimo` / `MargenGral` no numéricos o negativos | `IdError: true` — `"<Campo> invalido; capture un valor numerico >= 0."` |
+  | Alta exitosa | Registro creado con `FecSeg = HOY` e `Iniciales = IdUser`; auditoría vía `programas/auditoria.p` (operación `ALTA`) |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de despliegue y ejecución por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Origen:** versión REST del alta de `vtaa0250.p` (`vtaa0250.i`). Clave y descripción se convierten a mayúsculas (`CAPS`), igual que la captura de la pantalla. La pantalla graba `Iniciales = USERID("dictdb")`; el REST graba el `IdUser` recibido.
+  2. **Validación agregada:** la pantalla no valida el signo de `PromMinimo`/`MargenGral`; el servicio exige valores ≥ 0 para evitar capturas erróneas que afecten precios.
+  3. **Excepciones:** las excepciones del segmento se registran por separado en `POST /Ventas/SegmentoDistribucion/Excepciones/Alta` (tab de excepciones).
+  4. **Operaciones relacionadas:** consulta `segmentodist-SegmentoConsulta.md`, edición `segmentodist-SegmentoModifica.md`, baja `segmentodist-SegmentoBaja.md`.
+  5. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

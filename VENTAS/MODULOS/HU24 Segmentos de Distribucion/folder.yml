@@ -1,0 +1,7 @@
+info:
+  name: HU24 Segmentos de Distribucion
+  type: folder
+  seq: 7
+
+request:
+  auth: inherit

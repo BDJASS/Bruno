@@ -1,0 +1,173 @@
+info:
+  name: Edicion del Segmento
+  type: http
+  seq: 3
+
+http:
+  method: PUT
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/SegmentoDistribucion/Modifica?IdSegmento=D9X&IdUser=olds&Descr=distrib ejemplo&PromMinimo=75000&MargenGral=11.56
+  params:
+    - name: IdSegmento
+      value: D9X
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+    - name: Descr
+      value: distrib ejemplo
+      type: query
+    - name: PromMinimo
+      value: "75000"
+      type: query
+    - name: MargenGral
+      value: "11.56"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Segmentos de Distribución (Modificación)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Segmentos de Distribución — Modificación**
+  Actualiza la descripción, el promedio mínimo y/o el margen general de un segmento de distribución existente. **La clave del segmento no es editable**, igual que en la pantalla.
+  Programa servidor: `segmentodist.p` · Procedimiento: `modificaSegmento` | Versión REST del cambio de la pantalla `vtaa0250.p` (`vtaa0251.i`).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  PUT
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/SegmentoDistribucion/Modifica
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · Decimales con punto (`12.5`) · Vacío = conserva el valor actual
+
+  **`IdSegmento`** · STRING · ✅ — Clave del segmento a modificar (debe existir)
+
+  **`Descr`** · STRING · ❌ — Nueva descripción (mayúsculas); vacío = conserva la actual
+
+  **`PromMinimo`** · STRING · ❌ — Nuevo promedio mínimo; ≥ 0; vacío = conserva el actual
+
+  **`MargenGral`** · STRING · ❌ — Nuevo margen general; ≥ 0; vacío = conserva el actual
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la operación (se guarda en `Segmento.Iniciales` y en auditoría)
+
+  > Se requiere **al menos uno** de `Descr`, `PromMinimo`, `MargenGral`.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Todos los parámetros viajan por query string.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  PUT .../Ventas/SegmentoDistribucion/Modifica?IdSegmento=DIST03&MargenGral=14&IdUser=sis10
+        (solo cambia el margen general; descripción y promedio se conservan)
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Segmento DIST03 actualizado."
+    }
+  }
+  ```
+
+  **`IdError`** · BOOLEAN — `false` = cambio exitoso; `true` = error controlado (no se modificó nada)
+  **`Respuesta`** · STRING — Mensaje descriptivo del resultado
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "El registro esta siendo usado por otro proceso; intente de nuevo."
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdSegmento` vacío | `IdError: true` — `"Se requiere el segmento (IdSegmento)."` |
+  | `IdSegmento` inexistente | `IdError: true` — `"Segmento inexistente."` |
+  | `PromMinimo` / `MargenGral` no numéricos o negativos | `IdError: true` — `"<Campo> invalido; capture un valor numerico >= 0."` |
+  | Ningún dato a modificar | `IdError: true` — `"No se recibio ningun dato a modificar (Descr, PromMinimo, MargenGral vacios)."` |
+  | Registro bloqueado por otro proceso | `IdError: true` — error controlado sin sesión colgada (`NO-WAIT`) |
+  | Cambio exitoso | Actualiza solo los campos enviados + `FecSeg = HOY` e `Iniciales = IdUser`; auditoría (operación `CAMBIO`) |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de despliegue y ejecución por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Origen:** versión REST del cambio de `vtaa0250.p` (`vtaa0251.i`), donde solo se editan descripción, promedio mínimo y margen general — la clave queda fija. El servicio replica esa regla: para "renombrar" un segmento hay que darlo de baja y de alta.
+  2. **Actualización parcial:** la pantalla siempre reescribe los 3 campos; el REST solo toca los enviados, para que el front pueda ajustar un campo sin reenviar los demás.
+  3. **Operaciones relacionadas:** consulta `segmentodist-SegmentoConsulta.md`, alta `segmentodist-SegmentoAlta.md`, baja `segmentodist-SegmentoBaja.md`.
+  4. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

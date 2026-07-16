@@ -5,24 +5,23 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/MargenesPorCategoriaDivision?IdUser=olds&FechaInicial=2026-06-08&FechaFinal=2026-07-08&Seleccionar=1&ConAsociados=false
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/MargenesPorCategoriaDivision?IdUser=olds&FechaInicial=2026-01-01&FechaFinal=2026-15-01&Seleccionar=6&Lista=WEB&ConAsociados=false
   params:
     - name: IdUser
       value: olds
       type: query
     - name: FechaInicial
-      value: 2026-06-08
+      value: 2026-01-01
       type: query
     - name: FechaFinal
-      value: 2026-07-08
+      value: 2026-15-01
       type: query
     - name: Seleccionar
-      value: "1"
+      value: "6"
       type: query
     - name: Lista
-      value: "575"
+      value: WEB
       type: query
-      disabled: true
     - name: ConAsociados
       value: "false"
       type: query

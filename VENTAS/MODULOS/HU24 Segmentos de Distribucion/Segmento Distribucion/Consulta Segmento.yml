@@ -1,0 +1,189 @@
+info:
+  name: Consulta Segmento
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/SegmentoDistribucion/Consulta
+  params:
+    - name: IdSegmento
+      value: D2X
+      type: query
+      disabled: true
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Segmentos de Distribución (Consulta)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Segmentos de Distribución — Consulta**
+  Lista los segmentos de distribución (tabla `Segmento`) con su descripción, promedio mínimo de compra, margen general, **número de clientes que tienen asignado el segmento** (`Cliente.Id-Segmento`) y número de excepciones registradas.
+  Programa servidor: `segmentodist.p` · Procedimiento: `leeSegmentos` | Versión REST de la pantalla `vtaa0250.p` "Mantenimiento de los segmentos de distribución" (modo carácter).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/SegmentoDistribucion/Consulta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdSegmento`** · STRING · ❌ — Segmento específico (se normaliza a mayúsculas). Si viene, debe existir
+  - Vacío = todos los segmentos
+
+  **`CuentaClientes`** · STRING · ❌ — Controla el conteo de clientes por segmento
+  - Vacío o `S` = cuenta (default) · `N` = omite el conteo y `NumClientes` regresa `0` (respuesta inmediata)
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/SegmentoDistribucion/Consulta                       (todos, con conteo)
+  GET .../Ventas/SegmentoDistribucion/Consulta?CuentaClientes=N      (todos, sin conteo — rápido)
+  GET .../Ventas/SegmentoDistribucion/Consulta?IdSegmento=DIST01     (un segmento)
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Consulta generada: 2 registro(s).",
+      "ttSegmentoDist": {
+        "ttSegmentoDist": [
+          {
+            "IdSegmento": "DIST01",
+            "Descr": "DISTRIBUIDORES ZONA NORTE",
+            "PromMinimo": 50000.00,
+            "MargenGral": 12.50,
+            "FecSeg": "2026-05-14",
+            "Iniciales": "ALEX",
+            "NumClientes": 148,
+            "NumExcepciones": 5
+          },
+          {
+            "IdSegmento": "DIST02",
+            "Descr": "DISTRIBUIDORES FORANEOS",
+            "PromMinimo": 30000.00,
+            "MargenGral": 15.00,
+            "FecSeg": "2026-06-02",
+            "Iniciales": "SIS10",
+            "NumClientes": 61,
+            "NumExcepciones": 0
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  ### Campos de `ttSegmentoDist` (1 registro por segmento, ordenado por clave)
+
+  **`IdSegmento`** · STRING — Clave del segmento de distribución
+  **`Descr`** · STRING — Descripción del segmento
+  **`PromMinimo`** · DECIMAL — Promedio mínimo de compra del cliente
+  **`MargenGral`** · DECIMAL — Margen general del segmento para clientes con distribución
+  **`FecSeg`** · DATE — Fecha del último alta/cambio del registro
+  **`Iniciales`** · STRING — Usuario del último alta/cambio
+  **`NumClientes`** · INT — Clientes con el segmento asignado (`Cliente.Id-Segmento`); `0` si se pidió `CuentaClientes=N`
+  **`NumExcepciones`** · INT — Excepciones registradas en `DetSegmento` (renglones del tab de excepciones)
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Segmento inexistente.",
+    "ttSegmentoDist": { "ttSegmentoDist": [] }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdSegmento` con valor pero inexistente | `IdError: true` — `"Segmento inexistente."` |
+  | `IdSegmento` vacío | Consulta OK; regresa todos los segmentos |
+  | `CuentaClientes` = `N` / `NO` / `false` | Omite el conteo; `NumClientes = 0` y la `Respuesta` lo indica |
+  | Sin registros | Consulta OK; `Respuesta: "Sin segmentos registrados con los criterios indicados."` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de despliegue y ejecución por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Origen:** versión REST de `vtaa0250.p` (browse "Segmentos de distribución", modo carácter). La columna `NumClientes` es **nueva** respecto a la pantalla: se agregó a petición del negocio para ver cuántos clientes tienen asignado cada segmento.
+  2. **Costo del conteo de clientes (importante):** la tabla `Cliente` **no tiene índice** por `Id-Segmento` (se revisaron sus 32 índices). Para que el conteo no fuera pesado, el servicio **NO** consulta cliente-por-segmento (eso haría un barrido completo de `Cliente` por cada segmento); en su lugar hace **una sola pasada secuencial** de `Cliente` (con `FIELDS (Id-Segmento)`, lectura mínima) acumulando el conteo de todos los segmentos a la vez. El costo es fijo: un barrido de la tabla por request, sin importar cuántos segmentos existan.
+  3. **Escape de rendimiento:** si aun así el barrido resultara lento en producción (depende del tamaño real de `Cliente`), el front puede pedir `CuentaClientes=N` para pintar el grid al instante y pedir el conteo después, o se puede evaluar con el DBA agregar un índice por `Id-Segmento` a `Cliente`, con lo que el conteo sería inmediato.
+  4. **`NumExcepciones`:** conteo barato (la tabla `DetSegmento` sí se accede por `Id-Segmento`); sirve para el badge del tab "Excepciones".
+  5. **Operaciones relacionadas:** alta `segmentodist-SegmentoAlta.md`, edición `segmentodist-SegmentoModifica.md`, baja `segmentodist-SegmentoBaja.md`; tab de excepciones en `segmentodist-Excepcion*.md`. No confundir con `GET /Ventas/Catalogo/Segmentos` (`ventas-cat-segmento.p`), que es solo el catálogo Id+Descr para combos.
+  6. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS
