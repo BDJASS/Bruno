@@ -1,0 +1,174 @@
+info:
+  name: Baja
+  type: http
+  seq: 3
+
+http:
+  method: DELETE
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ClienteMoneda/Baja?IdMoneda=2&IdCliente=29886&IdUser=olds
+  params:
+    - name: IdMoneda
+      value: "2"
+      type: query
+    - name: IdCliente
+      value: "29886"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Clientes por Moneda Extranjera (Baja)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Clientes por Moneda Extranjera — Baja**
+  Desactiva un cliente para hacer pedidos y facturar en una moneda extranjera (elimina el registro de `CteMon`). Baja **atómica y sin espera de bloqueos**: si otro proceso tiene tomado el registro, responde error controlado de inmediato en lugar de quedarse esperando el candado; si existieran registros duplicados, los elimina todos o ninguno.
+  Programa servidor: `ctemoneda.p` · Procedimiento: `bajaClienteMoneda` | Complemento de la pantalla `cxca0460.p` (modo carácter).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  DELETE
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ClienteMoneda/Baja
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdCliente`** · STRING · ✅ — Cliente a desactivar
+  **`IdMoneda`** · STRING · ✅ — Moneda a retirar (ej. `3` = dólares)
+  **`IdUser`** · STRING · ✅ — Usuario que realiza la baja (queda en la auditoría)
+
+  > La baja **no** exige que el cliente o la moneda sigan existiendo en sus catálogos — así se pueden depurar registros huérfanos. Solo exige que el registro `CteMon` exista.
+
+  ---
+
+  ## 5. Body
+
+  No aplica; los parámetros viajan por query string.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  DELETE .../Ventas/ClienteMoneda/Baja?IdCliente=34561&IdMoneda=3&IdUser=sis10
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Cliente 34561 desactivado para la moneda 3."
+    }
+  }
+  ```
+
+  ### Response con depuración de duplicados
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Cliente 34561 desactivado para la moneda 3. Se eliminaron 2 registros (habia duplicados)."
+    }
+  }
+  ```
+
+  ### Response de error controlado (registro bloqueado)
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "El registro esta siendo usado por otro proceso; intente de nuevo."
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdCliente` vacío, no numérico o `≤ 0` | `IdError: true` — `"Numero de cliente invalido."` |
+  | `IdMoneda` vacío, no numérico o `≤ 0` | `IdError: true` — `"Numero de moneda invalido."` |
+  | Registro inexistente (cliente no activado para esa moneda) | `IdError: true` — `"El cliente no esta registrado con esa moneda."` |
+  | Registro bloqueado por otro proceso | `IdError: true` — `"El registro esta siendo usado por otro proceso; intente de nuevo."` — **sin espera** y sin eliminar nada |
+  | Registros duplicados (cliente+moneda repetidos) | Se eliminan **todos** en una sola transacción; la respuesta indica cuántos |
+  | Baja correcta | `IdError: false` — `"Cliente N desactivado para la moneda M."` |
+  | Reintento tras baja exitosa | `IdError: true` — `"El cliente no esta registrado con esa moneda."` (no truena, es idempotente en efecto) |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Sin espera de bloqueos (`NO-WAIT`):** el registro se toma con `EXCLUSIVE-LOCK NO-WAIT`; si otro usuario/proceso lo tiene (por ejemplo, la pantalla `cxca0460` en modo carácter posicionada en ese renglón), el servicio responde de inmediato con error controlado — nunca deja la sesión del PAS detenida esperando un candado.
+  2. **Atómica ante duplicados:** si por datos históricos existieran registros duplicados del mismo cliente+moneda, la baja los elimina **todos dentro de una sola transacción**; si cualquiera de ellos está bloqueado, se deshace todo (`UNDO`) y no se elimina ninguno — nunca queda una baja a medias.
+  3. **Depuración de huérfanos:** deliberadamente **no** se valida que el cliente exista en `Cliente` ni la moneda en `Moneda` — solo que el registro `CteMon` exista. Esto permite limpiar registros de clientes o monedas ya dados de baja de sus catálogos.
+  4. **Auditoría:** tras la baja se registra en `programas/auditoria.p` (usuario, módulo `ClienteMoneda`, operación `BAJA`, cliente, moneda y número de registros eliminados). No crítica: si falla, la baja ya quedó aplicada.
+  5. **Efecto inmediato:** al eliminar el registro, el cliente deja de estar autorizado para pedidos/facturación en esa moneda en cuanto los procesos consulten `CteMon`.
+  6. **Operaciones hermanas:** consulta en `ctemoneda-ClienteMonedaConsulta.md` (`GET /Ventas/ClienteMoneda/Consulta`) y alta en `ctemoneda-ClienteMonedaAlta.md` (`POST /Ventas/ClienteMoneda/Alta`).
+  7. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

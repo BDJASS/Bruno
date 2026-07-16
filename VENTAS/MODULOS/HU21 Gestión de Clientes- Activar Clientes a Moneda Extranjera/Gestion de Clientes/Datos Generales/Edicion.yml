@@ -1,0 +1,123 @@
+info:
+  name: Edicion
+  type: http
+  seq: 2
+
+http:
+  method: PUT
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionCliente/DatosGenerales/Edicion?IdUser=nmra
+  params:
+    - name: IdUser
+      value: nmra
+      type: query
+  body:
+    type: json
+    data: |-
+      {
+        "ttDatosGral": [
+          {
+            "IdCliente": 54631,
+            "IdVendedor": "0045"
+          }
+        ]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  # DatosGenerales — Nuevos campos `IdResp` e `IdSegmento` (GET y PUT)
+
+  **Módulo:** Gestión de Créditos / CYC
+  **Proyecto:** RestADOSACyc
+  **Programa:** `RestADOSACyc/AppServer/DatosGenerales.p`
+  **Autor:** SIS10 — JASS
+  **Fecha implementación:** 2026-07-06
+  **Estatus:** Implementado ✅
+
+  ---
+
+  ## Resumen del cambio
+
+  Se agregaron dos campos a la temp-table `ttDatosGral` del dataset `dsDatosGral`:
+
+  **`IdResp`** · INTEGER — Responsable del cliente (`Cliente.Id-Resp`)
+  **`IdSegmento`** · INTEGER — Segmento del cliente (`Cliente.Id-Segmento`)
+
+  Ambos campos se **devuelven en la consulta (GET)** y se pueden **modificar en la
+  edición (PUT)** con registro de auditoría en `CambioCte`. El resto del servicio
+  no cambia.
+
+  ---
+
+  # Documentación 2 — PUT Edición
+
+  **Endpoint:** `PUT /GestionCredito/DatosGenerales/Editar`
+  **Procedure:** `EditarDatosGenerales`
+
+  ## Parámetros de entrada
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUser`** · STRING · ✅ — Usuario que realiza la operación (Query String)
+  **`dsDatosGral`** · DATASET · ✅ — Body JSON con los cambios
+
+  ## Cambio en el body (ttDatosGral)
+
+  Ahora se aceptan dos campos editables adicionales:
+
+  **`IdResp`** · INTEGER · ❌ — Nuevo responsable del cliente
+  - `0` o ausente = no se modifica
+  - Distinto de `0` y diferente al actual = se actualiza `Cliente.Id-Resp`
+
+  **`IdSegmento`** · INTEGER · ❌ — Nuevo segmento del cliente
+  - `0` o ausente = no se modifica
+  - Distinto de `0` y diferente al actual = se actualiza `Cliente.Id-Segmento`
+
+  ### Ejemplo de body (fragmento)
+
+  ```json
+  {
+    "dsDatosGral": {
+      "ttDatosGral": [
+        {
+          "IdCliente": 1053,
+          "IdResp": 9,
+          "IdSegmento": 3
+        }
+      ]
+    }
+  }
+  ```
+
+  ## Auditoría (CambioCte)
+
+  Cada cambio genera su registro de auditoría con usuario, fecha, hora, valor
+  anterior y valor nuevo:
+
+  | Campo editado | `CambioCte.Descr` | `CambioCte.Campo` |
+  |---------------|-------------------|-------------------|
+  | `IdResp`      | `Id-Resp`         | `31`              |
+  | `IdSegmento`  | `Id-Segmento`     | `31`              |
+
+  ## Reglas y consideraciones
+
+  - Ambos campos siguen la misma convención que el resto de la edición:
+    **solo se actualizan si vienen con valor distinto de `0` y diferente al valor
+    actual** del cliente; enviar `0` u omitirlos deja el dato sin cambios.
+  - **Interacción con `ttCredito.IdClase`** — si en la misma petición se envía un
+    cambio de clase (`ttCredito.IdClase`), el sistema deriva el responsable de la
+    clase (`1→33 Local`, `2→9 Foráneo`, `3→30 Corporativo`) y **sobrescribe**
+    `Cliente.Id-Resp`, ya que la sección de crédito se procesa después de
+    `ttDatosGral`. Si se quiere asignar un responsable manual, no enviar cambio
+    de clase en la misma petición.
+  - La respuesta del PUT no cambia: `IdError` · LOGICAL y `Respuesta` · STRING
+    (`"Datos generales actualizados correctamente."` en éxito).
+
+  ---
+
+  **Desarrollado por:** SIS10 - JASS

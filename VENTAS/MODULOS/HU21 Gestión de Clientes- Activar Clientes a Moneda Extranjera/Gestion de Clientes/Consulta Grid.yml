@@ -1,0 +1,22 @@
+info:
+  name: Consulta Grid
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/FiltrarClientes?Clase=1&Activo=true
+  params:
+    - name: Clase
+      value: "1"
+      type: query
+    - name: Activo
+      value: "true"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

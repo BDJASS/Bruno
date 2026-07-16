@@ -1,0 +1,162 @@
+info:
+  name: Alta
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ClienteMoneda/Alta?IdMoneda=3&IdCliente=29886&IdUser=olds
+  params:
+    - name: IdMoneda
+      value: "3"
+      type: query
+    - name: IdCliente
+      value: "29886"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Clientes por Moneda Extranjera (Alta)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Clientes por Moneda Extranjera — Alta**
+  Activa un cliente para hacer pedidos y facturar en una moneda extranjera (crea el registro en `CteMon`), con las mismas validaciones que la pantalla original: cliente existente y no registrado previamente para esa moneda.
+  Programa servidor: `ctemoneda.p` · Procedimiento: `altaClienteMoneda` | Versión REST del alta de la pantalla `cxca0460.p` / `cxca0460.i` (modo carácter).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ClienteMoneda/Alta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdCliente`** · STRING · ✅ — Cliente a activar; debe existir
+  **`IdMoneda`** · STRING · ✅ — Moneda extranjera a asignar; debe existir en `Moneda` y ser diferente de la nacional (`1`). Ej. `3` = dólares
+  **`IdUser`** · STRING · ✅ — Usuario que realiza el alta (queda en la auditoría)
+
+  ---
+
+  ## 5. Body
+
+  No aplica; los parámetros viajan por query string (mismo patrón que otros POST del módulo).
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST .../Ventas/ClienteMoneda/Alta?IdCliente=34561&IdMoneda=3&IdUser=sis10
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Cliente 34561 activado para DOLARES."
+    }
+  }
+  ```
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "Cliente ya registrado con moneda extranjera."
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdCliente` vacío, no numérico o `≤ 0` | `IdError: true` — `"Numero de cliente invalido."` |
+  | `IdMoneda` vacío, no numérico o `≤ 0` | `IdError: true` — `"Numero de moneda invalido."` |
+  | `IdMoneda = 1` (nacional) | `IdError: true` — `"La moneda debe ser extranjera (diferente de la nacional)."` |
+  | Moneda inexistente | `IdError: true` — `"Moneda inexistente."` |
+  | Cliente inexistente | `IdError: true` — `"Cliente inexistente."` |
+  | Cliente ya activado para esa moneda | `IdError: true` — `"Cliente ya registrado con moneda extranjera."` |
+  | Alta correcta | `IdError: false` — `"Cliente N activado para <moneda>."` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Origen:** versión REST del alta de `cxca0460.p` / `cxca0460.i` (CxC modo carácter). Replica sus dos validaciones: "Cliente Inexistente..." y "Cliente ya registrado con moneda extranjera...".
+  2. **Qué graba:** un registro en `CteMon` con `Id-Cliente` + `Id-Moneda`, exactamente los mismos dos campos que asigna la pantalla original — sin campos adicionales.
+  3. **Solo moneda extranjera:** se rechaza `IdMoneda = 1` (nacional); la pantalla original está pensada para monedas extranjeras (default `3` = dólares) y la tabla habilita facturación en moneda distinta a la nacional.
+  4. **Auditoría:** tras el alta se registra en `programas/auditoria.p` (usuario, módulo `ClienteMoneda`, operación `ALTA`, cliente y moneda). La auditoría es no crítica: si falla, el alta ya quedó grabada y no se marca error.
+  5. **Idempotencia:** reintentar el mismo alta regresa `"Cliente ya registrado con moneda extranjera."` — no duplica registros.
+  6. **Baja:** ver documento `ctemoneda-ClienteMonedaBaja.md` (`DELETE /Ventas/ClienteMoneda/Baja`).
+  7. **Consulta:** ver documento `ctemoneda-ClienteMonedaConsulta.md` (`GET /Ventas/ClienteMoneda/Consulta`).
+  8. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

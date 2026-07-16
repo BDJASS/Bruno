@@ -1,0 +1,180 @@
+info:
+  name: Consulta
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ClienteMoneda/Consulta
+  params:
+    - name: IdMoneda
+      value: "3"
+      type: query
+      disabled: true
+    - name: IdCliente
+      value: "29886"
+      type: query
+      disabled: true
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Clientes por Moneda Extranjera (Consulta)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Clientes por Moneda Extranjera — Consulta**
+  Lista los clientes activados para hacer pedidos y facturar en moneda extranjera (tabla `CteMon`), filtrable por moneda y/o cliente. Sirve también como validación puntual: mandando `IdCliente` + `IdMoneda`, cero registros = el cliente **no** puede facturar en esa moneda.
+  Programa servidor: `ctemoneda.p` · Procedimiento: `leeClientesMoneda` | Versión REST de la pantalla `cxca0460.p` (modo carácter).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ClienteMoneda/Consulta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdMoneda`** · STRING · ❌ — Moneda a consultar (ej. `3` = dólares, como el default de la pantalla). Si viene, debe existir en `Moneda`
+  - Vacío o `0` = todas las monedas
+
+  **`IdCliente`** · STRING · ❌ — Cliente específico; combinado con `IdMoneda` funciona como validación sí/no
+  - Vacío o `0` = todos los clientes
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/ClienteMoneda/Consulta?IdMoneda=3
+  GET .../Ventas/ClienteMoneda/Consulta?IdMoneda=3&IdCliente=34561   (validación puntual)
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Consulta generada: 2 registro(s).",
+      "ttCteMoneda": {
+        "ttCteMoneda": [
+          {
+            "IdCliente": 26,
+            "RazonSocial": "COMERCIALIZADORA DEL NORTE SA DE CV",
+            "IdMoneda": 3,
+            "Moneda": "DOLARES"
+          },
+          {
+            "IdCliente": 34561,
+            "RazonSocial": "JOSE VILLANUEVA TORRES",
+            "IdMoneda": 3,
+            "Moneda": "DOLARES"
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  ### Campos de `ttCteMoneda` (1 registro por cliente-moneda, ordenado por moneda y cliente)
+
+  **`IdCliente`** · INT — Clave del cliente activado
+  **`RazonSocial`** · STRING — Razón social del cliente; vacía si el cliente ya no existe
+  **`IdMoneda`** · INT — Clave de la moneda asignada
+  **`Moneda`** · STRING — Nombre de la moneda (tabla `Moneda`)
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Moneda inexistente.",
+    "ttCteMoneda": { "ttCteMoneda": [] }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdMoneda` con valor pero inexistente en `Moneda` | `IdError: true` — `"Moneda inexistente."` |
+  | `IdMoneda` vacío / `0` | Consulta OK; regresa todas las monedas |
+  | `IdCliente` vacío / `0` | Consulta OK; regresa todos los clientes |
+  | Sin registros con los filtros | Consulta OK; `Respuesta: "Sin clientes registrados con los criterios indicados."` y tabla vacía |
+  | `IdMoneda` / `IdCliente` no numéricos | Se tratan como `0` (sin filtro) |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Origen:** versión REST de `cxca0460.p` ("Tabla de Activación de clientes x Moneda permitida para hacer pedidos y facturar", CxC modo carácter). La pantalla original abre con moneda default `3` (dólares) y muestra el browse "Números de cliente con moneda extranjera asignada" — este GET con `IdMoneda=3` regresa exactamente ese listado.
+  2. **Uso como validación:** el caso `IdCliente` + `IdMoneda` permite al front preguntar "¿este cliente puede facturar en esta moneda?" sin traer el catálogo completo: 1 registro = sí, 0 = no.
+  3. **Clientes huérfanos:** si un `CteMon` apunta a un cliente ya inexistente, el registro se regresa con `RazonSocial` vacía (no se oculta), igual que el browse original que solo muestra la razón social `WHEN AVAILABLE Cliente`.
+  4. **Alta y Baja:** ver `ctemoneda-ClienteMonedaAlta.md` (`POST /Ventas/ClienteMoneda/Alta`) y `ctemoneda-ClienteMonedaBaja.md` (`DELETE /Ventas/ClienteMoneda/Baja`).
+  5. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

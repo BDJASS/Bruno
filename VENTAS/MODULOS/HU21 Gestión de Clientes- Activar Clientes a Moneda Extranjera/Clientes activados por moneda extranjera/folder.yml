@@ -1,0 +1,7 @@
+info:
+  name: Clientes activados por moneda extranjera
+  type: folder
+  seq: 1
+
+request:
+  auth: inherit
