@@ -1,0 +1,188 @@
+info:
+  name: "Consulta "
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ClienteSegmento/Consulta?IdUser=olds&IdSegmento=I1&IdCliente=
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdSegmento
+      value: I1
+      type: query
+    - name: IdCliente
+      value: ""
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Clientes por Segmento de Distribución (Consulta)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Clientes por Segmento de Distribución — Consulta**
+  Consulta principal: se envía el segmento de distribución (`Cliente.Id-Segmento`) y regresa los clientes que lo tienen asignado. También acepta `IdCliente` para consultar el segmento actual de **un** cliente (el lookup que hace la pantalla antes de cambiar el segmento).
+  Programa servidor: `ctesegmento.p` · Procedimiento: `leeClientesSegmento` | Versión REST de la pantalla `cxcb0220.p` "Cambio de Segmento a Clientes" (modo carácter).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ClienteSegmento/Consulta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · Se requiere **al menos uno** de `IdSegmento` / `IdCliente`
+
+  **`IdSegmento`** · STRING · ❌ — Segmento de distribución (se normaliza a mayúsculas); debe existir en `Segmento`. Regresa todos los clientes que lo tienen asignado
+
+  **`IdCliente`** · STRING · ❌ — Cliente específico; regresa ese cliente con su segmento actual (aunque no tenga segmento)
+  - Combinado con `IdSegmento` funciona como validación: ¿este cliente tiene este segmento?
+
+  **`IdUser`** · STRING · ✅ — Usuario que consulta; requerido en todas las operaciones del servicio (se usará para la validación de bitácora que se integrará más adelante)
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/ClienteSegmento/Consulta?IdSegmento=DIST01&IdUser=sis10        (clientes del segmento)
+  GET .../Ventas/ClienteSegmento/Consulta?IdCliente=34561&IdUser=sis10          (segmento actual del cliente)
+  GET .../Ventas/ClienteSegmento/Consulta?IdSegmento=DIST01&IdCliente=34561&IdUser=sis10   (validación puntual)
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Consulta generada: 2 cliente(s) con el segmento DIST01.",
+      "ttClienteSeg": {
+        "ttClienteSeg": [
+          {
+            "IdCliente": 26,
+            "RazonSocial": "COMERCIALIZADORA DEL NORTE SA DE CV",
+            "Activo": true,
+            "IdSegmento": "DIST01",
+            "Segmento": "DISTRIBUIDORES ZONA NORTE"
+          },
+          {
+            "IdCliente": 34561,
+            "RazonSocial": "JOSE VILLANUEVA TORRES",
+            "Activo": true,
+            "IdSegmento": "DIST01",
+            "Segmento": "DISTRIBUIDORES ZONA NORTE"
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  ### Campos de `ttClienteSeg` (1 registro por cliente)
+
+  **`IdCliente`** · INT — Clave del cliente
+  **`RazonSocial`** · STRING — Razón social del cliente
+  **`Activo`** · BOOLEAN — `true` = cliente activo; `false` = inactivo
+  **`IdSegmento`** · STRING — Segmento de distribución asignado; vacío si no tiene (solo en lookup por cliente)
+  **`Segmento`** · STRING — Descripción del segmento (`Segmento.Descr`); vacía si no tiene o el segmento ya no existe
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "No existe este segmento de distribucion, intente de nuevo...",
+    "ttClienteSeg": { "ttClienteSeg": [] }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | Sin `IdSegmento` ni `IdCliente` | `IdError: true` — se requiere al menos uno |
+  | `IdSegmento` inexistente | `IdError: true` — `"No existe este segmento de distribucion, intente de nuevo..."` |
+  | `IdCliente` inexistente | `IdError: true` — `"Codigo de Cliente inexistente, intente de nuevo."` (mensaje de la pantalla) |
+  | `IdCliente` sin segmento asignado | Consulta OK; el registro regresa con `IdSegmento` vacío y la `Respuesta` lo indica |
+  | `IdCliente` + `IdSegmento` y el cliente no lo tiene | Consulta OK; tabla vacía y `Respuesta` lo indica |
+  | Segmento sin clientes | Consulta OK; `Respuesta: "Sin clientes con el segmento <X>."` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de despliegue y ejecución por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Origen:** versión REST de `cxcb0220.p` ("Cambio de Segmento a Clientes", modo carácter). La pantalla no tiene browse; el listado por segmento es **nuevo** a petición del negocio (consulta principal del módulo). El lookup por `IdCliente` replica lo que la pantalla muestra al capturar el cliente (razón social + segmento actual).
+  2. **Rendimiento:** `Cliente.Id-Segmento` no tiene índice, así que el listado por segmento hace un barrido secuencial de `Cliente` por request (con `FIELDS` para lectura mínima) — mismo costo ya conocido del conteo en `segmentodist.p`. El lookup por `IdCliente` es directo por índice primario (inmediato).
+  3. **Password vs IdUser:** el password Tipo 15 que exige la pantalla original se valida en el **front** (ningún endpoint del servicio lo recibe). En cambio, `IdUser` sí es requerido en todas las operaciones — se usará para la validación contra otra bitácora que se integrará más adelante sin cambiar el contrato del API.
+  4. **Operaciones relacionadas:** alta `ctesegmento-ClienteSegmentoAlta.md`, cambio `ctesegmento-ClienteSegmentoCambio.md`, baja `ctesegmento-ClienteSegmentoBaja.md`. El catálogo de segmentos para el combo del front está en `GET /Ventas/SegmentoDistribucion/Consulta` (o `/Ventas/Catalogo/Segmentos`).
+  5. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

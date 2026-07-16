@@ -1,0 +1,164 @@
+info:
+  name: Alta
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ClienteSegmento/Alta?IdUser=olds&IdCliente=113&IdSegmento=I1
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdCliente
+      value: "113"
+      type: query
+    - name: IdSegmento
+      value: I1
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Clientes por Segmento de Distribución (Alta)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Clientes por Segmento de Distribución — Alta**
+  Asigna un segmento de distribución a un cliente que **no** tiene segmento (`Cliente.Id-Segmento` vacío). Aplica el candado de la pantalla: si el cliente está asociado a otro cliente que ya es distribuidor, el alta no procede.
+  Programa servidor: `ctesegmento.p` · Procedimiento: `altaClienteSegmento` | Versión REST de la pantalla `cxcb0220.p` "Cambio de Segmento a Clientes" (modo carácter).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ClienteSegmento/Alta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdCliente`** · STRING · ✅ — Cliente al que se le asigna el segmento; debe existir y **no** tener segmento actual
+
+  **`IdSegmento`** · STRING · ✅ — Segmento a asignar (mayúsculas); debe existir en `Segmento`
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la operación (bitácora `CambioCte`, correo y auditoría)
+
+  > El password Tipo 15 que exige la pantalla original se valida en el **front**; el servicio no lo recibe.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Todos los parámetros viajan por query string.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST .../Ventas/ClienteSegmento/Alta?IdCliente=34561&IdSegmento=DIST01&IdUser=sis10
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Cliente 34561 con segmento DIST01."
+    }
+  }
+  ```
+
+  **`IdError`** · BOOLEAN — `false` = alta exitosa; `true` = error controlado (no se grabó nada)
+  **`Respuesta`** · STRING — Mensaje descriptivo del resultado
+
+  ### Response de error controlado (candado asociado-distribuidor)
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "La cuenta 34561 JOSE VILLANUEVA TORRES se encuentra asociada al cliente 26 COMERCIALIZADORA DEL NORTE SA DE CV, el cual ya se encuentra dado de alta como distribuidor. Alta no procede..."
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdCliente` no numérico o inexistente | `IdError: true` — `"Numero de cliente invalido."` / `"Codigo de Cliente inexistente, intente de nuevo."` |
+  | `IdSegmento` vacío o inexistente | `IdError: true` — `"Se requiere el segmento a asignar (IdSegmento)."` / `"No existe este segmento de distribucion, intente de nuevo..."` |
+  | Cliente ya con segmento asignado | `IdError: true` — `"El cliente <N> ya tiene asignada la distribucion <X>."` (mensaje amigable, sin referencias técnicas) |
+  | Cliente asociado a un distribuidor (tablas `Asociado` + `DstArt`) | `IdError: true` — `"...Alta no procede..."` (mismo candado de la pantalla) |
+  | Cliente bloqueado por otro proceso | `IdError: true` — error controlado sin sesión colgada (`NO-WAIT`) |
+  | Alta exitosa | `Cliente.Id-Segmento` asignado + bitácora `CambioCte` (Campo 1290) + correo de aviso a los gerentes + auditoría (operación `ALTA`) |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de despliegue y ejecución por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Origen:** versión REST de `cxcb0220.p`. La pantalla hace alta/cambio/quitar en un solo flujo (`Actualiza`); el REST separa la semántica: este `POST` solo asigna a clientes **sin** segmento. Si el cliente ya tiene distribución, regresa un mensaje amigable para el usuario final (sin mencionar verbos HTTP); el front decide si redirige al flujo de cambio.
+  2. **Password Tipo 15:** la pantalla exige el password al entrar; en el REST ese candado lo valida el **front** (permisos de la aplicación) — el servicio no recibe password.
+  3. **Correo de aviso con control de ambiente:** cada movimiento manda el mismo correo de la pantalla ("Cambio del segmento de distribucion a un cliente") a `odelgado@`, `agomez@` y `agomezl@adosa.com.mx`, vía `programas/correo02_rest.p` — el wrapper que ya usa el módulo de cotizaciones: en **DESARROLLO** (marcador `programas/desarrollo.flag` en el servidor) redirige el correo a los buzones de desarrollo y antepone "DESARROLLO" al asunto, para que las pruebas **no** lleguen a los gerentes; en **producción** envía a los destinatarios reales con BCC de monitoreo. El correo es **no crítico**: si falla, el cambio ya quedó grabado.
+  4. **Bitácora doble:** `CambioCte` con Campo `1290` (la misma bitácora de cambios de cliente que usa la pantalla y `cliente_p.p`) + `programas/auditoria.p` (convención REST del módulo).
+  5. **Operaciones relacionadas:** consulta `ctesegmento-ClienteSegmentoConsulta.md`, cambio `ctesegmento-ClienteSegmentoCambio.md`, baja `ctesegmento-ClienteSegmentoBaja.md`.
+  6. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

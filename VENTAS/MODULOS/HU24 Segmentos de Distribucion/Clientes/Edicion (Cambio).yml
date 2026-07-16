@@ -1,0 +1,166 @@
+info:
+  name: Edicion (Cambio)
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ClienteSegmento/Cambio?IdUser=olds&IdCliente=113&IdSegmento=I1
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdCliente
+      value: "113"
+      type: query
+    - name: IdSegmento
+      value: I1
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Clientes por Segmento de Distribución (Cambio)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Clientes por Segmento de Distribución — Cambio**
+  Cambia el segmento de distribución de un cliente que **ya** tiene uno asignado, a otro segmento **existente**. Aplica el mismo candado asociado-distribuidor de la pantalla.
+  Programa servidor: `ctesegmento.p` · Procedimiento: `cambiaClienteSegmento` | Versión REST de la pantalla `cxcb0220.p` "Cambio de Segmento a Clientes" (modo carácter).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  PUT
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ClienteSegmento/Cambio
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdCliente`** · STRING · ✅ — Cliente a cambiar; debe existir y **tener** segmento actual
+
+  **`IdSegmento`** · STRING · ✅ — Nuevo segmento (mayúsculas); debe existir en `Segmento` y ser **distinto** del actual
+  - Para quitar el segmento el front debe usar la baja (`DELETE /Ventas/ClienteSegmento/Baja`), no mandar vacío
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la operación (bitácora `CambioCte`, correo y auditoría)
+
+  > El password Tipo 15 que exige la pantalla original se valida en el **front**; el servicio no lo recibe.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Todos los parámetros viajan por query string.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  PUT .../Ventas/ClienteSegmento/Cambio?IdCliente=34561&IdSegmento=DIST02&IdUser=sis10
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Cliente 34561 con segmento DIST02 (anterior: DIST01)."
+    }
+  }
+  ```
+
+  **`IdError`** · BOOLEAN — `false` = cambio exitoso; `true` = error controlado (no se modificó nada)
+  **`Respuesta`** · STRING — Mensaje con el segmento nuevo y el anterior
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "El cliente 34561 no tiene distribucion asignada."
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdCliente` no numérico o inexistente | `IdError: true` — `"Numero de cliente invalido."` / `"Codigo de Cliente inexistente, intente de nuevo."` |
+  | `IdSegmento` vacío | `IdError: true` — `"Se requiere el nuevo segmento (IdSegmento)."` |
+  | `IdSegmento` inexistente | `IdError: true` — `"No existe este segmento de distribucion, intente de nuevo..."` (mensaje de la pantalla) |
+  | Cliente sin segmento actual | `IdError: true` — `"El cliente <N> no tiene distribucion asignada."` (mensaje amigable, sin referencias técnicas) |
+  | Nuevo segmento igual al actual | `IdError: true` — `"El cliente <N> ya tiene asignada esa distribucion (<X>)."` |
+  | Cliente asociado a un distribuidor (tablas `Asociado` + `DstArt`) | `IdError: true` — `"...Alta no procede..."` (mismo candado de la pantalla) |
+  | Cliente bloqueado por otro proceso | `IdError: true` — error controlado sin sesión colgada (`NO-WAIT`) |
+  | Cambio exitoso | `Cliente.Id-Segmento` actualizado + bitácora `CambioCte` (Campo 1290, guarda valor anterior y nuevo) + correo de aviso a los gerentes + auditoría (operación `CAMBIO`) |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de despliegue y ejecución por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Origen:** versión REST del flujo principal de `cxcb0220.p` (capturar cliente → capturar segmento nuevo → `Actualiza`). El candado asociado-distribuidor se aplica igual que en la pantalla, que lo valida al capturar el cliente.
+  2. **Flujo sugerido para el front:** primero `GET /Ventas/ClienteSegmento/Consulta?IdCliente=N` para mostrar razón social y segmento actual (como la pantalla), luego este `PUT` con el segmento nuevo elegido del catálogo.
+  3. **Correo y bitácora:** cada cambio manda el correo de aviso a los gerentes vía `programas/correo02_rest.p` (con control de ambiente: en DEV se redirige a los buzones de desarrollo, no llega a los gerentes; no crítico) y graba `CambioCte` Campo `1290` con `ValorOld`/`ValorNuevo` + auditoría REST — ver detalle en `ctesegmento-ClienteSegmentoAlta.md`. El password Tipo 15 de la pantalla se valida en el front.
+  4. **Operaciones relacionadas:** consulta `ctesegmento-ClienteSegmentoConsulta.md`, alta `ctesegmento-ClienteSegmentoAlta.md`, baja `ctesegmento-ClienteSegmentoBaja.md`.
+  5. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

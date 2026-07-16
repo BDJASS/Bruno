@@ -1,0 +1,157 @@
+info:
+  name: Eliminacion
+  type: http
+  seq: 3
+
+http:
+  method: DELETE
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ClienteSegmento/Baja?IdUser=olds&IdCliente=113
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdCliente
+      value: "113"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Clientes por Segmento de Distribución (Baja)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Clientes por Segmento de Distribución — Baja**
+  Quita el segmento de distribución al cliente (`Cliente.Id-Segmento = ""`), equivalente a capturar el segmento vacío en la pantalla ("Se eliminará la distribución al cliente...").
+  Programa servidor: `ctesegmento.p` · Procedimiento: `bajaClienteSegmento` | Versión REST de la pantalla `cxcb0220.p` "Cambio de Segmento a Clientes" (modo carácter).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  DELETE
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ClienteSegmento/Baja
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdCliente`** · STRING · ✅ — Cliente al que se le quita el segmento; debe existir y tener segmento asignado
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la operación (bitácora `CambioCte`, correo y auditoría)
+
+  > El password Tipo 15 que exige la pantalla original se valida en el **front**; el servicio no lo recibe.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Todos los parámetros viajan por query string.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  DELETE .../Ventas/ClienteSegmento/Baja?IdCliente=34561&IdUser=sis10
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Se elimino la distribucion al cliente 34561 (segmento anterior: DIST01)."
+    }
+  }
+  ```
+
+  **`IdError`** · BOOLEAN — `false` = baja exitosa; `true` = error controlado (no se modificó nada)
+  **`Respuesta`** · STRING — Mensaje con el segmento que tenía el cliente
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "El cliente 34561 no tiene segmento de distribucion asignado."
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdCliente` no numérico o inexistente | `IdError: true` — `"Numero de cliente invalido."` / `"Codigo de Cliente inexistente, intente de nuevo."` |
+  | Cliente sin segmento asignado | `IdError: true` — `"El cliente <N> no tiene segmento de distribucion asignado."` |
+  | Cliente bloqueado por otro proceso | `IdError: true` — error controlado sin sesión colgada (`NO-WAIT`) |
+  | Baja exitosa | `Cliente.Id-Segmento = ""` + bitácora `CambioCte` (Campo 1290, guarda el valor anterior) + correo de aviso a los gerentes + auditoría (operación `BAJA`) |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de despliegue y ejecución por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Origen:** en `cxcb0220.p` quitar la distribución se hace capturando el segmento vacío (la pantalla avisa "Se eliminara la distrubicion al cliente..." y `Actualiza` graba `Id-Segmento = ""`); el REST lo expone como `DELETE` con semántica propia.
+  2. **Candado asociado-distribuidor:** NO aplica en la baja (a diferencia de alta y cambio): quitar la distribución no genera el riesgo que ese candado previene. Es la única diferencia deliberada respecto a la pantalla, que bloquea al cliente desde la captura.
+  3. **El registro del cliente NO se elimina** — solo se limpia el campo `Id-Segmento`. Las excepciones del segmento (`DetSegmento`) no se tocan: pertenecen al segmento, no al cliente.
+  4. **Correo y bitácora:** igual que alta y cambio — correo de aviso a los gerentes vía `programas/correo02_rest.p` (en DEV se redirige a los buzones de desarrollo, no llega a los gerentes; no crítico), `CambioCte` Campo `1290` con el valor anterior, y auditoría REST. El password Tipo 15 de la pantalla se valida en el front.
+  5. **Operaciones relacionadas:** consulta `ctesegmento-ClienteSegmentoConsulta.md`, alta `ctesegmento-ClienteSegmentoAlta.md`, cambio `ctesegmento-ClienteSegmentoCambio.md`.
+  6. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS
