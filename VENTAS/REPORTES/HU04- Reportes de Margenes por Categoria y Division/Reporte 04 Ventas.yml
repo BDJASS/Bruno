@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/MargenesPorCategoriaDivision?IdUser=olds&FechaInicial=2026-01-01&FechaFinal=2026-15-01&Seleccionar=6&Lista=WEB&ConAsociados=false
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/MargenesPorCategoriaDivision?IdUser=olds&FechaInicial=2026-01-01&FechaFinal=2026-15-01&Seleccionar=7&Lista=D3&ConAsociados=false
   params:
     - name: IdUser
       value: olds
@@ -17,10 +17,10 @@ http:
       value: 2026-15-01
       type: query
     - name: Seleccionar
-      value: "6"
+      value: "7"
       type: query
     - name: Lista
-      value: WEB
+      value: D3
       type: query
     - name: ConAsociados
       value: "false"
@@ -58,7 +58,7 @@ docs: |
   ## 3. URL Completa
 
   ```
-  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/MargenesPorCategoriaDivision
+  http://192.0.1.14:8850/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/MargenesPorCategoriaDivision
   ```
 
   ---
@@ -82,9 +82,11 @@ docs: |
   - `4` ListaCte (requiere `Lista` = CSV de `Id-ListaCte`)
   - `5` Contratos vigentes al periodo
   - `6` UbiVta (requiere `Lista` = CSV de `Id-Ubic`)
+  - `7` Segmento de distribución (`Lista` = CSV de `Id-Segmento`; vacío = todos los clientes con segmento asignado)
 
   **`Lista`** · STRING · ❌ — CSV de códigos según `Seleccionar`
   - Ej: `"001,002"` · Vacío cuando `Seleccionar=1` o `Seleccionar=5`
+  - Con `Seleccionar=7`: CSV de segmentos, ej. `"DIST01,DIST02"` (se normaliza a mayúsculas y cada segmento debe existir) · Vacío = todos los segmentos
 
   **`ConAsociados`** · BOOLEAN · ❌ — Incluir clientes asociados *(solo aplica con `Seleccionar=3`)*
   - `true` = incluye asociados al cliente · `false` = solo el cliente indicado (default)
@@ -108,7 +110,7 @@ docs: |
   ## 7. Ejemplo de Request
 
   ```
-  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/MargenesPorCategoriaDivision
+  GET http://192.0.1.14:8850/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/MargenesPorCategoriaDivision
       ?IdUser=olds
       &FechaInicial=2026-02-21
       &FechaFinal=2026-03-23
@@ -121,6 +123,17 @@ docs: |
   - Criterio **General** — incluye todos los clientes sin filtro
   - Periodo del `2026-02-21` al `2026-03-23`
   - Sin desglose de clientes asociados
+
+  **Ejemplo por Segmento de distribución:**
+
+  ```
+  GET .../Ventas/Reporte/MargenesPorCategoriaDivision
+      ?IdUser=olds
+      &FechaInicial=2026-02-21
+      &FechaFinal=2026-03-23
+      &Seleccionar=7
+      &Lista=DIST01,DIST02          ← vacío = todos los clientes con segmento
+  ```
 
   ---
 
@@ -286,6 +299,7 @@ docs: |
   3. **Cálculo de `Margen`:** Se calcula sobre costo: `((Neto / Costo) − 1) × 100`. Si el costo es `0`, el margen se retorna como `0`.
   4. **Cálculo de `PorDes`:** `(((Importe − Descto) / Importe) − 1) × 100`. Valor negativo indica descuento. Si el importe es `0`, se retorna `0`.
   5. **`Descto` = Descuento pronto pago (FactorPP):** No es el descuento comercial de la línea. Es el descuento de pronto pago prorrateado por línea de detalle usando el factor `(1 − Desc1/SubTot) × (1 − Desc2/Tot)`.
-  6. **`Seleccionar=4` (ListaCte) y `Seleccionar=5` (Contratos):** El servidor construye internamente una tabla de clientes elegibles (`t-liscte`) antes de procesar las ventas. `Lista` debe contener los IDs de lista/contrato, no de clientes.
-  7. **`ConAsociados=true`:** Solo tiene efecto con `Seleccionar=3`. Amplía el universo de facturas/remisiones al cliente indicado en `Lista` y a todos sus clientes asociados registrados en el catálogo.
-  8. **Volumen de datos:** Con `Seleccionar=1` (General) y periodos amplios, el response puede ser extenso. El número de registros se indica en el campo `Respuesta` (ej: `"12 categorias encontradas."`).
+  6. **`Seleccionar=4` (ListaCte), `Seleccionar=5` (Contratos) y `Seleccionar=7` (Segmento):** El servidor construye internamente una tabla de clientes elegibles (`t-liscte`) antes de procesar las ventas. En `4` la `Lista` trae IDs de lista (no de clientes); en `7` trae claves de segmento de distribución.
+  7. **`Seleccionar=7` (Segmento de distribución):** los clientes elegibles son los que tienen el segmento asignado en `Cliente.Id-Segmento`. Si `Lista` viene vacía entran **todos los clientes con segmento**; si trae segmentos (CSV, ej. `"DIST01,DIST02"`) solo esos, y **cada segmento debe existir** en el catálogo (`Segmento`) — si alguno no existe regresa `IdError: true` con `"No existe el segmento de distribucion: X."`. Nota de costo: `Cliente.Id-Segmento` **no tiene índice**, por lo que armar `t-liscte` hace **un** barrido secuencial de `Cliente` por request (lectura mínima con `FIELDS`), mismo costo fijo que el conteo de clientes de `segmentodist.p`.
+  8. **`ConAsociados=true`:** Solo tiene efecto con `Seleccionar=3`. Amplía el universo de facturas/remisiones al cliente indicado en `Lista` y a todos sus clientes asociados registrados en el catálogo.
+  9. **Volumen de datos:** Con `Seleccionar=1` (General) y periodos amplios, el response puede ser extenso. El número de registros se indica en el campo `Respuesta` (ej: `"12 categorias encontradas."`).

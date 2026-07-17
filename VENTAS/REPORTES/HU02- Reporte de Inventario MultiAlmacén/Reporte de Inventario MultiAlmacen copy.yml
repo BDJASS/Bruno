@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/InventarioMultiAlmacen?Opciones=2&Seleccion=021118&Articulo=021118&ReportePor=2&IncExist=1&UnidadesEn=1&Resagados=1&IdUser=OLDS
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/InventarioMultiAlmacen?Opciones=2&Seleccion=021118&Articulo=021118&ReportePor=2&IncExist=1&UnidadesEn=3&Resagados=1&IdUser=OLDS
   params:
     - name: Opciones
       value: "2"
@@ -23,7 +23,7 @@ http:
       value: "1"
       type: query
     - name: UnidadesEn
-      value: "1"
+      value: "3"
       type: query
     - name: Resagados
       value: "1"

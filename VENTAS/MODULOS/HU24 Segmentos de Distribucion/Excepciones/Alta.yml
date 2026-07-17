@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/SegmentoDistribucion/Excepciones/Alta?IdSegmento=D2X&IdUser=olds&TipoExcepcion=1&IdExcepcion=2033
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/SegmentoDistribucion/Excepciones/Alta?IdSegmento=D2X&IdUser=olds&TipoExcepcion=1&IdExcepcion=2032
   params:
     - name: IdSegmento
       value: D2X
@@ -17,7 +17,7 @@ http:
       value: "1"
       type: query
     - name: IdExcepcion
-      value: "2033"
+      value: "2032"
       type: query
   auth: inherit
 

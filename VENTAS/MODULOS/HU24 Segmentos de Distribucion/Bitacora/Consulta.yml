@@ -1,0 +1,244 @@
+info:
+  name: "Consulta "
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/SegmentoDistribucion/Bitacora?IdUser=olds&IdSegmento=D2X&FechaIni=2026-01-01&FechaFin=2026-07-16
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdSegmento
+      value: D2X
+      type: query
+    - name: FechaIni
+      value: 2026-01-01
+      type: query
+    - name: FechaFin
+      value: 2026-07-16
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Bitácora del Segmento de Distribución
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Bitácora del Segmento de Distribución — Consulta**
+  Devuelve el historial de movimientos de un segmento de distribución en una sola línea de tiempo, del más reciente al más antiguo: alta / cambio / baja del segmento, alta / cambio / baja de excepciones y alta / baja de clientes al segmento.
+  Programa servidor: `bitacoraseg.p` · Procedimiento: `leeBitacoraSegmento` | Lee la tabla `CambioSeg`, poblada por `segmentodist.p` (segmento y excepciones) y `ctesegmento.p` (clientes).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/SegmentoDistribucion/Bitacora
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · Fechas en formato ISO `aaaa-mm-dd`
+
+  **`IdSegmento`** · STRING · ✅ — Segmento a consultar (se normaliza a mayúsculas). NO se exige que siga existiendo: un segmento dado de baja conserva su bitácora
+
+  **`FechaIni`** · DATE · ✅ — Fecha inicial del rango (obligatoria)
+  - Ej: `"2026-07-01"`
+
+  **`FechaFin`** · DATE · ✅ — Fecha final del rango (obligatoria)
+  - Ej: `"2026-07-16"`
+
+  **`TipoMov`** · STRING · ❌ — Filtra un solo tipo de movimiento
+  - `1` Alta segmento · `2` Cambio segmento · `3` Baja segmento · `4` Alta excepción · `5` Cambio excepción · `6` Baja excepción · `7` Alta cliente · `8` Baja cliente · Vacío = todos
+
+  **`IdUser`** · STRING · ✅ — Usuario que consulta
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/SegmentoDistribucion/Bitacora?IdSegmento=DIST01&FechaIni=2026-07-01&FechaFin=2026-07-16&IdUser=SIS10
+  GET .../Ventas/SegmentoDistribucion/Bitacora?IdSegmento=DIST01&FechaIni=2026-07-01&FechaFin=2026-07-16&TipoMov=7&IdUser=SIS10   (solo altas de cliente)
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Consulta generada: 5 movimiento(s) del segmento DIST01.",
+      "ttBitacora": {
+        "ttBitacora": [
+          {
+            "Orden": 1,
+            "FecReg": "2026-07-16",
+            "HoraTxt": "12:07:05",
+            "IdUser": "SIS10",
+            "Movimiento": "Baja de cliente",
+            "ValorNuevo": "",
+            "ValorOld": "113 ISRAEL CAVAZOS CAVAZOS"
+          },
+          {
+            "Orden": 2,
+            "FecReg": "2026-07-15",
+            "HoraTxt": "10:35:10",
+            "IdUser": "ALEX",
+            "Movimiento": "Cambio de excepcion",
+            "ValorNuevo": "MARCA 1234 (7.50%)",
+            "ValorOld": "MARCA 1234 (5.00%)"
+          },
+          {
+            "Orden": 3,
+            "FecReg": "2026-07-14",
+            "HoraTxt": "08:54:10",
+            "IdUser": "ALEX",
+            "Movimiento": "Alta de excepcion",
+            "ValorNuevo": "PROVEEDOR 550 (10.00%)",
+            "ValorOld": ""
+          },
+          {
+            "Orden": 4,
+            "FecReg": "2026-07-10",
+            "HoraTxt": "11:23:25",
+            "IdUser": "SIS10",
+            "Movimiento": "Alta de cliente",
+            "ValorNuevo": "113 ISRAEL CAVAZOS CAVAZOS",
+            "ValorOld": ""
+          },
+          {
+            "Orden": 5,
+            "FecReg": "2026-07-01",
+            "HoraTxt": "08:30:00",
+            "IdUser": "SIS10",
+            "Movimiento": "Alta de segmento",
+            "ValorNuevo": "Descr: DISTRIBUIDORES ZONA NORTE Prom: 50000 Margen: 12.5%",
+            "ValorOld": ""
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  ### Campos de `ttBitacora` (1 registro por movimiento, del más reciente al más antiguo)
+
+  **`Orden`** · INT — Consecutivo de despliegue (`1` = movimiento más reciente); conserva el orden en el JSON
+  **`FecReg`** · DATE — Fecha del movimiento
+  **`HoraTxt`** · STRING — Hora del movimiento formateada `HH:MM:SS`
+  **`IdUser`** · STRING — Usuario que realizó el movimiento
+  **`Movimiento`** · STRING — Etiqueta legible del movimiento (alta/cambio/baja de segmento, excepción o cliente)
+  **`ValorNuevo`** · STRING — Valor nuevo / detalle del movimiento (según el tipo)
+  **`ValorOld`** · STRING — Valor anterior del movimiento (según el tipo)
+
+  > El código de tipo, el renglón de la excepción y el número/razón social del cliente **no** se exponen como campos aparte: el dato relevante ya viene legible dentro de `Movimiento`, `ValorNuevo` y `ValorOld` (p. ej. el cliente aparece como `"113 ISRAEL CAVAZOS CAVAZOS"`).
+
+  ### Contenido de `ValorNuevo` / `ValorOld` según el movimiento
+
+  **Alta de segmento** — `ValorNuevo` = `Descr / Prom / Margen` capturados · `ValorOld` vacío
+  **Cambio de segmento** — `ValorNuevo` = estado nuevo · `ValorOld` = estado anterior (`Descr / Prom / Margen`)
+  **Baja de segmento** — `ValorOld` = descripción + clientes y excepciones afectados · `ValorNuevo` vacío
+  **Alta de excepción** — `ValorNuevo` = `Tipo clave (margen%)` · `ValorOld` vacío
+  **Cambio de excepción** — `ValorNuevo` / `ValorOld` = `Tipo clave (margen%)` nuevo / anterior
+  **Baja de excepción** — `ValorOld` = `Tipo clave (margen%)`
+  **Alta de cliente** — `ValorNuevo` = `Cliente RazónSocial`
+  **Baja de cliente** — `ValorOld` = `Cliente RazónSocial`
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Indique el rango de fechas (FechaIni y FechaFin).",
+    "ttBitacora": { "ttBitacora": [] }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdSegmento` vacío | `IdError: true` — `"Se requiere el segmento (IdSegmento)."` |
+  | `FechaIni` o `FechaFin` vacía | `IdError: true` — `"Indique el rango de fechas (FechaIni y FechaFin)."` |
+  | `FechaIni` mayor que `FechaFin` | `IdError: true` — `"La fecha inicial no puede ser mayor que la final."` |
+  | `TipoMov` fuera de 1 a 8 | `IdError: true` — `"Tipo de movimiento no valido (1 a 8)."` |
+  | Segmento sin movimientos en el rango | Consulta OK; `Respuesta: "Sin movimientos del segmento X en el rango de fechas indicado."` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de dar de alta la tabla `CambioSeg`, compilar en PDSOE y ejecutar por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Fuente de datos — tabla `CambioSeg` (nueva):** bitácora dedicada del segmento, de la misma familia que `CambioCte` / `CambioArt`. Índice primario `Idx-SegFec` (`Id-Segmento` + `FecReg` desc + `Hora` desc): la consulta acotada por fechas se resuelve por índice y entrega el orden más reciente primero sin `BY`. El rango de fechas es **obligatorio** justamente para acotar el crecimiento de la tabla.
+  2. **Un solo origen (no barre `CambioCte`):** los movimientos de cliente (alta/baja del segmento) también se graban en `CambioSeg` desde `ctesegmento.p`, además del `CambioCte` (campo 1290) que ya existía para la bitácora del cliente. Así la bitácora del segmento lee **una sola tabla indexada** por segmento y no depende de un barrido de `CambioCte` (que no tiene índice por segmento). La bitácora del segmento arranca desde que la tabla `CambioSeg` existe.
+  3. **Escrituras atómicas:** cada movimiento se graba en `CambioSeg` **dentro de la misma transacción** del cambio (alta/cambio/baja de segmento y excepción en `segmentodist.p`; alta/baja de cliente en `ctesegmento.p`), de modo que el cambio y su bitácora quedan juntos.
+  4. **Cambio de segmento de un cliente:** cuando un cliente pasa del segmento A al B, se registran **dos** movimientos: `Baja de cliente` (TipoMov 8) en el segmento A y `Alta de cliente` (TipoMov 7) en el segmento B, para que la bitácora de cada segmento refleje su propio movimiento.
+  5. **Baja de segmento:** genera **un** movimiento `Baja de segmento` (TipoMov 3) con el conteo de clientes y excepciones afectados; no se registra un renglón por cada cliente (el segmento deja de existir).
+  6. **Segmento dado de baja:** el servicio **no** valida que el segmento exista en la tabla `Segmento`; así la bitácora de un segmento eliminado (incluido su propio movimiento de baja) sigue siendo consultable.
+  7. **Fechas tipadas:** `FechaIni` / `FechaFin` se reciben como `DATE` (ISO `aaaa-mm-dd`); PASOE convierte el texto. Mismo patrón que `ventaperdidalist.p` y `cotizacion2.p`.
+  8. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

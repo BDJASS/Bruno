@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ClienteSegmento/Alta?IdUser=olds&IdCliente=113&IdSegmento=I1
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ClienteSegmento/Alta?IdUser=olds&IdCliente=113&IdSegmento=D2X
   params:
     - name: IdUser
       value: olds
@@ -14,7 +14,7 @@ http:
       value: "113"
       type: query
     - name: IdSegmento
-      value: I1
+      value: D2X
       type: query
   auth: inherit
 

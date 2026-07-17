@@ -5,10 +5,10 @@ info:
 
 http:
   method: PUT
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/SegmentoDistribucion/Modifica?IdSegmento=D9X&IdUser=olds&Descr=distrib ejemplo&PromMinimo=75000&MargenGral=11.56
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/SegmentoDistribucion/Modifica?IdSegmento=D2X&IdUser=olds&Descr=distrib ejemplo&PromMinimo=80&MargenGral=11.56
   params:
     - name: IdSegmento
-      value: D9X
+      value: D2X
       type: query
     - name: IdUser
       value: olds
@@ -17,7 +17,7 @@ http:
       value: distrib ejemplo
       type: query
     - name: PromMinimo
-      value: "75000"
+      value: "80"
       type: query
     - name: MargenGral
       value: "11.56"
