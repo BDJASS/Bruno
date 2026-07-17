@@ -1,0 +1,158 @@
+info:
+  name: Previa Cotizacion
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Contratos/Previa?IdCot=4101355
+  params:
+    - name: IdCot
+      value: "4101355"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Contratos: Previa desde Cotización
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Contratos — Previa desde Cotización**
+  Arma la previa de un contrato a partir de una cotización y devuelve el **MISMO DATASET** que el Detalle (cabecera + márgenes + partidas con precio neto), para que el front llene el grid. El usuario luego **quita** renglones (no puede agregar) y manda el dataset resultante a la Alta.
+  Programa servidor: `contrato.p` · Procedimiento: `previaCotizacion` | Versión REST de la carga de `vtaa0022.p`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Contratos/Previa
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdCot`** · STRING · ✅ — Cotización origen; debe existir
+  **`FechaIni`** · DATE (ISO `aaaa-mm-dd`) · ❌ — Vigencia inicial; vacía = `Cot.FecReg`
+  **`FechaFin`** · DATE (ISO `aaaa-mm-dd`) · ❌ — Vigencia final; vacía = `Cot.FecReg + 60`
+
+  ---
+
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
+
+  | Header   | Valor              |
+  |----------|--------------------|
+  | `Accept` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Contratos/Previa?IdCot=4101355
+  GET .../Ventas/Contratos/Previa?IdCot=4101355&FechaIni=2026-07-10&FechaFin=2026-09-08
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Previa de la cotizacion 4101355: 2 partida(s). El front puede QUITAR renglones (no agregar) y mandar el dataset a la alta.",
+      "dsContrato": {
+        "dsContrato": {
+          "ttContEnc": [
+            {
+              "IdContrato": 0, "IdCot": "4101355", "IdCliente": 26,
+              "RazonSocial": "FIDEL ALEJANDRO AYALA NOVAK",
+              "FecIni": "2026-07-10", "FecFin": "2026-09-08", "DiasVig": 60,
+              "Usuario": "", "Activo": false, "Cancelado": false,
+              "Estatus": "PENDIENTE (PREVIA)", "Partidas": 2,
+              "PonIni": 17.99, "PonAct": 17.99, "AriIni": 17.97, "AriAct": 17.97
+            }
+          ],
+          "ttDetContrato": [
+            {
+              "IdContrato": 0, "Seq": 10, "IdArticulo": "021118",
+              "DescrArt": "BOLIGRAFO P/MED. 1.0MM BIC M-250 923995 DURA+",
+              "IdColor": 2, "Kolor": "AZUL", "IdPres": 4, "Presentacion": "C/12",
+              "IdMoneda": 0, "Moneda": "", "PrecUnit": 41.4, "IndicaPre": "F",
+              "CostoCot": 35.41368, "CostoEsp": 0.0, "IdMonedaCE": 1,
+              "CostoIni": 35.41368, "CostoAct": 35.41368,
+              "MargenIni": 16.9, "MargenAct": 16.9,
+              "EnOtroContrato": false, "Descontinuado": false
+            }
+          ]
+        }
+      }
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos del Response
+
+  Es el mismo DATASET `dsContrato` que el **Detalle** (ver `contrato-ContratosDetalle.md`, sección 9), con dos diferencias:
+  - `ttContEnc.IdContrato = 0` (el contrato aún no existe) y `Estatus = "PENDIENTE (PREVIA)"`.
+  - Por renglón vienen las banderas informativas **`EnOtroContrato`** (el artículo ya está en otro contrato activo del cliente) y **`Descontinuado`**, para que el front las resalte y el usuario decida quitarlas.
+
+  El precio por partida es el **neto** de la cotización: `PUnit` (o `PUnitExt` si aplica) menos descuento.
+
+  ---
+
+  ## 10. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | Cotización inexistente | `IdError: true` — `"Cotizacion inexistente, verifique..."` |
+  | Cotización con renglón a TC Real (`IndicaPre = "X"`) | `IdError: true` — `"La cotizacion ... contiene al menos un articulo con precio calculado al TC Real, alta no procede..."` |
+  | Artículo repetido en la misma cotización | `IdError: true` — `"El articulo <x> se encuentra repetido dentro de la misma cotizacion."` |
+  | Previa correcta | `IdError: false` — `"Previa de la cotizacion N: M partida(s)..."` (+ aviso de descontinuados si aplica) |
+
+  ---
+
+  ## 11. Resultado
+
+  | Estado | Descripción |
+  |--------|-------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 12. Observaciones Técnicas
+
+  1. El front toma este dataset, **quita** los renglones que no quiera (no puede agregar) y lo manda tal cual al body de la Alta (`POST /Ventas/Contratos/Alta`). Cada renglón ya trae los datos de persistencia (`PrecUnit`, `IndicaPre`, `IdMoneda`, `CostoEsp`, `IdMonedaCE`, `CostoCot`).
+  2. Márgenes con `vtaa0023.p` e `IdContrato = 0` (usa `HCosto`), igual que el alta en modo carácter; redondeados a 2 decimales.
+  3. Servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

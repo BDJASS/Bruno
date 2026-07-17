@@ -1,0 +1,160 @@
+info:
+  name: Consultaa
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Contratos/Consulta?FechaIni=2026-01-01&FechaFin=2026-07-20
+  params:
+    - name: FechaIni
+      value: 2026-01-01
+      type: query
+    - name: FechaFin
+      value: 2026-07-20
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Contratos: Consulta (Listado)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Contratos — Consulta / Listado**
+  Lista los contratos de precios fijos por **rango de fechas de vigencia inicial** (`Contrato.FecIni`). Es el listado del módulo de gestión.
+  Programa servidor: `contrato.p` · Procedimiento: `consultaContratos` | Versión REST de `vtaa0020.p`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Contratos/Consulta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`FechaIni`** · DATE (ISO `aaaa-mm-dd`) · ✅ — Inicio del rango sobre `Contrato.FecIni`
+  **`FechaFin`** · DATE (ISO `aaaa-mm-dd`) · ✅ — Fin del rango; debe ser ≥ `FechaIni`
+
+  > No hay otros filtros: la consulta es únicamente por rango de fechas.
+
+  ---
+
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
+
+  | Header   | Valor              |
+  |----------|--------------------|
+  | `Accept` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Contratos/Consulta?FechaIni=2026-07-01&FechaFin=2026-07-31
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Consulta generada: 2 contrato(s).",
+      "ttContrato": {
+        "ttContrato": [
+          {
+            "IdContrato": 2438,
+            "IdCot": "4101355",
+            "IdCliente": 26,
+            "RazonSocial": "FIDEL ALEJANDRO AYALA NOVAK",
+            "FecIni": "2026-07-10",
+            "FecFin": "2026-09-08",
+            "DiasVig": 60,
+            "Usuario": "sis10",
+            "Activo": false,
+            "Cancelado": false,
+            "FecCanc": null,
+            "FecReactiv": null,
+            "Estatus": "PENDIENTE",
+            "Partidas": 1
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos del Response (ttContrato)
+
+  **`IdContrato`** · INTEGER — Folio del contrato
+  **`IdCot`** · CHARACTER — Cotización origen
+  **`IdCliente`** / **`RazonSocial`** — Cliente
+  **`FecIni`** / **`FecFin`** · DATE — Vigencia
+  **`DiasVig`** · INTEGER — Días de vigencia (`FecFin − FecIni`)
+  **`Usuario`** · CHARACTER — Usuario que dio de alta / activó
+  **`Activo`** / **`Cancelado`** · BOOLEAN — Banderas de la tabla
+  **`FecCanc`** / **`FecReactiv`** · DATE — Fechas de cancelación / reactivación
+  **`Estatus`** · CHARACTER — Estatus calculado: **PENDIENTE** (dado de alta, sin activar) · **ACTIVO** · **CANCELADO** · **VENCIDO** (`FecFin < hoy`, derivado)
+  **`Partidas`** · INTEGER — Cantidad de artículos del contrato
+
+  ---
+
+  ## 10. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `FechaIni` o `FechaFin` vacías | `IdError: true` — `"El rango de fechas del contrato es obligatorio (FechaIni y FechaFin, formato aaaa-mm-dd)."` |
+  | `FechaFin < FechaIni` | `IdError: true` — `"La fecha final no puede ser menor a la inicial."` |
+  | Sin contratos en el rango | `IdError: false` — `"Sin contratos con los criterios indicados."` |
+  | Consulta correcta | `IdError: false` — `"Consulta generada: N contrato(s)."` |
+
+  ---
+
+  ## 11. Resultado
+
+  | Estado | Descripción |
+  |--------|-------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 12. Observaciones Técnicas
+
+  1. El estatus se calcula por registro (`EstatusContrato`); no es un campo de la tabla.
+  2. Registro/mapeo del recurso en `resourceModel.xml` a cargo del usuario (alta manual).
+  3. Servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

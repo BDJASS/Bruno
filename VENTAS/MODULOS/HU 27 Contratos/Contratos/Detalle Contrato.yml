@@ -1,0 +1,173 @@
+info:
+  name: Detalle Contrato
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Contratos/Detalle?IdContrato=2438
+  params:
+    - name: IdContrato
+      value: "2438"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Contratos: Detalle
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Contratos — Detalle**
+  Devuelve un contrato como **DATASET**: cabecera (fecha, cliente, usuario, activo, estatus y los 4 márgenes) + partidas (artículo, color, presentación, moneda, precio, costo y margen por renglón).
+  Programa servidor: `contrato.p` · Procedimiento: `consultaDetContrato` | Versión REST de `vtaa0021.p`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Contratos/Detalle
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdContrato`** · STRING · ✅ — Folio del contrato a consultar
+
+  ---
+
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
+
+  | Header   | Valor              |
+  |----------|--------------------|
+  | `Accept` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Contratos/Detalle?IdContrato=2438
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Contrato 2438: 1 partida(s).",
+      "dsContrato": {
+        "dsContrato": {
+          "ttContEnc": [
+            {
+              "IdContrato": 2438, "IdCot": "4101355", "IdCliente": 26,
+              "RazonSocial": "FIDEL ALEJANDRO AYALA NOVAK",
+              "FecIni": "2026-07-10", "FecFin": "2026-09-08", "DiasVig": 60,
+              "Usuario": "sis10", "Activo": false, "Cancelado": false,
+              "FecCanc": null, "FecReactiv": null, "Estatus": "PENDIENTE",
+              "Partidas": 1,
+              "PonIni": 16.9, "PonAct": 16.9, "AriIni": 16.9, "AriAct": 16.9
+            }
+          ],
+          "ttDetContrato": [
+            {
+              "IdContrato": 2438, "Seq": 10, "IdArticulo": "021118",
+              "DescrArt": "BOLIGRAFO P/MED. 1.0MM BIC M-250 923995 DURA+",
+              "IdColor": 2, "Kolor": "AZUL", "IdPres": 4, "Presentacion": "C/12",
+              "IdMoneda": 0, "Moneda": "", "PrecUnit": 41.4, "IndicaPre": "F",
+              "CostoCot": 35.41368, "CostoEsp": 0.0, "IdMonedaCE": 1,
+              "CostoIni": 35.41368, "CostoAct": 35.41368,
+              "MargenIni": 16.90397609, "MargenAct": 16.90397609,
+              "EnOtroContrato": false, "Descontinuado": false
+            }
+          ]
+        }
+      }
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos del Response (DATASET dsContrato)
+
+  ### ttContEnc (cabecera, 1 registro)
+  **`IdContrato`, `IdCot`, `IdCliente`, `RazonSocial`, `FecIni`, `FecFin`, `DiasVig`, `Usuario`, `Activo`, `Cancelado`, `FecCanc`, `FecReactiv`, `Estatus`, `Partidas`**
+  **`PonIni` / `PonAct`** · DECIMAL — Margen **ponderado** a la fecha inicial y a hoy (redondeado a 2 decimales)
+  **`AriIni` / `AriAct`** · DECIMAL — Margen **aritmético** (promedio por renglón) inicial y actual (2 decimales)
+
+  ### ttDetContrato (partidas)
+  **`Seq`, `IdArticulo`, `DescrArt`, `IdColor`, `Kolor`, `IdPres`, `Presentacion`, `IdMoneda`, `Moneda`, `PrecUnit`, `IndicaPre`**
+  **`CostoCot`, `CostoEsp`, `IdMonedaCE`** — datos de persistencia (se devuelven tal cual)
+  **`CostoIni` / `CostoAct`** · DECIMAL — Costo a la fecha inicial y a hoy (insumo del ponderado)
+  **`MargenIni` / `MargenAct`** · DECIMAL — Margen por renglón inicial y actual (insumo del aritmético)
+  **`EnOtroContrato`** · BOOLEAN — El artículo ya está en otro contrato activo del cliente
+  **`Descontinuado`** · BOOLEAN — Artículo/color descontinuado
+
+  > **Nota:** el proveedor (`IdProv`/`NomProv`) NO se incluye en el detalle: no se usa.
+
+  ---
+
+  ## 10. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdContrato` vacío, no numérico o ≤ 0 | `IdError: true` — `"Numero de contrato invalido."` |
+  | Contrato inexistente | `IdError: true` — `"No existe folio en archivo de Contratos, favor de verificar."` |
+  | Consulta correcta | `IdError: false` — `"Contrato N: M partida(s)."` |
+
+  ---
+
+  ## 11. Márgenes (cómo se calculan)
+
+  Equivalen a los del modo carácter (`MarIni`/`MarFin`/`MarAritIni`/`MarAritFin`, vía `vtaa0023.p` contra `HCosto`/`CostoEsp`):
+  - **Ponderado**: `((Σ PrecUnit / Σ CostoIni) − 1) × 100` a la fecha inicial (`PonIni`) y con `CostoAct` a hoy (`PonAct`).
+  - **Aritmético**: promedio de `MargenIni` / `MargenAct` por renglón.
+
+  El front puede recalcular los 4 totales en vivo al quitar renglones usando los campos por partida (`PrecUnit`, `CostoIni`, `CostoAct`, `MargenIni`, `MargenAct`).
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado | Descripción |
+  |--------|-------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. Márgenes calculados con `vtaa0023.p` (RUN con `NO-ERROR`: un artículo sin costo cuenta como margen 0). El PROPATH del agente PASOE debe alcanzar `vtaa0023.p`.
+  2. Servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

@@ -1,0 +1,213 @@
+info:
+  name: ALTA
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Contratos/Alta?IdUser=olds&FechaIni=&FechaFin=
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: FechaIni
+      value: ""
+      type: query
+    - name: FechaFin
+      value: ""
+      type: query
+  body:
+    type: json
+    data: |-
+      {
+        "dsContrato": {
+          "ttContEnc": [
+            {
+              "IdContrato": 0,
+              "IdCot": "4101355",
+              "IdCliente": 26,
+              "RazonSocial": "FIDEL ALEJANDRO AYALA NOVAK",
+              "Estatus": "BORRADOR (PREVIA)",
+              "Partidas": 1
+            }
+          ],
+          "ttDetContrato": [
+            {
+              "IdContrato": 0,
+              "Seq": 10,
+              "IdArticulo": "021118",
+              "IdColor": 2,
+              "IdPres": 4,
+              "IdMoneda": 0,
+              "PrecUnit": 41.4,
+              "IndicaPre": "F",
+              "CostoCot": 35.41368,
+              "CostoEsp": 0.0,
+              "IdMonedaCE": 1,
+              "Descontinuado": false
+            }
+          ]
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Contratos: Alta
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Contratos — Alta**
+  Crea el contrato con lo que llega en el **body** (el dataset que devolvió la Previa, ya editado: el front solo pudo **quitar** renglones). Nace en estatus **PENDIENTE** (`Activo = NO`); se pone en vigor con la Activación.
+  Programa servidor: `contrato.p` · Procedimiento: `altaContrato` | Versión REST de `vtaa0022.p` + `vtaa0027.i`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Contratos/Alta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`FechaIni`** · DATE (ISO `aaaa-mm-dd`) · ❌ — Vigencia inicial (editable); vacía = `Cot.FecReg`
+  **`FechaFin`** · DATE (ISO `aaaa-mm-dd`) · ❌ — Vigencia final (editable); vacía = `Cot.FecReg + 60`
+  **`Confirmar`** · LOGICAL · ❌ — `false`/omitido en el primer intento. Si hay artículos en otro contrato activo, el servicio regresa una confirmación y **no crea nada**; el front reenvía el mismo body con `Confirmar=true` para saltarla
+  **`IdUser`** · STRING · ✅ — Usuario que crea el contrato (auditoría)
+
+  ---
+
+  ## 5. Body
+
+  **DATASET `dsContrato`** — el que devolvió `GET /Ventas/Contratos/Previa`, ya editado (renglones que quedaron). La cabecera `ttContEnc` debe traer al menos **`IdCot`**; cada partida de `ttDetContrato` trae `IdArticulo`, `IdColor`, `IdPres`, `Seq`, `IdMoneda`, `IndicaPre`, `PrecUnit`, `CostoEsp`, `IdMonedaCE`, `CostoCot`, `Descontinuado`.
+
+  ```json
+  {
+    "dsContrato": {
+      "ttContEnc": [
+        { "IdContrato": 0, "IdCot": "4101355", "Estatus": "PENDIENTE (PREVIA)", "Partidas": 1 }
+      ],
+      "ttDetContrato": [
+        {
+          "IdContrato": 0, "Seq": 10, "IdArticulo": "021118",
+          "IdColor": 2, "IdPres": 4, "IdMoneda": 0,
+          "PrecUnit": 41.4, "IndicaPre": "F",
+          "CostoCot": 35.41368, "CostoEsp": 0.0, "IdMonedaCE": 1,
+          "Descontinuado": false
+        }
+      ]
+    }
+  }
+  ```
+
+  > Si el mapeo PASOE espera el nombre del parámetro por fuera (como en la salida, que anida `dsContrato.dsContrato`), envuélvelo una vez más: `{ "dsContrato": { "dsContrato": { "ttContEnc": [...], "ttDetContrato": [...] } } }`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST .../Ventas/Contratos/Alta?FechaIni=2026-07-10&FechaFin=2026-09-08&IdUser=sis10
+       (con el DATASET dsContrato en el body)
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ### Alta correcta
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Se genero el Contrato 2438 en estatus PENDIENTE, vigencia 10/07/2026 a 08/09/2026. Use la activacion para ponerlo en vigor."
+    }
+  }
+  ```
+
+  ### Necesita confirmación (artículos en otro contrato activo)
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "Los siguientes articulos ya estan en otro contrato activo del cliente: 021118. Confirme para crear el contrato de todas formas."
+    }
+  }
+  ```
+  → El front reenvía el mismo body agregando `&Confirmar=true` a la URL.
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `"Se requiere el usuario (IdUser)."` |
+  | Body sin cabecera | `"No se recibio la cabecera del contrato en el body (dsContrato)."` |
+  | Cabecera sin `IdCot` | `"El body no trae la cotizacion (IdCot) en la cabecera."` |
+  | Body sin partidas | `"El contrato debe tener al menos un articulo."` |
+  | Cotización inexistente | `"Cotizacion inexistente, verifique..."` |
+  | Renglón del body a TC Real (`IndicaPre = "X"`) | `"El contrato contiene al menos un articulo con precio calculado al TC Real; quitelo para poder crearlo."` |
+  | `FechaFin < hoy` / `< FechaIni` | `"Fecha Final menor a Fecha Actual."` / `"...menor a Fecha Inicial."` |
+  | Asociado del cliente con contrato activo | `"YA EXISTE EL CONTRATO <n> CON EL ASOCIADO <cliente> <razón social>."` |
+  | Artículos en otro contrato activo (`Confirmar≠true`) | `"Los siguientes articulos ya estan en otro contrato activo del cliente: <lista>. Confirme para crear el contrato de todas formas."` |
+  | Alta correcta | `"Se genero el Contrato N en estatus PENDIENTE, vigencia..."` (+ aviso de descontinuados si aplica) |
+
+  ---
+
+  ## 10. Reglas del proceso (todo desde el body)
+
+  - Se trabaja **solo con los renglones que llegan en el body**; lo que el front quitó ya no viene (por eso la validación de TC Real es sobre el body).
+  - Cada `DetContrato` se crea con los valores del body (no se re-consulta la cotización renglón por renglón).
+  - **Cliente:** el de la cotización (`IdCot`); no se recibe como parámetro.
+  - **Descontinuados:** solo aviso en la `Respuesta` (no bloquean, igual que la pantalla vigente).
+  - Folio: tabla `Folio` con `Id-Doc = "CONTRATO"` (con `NO-WAIT` + reintentos). El contrato nace **PENDIENTE**.
+
+  ---
+
+  ## 11. Resultado
+
+  | Estado | Descripción |
+  |--------|-------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 12. Observaciones Técnicas
+
+  1. Auditoría: operación `ALTA` en `programas/auditoria.p` (módulo `Contratos`).
+  2. Servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

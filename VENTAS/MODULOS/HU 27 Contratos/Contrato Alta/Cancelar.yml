@@ -1,0 +1,160 @@
+info:
+  name: Cancelar
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Contratos/Cancela?IdUser=olds&IdContrato=2438
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdContrato
+      value: "2438"
+      type: query
+  body:
+    type: json
+    data: |-
+      {
+        "dsContrato": {
+          "ttContEnc": [
+            {
+              "IdContrato": 0,
+              "IdCot": "4101355",
+              "IdCliente": 26,
+              "RazonSocial": "FIDEL ALEJANDRO AYALA NOVAK",
+              "Estatus": "BORRADOR (PREVIA)",
+              "Partidas": 1
+            }
+          ],
+          "ttDetContrato": [
+            {
+              "IdContrato": 0,
+              "Seq": 10,
+              "IdArticulo": "021118",
+              "IdColor": 2,
+              "IdPres": 4,
+              "IdMoneda": 0,
+              "PrecUnit": 41.4,
+              "IndicaPre": "F",
+              "CostoCot": 35.41368,
+              "CostoEsp": 0.0,
+              "IdMonedaCE": 1,
+              "Descontinuado": false
+            }
+          ]
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Contratos: Cancelación
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Contratos — Cancelación**
+  Cancela el contrato: `Cancelado = SI`, `FecCanc = hoy`, `Activo = NO`. Es reversible: después se puede reactivar con la Activación.
+  Programa servidor: `contrato.p` · Procedimiento: `cancelaContrato` | Versión REST de `vtaa0028.i`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  PUT
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Contratos/Cancela
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdContrato`** · STRING · ✅ — Folio del contrato a cancelar
+  **`IdUser`** · STRING · ✅ — Usuario que cancela (auditoría)
+
+  ---
+
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  PUT .../Ventas/Contratos/Cancela?IdContrato=2438&IdUser=sis10
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Contrato 2438 CANCELADO el 16/07/2026. Puede reactivarse con la activacion."
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `"Se requiere el usuario (IdUser)."` |
+  | `IdContrato` inválido | `"Numero de contrato invalido."` |
+  | Contrato inexistente | `"No existe folio en archivo de Contratos, favor de verificar."` |
+  | Contrato tomado por otro proceso | `"El contrato esta siendo usado por otro proceso; intente de nuevo."` |
+  | Ya estaba cancelado | `"El contrato ya ha sido cancelado."` |
+  | Cancelación correcta | `"Contrato N CANCELADO el dd/mm/aaaa. Puede reactivarse con la activacion."` |
+
+  ---
+
+  ## 10. Resultado
+
+  | Estado | Descripción |
+  |--------|-------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 11. Observaciones Técnicas
+
+  1. La confirmación previa (¿desea cancelar?) es responsabilidad del front; el servicio ejecuta directo.
+  2. Reversible: un contrato cancelado se puede reactivar con `PUT /Ventas/Contratos/Activa` (ver `contrato-ContratosActiva.md`).
+  3. Auditoría: operación `CANCELA` en `programas/auditoria.p` (módulo `Contratos`).
+  4. Servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

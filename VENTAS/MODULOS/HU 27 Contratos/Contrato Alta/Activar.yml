@@ -1,0 +1,195 @@
+info:
+  name: Activar
+  type: http
+  seq: 3
+
+http:
+  method: PUT
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Contratos/Activa?IdUser=olds&IdContrato=2438
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdContrato
+      value: "2438"
+      type: query
+  body:
+    type: json
+    data: |-
+      {
+        "dsContrato": {
+          "ttContEnc": [
+            {
+              "IdContrato": 0,
+              "IdCot": "4101355",
+              "IdCliente": 26,
+              "RazonSocial": "FIDEL ALEJANDRO AYALA NOVAK",
+              "Estatus": "BORRADOR (PREVIA)",
+              "Partidas": 1
+            }
+          ],
+          "ttDetContrato": [
+            {
+              "IdContrato": 0,
+              "Seq": 10,
+              "IdArticulo": "021118",
+              "IdColor": 2,
+              "IdPres": 4,
+              "IdMoneda": 0,
+              "PrecUnit": 41.4,
+              "IndicaPre": "F",
+              "CostoCot": 35.41368,
+              "CostoEsp": 0.0,
+              "IdMonedaCE": 1,
+              "Descontinuado": false
+            }
+          ]
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Contratos: Activación / Reactivación
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Contratos — Activación / Reactivación**
+  Pone en vigor un contrato. Cubre dos casos según el estado actual:
+  - **PENDIENTE → ACTIVO** (irreversible).
+  - **CANCELADO → REACTIVADO** (limpia la cancelación, extiende `FecFin` si venció, y avisa a gerencia por correo si el plazo restante es > 30 días).
+
+  Programa servidor: `contrato.p` · Procedimiento: `activaContrato` | Versión REST de `vtaa0023.i` + el correo de `vtaa0021.p`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  PUT
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Contratos/Activa
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdContrato`** · STRING · ✅ — Folio del contrato
+  **`IdUser`** · STRING · ✅ — Usuario que activa/reactiva (auditoría y correo)
+
+  ---
+
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  PUT .../Ventas/Contratos/Activa?IdContrato=2438&IdUser=sis10
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ### Activación de un contrato pendiente
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Contrato 2438 ACTIVADO. Proceso irreversible: el contrato ya no admite cambios."
+    }
+  }
+  ```
+
+  ### Reactivación de un contrato cancelado
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Contrato 2438 REACTIVADO (fecha de reactivacion 16/07/2026)."
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `"Se requiere el usuario (IdUser)."` |
+  | `IdContrato` inválido | `"Numero de contrato invalido."` |
+  | Contrato inexistente | `"No existe folio en archivo de Contratos, favor de verificar."` |
+  | Contrato tomado por otro proceso | `"El contrato esta siendo usado por otro proceso; intente de nuevo."` |
+  | Ya estaba activo (al activar un pendiente) | `"El Contrato ya fue activado."` |
+  | Reactivación con artículo repetido en otro contrato activo | **Aviso** (no bloquea): antepone `"AVISO: existe otro contrato activo del cliente con al menos un articulo repetido (N)."` |
+  | Activación correcta | `"Contrato N ACTIVADO. Proceso irreversible..."` |
+  | Reactivación correcta | `"Contrato N REACTIVADO (fecha de reactivacion dd/mm/aaaa)."` |
+
+  ---
+
+  ## 10. Correo de aviso (solo reactivación con plazo > 30 días)
+
+  Si se **reactiva** un contrato cuyo plazo restante (`FecFin − hoy`) es mayor a 30 días, se envía el aviso **"SE REACTIVO UN CONTRATO CON PLAZO MAYOR A 3 MESES"** a gerencia, **vía `programas/correo02_rest.p`** (regla dev/prod):
+  - **DEV** (existe `programas/desarrollo.flag` en el servidor): redirige a los buzones de desarrollo y antepone `"DESARROLLO "` al asunto.
+  - **Producción**: va a los destinatarios reales (sgomez/ogomez/agomez/flucio) con BCC de monitoreo.
+
+  El correo se envía **después** de cerrar la transacción (no bloquea la BD) y es **no crítico**: si falla, la reactivación ya quedó aplicada. El HTML se arma en un archivo en `/usr3/tmp` (correo02_rest recibe la ruta).
+
+  > Si un aviso llega a destinatarios reales estando en DEV, revisar que `programas/desarrollo.flag` exista en el **servidor** (Linux, en el PROPATH del agente) y que el `.r` desplegado esté recompilado.
+
+  ---
+
+  ## 11. Estados del contrato
+
+  `PENDIENTE` (dado de alta, sin activar) → **ACTIVO** (irreversible) / **CANCELADO** (reversible con esta misma operación) · **VENCIDO** = derivado de `FecFin < hoy`.
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado | Descripción |
+  |--------|-------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. Auditoría: operación `ACTIVA` / `REACTIVA` en `programas/auditoria.p` (módulo `Contratos`).
+  2. PROPATH del agente PASOE debe alcanzar `programas/correo02_rest.p` (y su cadena).
+  3. Servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS
