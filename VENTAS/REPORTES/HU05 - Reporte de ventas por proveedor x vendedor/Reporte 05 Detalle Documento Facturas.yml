@@ -1,0 +1,264 @@
+info:
+  name: Reporte 05 Detalle Documento Facturas
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/VentasPorProvPorVend/DetalleDocumento?IdUser=olds&Folio=22218RE&Fecha=2026-05-02&IdCliente=39397&IdArticulo=000622
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: Folio
+      value: 22218RE
+      type: query
+    - name: Fecha
+      value: 2026-05-02
+      type: query
+    - name: IdCliente
+      value: "39397"
+      type: query
+    - name: IdArticulo
+      value: "000622"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Detalle de Documento (Ventas por Vendedor)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Detalle de Documento (Factura / Remisión) — Consulta**
+  Devuelve el detalle **completo** de una factura o remisión, con todos sus renglones en el orden capturado: artículos y renglones de corte/comentario (`Tipo = 3` o `4`, que no llevan artículo).
+  Programa servidor: `ventas-rep006det.p` · Procedimiento: `GetDetalleDocumento` | Complemento del desglose por documentos de `ventas-rep006.p`: ahí `ttDes.TieneCorte = true` indica que el artículo maneja cortes, y con este servicio se consulta el documento cuando el usuario lo pide (los comentarios de corte son textos grandes y no viajan en el desglose).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/VentasPorProvPorVend/DetalleDocumento
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · Los tres datos vienen en el renglón de `ttDes` del desglose
+
+  **`Folio`** · STRING · ✅ — Folio del documento (`ttDes.IdFactura`; puede ser factura o remisión, el servicio lo detecta)
+
+  **`Fecha`** · DATE · ✅ — Fecha del documento (`ttDes.FecReg`, ISO `aaaa-mm-dd`)
+
+  **`IdCliente`** · STRING (numérico) · ✅ — Cliente del documento (`ttDes.IdCliente`)
+
+  **`IdArticulo`** · STRING · ❌ — Artículo a filtrar (`ttDes.IdArticulo`; se normaliza con ceros a la izquierda: `21118` = `021118`)
+  - Con valor: regresa el renglón de ese artículo **y los cortes (Tipo 3/4) que le siguen** en el orden del documento; al iniciar otro artículo la captura termina (los cortes de otros artículos ya no salen)
+  - Vacío = documento completo
+
+  **`IdUser`** · STRING · ✅ — Usuario que consulta
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../DetalleDocumento?Folio=0123456&Fecha=2026-02-10&IdCliente=55921&IdUser=SIS10                      (documento completo)
+  GET .../DetalleDocumento?Folio=22519RE&Fecha=2026-05-04&IdCliente=42707&IdArticulo=021118&IdUser=SIS10    (solo ese articulo + sus cortes)
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Factura 0123456: 3 renglon(es).",
+      "dsDocumento": {
+        "ttDocEnc": [
+          {
+            "Folio": "0123456",
+            "TipoDoc": "FACTURA",
+            "FecReg": "2026-02-10",
+            "IdCliente": 55921,
+            "RazonSocial": "DISTRIBUIDORA DEL VALLE SA DE CV",
+            "IdVendedor": "0077",
+            "Renglones": 3,
+            "ttDocDet": [
+              {
+                "Folio": "0123456",
+                "Orden": 1,
+                "Tipo": 1,
+                "EsCorte": false,
+                "IdArticulo": "010203",
+                "DescrArt": "PAPEL BOND CARTA BLANCO",
+                "Renglon": "PAPEL BOND CARTA BLANCO",
+                "IdColor": 0,
+                "Color": "",
+                "IdPres": 2,
+                "Presentacion": "CAJA",
+                "Cant": 10.00,
+                "PrecUnit": 850.000000,
+                "Descto": 0.00,
+                "Importe": 8500.00
+              },
+              {
+                "Folio": "0123456",
+                "Orden": 2,
+                "Tipo": 3,
+                "EsCorte": true,
+                "IdArticulo": "",
+                "DescrArt": "",
+                "Renglon": "CORTE A MEDIA CARTA, EMPACAR EN PAQUETES DE 500",
+                "IdColor": 0,
+                "Color": "",
+                "IdPres": 0,
+                "Presentacion": "",
+                "Cant": 0.00,
+                "PrecUnit": 0.000000,
+                "Descto": 0.00,
+                "Importe": 0.00
+              },
+              {
+                "Folio": "0123456",
+                "Orden": 3,
+                "Tipo": 3,
+                "EsCorte": true,
+                "IdArticulo": "",
+                "DescrArt": "",
+                "Renglon": "ENTREGAR EN BODEGA 2",
+                "IdColor": 0,
+                "Color": "",
+                "IdPres": 0,
+                "Presentacion": "",
+                "Cant": 0.00,
+                "PrecUnit": 0.000000,
+                "Descto": 0.00,
+                "Importe": 0.00
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  ### Campos de `ttDocEnc` (cabecera, 1 registro)
+
+  **`Folio`** · STRING — Folio del documento
+  **`TipoDoc`** · STRING — `FACTURA` o `REMISION`
+  **`FecReg`** · DATE — Fecha del documento
+  **`IdCliente`** · INT — Cliente
+  **`RazonSocial`** · STRING — Razón social (directa del documento)
+  **`IdVendedor`** · STRING — Vendedor del documento
+  **`Renglones`** · INT — Total de renglones del detalle
+
+  ### Campos de `ttDocDet` (1 registro por renglón, en el orden del documento)
+
+  **`Folio`** · STRING — Folio (llave con la cabecera)
+  **`Orden`** · INT — Consecutivo de despliegue (orden de captura: `DetFactura.Reng` / `DetRemis.Sec`)
+  **`Tipo`** · INT — Tipo del renglón (`1` artículo; `3`/`4` corte/comentario)
+  **`EsCorte`** · BOOLEAN — `true` = renglón de corte/comentario (`Tipo = 3` o `4`)
+  **`IdArticulo`** · STRING — Artículo; **vacío en los renglones de corte**
+  **`DescrArt`** · STRING — Descripción del catálogo de artículos
+  **`Renglon`** · STRING — Texto del renglón (`Descr` del detalle); en los renglones de corte es **el comentario del corte**
+  **`IdColor`** / **`Color`** · INT / STRING — Color del renglón
+  **`IdPres`** / **`Presentacion`** · INT / STRING — Presentación del renglón
+  **`Cant`** · DECIMAL — Cantidad
+  **`PrecUnit`** · DECIMAL — Precio unitario
+  **`Descto`** · DECIMAL — % de descuento (`DetFactura.Descto` / `DetRemis.PorcDesc`)
+  **`Importe`** · DECIMAL — Importe del renglón
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "No se encontro el documento 0123456 con la fecha y el cliente indicados.",
+    "dsDocumento": { "ttDocEnc": [] }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `Folio` vacío | `IdError: true` — `"Se requiere el folio del documento (Folio)."` |
+  | `Fecha` vacía | `IdError: true` — `"Se requiere la fecha del documento (Fecha)."` |
+  | `IdCliente` no numérico o `<= 0` | `IdError: true` — `"Numero de cliente invalido."` |
+  | Folio+fecha+cliente sin coincidencia en Factura ni Remisión | `IdError: true` — `"No se encontro el documento X con la fecha y el cliente indicados."` |
+  | `IdArticulo` con valor y el documento no lo trae | Consulta OK; detalle vacío y `Respuesta: "La factura/remision X no trae el articulo Y."` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilar en PDSOE (regenerar `.pidl`/`.r`) y ejecutar por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Para qué existe:** el desglose por documentos de `ventas-rep006.p` (`ttDes`) marca `TieneCorte = true` cuando el artículo maneja cortes (`Articulo.TpoCorte <> 0`), pero los comentarios del corte son textos grandes que engordaban ese response. Este servicio se consulta **por documento** solo cuando el usuario abre el detalle.
+  2. **Detección Factura vs. Remisión:** el folio (`ttDes.IdFactura`) puede ser de cualquiera de las dos tablas. Se busca primero en `Factura` y luego en `Remision`, validando **fecha y cliente** (los mismos datos que mostró el reporte); eso desambigua si un folio existiera en ambas.
+  3. **Renglones de corte:** en el detalle del documento los cortes se capturan como renglones de `DetFactura`/`DetRemis` con `Tipo = 3` o `4` y **sin artículo** (`Id-Articulo` vacío); su texto va en `Renglon` (campo `Descr`). Puede haber varios por documento y salen **en el orden de captura** (`Reng` en factura, `Sec` en remisión), es decir, debajo de su artículo tal como se ven en el documento.
+  4. **Alcance:** sin `IdArticulo` devuelve **todos** los renglones del documento, para que el front muestre la factura/remisión completa.
+  5. **Filtro por artículo (`IdArticulo`):** recorre el detalle en el orden del documento con una "captura": el renglón del artículo pedido la enciende, los renglones de corte (`Tipo 3/4`) la conservan (salen), y cualquier otro renglón (otro artículo o comentario de otro tipo) la apaga — así los cortes de los demás artículos no se cuelan. Si el artículo aparece más de una vez en el documento (otro color/presentación), cada aparición sale con sus cortes.
+  5. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS
