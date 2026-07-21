@@ -5,16 +5,16 @@ info:
 
 http:
   method: POST
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Contratos/Alta?IdUser=olds&FechaIni=&FechaFin=
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Contratos/Alta?IdUser=olds&FechaIni=2026-07-10&FechaFin=2026-09-08
   params:
     - name: IdUser
       value: olds
       type: query
     - name: FechaIni
-      value: ""
+      value: 2026-07-10
       type: query
     - name: FechaFin
-      value: ""
+      value: 2026-09-08
       type: query
   body:
     type: json
@@ -27,8 +27,7 @@ http:
               "IdCot": "4101355",
               "IdCliente": 26,
               "RazonSocial": "FIDEL ALEJANDRO AYALA NOVAK",
-              "Estatus": "BORRADOR (PREVIA)",
-              "Partidas": 1
+              "Activo":true
             }
           ],
           "ttDetContrato": [
@@ -99,13 +98,15 @@ docs: |
 
   ## 5. Body
 
-  **DATASET `dsContrato`** — el que devolvió `GET /Ventas/Contratos/Previa`, ya editado (renglones que quedaron). La cabecera `ttContEnc` debe traer al menos **`IdCot`**; cada partida de `ttDetContrato` trae `IdArticulo`, `IdColor`, `IdPres`, `Seq`, `IdMoneda`, `IndicaPre`, `PrecUnit`, `CostoEsp`, `IdMonedaCE`, `CostoCot`, `Descontinuado`.
+  **DATASET `dsContrato`** — el que devolvió `GET /Ventas/Contratos/Previa`, ya editado (renglones que quedaron). La cabecera `ttContEnc` debe traer al menos **`IdCot`**; opcionalmente **`Activo`** (ver abajo). Cada partida de `ttDetContrato` trae `IdArticulo`, `IdColor`, `IdPres`, `Seq`, `IdMoneda`, `IndicaPre`, `PrecUnit`, `CostoEsp`, `IdMonedaCE`, `CostoCot`, `Descontinuado`.
+
+  > **`Activo`** (LOGICAL, en `ttContEnc`) — `false`/omitido = nace **PENDIENTE** (comportamiento por defecto). `true` = nace **ACTIVO** directamente (sin pasar por la activación). El campo de texto `Estatus` del body es solo informativo y se **ignora**.
 
   ```json
   {
     "dsContrato": {
       "ttContEnc": [
-        { "IdContrato": 0, "IdCot": "4101355", "Estatus": "PENDIENTE (PREVIA)", "Partidas": 1 }
+        { "IdContrato": 0, "IdCot": "4101355", "Activo": false, "Partidas": 1 }
       ],
       "ttDetContrato": [
         {
@@ -150,10 +151,13 @@ docs: |
   {
     "response": {
       "IdError": false,
-      "Respuesta": "Se genero el Contrato 2438 en estatus PENDIENTE, vigencia 10/07/2026 a 08/09/2026. Use la activacion para ponerlo en vigor."
+      "Respuesta": "Contrato 2438 generado.",
+      "IdContrato": 2438
     }
   }
   ```
+
+  > **`IdContrato`** (INTEGER) — folio generado; `0` si hubo error. El front lo usa directo (no necesita parsear `Respuesta`).
 
   ### Necesita confirmación (artículos en otro contrato activo)
 
@@ -182,7 +186,7 @@ docs: |
   | `FechaFin < hoy` / `< FechaIni` | `"Fecha Final menor a Fecha Actual."` / `"...menor a Fecha Inicial."` |
   | Asociado del cliente con contrato activo | `"YA EXISTE EL CONTRATO <n> CON EL ASOCIADO <cliente> <razón social>."` |
   | Artículos en otro contrato activo (`Confirmar≠true`) | `"Los siguientes articulos ya estan en otro contrato activo del cliente: <lista>. Confirme para crear el contrato de todas formas."` |
-  | Alta correcta | `"Se genero el Contrato N en estatus PENDIENTE, vigencia..."` (+ aviso de descontinuados si aplica) |
+  | Alta correcta | `"Contrato N generado."` + `IdContrato = N` |
 
   ---
 
@@ -191,8 +195,8 @@ docs: |
   - Se trabaja **solo con los renglones que llegan en el body**; lo que el front quitó ya no viene (por eso la validación de TC Real es sobre el body).
   - Cada `DetContrato` se crea con los valores del body (no se re-consulta la cotización renglón por renglón).
   - **Cliente:** el de la cotización (`IdCot`); no se recibe como parámetro.
-  - **Descontinuados:** solo aviso en la `Respuesta` (no bloquean, igual que la pantalla vigente).
-  - Folio: tabla `Folio` con `Id-Doc = "CONTRATO"` (con `NO-WAIT` + reintentos). El contrato nace **PENDIENTE**.
+  - **Descontinuados:** se registran en la auditoría (no bloquean, igual que la pantalla vigente); ya no se detallan en la `Respuesta`.
+  - Folio: tabla `Folio` con `Id-Doc = "CONTRATO"` (con `NO-WAIT` + reintentos). Nace **PENDIENTE** salvo que el body traiga `ttContEnc.Activo = true`, en cuyo caso nace **ACTIVO** (capacidad del front; el carácter siempre nacía PENDIENTE).
 
   ---
 

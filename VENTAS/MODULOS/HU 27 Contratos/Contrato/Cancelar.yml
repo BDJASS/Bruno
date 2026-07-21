@@ -1,7 +1,7 @@
 info:
   name: Cancelar
   type: http
-  seq: 4
+  seq: 2
 
 http:
   method: PUT
@@ -121,7 +121,7 @@ docs: |
   {
     "response": {
       "IdError": false,
-      "Respuesta": "Contrato 2438 CANCELADO el 16/07/2026. Puede reactivarse con la activacion."
+      "Respuesta": "Contrato 2438 cancelado."
     }
   }
   ```
@@ -137,7 +137,7 @@ docs: |
   | Contrato inexistente | `"No existe folio en archivo de Contratos, favor de verificar."` |
   | Contrato tomado por otro proceso | `"El contrato esta siendo usado por otro proceso; intente de nuevo."` |
   | Ya estaba cancelado | `"El contrato ya ha sido cancelado."` |
-  | Cancelación correcta | `"Contrato N CANCELADO el dd/mm/aaaa. Puede reactivarse con la activacion."` |
+  | Cancelación correcta | `"Contrato N cancelado."` |
 
   ---
 

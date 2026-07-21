@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Catalogo/Contrato?IdUser=olds
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Catalogo/Contratos?IdUser=olds
   params:
     - name: IdUser
       value: olds

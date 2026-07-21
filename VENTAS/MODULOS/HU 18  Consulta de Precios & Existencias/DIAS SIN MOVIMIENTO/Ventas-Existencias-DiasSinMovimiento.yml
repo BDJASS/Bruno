@@ -5,10 +5,10 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Existencias/DiasSinMovimiento?IdArticulo=044705
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Existencias/DiasSinMovimiento?IdArticulo=000623
   params:
     - name: IdArticulo
-      value: "044705"
+      value: "000623"
       type: query
   auth: inherit
 

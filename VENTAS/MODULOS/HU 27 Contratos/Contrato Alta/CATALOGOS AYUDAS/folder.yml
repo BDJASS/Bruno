@@ -1,7 +1,7 @@
 info:
   name: CATALOGOS AYUDAS
   type: folder
-  seq: 5
+  seq: 3
 
 request:
   auth: inherit

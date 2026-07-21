@@ -5,10 +5,10 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Contratos/Detalle?IdContrato=2438
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Contratos/Detalle?IdContrato=2434
   params:
     - name: IdContrato
-      value: "2438"
+      value: "2434"
       type: query
   auth: inherit
 

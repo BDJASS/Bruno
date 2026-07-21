@@ -5,10 +5,13 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Contratos/Previa?IdCot=4101355
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Contratos/Previa?IdCot=4101355&Confirmar=false
   params:
     - name: IdCot
       value: "4101355"
+      type: query
+    - name: Confirmar
+      value: "false"
       type: query
   auth: inherit
 
@@ -54,6 +57,7 @@ docs: |
   **`IdCot`** · STRING · ✅ — Cotización origen; debe existir
   **`FechaIni`** · DATE (ISO `aaaa-mm-dd`) · ❌ — Vigencia inicial; vacía = `Cot.FecReg`
   **`FechaFin`** · DATE (ISO `aaaa-mm-dd`) · ❌ — Vigencia final; vacía = `Cot.FecReg + 60`
+  **`Confirmar`** · BOOLEAN · ❌ — Solo para el aviso de descontinuados. `false`/vacío = primer mensaje + tabla de descontinuados; `true` = segundo mensaje (ya no avanza). En ningún caso convierte una cotización con descontinuados
 
   ---
 
@@ -76,6 +80,7 @@ docs: |
   ```
   GET .../Ventas/Contratos/Previa?IdCot=4101355
   GET .../Ventas/Contratos/Previa?IdCot=4101355&FechaIni=2026-07-10&FechaFin=2026-09-08
+  GET .../Ventas/Contratos/Previa?IdCot=2083464&Confirmar=true
   ```
 
   ---
@@ -112,7 +117,52 @@ docs: |
             }
           ]
         }
+      },
+      "ttDescontinuado": { "ttDescontinuado": [] }
+    }
+  }
+  ```
+
+  ### Artículos descontinuados — flujo de dos mensajes (como el modo carácter)
+
+  Una cotización con artículo/color descontinuado **no puede convertirse en contrato** (bloqueo, igual que el carácter). El aviso replica la secuencia de la pantalla: primero la ventana + la tabla, y al reenviar (ya visto) el mensaje final que ya no avanza. En ninguno de los dos pasos se devuelve el dataset del contrato.
+
+  **Paso 1 — primera llamada (`Confirmar` no enviado):** primer mensaje + la lista en `ttDescontinuado` para que el front muestre la ventana ("COTIZACION CON ARTICULO DESCONTINUADO") y la tabla.
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "Existe al menos un articulo/color descontinuado en esta cotizacion y no puede convertirse en contrato, verifique.",
+      "dsContrato": {
+        "dsContrato": { "ttContEnc": [], "ttDetContrato": [] }
+      },
+      "ttDescontinuado": {
+        "ttDescontinuado": [
+          {
+            "IdArticulo": "021118",
+            "DescrArt": "BOLIGRAFO P/MED. 1.0MM BIC M-250 923995 DURA+",
+            "IdColor": 2, "Kolor": "AZUL",
+            "IdPres": 4, "Presentacion": "C/12",
+            "Motivo": "Articulo descontinuado"
+          }
+        ]
       }
+    }
+  }
+  ```
+
+  **Paso 2 — reenvío con `Confirmar=true`** (el usuario ya vio el aviso y la tabla): segundo mensaje, el flujo ya no avanza. `ttDescontinuado` regresa vacío (ya se mostró).
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "La cotizacion no puede convertirse en contrato por contener articulo(s)/color(es) descontinuado(s).",
+      "dsContrato": {
+        "dsContrato": { "ttContEnc": [], "ttDetContrato": [] }
+      },
+      "ttDescontinuado": { "ttDescontinuado": [] }
     }
   }
   ```
@@ -127,6 +177,18 @@ docs: |
 
   El precio por partida es el **neto** de la cotización: `PUnit` (o `PUnitExt` si aplica) menos descuento.
 
+  ### Lista aparte — `ttDescontinuado` (aviso de descontinuados)
+
+  Un renglón por cada partida descontinuada (para la ventana de aviso, estilo modo carácter):
+
+  **`IdArticulo`** · STRING — Clave del artículo descontinuado
+  **`DescrArt`** · STRING — Descripción del artículo
+  **`IdColor`** · INTEGER — Color
+  **`Kolor`** · STRING — Abreviatura del color
+  **`IdPres`** · INTEGER — Presentación
+  **`Presentacion`** · STRING — Descripción de la presentación
+  **`Motivo`** · STRING — `"Articulo descontinuado"`, `"Color descontinuado"` o `"Articulo y color descontinuados"`
+
   ---
 
   ## 10. Validaciones del Servicio
@@ -136,7 +198,9 @@ docs: |
   | Cotización inexistente | `IdError: true` — `"Cotizacion inexistente, verifique..."` |
   | Cotización con renglón a TC Real (`IndicaPre = "X"`) | `IdError: true` — `"La cotizacion ... contiene al menos un articulo con precio calculado al TC Real, alta no procede..."` |
   | Artículo repetido en la misma cotización | `IdError: true` — `"El articulo <x> se encuentra repetido dentro de la misma cotizacion."` |
-  | Previa correcta | `IdError: false` — `"Previa de la cotizacion N: M partida(s)..."` (+ aviso de descontinuados si aplica) |
+  | Cotización con descontinuados, `Confirmar` no enviado | `IdError: true` — `"Existe al menos un articulo/color descontinuado en esta cotizacion y no puede convertirse en contrato, verifique."` + `ttDescontinuado` con el detalle; `dsContrato` vacío |
+  | Cotización con descontinuados, `Confirmar=true` | `IdError: true` — `"La cotizacion no puede convertirse en contrato por contener articulo(s)/color(es) descontinuado(s)."`; `ttDescontinuado` y `dsContrato` vacíos |
+  | Previa correcta (sin descontinuados) | `IdError: false` — `"Previa de la cotizacion N: M partida(s)..."` |
 
   ---
 
@@ -151,8 +215,9 @@ docs: |
   ## 12. Observaciones Técnicas
 
   1. El front toma este dataset, **quita** los renglones que no quiera (no puede agregar) y lo manda tal cual al body de la Alta (`POST /Ventas/Contratos/Alta`). Cada renglón ya trae los datos de persistencia (`PrecUnit`, `IndicaPre`, `IdMoneda`, `CostoEsp`, `IdMonedaCE`, `CostoCot`).
-  2. Márgenes con `vtaa0023.p` e `IdContrato = 0` (usa `HCosto`), igual que el alta en modo carácter; redondeados a 2 decimales.
-  3. Servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+  2. **Aviso de descontinuados (dos mensajes, como el carácter):** replica la secuencia de `vtaa0022.p`. La cotización con descontinuados **nunca** se convierte en contrato. Primera llamada sin `Confirmar` → primer mensaje (texto exacto del carácter, "...verifique.") + `ttDescontinuado` con el detalle → el front muestra la ventana "COTIZACION CON ARTICULO DESCONTINUADO" y la tabla. Reenvío con `Confirmar=true` (el usuario ya lo vio) → segundo mensaje que ya no avanza; `dsContrato` y `ttDescontinuado` vacíos. El bloque va **antes** de la validación de artículos repetidos, para respetar el orden del carácter (descontinuado primero).
+  3. Márgenes con `vtaa0023.p` e `IdContrato = 0` (usa `HCosto`), igual que el alta en modo carácter; redondeados a 2 decimales.
+  4. Servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
 
   ---
   **Desarrollado por:** SIS10 - JASS
