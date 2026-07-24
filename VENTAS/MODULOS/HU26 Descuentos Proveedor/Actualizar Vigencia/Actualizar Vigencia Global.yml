@@ -1,0 +1,147 @@
+info:
+  name: Actualizar Vigencia Global
+  type: http
+  seq: 1
+
+http:
+  method: PUT
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/DescuentoProveedor/ActualizaVigencia?FecIni=2026-06-01&FecFin=2026-08-31&IdUser=olds
+  params:
+    - name: FecIni
+      value: 2026-06-01
+      type: query
+    - name: FecFin
+      value: 2026-08-31
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Descuentos de Proveedores (Actualiza Vigencia Global)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Descuentos de Proveedores — Actualiza Vigencia Global**
+  Aplica una **misma vigencia** (`FecIni` / `FecFin`) a **todos** los registros del catálogo `DescProv` en una sola operación.
+  Programa servidor: `descprovexpo.p` · Procedimiento: `actualizarVigenciaGlobal` | Utilidad masiva del mantenimiento de descuentos de proveedores.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  PUT
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/DescuentoProveedor/ActualizaVigencia
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · Formato de fecha: `AAAA-MM-DD`
+
+  **`FecIni`** · DATE · ✅ — Nueva fecha inicial de vigencia para todo el catálogo
+  **`FecFin`** · DATE · ✅ — Nueva fecha final de vigencia para todo el catálogo
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la operación
+
+  ---
+
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
+
+  | Header   | Valor              |
+  |----------|--------------------|
+  | `Accept` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  PUT .../Ventas/DescuentoProveedor/ActualizaVigencia?FecIni=2026-06-01&FecFin=2026-08-31&IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "pIdError": false,
+      "pRespuesta": "Vigencia guardada y aplicada a 37 proveedor(es)."
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos del Response
+
+  **`pIdError`** · BOOLEAN — `true` = no se aplicó (ver `pRespuesta`); `false` = operación exitosa
+  **`pRespuesta`** · STRING — Mensaje de resultado; incluye el número de proveedores actualizados
+
+  ---
+
+  ## 10. Validaciones del Servicio
+
+  | Regla | Caso | Comportamiento |
+  |-------|------|----------------|
+  | RN-005 | `FecFin` < `FecIni` | `pIdError: true` — `"La fecha final no puede ser menor a la inicial."` |
+  | RN-006 | `FecFin` < hoy | `pIdError: true` — `"La fecha final no puede ser menor a la fecha actual."` |
+  | — | Aplicación correcta | `pIdError: false` — `"Vigencia guardada y aplicada a N proveedor(es)."` |
+
+  ---
+
+  ## 11. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 12. Fecha de Prueba
+
+  | Ambiente | Fecha        | Ejecutado por |
+  |----------|--------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 13. Resultado
+
+  | Estado              | Descripción                                                  |
+  |---------------------|--------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 14. Observaciones Técnicas
+
+  1. ⚠️ **Operación masiva:** actualiza `FecIni` y `FecFin` de **TODOS** los proveedores del catálogo dentro de una transacción (`FOR EACH DescProv EXCLUSIVE-LOCK`). No modifica `Descto` ni `FC`.
+  2. El conteo devuelto en `pRespuesta` corresponde a los registros efectivamente actualizados.
+  3. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

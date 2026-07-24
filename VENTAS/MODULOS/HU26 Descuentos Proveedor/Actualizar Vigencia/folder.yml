@@ -1,7 +1,7 @@
 info:
-  name: HU 27 Contratos
+  name: Actualizar Vigencia
   type: folder
-  seq: 10
+  seq: 2
 
 request:
   auth: inherit

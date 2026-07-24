@@ -1,0 +1,185 @@
+info:
+  name: Crea
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/DescuentoProveedor/Crea?IdUser=olds
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+  body:
+    type: json
+    data: |-
+      {
+              "ttDescProv": [
+                {
+                  "IdProv": 2033,
+                  "Nombre": "(BARRILITO) ACCO MEXICANA, S.A. DE C.V.",
+                  "Descto": 15.0,
+                  "FecIni": "2026-06-01",
+                  "FecFin": "2026-07-31",
+                  "FC": 15.0
+                }
+              ]
+            }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Descuentos de Proveedores (Crea)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Descuentos de Proveedores — Crea**
+  Da de alta un registro de descuento para un proveedor en el catálogo `DescProv`.
+  Programa servidor: `descprovexpo.p` · Procedimiento: `crearDescProv` | Versión REST del alta del mantenimiento de descuentos de proveedores (modo carácter `cxpa0160.p`).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/DescuentoProveedor/Crea
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta el alta
+
+  ---
+
+  ## 5. Body
+
+  Dataset `dsDescProv` con **una** fila en `ttDescProv`:
+
+  ```json
+  {
+    "dsDescProv": {
+      "ttDescProv": [
+        {
+          "IdProv": 2033,
+          "Descto": 12.00,
+          "FecIni": "2026-06-01",
+          "FecFin": "2026-08-31",
+          "FC": 3.50
+        }
+      ]
+    }
+  }
+  ```
+
+  **`IdProv`** · INTEGER · ✅ — Clave del proveedor a registrar
+  **`Descto`** · DECIMAL · ✅ — Porcentaje de descuento (mayor a 0)
+  **`FecIni`** · DATE · ✅ — Fecha inicial de vigencia
+  **`FecFin`** · DATE · ✅ — Fecha final de vigencia
+  **`FC`** · DECIMAL · ✅ — Factor costo (mayor a 0)
+
+  > `Nombre` no se envía en el alta (se resuelve del catálogo `Prov` al consultar).
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Content-Type` | `application/json` |
+  | `Accept`       | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST .../Ventas/DescuentoProveedor/Crea?IdUser=olds
+  ```
+  Body: ver sección 5.
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "pIdError": false,
+      "pRespuesta": "Registro creado correctamente."
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos del Response
+
+  **`pIdError`** · BOOLEAN — `true` = no se registró (ver `pRespuesta`); `false` = alta exitosa
+  **`pRespuesta`** · STRING — Mensaje de resultado o motivo del rechazo
+
+  ---
+
+  ## 10. Validaciones del Servicio
+
+  | Regla | Caso | Comportamiento |
+  |-------|------|----------------|
+  | — | Body vacío / sin fila | `pIdError: true` — `"No se recibió información del descuento a registrar."` |
+  | RN-001 | Proveedor inexistente o inactivo | `pIdError: true` — `"Proveedor inexistente o inactivo, verifique."` |
+  | RN-002 | El proveedor ya existe en `DescProv` | `pIdError: true` — `"El proveedor ya existe en el catálogo de descuentos."` |
+  | RN-003 | `Descto` ≤ 0 | `pIdError: true` — `"El descuento no puede ser menor o igual a cero, verifique."` |
+  | RN-004 | `FC` (factor costo) ≤ 0 | `pIdError: true` — `"El factor costo del proveedor no puede ser cero, verifique."` |
+  | RN-005 | `FecFin` < `FecIni` | `pIdError: true` — `"La fecha final no puede ser menor a la inicial."` |
+  | RN-006 | `FecFin` < hoy | `pIdError: true` — `"La fecha final no puede ser menor a la fecha actual."` |
+  | — | Alta correcta | `pIdError: false` — `"Registro creado correctamente."` |
+
+  ---
+
+  ## 11. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 12. Fecha de Prueba
+
+  | Ambiente | Fecha        | Ejecutado por |
+  |----------|--------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 13. Resultado
+
+  | Estado              | Descripción                                                  |
+  |---------------------|--------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 14. Observaciones Técnicas
+
+  1. El alta valida **existencia y estado activo** del proveedor (`Prov.Activo = TRUE`) y que **no exista** ya un descuento para ese proveedor (un registro por proveedor).
+  2. Para modificar un registro existente use `descprovexpo-DescuentoProveedorActualiza.md`.
+  3. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

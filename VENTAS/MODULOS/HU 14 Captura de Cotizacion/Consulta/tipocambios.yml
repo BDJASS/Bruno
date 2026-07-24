@@ -5,15 +5,14 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/tipocambios?IdMoneda=3&ctTipoPrecio=TC
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/tipocambios?IdMoneda=3&ctFecha=22-07-2026&ctTipoPrecio=TC
   params:
     - name: IdMoneda
       value: "3"
       type: query
     - name: ctFecha
-      value: 30-06-2026
+      value: 22-07-2026
       type: query
-      disabled: true
     - name: ctTipoPrecio
       value: TC
       type: query

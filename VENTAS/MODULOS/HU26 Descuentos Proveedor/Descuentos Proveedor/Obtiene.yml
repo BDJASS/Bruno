@@ -1,0 +1,160 @@
+info:
+  name: Obtiene
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/DescuentoProveedor/Obtiene?IdProv=2033
+  params:
+    - name: IdProv
+      value: "2033"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Descuentos de Proveedores (Obtiene)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Descuentos de Proveedores — Obtiene**
+  Regresa el catálogo de descuentos de proveedores (`DescProv`) con el nombre del proveedor. Permite consultar todo el catálogo o un solo proveedor.
+  Programa servidor: `descprovexpo.p` · Procedimiento: `obtenerDescProv` | Versión REST del mantenimiento de descuentos de proveedores (modo carácter `cxpa0160.p` / `cxpa0161.i`).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/DescuentoProveedor/Obtiene
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdProv`** · INTEGER · ❌ — Clave del proveedor a consultar
+  - Vacío o `0` = todo el catálogo · Un valor = solo ese proveedor
+
+  ---
+
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
+
+  | Header   | Valor              |
+  |----------|--------------------|
+  | `Accept` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/DescuentoProveedor/Obtiene
+  GET .../Ventas/DescuentoProveedor/Obtiene?IdProv=2033
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "pIdError": false,
+      "pRespuesta": "OK",
+      "dsDescProv": {
+        "ttDescProv": [
+          {
+            "IdProv": 2033,
+            "Nombre": "PAPELERA INDUSTRIAL SA",
+            "Descto": 12.00,
+            "FecIni": "2026-06-01",
+            "FecFin": "2026-08-31",
+            "FC": 3.50
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos del Response (ttDescProv)
+
+  **`IdProv`** · INTEGER — Clave del proveedor
+  **`Nombre`** · STRING — Nombre del proveedor (catálogo `Prov`; vacío si ya no existe)
+  **`Descto`** · DECIMAL — Porcentaje de descuento del proveedor
+  **`FecIni`** · DATE — Fecha inicial de la vigencia del descuento
+  **`FecFin`** · DATE — Fecha final de la vigencia del descuento
+  **`FC`** · DECIMAL — Factor costo que se suma al costo del artículo al momento de la venta
+
+  > Campos de control: **`pIdError`** · BOOLEAN — `true` si hubo error · **`pRespuesta`** · STRING — mensaje de resultado.
+
+  ---
+
+  ## 10. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | Consulta de todo el catálogo (sin `IdProv` o `0`) | `pIdError: false` — `"OK"` con todas las filas |
+  | `IdProv` indicado y existe | `pIdError: false` — `"OK"` con una fila |
+  | `IdProv` indicado y NO existe | `pIdError: true` — `"No existe un descuento registrado para el proveedor N."` |
+  | Error ABL en la consulta | `pIdError: true` — `"ERROR ABL real: <mensaje> (<número>)"` |
+
+  ---
+
+  ## 11. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 12. Fecha de Prueba
+
+  | Ambiente | Fecha        | Ejecutado por |
+  |----------|--------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 13. Resultado
+
+  | Estado              | Descripción                                                  |
+  |---------------------|--------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 14. Observaciones Técnicas
+
+  1. Este `GET` **no recibe `IdUser`** (es solo lectura); las operaciones de escritura (`Crea`, `Actualiza`, `Elimina`, `ActualizaVigencia`) sí lo requieren.
+  2. **Mantenimiento:** ver `descprovexpo-DescuentoProveedorCrea.md`, `...Actualiza.md`, `...Elimina.md` y `...ActualizaVigencia.md`.
+  3. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

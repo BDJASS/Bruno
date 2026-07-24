@@ -1,7 +1,7 @@
 info:
-  name: HU 27 Contratos
+  name: HU26 Descuentos Proveedor
   type: folder
-  seq: 10
+  seq: 9
 
 request:
   auth: inherit

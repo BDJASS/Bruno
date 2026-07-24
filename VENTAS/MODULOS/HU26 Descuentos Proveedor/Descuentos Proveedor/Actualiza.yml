@@ -1,0 +1,182 @@
+info:
+  name: Actualiza
+  type: http
+  seq: 2
+
+http:
+  method: PUT
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/DescuentoProveedor/Actualiza?IdUser=olds
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+  body:
+    type: json
+    data: |-
+      {
+              "ttDescProv": [
+                {
+                  "IdProv": 2033,
+                  "Nombre": "(BARRILITO) ACCO MEXICANA, S.A. DE C.V.",
+                  "Descto": 15.0,
+                  "FecIni": "2026-06-01",
+                  "FecFin": "2026-07-31",
+                  "FC": 15.0
+                }
+              ]
+            }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Descuentos de Proveedores (Actualiza)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Descuentos de Proveedores — Actualiza**
+  Modifica el descuento, factor costo y vigencia de un proveedor existente en `DescProv`.
+  Programa servidor: `descprovexpo.p` · Procedimiento: `actualizarDescProv` | Versión REST de la modificación del mantenimiento de descuentos de proveedores (modo carácter `cxpa0161.i`).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  PUT
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/DescuentoProveedor/Actualiza
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la modificación
+
+  ---
+
+  ## 5. Body
+
+  Dataset `dsDescProv` con **una** fila en `ttDescProv`:
+
+  ```json
+  {
+    "dsDescProv": {
+      "ttDescProv": [
+        {
+          "IdProv": 2033,
+          "Descto": 15.00,
+          "FecIni": "2026-06-01",
+          "FecFin": "2026-09-30",
+          "FC": 4.00
+        }
+      ]
+    }
+  }
+  ```
+
+  **`IdProv`** · INTEGER · ✅ — Clave del proveedor a modificar (**solo localiza** el registro; no se reasigna)
+  **`Descto`** · DECIMAL · ✅ — Nuevo porcentaje de descuento (mayor a 0)
+  **`FecIni`** · DATE · ✅ — Nueva fecha inicial de vigencia
+  **`FecFin`** · DATE · ✅ — Nueva fecha final de vigencia
+  **`FC`** · DECIMAL · ✅ — Nuevo factor costo (mayor a 0)
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Content-Type` | `application/json` |
+  | `Accept`       | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  PUT .../Ventas/DescuentoProveedor/Actualiza?IdUser=olds
+  ```
+  Body: ver sección 5.
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "pIdError": false,
+      "pRespuesta": "Registro actualizado correctamente."
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos del Response
+
+  **`pIdError`** · BOOLEAN — `true` = no se actualizó (ver `pRespuesta`); `false` = actualización exitosa
+  **`pRespuesta`** · STRING — Mensaje de resultado o motivo del rechazo
+
+  ---
+
+  ## 10. Validaciones del Servicio
+
+  | Regla | Caso | Comportamiento |
+  |-------|------|----------------|
+  | — | Body vacío / sin fila | `pIdError: true` — `"No se recibió información del descuento a actualizar."` |
+  | — | No existe `DescProv` para el `IdProv` | `pIdError: true` — `"No existe un descuento registrado para el proveedor N."` |
+  | RN-003 | `Descto` ≤ 0 | `pIdError: true` — `"El descuento no puede ser cero, verifique."` |
+  | RN-004 | `FC` (factor costo) ≤ 0 | `pIdError: true` — `"El factor costo del proveedor no puede ser cero, verifique."` |
+  | RN-005 | `FecFin` < `FecIni` | `pIdError: true` — `"La fecha final no puede ser menor a la inicial."` |
+  | RN-006 | `FecFin` < hoy | `pIdError: true` — `"La fecha final no puede ser menor a la fecha actual."` |
+  | — | Actualización correcta | `pIdError: false` — `"Registro actualizado correctamente."` |
+
+  ---
+
+  ## 11. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 12. Fecha de Prueba
+
+  | Ambiente | Fecha        | Ejecutado por |
+  |----------|--------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 13. Resultado
+
+  | Estado              | Descripción                                                  |
+  |---------------------|--------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 14. Observaciones Técnicas
+
+  1. **RN-010:** `Id-Prov` es inmutable — el `IdProv` del body solo sirve para localizar el registro; nunca se reasigna en el `UPDATE`.
+  2. Solo se actualizan `Descto`, `FecIni`, `FecFin` y `FC`.
+  3. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

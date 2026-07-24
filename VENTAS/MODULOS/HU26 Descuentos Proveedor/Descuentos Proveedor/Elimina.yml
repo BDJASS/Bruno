@@ -1,0 +1,145 @@
+info:
+  name: Elimina
+  type: http
+  seq: 4
+
+http:
+  method: DELETE
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/DescuentoProveedor/Elimina?IdUser=olds&IdProv=2033
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdProv
+      value: "2033"
+      type: query
+  body:
+    type: json
+    data: ""
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Descuentos de Proveedores (Elimina)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Descuentos de Proveedores — Elimina**
+  Borra del catálogo `DescProv` el registro de descuento de un proveedor.
+  Programa servidor: `descprovexpo.p` · Procedimiento: `eliminarDescProv` | Versión REST de la baja del mantenimiento de descuentos de proveedores (modo carácter `cxpa0160.p`).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  DELETE
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/DescuentoProveedor/Elimina
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la baja
+  **`IdProv`** · INTEGER · ✅ — Clave del proveedor cuyo descuento se elimina
+
+  ---
+
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
+
+  | Header   | Valor              |
+  |----------|--------------------|
+  | `Accept` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  DELETE .../Ventas/DescuentoProveedor/Elimina?IdUser=olds&IdProv=2033
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "pIdError": false,
+      "pRespuesta": "Registro eliminado del catálogo."
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos del Response
+
+  **`pIdError`** · BOOLEAN — `true` = no se eliminó (ver `pRespuesta`); `false` = baja exitosa
+  **`pRespuesta`** · STRING — Mensaje de resultado o motivo del rechazo
+
+  ---
+
+  ## 10. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | No existe `DescProv` para el `IdProv` | `pIdError: true` — `"No existe un descuento registrado para el proveedor N."` |
+  | Baja correcta | `pIdError: false` — `"Registro eliminado del catálogo."` |
+
+  ---
+
+  ## 11. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 12. Fecha de Prueba
+
+  | Ambiente | Fecha        | Ejecutado por |
+  |----------|--------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 13. Resultado
+
+  | Estado              | Descripción                                                  |
+  |---------------------|--------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 14. Observaciones Técnicas
+
+  1. La baja es **física** (`DELETE DescProv`), no un marcado lógico.
+  2. El registro se localiza por `IdProv` (índice único de `DescProv`).
+  3. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

@@ -5,16 +5,16 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/EnviaCorreo?idCotiza=2083417&Mail=desarrollo10@adosa.com.mx&Contenido=hhhhh
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/EnviaCorreo?idCotiza=2083464&Mail=desarrollo10@adosa.com.mx&Contenido=Te mando la Cotizacion
   params:
     - name: idCotiza
-      value: "2083417"
+      value: "2083464"
       type: query
     - name: Mail
       value: desarrollo10@adosa.com.mx
       type: query
     - name: Contenido
-      value: hhhhh
+      value: Te mando la Cotizacion
       type: query
   body:
     type: json
