@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Contratos/Alta?IdUser=olds&FechaIni=2026-07-10&FechaFin=2026-09-08
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Contratos/Alta?IdUser=olds&FechaIni=2026-07-10&FechaFin=2026-09-08&Confirmar=false
   params:
     - name: IdUser
       value: olds
@@ -15,6 +15,9 @@ http:
       type: query
     - name: FechaFin
       value: 2026-09-08
+      type: query
+    - name: Confirmar
+      value: "false"
       type: query
   body:
     type: json
@@ -34,7 +37,23 @@ http:
             {
               "IdContrato": 0,
               "Seq": 10,
+              "IdCot": "4101355",
               "IdArticulo": "021118",
+              "IdColor": 2,
+              "IdPres": 4,
+              "IdMoneda": 0,
+              "PrecUnit": 41.4,
+              "IndicaPre": "F",
+              "CostoCot": 35.41368,
+              "CostoEsp": 0.0,
+              "IdMonedaCE": 1,
+              "Descontinuado": false
+            },
+            {
+              "IdContrato": 0,
+              "Seq": 10,
+              "IdCot": "4101355",
+              "IdArticulo": "021117",
               "IdColor": 2,
               "IdPres": 4,
               "IdMoneda": 0,
@@ -64,7 +83,7 @@ docs: |
   ## 1. Título del Servicio
 
   **Contratos — Alta**
-  Crea el contrato con lo que llega en el **body** (el dataset que devolvió la Previa, ya editado: el front solo pudo **quitar** renglones). Nace en estatus **PENDIENTE** (`Activo = NO`); se pone en vigor con la Activación.
+  Crea el contrato con lo que llega en el **body** (el dataset que devolvió la Previa, ya editado: el front solo pudo **quitar** renglones). Admite partidas de **varias cotizaciones**, siempre del **mismo cliente**. Nace en estatus **PENDIENTE** (`Activo = NO`); se pone en vigor con la Activación.
   Programa servidor: `contrato.p` · Procedimiento: `altaContrato` | Versión REST de `vtaa0022.p` + `vtaa0027.i`.
 
   ---
@@ -98,28 +117,48 @@ docs: |
 
   ## 5. Body
 
-  **DATASET `dsContrato`** — el que devolvió `GET /Ventas/Contratos/Previa`, ya editado (renglones que quedaron). La cabecera `ttContEnc` debe traer al menos **`IdCot`**; opcionalmente **`Activo`** (ver abajo). Cada partida de `ttDetContrato` trae `IdArticulo`, `IdColor`, `IdPres`, `Seq`, `IdMoneda`, `IndicaPre`, `PrecUnit`, `CostoEsp`, `IdMonedaCE`, `CostoCot`, `Descontinuado`.
+  **DATASET `dsContrato`** — el que devolvió `GET /Ventas/Contratos/Previa`, ya editado (renglones que quedaron). Cada partida de `ttDetContrato` trae `IdArticulo`, `IdColor`, `IdPres`, `Seq`, **`IdCot`**, `IdMoneda`, `IndicaPre`, `PrecUnit`, `CostoEsp`, `IdMonedaCE`, `CostoCot`, `Descontinuado`.
+
+  > ⚠️ **`IdCot` es OBLIGATORIO en CADA partida** de `ttDetContrato`: indica de qué cotización proviene ese producto. Es la columna que permite armar el grid con **varias cotizaciones** y la base de todas las validaciones de este servicio. Un renglón sin `IdCot` es rechazado. La Previa ya lo devuelve llenado — **el front solo debe conservarlo**.
 
   > **`Activo`** (LOGICAL, en `ttContEnc`) — `false`/omitido = nace **PENDIENTE** (comportamiento por defecto). `true` = nace **ACTIVO** directamente (sin pasar por la activación). El campo de texto `Estatus` del body es solo informativo y se **ignora**.
+
+  > **`IdCot` de la cabecera** (`ttContEnc`) es **opcional**: `Contrato.Id-Cot` es `x(7)` y cabe una sola cotización, así que la cabecera guarda una de referencia (la que mande el front si es una de las del grid; si no, la primera). El origen real de cada producto vive en cada partida.
 
   ```json
   {
     "dsContrato": {
       "ttContEnc": [
-        { "IdContrato": 0, "IdCot": "4101355", "Activo": false, "Partidas": 1 }
+        { "IdContrato": 0, "IdCot": "4101355", "IdCliente": 575, "Activo": false, "Partidas": 3 }
       ],
       "ttDetContrato": [
         {
-          "IdContrato": 0, "Seq": 10, "IdArticulo": "021118",
+          "IdContrato": 0, "Seq": 10, "IdCot": "4101355", "IdArticulo": "021118",
           "IdColor": 2, "IdPres": 4, "IdMoneda": 0,
           "PrecUnit": 41.4, "IndicaPre": "F",
           "CostoCot": 35.41368, "CostoEsp": 0.0, "IdMonedaCE": 1,
+          "Descontinuado": false
+        },
+        {
+          "IdContrato": 0, "Seq": 20, "IdCot": "4101355", "IdArticulo": "021119",
+          "IdColor": 0, "IdPres": 1, "IdMoneda": 0,
+          "PrecUnit": 88.0, "IndicaPre": "F",
+          "CostoCot": 70.15, "CostoEsp": 0.0, "IdMonedaCE": 1,
+          "Descontinuado": false
+        },
+        {
+          "IdContrato": 0, "Seq": 10, "IdCot": "4101360", "IdArticulo": "033420",
+          "IdColor": 0, "IdPres": 1, "IdMoneda": 0,
+          "PrecUnit": 15.5, "IndicaPre": "F",
+          "CostoCot": 12.3, "CostoEsp": 0.0, "IdMonedaCE": 1,
           "Descontinuado": false
         }
       ]
     }
   }
   ```
+
+  > Nota del ejemplo: el `Seq` se repite (`10`) porque cada cotización numera desde 1 — **es normal y esperado**. El servidor renumera la secuencia al guardar (ver sección 11).
 
   > Si el mapeo PASOE espera el nombre del parámetro por fuera (como en la salida, que anida `dsContrato.dsContrato`), envuélvelo una vez más: `{ "dsContrato": { "dsContrato": { "ttContEnc": [...], "ttDetContrato": [...] } } }`.
 
@@ -151,13 +190,38 @@ docs: |
   {
     "response": {
       "IdError": false,
-      "Respuesta": "Contrato 2438 generado.",
+      "Respuesta": "Contrato 2438 generado con 3 partida(s) de 2 cotizaciones (4101355,4101360).",
       "IdContrato": 2438
     }
   }
   ```
 
+  Con una sola cotización el mensaje queda: `"Contrato 2438 generado con 3 partida(s) de la cotizacion 4101355."`
+
   > **`IdContrato`** (INTEGER) — folio generado; `0` si hubo error. El front lo usa directo (no necesita parsear `Respuesta`).
+
+  ### Rechazo: artículo repetido en el grid
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "El articulo 021118 esta repetido en el contrato: cotizacion 4101355 con precio 41.40 y cotizacion 4101360 con precio 48.90. Deje un solo renglon por articulo/color/presentacion."
+    }
+  }
+  ```
+  → **No es confirmable.** El front debe quitar uno de los dos renglones y reenviar.
+
+  ### Rechazo: cotizaciones de clientes distintos
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "Las cotizaciones del contrato son de clientes distintos: 4101355 (cliente 575) y 4101360 (cliente 39742). Todas deben ser del mismo cliente."
+    }
+  }
+  ```
 
   ### Necesita confirmación (artículos en otro contrato activo)
 
@@ -179,28 +243,83 @@ docs: |
   |------|----------------|
   | `IdUser` vacío | `"Se requiere el usuario (IdUser)."` |
   | Body sin cabecera | `"No se recibio la cabecera del contrato en el body (dsContrato)."` |
-  | Cabecera sin `IdCot` | `"El body no trae la cotizacion (IdCot) en la cabecera."` |
   | Body sin partidas | `"El contrato debe tener al menos un articulo."` |
-  | Cotización inexistente | `"Cotizacion inexistente, verifique..."` |
+  | **Partida sin `IdCot`** | `"El renglon del articulo <art> no indica de que cotizacion proviene; la cotizacion (IdCot) es obligatoria en cada partida."` |
+  | **Cotización inexistente** | `"La cotizacion <IdCot> no existe, verifique..."` |
+  | **Cotización cancelada** | `"La cotizacion <IdCot> esta cancelada y no puede formar parte de un contrato."` |
+  | 🔴 **Cotizaciones de clientes distintos** | `"Las cotizaciones del contrato son de clientes distintos: <cot> (cliente <n>) y <cot> (cliente <n>). Todas deben ser del mismo cliente."` |
+  | **Cliente de la cabecera no cuadra** | `"El cliente de la cabecera (<n>) no corresponde al de las cotizaciones (<n>)."` |
+  | 🔴 **Artículo+Color+Presentación repetido en el grid** | `"El articulo <art> esta repetido en el contrato: cotizacion <cot> con precio <p> y cotizacion <cot> con precio <p>. Deje un solo renglon por articulo/color/presentacion."` — **no confirmable** |
   | Renglón del body a TC Real (`IndicaPre = "X"`) | `"El contrato contiene al menos un articulo con precio calculado al TC Real; quitelo para poder crearlo."` |
   | `FechaFin < hoy` / `< FechaIni` | `"Fecha Final menor a Fecha Actual."` / `"...menor a Fecha Inicial."` |
   | Asociado del cliente con contrato activo | `"YA EXISTE EL CONTRATO <n> CON EL ASOCIADO <cliente> <razón social>."` |
   | Artículos en otro contrato activo (`Confirmar≠true`) | `"Los siguientes articulos ya estan en otro contrato activo del cliente: <lista>. Confirme para crear el contrato de todas formas."` |
-  | Alta correcta | `"Contrato N generado."` + `IdContrato = N` |
+  | Alta correcta | `"Contrato N generado con X partida(s) de ..."` + `IdContrato = N` |
+
+  > Las validaciones marcadas 🔴 **no se pueden saltar con `Confirmar=true`**: son reglas de integridad, no avisos.
 
   ---
 
-  ## 10. Reglas del proceso (todo desde el body)
+  ## 10. Contrato con artículos de VARIAS cotizaciones
+
+  ### Flujo
+
+  1. El front llama `GET /Ventas/Contratos/Previa` **una vez por cotización** y **concatena** los renglones en el mismo grid. Cada renglón ya viene con su `IdCot`.
+  2. El usuario quita los renglones que no quiere.
+  3. El front manda **un solo** `POST /Ventas/Contratos/Alta` con todos los renglones juntos.
+
+  ### Regla de negocio: mismo cliente
+
+  Todas las cotizaciones del grid deben ser del **mismo cliente**. El servidor lo valida recolectando los `IdCot` distintos de las partidas y comparando el `Cot.Id-Cliente` de cada una; si difieren, rechaza indicando cuáles. Valida además que el `IdCliente` de la cabecera cuadre con el derivado.
+
+  ### Reparto de la validación de artículo duplicado
+
+  | Alcance | Quién valida |
+  |---------|--------------|
+  | Repetido **dentro de una misma** cotización | **Previa** (servidor) — la bloquea antes de llegar al grid |
+  | Repetido **entre cotizaciones distintas** | **Front** al agregar cada cotización al grid *(la Previa no puede verlo: solo ve una cotización por llamada)* |
+  | Repetido **en el body completo** | **Alta** (servidor) — red de seguridad final, ver abajo |
+
+  > El front debe avisar al usuario en el momento en que agrega una cotización cuyo artículo ya está en el grid, para que sea una experiencia clara y no un error al guardar. **Pero el servidor lo valida de nuevo en el Alta**: es la única capa que no se puede saltar.
+
+  ### Por qué el duplicado es bloqueante y no confirmable
+
+  `obtprecdesc.p` (el programa que fija el precio en la venta) resuelve el precio de contrato así:
+
+  ```progress
+  FIND FIRST DetContrato WHERE DetContrato.Id-Contrato = Contrato.Id-Contrato
+                           AND DetContrato.Id-Articulo = Id-Articulo
+                           AND DetContrato.Id-Pres     = iNumPres NO-LOCK NO-ERROR.
+  ```
+
+  Es un **`FIND FIRST` por Artículo + Presentación** y el índice `idx-folio` **no es UNIQUE**. Si se guardaran dos renglones del mismo artículo con precios distintos, la venta tomaría **uno arbitrario** → precio no determinista. Por eso el Alta lo rechaza sin opción de confirmar.
+
+  ---
+
+  ## 11. La secuencia (`Seq`) con varias cotizaciones
+
+  - El `Seq` que devuelve la Previa es la secuencia **de su cotización** (`DetCot.Id-Seq`), así que con varias cotizaciones **se repite** (todas arrancan en 1). **Es normal y el front no tiene que corregirlo.**
+  - Al guardar, el servidor **renumera `DetContrato.Id-Seq` corrido (1..N)** sobre todo el contrato, ordenando **por `IdCot` y luego por `Seq`**. Así la secuencia queda continua, sin empates ni huecos, sin importar qué mande el front ni qué renglones se quitaron.
+  - **`Id-Seq` solo ordena el grid.** No lo consume la aplicación del precio (`obtprecdesc.p`) ni los reportes (`ventas-rep005.p`, `vtac1210.p`), que cruzan por Artículo+Color+Presentación. Renumerar no impacta ninguna lógica de negocio.
+  - La **columna que dice de qué cotización es cada producto** es `IdCot` (persistida en `DetContrato.Id-Cot`), y también es el primer criterio de ordenamiento. El detalle del contrato (`GET /Ventas/Contratos/Detalle`) la devuelve por renglón.
+
+  ---
+
+  ## 12. Reglas del proceso (todo desde el body)
 
   - Se trabaja **solo con los renglones que llegan en el body**; lo que el front quitó ya no viene (por eso la validación de TC Real es sobre el body).
   - Cada `DetContrato` se crea con los valores del body (no se re-consulta la cotización renglón por renglón).
-  - **Cliente:** el de la cotización (`IdCot`); no se recibe como parámetro.
+  - **Cliente:** derivado de las cotizaciones de las partidas; no se recibe como parámetro.
+  - **`DetContrato.Id-Cot`** se graba con el `IdCot` **del renglón** (no el de la cabecera) → cada partida conserva su cotización de origen.
+  - **`DetContrato.FecCot`** se graba con el `Cot.FecReg` de **su propia** cotización.
+  - **`Contrato.Id-Cot`** (cabecera, `x(7)`) guarda **una** cotización de referencia: la que mande el front si es una de las del grid, si no la primera.
+  - **Fechas:** los defaults (`Cot.FecReg` y `Cot.FecReg + 60`) se toman de la cotización de la **cabecera**. Con varias cotizaciones conviene que el front mande `FechaIni`/`FechaFin` **explícitas**.
   - **Descontinuados:** se registran en la auditoría (no bloquean, igual que la pantalla vigente); ya no se detallan en la `Respuesta`.
   - Folio: tabla `Folio` con `Id-Doc = "CONTRATO"` (con `NO-WAIT` + reintentos). Nace **PENDIENTE** salvo que el body traiga `ttContEnc.Activo = true`, en cuyo caso nace **ACTIVO** (capacidad del front; el carácter siempre nacía PENDIENTE).
 
   ---
 
-  ## 11. Resultado
+  ## 13. Resultado
 
   | Estado | Descripción |
   |--------|-------------|
@@ -208,10 +327,12 @@ docs: |
 
   ---
 
-  ## 12. Observaciones Técnicas
+  ## 14. Observaciones Técnicas
 
-  1. Auditoría: operación `ALTA` en `programas/auditoria.p` (módulo `Contratos`).
-  2. Servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+  1. Auditoría: operación `ALTA` en `programas/auditoria.p` (módulo `Contratos`); registra **todas** las cotizaciones del contrato.
+  2. **Sin cambios en la base de datos:** `DetContrato.Id-Cot` (`x(7)`, por renglón) ya existía; solo se dejó de llenar con el valor de la cabecera para grabar el de cada partida.
+  3. **Compatible hacia atrás:** un body con una sola cotización se comporta igual que antes, con la única diferencia de que `IdCot` ahora es obligatorio en cada partida (la Previa ya lo devuelve).
+  4. Servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
 
   ---
   **Desarrollado por:** SIS10 - JASS

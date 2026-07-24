@@ -1,0 +1,215 @@
+info:
+  name: Consulta Bitacora
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Corte/Bitacora?IdUser=olds&IdCliente=0&FecIni=2026-07-20&FecFin=2026-07-24
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdCliente
+      value: "0"
+      type: query
+    - name: FecIni
+      value: 2026-07-20
+      type: query
+    - name: FecFin
+      value: 2026-07-24
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Bitácora de Desbloqueos de Cortes
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Bitácora de Desbloqueos de Cortes — Consulta**
+  Devuelve el historial de desbloqueos de cortes de cliente en una sola línea de tiempo, del más reciente al más antiguo. Sin filtro de cliente muestra la bitácora **global**; con cliente muestra su historial (su último desbloqueo primero).
+  Programa servidor: `desbcortecte.p` · Procedimiento: `GetDesbloqueoCortes` | Lee la tabla `DesbCorteCte`, poblada por el propio `desbcortecte.p` al desbloquear.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Corte/Bitacora
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · Fechas en formato ISO `aaaa-mm-dd`
+
+  **`IdUser`** · STRING · ✅ — Usuario que consulta
+
+  **`IdCliente`** · INTEGER · ❌ — Cliente a filtrar
+  - Ej: `575` · `0` o vacío = todos los clientes (bitácora global)
+
+  **`FecIni`** · DATE · ❌ — Fecha inicial del rango
+  - Ej: `"2026-07-01"` · Vacío = sin límite inferior
+
+  **`FecFin`** · DATE · ❌ — Fecha final del rango
+  - Ej: `"2026-07-24"` · Vacío = sin límite superior
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Corte/Bitacora?IdUser=SIS10
+  GET .../Ventas/Corte/Bitacora?IdUser=SIS10&IdCliente=575
+  GET .../Ventas/Corte/Bitacora?IdUser=SIS10&FecIni=2026-07-01&FecFin=2026-07-24
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Consulta generada: 2 registro(s).",
+      "dsDesb": {
+        "ttDesb": [
+          {
+            "Orden": 1,
+            "Secuencia": 48,
+            "IdCliente": 575,
+            "RazonSocial": "PAPELERIA LA MODERNA SA DE CV",
+            "Consec": 3,
+            "Fecha": "2026-07-24",
+            "Hora": "13:22:41",
+            "FecHora": "24/07/2026 13:22:41",
+            "Usuario": "SIS10",
+            "Motivo": "Cliente al corriente, pago verificado",
+            "Detalle": "Desbloqueo: 2 corte(s), monto $35,000.00, ultimo corte 10/07/2026. Motivo: Cliente al corriente, pago verificado"
+          },
+          {
+            "Orden": 2,
+            "Secuencia": 31,
+            "IdCliente": 34561,
+            "RazonSocial": "DISTRIBUIDORA DEL NORTE SA DE CV",
+            "Consec": 1,
+            "Fecha": "2026-07-18",
+            "Hora": "09:05:12",
+            "FecHora": "18/07/2026 09:05:12",
+            "Usuario": "ALEX",
+            "Motivo": "Autoriza gerencia de credito",
+            "Detalle": "Desbloqueo: 1 corte(s), monto $10,000.00, ultimo corte 15/07/2026. Motivo: Autoriza gerencia de credito"
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  ### Campos de `ttDesb` (1 registro por desbloqueo, del más reciente al más antiguo)
+
+  **`Orden`** · INT — Consecutivo de despliegue (`1` = desbloqueo más reciente); conserva el orden en el JSON
+  **`Secuencia`** · INT — Folio global del desbloqueo (consecutivo único de toda la bitácora)
+  **`IdCliente`** · INT — Cliente desbloqueado
+  **`RazonSocial`** · STRING — Razón social del cliente
+  **`Consec`** · INT — Consecutivo del desbloqueo por cliente (`1`, `2`, `3`...)
+  **`Fecha`** · DATE — Fecha del desbloqueo
+  **`Hora`** · STRING — Hora del desbloqueo formateada `HH:MM:SS`
+  **`FecHora`** · STRING — Fecha y hora juntas `dd/mm/aaaa HH:MM:SS`
+  **`Usuario`** · STRING — Usuario que realizó el desbloqueo
+  **`Motivo`** · STRING — Motivo capturado al desbloquear
+  **`Detalle`** · STRING — Texto legible del desbloqueo (cortes, monto, último corte y motivo)
+
+  > El snapshot numérico (cortes, monto y última fecha de corte previos al desbloqueo) **sí** se guarda en la tabla `DesbCorteCte` (`CortesPrev`, `MontoPrev`, `FecUltCorte`), pero **no** se expone como campos aparte en esta consulta: el dato ya viene legible dentro de `Detalle`.
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Error al consultar la bitacora de desbloqueos: <detalle>",
+    "dsDesb": { "ttDesb": [] }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdCliente` vacío o `0` | Consulta global (todos los clientes) |
+  | `IdCliente` con valor | Filtra ese cliente; su último desbloqueo sale primero |
+  | `FecIni` / `FecFin` vacías | Sin límite en ese extremo del rango |
+  | Sin registros en el criterio | Consulta OK; `Respuesta: "Consulta generada: 0 registro(s)."` y `ttDesb` vacío |
+  | Error de base de datos | `IdError: true` con el mensaje del error; `ttDesb` vacío |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de dar de alta la tabla `DesbCorteCte`, compilar en PDSOE y ejecutar por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Fuente de datos — tabla `DesbCorteCte` (nueva):** bitácora dedicada de desbloqueos de cortes. El campo `Secuencia` es un folio **global** (consecutivo único de toda la tabla) y es la llave primaria (índice `idx-secuencia`).
+  2. **Orden del resultado:** la consulta ordena explícitamente `BY Secuencia DESCENDING`, de modo que **siempre sale el desbloqueo más reciente arriba** (campo `Orden` = `1`), tanto en la vista global como al filtrar por cliente.
+  3. **Índices que aprovecha la consulta:** sin cliente usa `idx-secuencia` (folio global desc). Con cliente se bracket-ea por `idx-cliente` (`Id-Cliente` + `Secuencia`), por lo que la última bitácora del cliente queda al inicio. El índice `idx-fecreg` (`- FecReg` + `Id-Cliente`) cubre el filtro por rango de fechas.
+  4. **Filtros opcionales:** `IdCliente` = `0`/`?` trae todos; `FecIni`/`FecFin` = `?` quitan el límite respectivo. No hay validación de rango obligatorio (a diferencia de la bitácora de segmento).
+  5. **Fechas tipadas:** `FecIni` / `FecFin` se reciben como `DATE` (ISO `aaaa-mm-dd`); PASOE convierte el texto.
+  6. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

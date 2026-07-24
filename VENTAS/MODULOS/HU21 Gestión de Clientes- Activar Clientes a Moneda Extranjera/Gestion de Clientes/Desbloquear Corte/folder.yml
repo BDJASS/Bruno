@@ -1,0 +1,7 @@
+info:
+  name: Desbloquear Corte
+  type: folder
+  seq: 3
+
+request:
+  auth: inherit

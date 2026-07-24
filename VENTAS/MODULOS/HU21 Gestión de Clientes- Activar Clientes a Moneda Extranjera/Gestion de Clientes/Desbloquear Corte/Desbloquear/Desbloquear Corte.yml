@@ -1,0 +1,178 @@
+info:
+  name: Desbloquear Corte
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Corte/Desbloquear?IdUser=olds&IdCliente=39742&Motivo=u
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdCliente
+      value: "39742"
+      type: query
+    - name: Motivo
+      value: u
+      type: query
+  body:
+    type: json
+    data: |-
+      {
+        "ttDatosGral": [
+          {
+            "IdCliente": 54631,
+            "IdVendedor": "0045"
+          }
+        ]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Desbloqueo de Cortes de Cliente
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Desbloqueo de Cortes de Cliente — Ejecuta**
+  Desbloquea a un cliente: valida que exista y tenga al menos un corte, guarda el snapshot en la bitácora `DesbCorteCte` (con usuario, fecha, hora y motivo) y **limpia** los campos de cortes en `Cliente` (`TotCortes`, `MontoDev`, `FecUDev`). Registra además bitácora de programa (`auditoria.p`).
+  Programa servidor: `desbcortecte.p` · Procedimiento: `DesbloquearCliente`
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Corte/Desbloquear
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdCliente`** · INTEGER · ✅ — Cliente a desbloquear (debe existir y tener ≥ 1 corte)
+  - Ej: `575`
+
+  **`IdUser`** · STRING · ✅ — Usuario que autoriza/realiza el desbloqueo
+
+  **`Motivo`** · STRING · ✅ — Motivo del desbloqueo (obligatorio, queda en la bitácora)
+  - Ej: `"Cliente al corriente, pago verificado"`
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Los parámetros viajan en el **query string** (aunque el verbo sea `POST`).
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                |
+  |----------------|----------------------|
+  | `Accept`       | `application/json`   |
+  | `Content-Type` | `application/json`   |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST .../Ventas/Corte/Desbloquear?IdCliente=575&IdUser=SIS10&Motivo=Cliente%20al%20corriente,%20pago%20verificado
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ### Éxito
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Cliente 575 desbloqueado. "
+    }
+  }
+  ```
+
+  **`IdError`** · BOOLEAN — `false` = desbloqueo realizado; `true` = no se ejecutó
+  **`Respuesta`** · STRING — Mensaje de resultado o de error para mostrar al usuario
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "El cliente no tiene cortes; no hay nada que desbloquear."
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `Motivo` vacío | `IdError: true` — `"El motivo del desbloqueo es obligatorio."` |
+  | `IdCliente` vacío o `≤ 0` | `IdError: true` — `"Se requiere el cliente a desbloquear."` |
+  | Cliente no existe | `IdError: true` — `"El cliente <id> no existe."` |
+  | Cliente sin cortes (`TotCortes < 1`) | `IdError: true` — `"El cliente no tiene cortes; no hay nada que desbloquear."` |
+  | Cliente bloqueado por otro usuario (lock) | `IdError: true` — `"El cliente esta siendo usado por otro usuario. Intente de nuevo en unos momentos."` |
+  | Desbloqueo correcto | `IdError: false` — `"Cliente <id> desbloqueado. "` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de dar de alta la tabla `DesbCorteCte`, compilar en PDSOE y ejecutar por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Transacción atómica:** el `CREATE DesbCorteCte` (bitácora) y la limpieza de los campos en `Cliente` (`TotCortes = 0`, `MontoDev = 0`, `FecUDev = ?`) ocurren **dentro de la misma transacción**, de modo que la bitácora y el desbloqueo quedan siempre juntos.
+  2. **Fail-fast de lock:** el cliente se toma con `EXCLUSIVE-LOCK NO-WAIT`; si otro proceso lo tiene tomado, la operación no espera y devuelve un mensaje amigable de reintento.
+  3. **Doble chequeo de cortes:** se valida `TotCortes >= 1` antes de la transacción y **otra vez** ya con el lock, por si otro proceso desbloqueó al cliente entre la lectura y el bloqueo.
+  4. **Folio global (`Secuencia`):** al grabar la bitácora se calcula el folio global (`FIND LAST ... USE-INDEX idx-secuencia`) y el consecutivo por cliente (`FIND LAST ... WHERE Id-Cliente = ... USE-INDEX idx-cliente`). Ambos quedan en el registro de `DesbCorteCte`.
+  5. **Snapshot antes de limpiar:** los valores previos del cliente (cortes, monto, última fecha de corte) se guardan en `CortesPrev`, `MontoPrev`, `FecUltCorte` **antes** de poner los campos de `Cliente` en cero, y se resumen en el campo `Detalle`.
+  6. **Bitácora de programa (no crítica):** después de la transacción se registra la operación en `programas/auditoria.p` (área `CLIENTE`, operación `DESBLOQ`) con `NO-ERROR`, de modo que un fallo de auditoría no revierte el desbloqueo.
+  7. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

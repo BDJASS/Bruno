@@ -99,7 +99,7 @@ docs: |
           ],
           "ttDetContrato": [
             {
-              "IdContrato": 2438, "Seq": 10, "IdArticulo": "021118",
+              "IdContrato": 2438, "Seq": 1, "IdCot": "4101355", "IdArticulo": "021118",
               "DescrArt": "BOLIGRAFO P/MED. 1.0MM BIC M-250 923995 DURA+",
               "IdColor": 2, "Kolor": "AZUL", "IdPres": 4, "Presentacion": "C/12",
               "IdMoneda": 0, "Moneda": "", "PrecUnit": 41.4, "IndicaPre": "F",
@@ -126,6 +126,7 @@ docs: |
 
   ### ttDetContrato (partidas)
   **`Seq`, `IdArticulo`, `DescrArt`, `IdColor`, `Kolor`, `IdPres`, `Presentacion`, `IdMoneda`, `Moneda`, `PrecUnit`, `IndicaPre`**
+  **`IdCot`** · STRING — Cotización de la que proviene **esa partida**. Un contrato puede tener artículos de varias cotizaciones (todas del mismo cliente), por eso puede diferir del `IdCot` de la cabecera, que guarda solo una de referencia. Es el primer criterio de ordenamiento del detalle (`IdCot` + `Seq`)
   **`CostoCot`, `CostoEsp`, `IdMonedaCE`** — datos de persistencia (se devuelven tal cual)
   **`CostoIni` / `CostoAct`** · DECIMAL — Costo a la fecha inicial y a hoy (insumo del ponderado)
   **`MargenIni` / `MargenAct`** · DECIMAL — Margen por renglón inicial y actual (insumo del aritmético)

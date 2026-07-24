@@ -1,0 +1,215 @@
+info:
+  name: Consulta
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Corte/Desbloquear/Consulta?IdUser=olds&IdCliente=575
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdCliente
+      value: "575"
+      type: query
+  body:
+    type: json
+    data: |-
+      {
+        "ttDatosGral": [
+          {
+            "IdCliente": 54631,
+            "IdVendedor": "0045"
+          }
+        ]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Cortes del Cliente (Consulta previa al Desbloqueo)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Cortes del Cliente — Consulta**
+  Devuelve el estado actual de cortes de **un** cliente: número de cliente, razón social y los tres campos de cortes (`TotalCortes`, `MontoCorte`, `FechaCorte`), más un indicador de si procede el desbloqueo. Sirve para que la vista muestre lo que se va a desbloquear **antes** de ejecutar el desbloqueo.
+  Programa servidor: `desbcortecte.p` · Procedimiento: `GetCortesCliente` | Lee los campos `TotCortes`, `MontoDev`, `FecUDev` de la tabla `Cliente`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Corte/Desbloquear/Consulta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · Ambos parámetros son obligatorios
+
+  **`IdUser`** · STRING · ✅ — Usuario que consulta
+  - Ej: `"olds"`
+
+  **`IdCliente`** · INTEGER · ✅ — Cliente a consultar (debe existir)
+  - Ej: `39742`
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Corte/Desbloquear/Consulta?IdUser=olds&IdCliente=39742
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ### Cliente con cortes (procede el desbloqueo)
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "El cliente tiene 2 corte(s).",
+      "dsCteCorte": {
+        "ttCteCorte": [
+          {
+            "IdCliente": 39742,
+            "RazonSocial": "PAPELERIA LA MODERNA SA DE CV",
+            "TotalCortes": 2,
+            "MontoCorte": 35000.00,
+            "FechaCorte": "2026-07-10",
+            "PuedeDesb": true
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  ### Cliente sin cortes (no procede el desbloqueo)
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "El cliente no tiene cortes; no hay nada que desbloquear.",
+      "dsCteCorte": {
+        "ttCteCorte": [
+          {
+            "IdCliente": 39742,
+            "RazonSocial": "PAPELERIA LA MODERNA SA DE CV",
+            "TotalCortes": 0,
+            "MontoCorte": 0.00,
+            "FechaCorte": null,
+            "PuedeDesb": false
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  ### Campos de `ttCteCorte` (siempre 1 registro)
+
+  **`IdCliente`** · INT — Número de cliente consultado
+  **`RazonSocial`** · STRING — Razón social del cliente
+  **`TotalCortes`** · INT — Cortes acumulados del cliente (origen: `Cliente.TotCortes`)
+  **`MontoCorte`** · DECIMAL — Monto acumulado de los cortes (origen: `Cliente.MontoDev`)
+  **`FechaCorte`** · DATE — Fecha del último corte (origen: `Cliente.FecUDev`); `null` si no tiene
+  **`PuedeDesb`** · BOOLEAN — `true` = el cliente tiene ≥ 1 corte y procede el desbloqueo; `false` = no hay nada que desbloquear
+
+  > Los nombres `TotalCortes` / `MontoCorte` / `FechaCorte` son **los mismos** que expone `cotcliente.p` en `ttClienteCot`, para que el front use un solo juego de nombres en ambas vistas.
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "El cliente 39742 no existe.",
+    "dsCteCorte": { "ttCteCorte": [] }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdCliente` vacío o `≤ 0` | `IdError: true` — `"Se requiere el cliente (IdCliente)."` |
+  | Cliente no existe | `IdError: true` — `"El cliente <id> no existe."` |
+  | Cliente sin cortes (`TotCortes < 1`) | Consulta OK; `PuedeDesb: false` — `"El cliente no tiene cortes; no hay nada que desbloquear."` |
+  | Cliente con cortes | Consulta OK; `PuedeDesb: true` — `"El cliente tiene N corte(s)."` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilar en PDSOE (generar `.pidl`) y ejecutar por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Origen de los datos:** lee directamente los campos de cortes de la tabla `Cliente` (`TotCortes` `inte`, `MontoDev` `deci-2`, `FecUDev` `date`). **No** consulta la bitácora `DesbCorteCte`, por lo que este servicio funciona aun sin registros de desbloqueo.
+  2. **Nombres alineados con `cotcliente.p`:** el temp-table expone `TotalCortes` / `MontoCorte` / `FechaCorte` (no los nombres físicos de la BD) para que coincidan con lo que ya recibe el front en `cotcliente.p` (`leeClienteCotiza` → `ttClienteCot`) y no haya dos convenciones.
+  3. **`PuedeDesb` — regla en el servidor:** el indicador aplica la misma condición que valida `DesbloquearCliente` (`TotCortes >= 1`), de modo que el front puede habilitar/deshabilitar el botón de desbloqueo sin replicar la regla de negocio.
+  4. **Cliente sin cortes no es error:** se devuelve `IdError: false` con el registro y `PuedeDesb: false`; así la vista puede mostrar la razón social y los ceros. Solo un cliente inexistente o un parámetro faltante devuelven `IdError: true`.
+  5. **Solo lectura:** el `FIND` sobre `Cliente` es `NO-LOCK` y no hay transacción; el servicio no modifica nada. La limpieza de los campos ocurre únicamente en `POST /Ventas/Corte/Desbloquear`.
+  6. **Flujo sugerido en la vista:** `GET .../Desbloquear/Consulta` (mostrar cortes y habilitar botón según `PuedeDesb`) → `POST .../Desbloquear` (capturando el motivo obligatorio) → `GET .../Corte/Bitacora` (refrescar el historial).
+  7. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

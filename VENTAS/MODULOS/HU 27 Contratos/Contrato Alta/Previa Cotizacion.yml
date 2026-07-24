@@ -106,7 +106,7 @@ docs: |
           ],
           "ttDetContrato": [
             {
-              "IdContrato": 0, "Seq": 10, "IdArticulo": "021118",
+              "IdContrato": 0, "Seq": 10, "IdCot": "4101355", "IdArticulo": "021118",
               "DescrArt": "BOLIGRAFO P/MED. 1.0MM BIC M-250 923995 DURA+",
               "IdColor": 2, "Kolor": "AZUL", "IdPres": 4, "Presentacion": "C/12",
               "IdMoneda": 0, "Moneda": "", "PrecUnit": 41.4, "IndicaPre": "F",
@@ -176,6 +176,22 @@ docs: |
   - Por renglón vienen las banderas informativas **`EnOtroContrato`** (el artículo ya está en otro contrato activo del cliente) y **`Descontinuado`**, para que el front las resalte y el usuario decida quitarlas.
 
   El precio por partida es el **neto** de la cotización: `PUnit` (o `PUnitExt` si aplica) menos descuento.
+
+  ### `IdCot` por renglón — obligatorio conservarlo
+
+  Cada partida trae **`IdCot`** con la cotización de la que proviene. **El front debe conservarlo tal cual** y devolverlo en el body del Alta: es obligatorio y sin él el Alta rechaza el renglón.
+
+  Sirve para armar un contrato con artículos de **varias cotizaciones del mismo cliente**: el front llama esta Previa **una vez por cotización** y **concatena** los renglones en el mismo grid; la columna `IdCot` dice de qué cotización es cada producto y es el primer criterio de ordenamiento.
+
+  > El `Seq` de cada renglón es la secuencia **dentro de su cotización**, así que al concatenar varias cotizaciones **se repite** (todas arrancan en 1). Es normal: el Alta renumera la secuencia del contrato al guardar. Ver `contrato-ContratosAlta.md`, secciones 10 y 11.
+
+  ### Validación de artículo repetido — qué cubre esta Previa y qué no
+
+  | Alcance | Quién valida |
+  |---------|--------------|
+  | Repetido **dentro de esta** cotización | ✅ **Esta Previa** — bloquea (ver sección 10) |
+  | Repetido **entre cotizaciones distintas** | ❌ **El front** — esta Previa solo ve una cotización por llamada |
+  | Repetido **en el body completo** | ✅ **El Alta** — red de seguridad final, bloqueante |
 
   ### Lista aparte — `ttDescontinuado` (aviso de descontinuados)
 
