@@ -1,0 +1,197 @@
+info:
+  name: Transporte
+  type: http
+  seq: 8
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Catalogo/Transporte?IdUser=olds
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Catálogo de Transportes
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Catálogo de Transportes — Consulta**
+  Devuelve el listado de líneas transportistas (tabla `Transporte`) para alimentar el combo de "Transporte" en captura de cotización, pedido y factura de contado (aplica cuando la entrega es foránea).
+  Programa servidor: `ventas-cat-transporte.p` · Procedimiento: `GetTransportes` | Versión REST de las ayudas F2 de modo carácter `vtaf0020.p` (por clave) y `vtaf0021.p` (por nombre).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Catalogo/Transportes
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUser`** · STRING · ✅ — Usuario que consulta
+
+  **`Buscar`** · STRING · ❌ — Filtra por nombre (contiene, sin distinguir mayúsculas)
+  - Ej: `"paqu"` trae `PAQUETEXPRESS` · Vacío = todos
+
+  **`OrdenarPor`** · STRING · ❌ — Criterio de orden
+  - `N` Por nombre (como `vtaf0021.p`) · Vacío u otro valor = por clave `Id-Tran` (como `vtaf0020.p`, **default**)
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header   | Valor              |
+  |----------|--------------------|
+  | `Accept` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Catalogo/Transportes?IdUser=sis10
+  GET .../Ventas/Catalogo/Transportes?IdUser=sis10&OrdenarPor=N
+  GET .../Ventas/Catalogo/Transportes?IdUser=sis10&Buscar=paqu
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Consulta generada: 3 transporte(s).",
+      "ttTransporte": {
+        "ttTransporte": [
+          {
+            "Orden": 1,
+            "IdTran": 1,
+            "Nombre": "PAQUETEXPRESS",
+            "NomLargo": "PAQUETE EXPRESS SA DE CV",
+            "IdRutaEmb": 2
+          },
+          {
+            "Orden": 2,
+            "IdTran": 4,
+            "Nombre": "TRES GUERRAS",
+            "NomLargo": "FLETERA TRES GUERRAS SA DE CV",
+            "IdRutaEmb": 1
+          },
+          {
+            "Orden": 3,
+            "IdTran": 7,
+            "Nombre": "CASTORES",
+            "NomLargo": "GRUPO CASTORES SA DE CV",
+            "IdRutaEmb": 3
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  ### Campos de `ttTransporte` (1 registro por transporte)
+
+  **`Orden`** · INT — Consecutivo de despliegue (`1` = primero); conserva el orden pedido en `OrdenarPor` dentro del JSON
+  **`IdTran`** · INT — Clave del transporte (`Transporte.Id-Tran`); es el valor a guardar en el documento
+  **`Nombre`** · STRING — Nombre corto, el que muestra el combo
+  **`NomLargo`** · STRING — Razón social / nombre largo (`Transporte.NomLargo`); la ayuda de carácter no lo mostraba por el ancho de la pantalla
+  **`IdRutaEmb`** · INT — Ruta de embarque asociada (`Transporte.Id-RutaEmb`), informativo
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "Se requiere el usuario (IdUser).",
+      "ttTransporte": { "ttTransporte": [] }
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `OrdenarPor` con valor no reconocido | Se ignora: ordena por `Id-Tran` (default) |
+  | `Buscar` sin coincidencias | `IdError: false` — `"Sin transportes con los criterios indicados."` y tabla vacía |
+  | Consulta correcta | `IdError: false` — `"Consulta generada: N transporte(s)."` |
+
+  ---
+
+  ## 10. Cuándo usar este catálogo
+
+  El transporte solo aplica en **entregas foráneas**. En la captura de factura de contado (`facturasust.p`), si `IdEntrega <= 11` **o** `IdEntrega = 16` el servicio **fuerza `IdTran = 0`** y no exige transporte.
+
+  Recomendación para el front: habilitar el combo de Transporte (y llamar este catálogo) solo cuando la entrega seleccionada **no** cumpla esa condición. Ver `ventas-cat-entrega-CatalogoEntregas.md`, sección 10.
+
+  ---
+
+  ## 11. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 12. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 13. Resultado
+
+  | Estado | Descripción |
+  |--------|-------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 14. Observaciones Técnicas
+
+  1. **Origen:** ayudas F2 `vtaf0020.p` (orden por `Id-Tran`, índice `idx-tran`) y `vtaf0021.p` (orden por `Nombre`, índice `Idx-Nombre`), ambas construidas con el include `seeksoft.i`. Las dos se consolidan en un solo endpoint con el parámetro `OrdenarPor`.
+  2. **Sin filtro de vigencia:** la tabla `Transporte` **no tiene campo `Activo`** — la ayuda del carácter usa `&Where = TRUE` y trae todos los registros. El servicio conserva ese comportamiento. Si el negocio requiere dar de baja transportistas, hay que agregar el campo al diccionario y filtrarlo aquí (no se asume).
+  3. **Búsqueda por nombre:** `Buscar` se resuelve con `CAPS(Nombre) MATCHES "*<texto>*"`, o sea **contiene**, no "empieza con". Al ser un `MATCHES` con comodín inicial no usa el índice `Idx-Nombre`, pero la tabla es chica y el costo es despreciable.
+  4. **Solo lectura:** el servicio no escribe nada; es un `FOR EACH ... NO-LOCK`.
+  5. **Catálogo pequeño:** no se paginó a propósito — el front lo consume como combo completo.
+  6. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

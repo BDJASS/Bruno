@@ -1,7 +1,7 @@
 info:
-  name: HU26 Descuentos Proveedor
+  name: HU 28 Lista de Articulos
   type: folder
-  seq: 10
+  seq: 12
 
 request:
   auth: inherit

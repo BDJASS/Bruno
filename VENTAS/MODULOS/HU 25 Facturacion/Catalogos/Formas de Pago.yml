@@ -1,0 +1,189 @@
+info:
+  name: Formas de Pago
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Catalogo/FormasPago?IdUser=olds
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Catálogo de Formas de Pago
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Catálogo de Formas de Pago — Consulta**
+  Devuelve las formas de pago del SAT que ADOSA acepta, para alimentar el combo de "Forma de Pago" en captura de cotización, pedido y factura de contado.
+  Programa servidor: `ventas-cat-formapago.p` · Procedimiento: `GetFormasPago` | Versión REST de la ayuda F2 de modo carácter `vtaf0290.p` ("Metodos de pagos validos en ADOSA").
+
+  > ⚠️ **Ojo con el nombre.** `vtaf0290.p` se titula *"Métodos de pagos"*, pero el campo que alimenta es **`FEFormaPago`** — o sea la **Forma de Pago** del SAT (catálogo `c_FormaPago`). El **Método de Pago** (`PUE` / `PPD`) es otro campo y otro catálogo (`FEMetodoPago`). Este servicio es de **formas** de pago; el título del programa de carácter es engañoso.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Catalogo/FormasPago
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUser`** · STRING · ✅ — Usuario que consulta
+
+  > No hay más parámetros: la lista es fija y de 6 elementos, no requiere filtro ni orden alternativo (la ayuda del carácter tampoco los tiene).
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header   | Valor              |
+  |----------|--------------------|
+  | `Accept` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Catalogo/FormasPago?IdUser=sis10
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Consulta generada: 6 forma(s) de pago.",
+      "ttFormaPago": {
+        "ttFormaPago": [
+          { "Orden": 1, "FEFormaPago": "01", "Descr": "EFECTIVO" },
+          { "Orden": 2, "FEFormaPago": "02", "Descr": "CHEQUE" },
+          { "Orden": 3, "FEFormaPago": "03", "Descr": "TRANSFERENCIA" },
+          { "Orden": 4, "FEFormaPago": "04", "Descr": "TARJETA DE CREDITO" },
+          { "Orden": 5, "FEFormaPago": "28", "Descr": "TARJETA DE DEBITO" },
+          { "Orden": 6, "FEFormaPago": "99", "Descr": "OTROS" }
+        ]
+      }
+    }
+  }
+  ```
+
+  ### Campos de `ttFormaPago` (6 registros fijos)
+
+  **`Orden`** · INT — Consecutivo de despliegue (`1` a `6`); conserva el orden en el JSON
+  **`FEFormaPago`** · STRING — Clave SAT de 2 posiciones con cero a la izquierda (`"01"`, `"02"`, `"03"`, `"04"`, `"28"`, `"99"`). **Es el valor a guardar** en `FEFormaPago` del documento
+  **`Descr`** · STRING — Descripción para mostrar en el combo
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "Se requiere el usuario (IdUser).",
+      "ttFormaPago": { "ttFormaPago": [] }
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | Consulta correcta | `IdError: false` — `"Consulta generada: 6 forma(s) de pago."` |
+
+  > Es una lista fija: no hay caso de "sin resultados".
+
+  ---
+
+  ## 10. ⚠️ La lista está replicada en 4 lugares
+
+  No existe tabla de catálogo: los 6 códigos están **escritos en el código**, igual que en el modo carácter (`vtaf0290.p` recorre `1..99` y solo crea esos 6 con un `CASE`).
+
+  Hoy la lista vive en:
+
+  | Lugar | Qué contiene |
+  |-------|--------------|
+  | `ventas-cat-formapago.p` | Los 6 códigos + descripciones *(este servicio)* |
+  | `facturasust.p` → `DescrFormaPago` | Los 6 códigos + descripciones (para la salida del GET) |
+  | `facturasust.p:517-518` | `CAN-DO("01,02,03,04,28,99")` + mensaje de error |
+  | `pedcambio.p:486` | `CAN-DO("01,02,03,04,28,99")` |
+
+  **Si se agrega o se quita una forma de pago hay que tocar los 4 puntos.** Es un riesgo real de inconsistencia: si se agrega aquí y no en los `CAN-DO`, el combo ofrecería una opción que el guardado rechaza.
+
+  Opciones si se quiere resolver (no aplicadas, requieren decisión):
+  1. **Include compartido** (p. ej. `programas/formapago.i`) con la lista, consumido por los 4 puntos.
+  2. **Tabla de catálogo** real en el diccionario, que además permitiría dar de alta/baja formas de pago sin recompilar.
+
+  ---
+
+  ## 11. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 12. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 13. Resultado
+
+  | Estado | Descripción |
+  |--------|-------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 14. Observaciones Técnicas
+
+  1. **Origen:** ayuda F2 `vtaf0290.p`, construida con el include `seeksoft.i` sobre un temp-table armado en memoria (no sobre tabla de base de datos).
+  2. **Sin el ciclo `1..99`:** el carácter recorre 99 iteraciones con un `CASE` que solo atiende 6 casos. Aquí se declaran los 6 directo — mismo resultado, sin las 93 iteraciones inútiles.
+  3. **Entrada comentada en el original:** `vtaf0290.p` tiene comentada una opción `"NA" / "NO DEFINIDO"`. **No** se incluye, para conservar el comportamiento vigente (y porque `NA` no es un código válido del SAT).
+  4. **Claves como texto:** `FEFormaPago` es `CHARACTER` de 2 posiciones con cero a la izquierda. El front debe mandarlas como string (`"01"`, no `1`), igual que las espera la validación del guardado.
+  5. **Sin estado:** el servicio no lee base de datos ni escribe nada; construye el temp-table en memoria.
+  6. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

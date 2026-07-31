@@ -1,0 +1,160 @@
+info:
+  name: Eliminar
+  type: http
+  seq: 2
+
+http:
+  method: DELETE
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ListaArticulos/QuitaArticulos?IdLista=952&IdArticulos=021118&IdUser=olds
+  params:
+    - name: IdLista
+      value: "952"
+      type: query
+    - name: IdArticulos
+      value: "021118"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Listas de Artículos (Quitar Artículos)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Listas de Artículos — Quitar Artículos**
+  Elimina uno o varios artículos (separados por coma) de una lista (opción "Baja" del browse de la pantalla original).
+  Programa servidor: `listaart.p` · Procedimiento: `quitaArticulos` | Versión REST de `cnfa0810.p` (modo carácter).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  DELETE
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ListaArticulos/QuitaArticulos
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdLista`** · STRING · ✅ — Número de la lista; debe existir en `ListaArt`
+  **`IdArticulos`** · STRING · ✅ — Clave(s) de artículo separadas por coma
+  - Las claves numéricas se completan con ceros a la izquierda a 6 posiciones
+
+  **`IdUser`** · STRING · ✅ — Usuario que realiza la baja (queda en la auditoría)
+
+  ---
+
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  DELETE .../Ventas/ListaArticulos/QuitaArticulos?IdLista=13&IdArticulos=1234,4567&IdUser=sis10
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Lista 13: 2 articulo(s) eliminado(s)."
+    }
+  }
+  ```
+
+  ### Response parcial (algunos artículos no procesados)
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Lista 13: 1 articulo(s) eliminado(s). No procesados: 007890: no esta en la lista."
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdLista` vacío, no numérico o `≤ 0` | `IdError: true` — `"Numero de lista invalido."` |
+  | Lista inexistente | `IdError: true` — `"Lista de articulos inexistente."` |
+  | `IdArticulos` vacío | `IdError: true` — `"Se requiere al menos un articulo (IdArticulos)."` |
+  | Artículo no está en la lista | Se omite y se reporta: `"<clave>: no esta en la lista."` |
+  | Registro tomado por otro proceso | Se omite y se reporta: `"<clave>: en uso por otro proceso."` |
+  | Ningún artículo procesado | `IdError: true` + detalle de fallas |
+  | Al menos un artículo eliminado | `IdError: false` + total eliminados y detalle de omitidos |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                  |
+  |---------------------|--------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Procesamiento por artículo:** cada clave se elimina en su propia transacción con `EXCLUSIVE-LOCK NO-WAIT`; si un registro está tomado por otro proceso solo ese artículo se reporta como no procesado.
+  2. **No hay baja de listas completas:** la pantalla original no la tiene y este servicio tampoco la expone; una lista puede quedar con 0 artículos.
+  3. **Auditoría:** operación `QUITA-ART` en `programas/auditoria.p` (módulo `ListaArticulos`), no crítica; solo se registra si se eliminó al menos un artículo.
+  4. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

@@ -1,0 +1,284 @@
+info:
+  name: Sustitucion
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/FacturaContado/Sustituye?IdUser=olds
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+  body:
+    type: json
+    data: |-
+      {
+            "ttFactura": [
+              {
+               "IdRemision": "10798CB",
+                "FecReg": "2026-07-27",
+                "IdVendedor": "5220",
+                "NombreVendedor": "MARIA HERMINIA RODRIGUEZ BRAVO",
+                "IdCliente": 26,
+                "RazonSocial": "FIDEL ALEJANDRO AYALA NOVAK",
+                "RFC": "AANF731127GK1",
+                "NomEmpresa": "",
+                "RSocietario": "",
+                "IdRFiscal": "605",
+                "DescrRFiscal": "Sueldos y Salarios e Ingresos Asimilados a Salarios",
+                "CalleNo": "CIPRES NORTE 2410",
+                "Colonia": "MODERNA",
+                "IdCiudad": 118,
+                "NombreCiudad": "MONTERREY",
+                "NombreEstado": "NUEVO LEON",
+                "CP": "64532",
+                "RazonSocial1": "",
+                "Email": "",
+                "CalleNo1": "",
+                "Colonia1": "",
+                "Ciudad1": "",
+                "Estado1": "",
+                "CP1": "",
+                "Referencia": "",
+                "Attn": "",
+                "IdEntrega": 4,
+                "DescrEntrega": "ESTAN X MERCANCIA",
+                "IdTran": 0,
+                "NombreTransporte": "",
+                "Observaciones1": "",
+                "Observaciones2": "",
+                "Requisicion": "",
+                "FEFormaPago": "01",
+                "DescrFormaPago": "EFECTIVO",
+                "IdUsoCFDI": "S01",
+                "TieneUUID": false,
+                "UUID": "",
+                "SustIdRemision": "63233AK"
+              }
+            ]
+          }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Factura de Contado (Sustitución / Cambio de Información)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Factura de Contado — Sustitución / Cambio de Información**
+  Aplica cambios a los datos generales de una factura de contado con las mismas validaciones y efectos que la pantalla original:
+  - **Con UUID (ya timbrada):** genera un folio nuevo, crea la factura sustituta (CFDI 4.0 con relación de sustitución `SustUUID` / `SustIdRemision`), copia el detalle, reapunta los documentos ligados (`Pedido`, `EstPedido`, `Movim`, `MovCaja`, `Vale`, `Devolucion`), timbra la nueva (`vtac2070.p`), cancela la original (`FecCancel` + `PorUUID`/`PorIdRemision`) y solicita su cancelación fiscal (`vtac2072.p`).
+  - **Sin UUID:** actualiza la misma factura y solicita su folio electrónico (`vtac2070.p`).
+
+  Programa servidor: `facturasust.p` · Procedimiento: `sustituyeFactura` | Versión REST de `vtaa0190.p` (modo carácter).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/FacturaContado/Sustituye
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUser`** · STRING · ✅ — Usuario que aplica el cambio. Debe existir en `Usuario`; su `Id-Ubicacion` define la serie de folios, igual que `g-Origen` en modo carácter
+  - Ej: `"sis10"`
+
+  ---
+
+  ## 5. Body
+
+  JSON con el **mismo registro que regresa el GET** `/Ventas/FacturaContado/Consulta`, ya editado. **No lleva ningún campo extra**: `ttFactura` es idéntico en ambos endpoints y el usuario viaja en el query string (ver sección 4).
+
+  ```json
+  {
+    "request": {
+      "ttFactura": {
+        "ttFactura": [
+          {
+            "IdRemision": "12345AB",
+            "IdVendedor": "0021",
+            "IdCliente": 34561,
+            "RazonSocial": "PAPELERA DEL NORTE SA DE CV",
+            "RFC": "PNO910101AB1",
+            "NomEmpresa": "PAPELERA DEL NORTE",
+            "RSocietario": "SA DE CV",
+            "IdRFiscal": "601",
+            "CalleNo": "AV JUAREZ 100",
+            "Colonia": "CENTRO",
+            "IdCiudad": 1,
+            "CP": "64000",
+            "RazonSocial1": "PAPELERA DEL NORTE SA DE CV",
+            "Email": "compras@papeleranorte.mx",
+            "CalleNo1": "AV JUAREZ 100",
+            "Colonia1": "CENTRO",
+            "Ciudad1": "MONTERREY",
+            "Estado1": "NUEVO LEON",
+            "CP1": "64000",
+            "Referencia": "",
+            "Attn": "LUIS GARZA",
+            "IdEntrega": 3,
+            "IdTran": 0,
+            "Observaciones1": "",
+            "Observaciones2": "",
+            "Requisicion": "",
+            "FEFormaPago": "03",
+            "IdUsoCFDI": "G03"
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  > Los campos informativos (`NombreVendedor`, `DescrRFiscal`, `NombreCiudad`, `TieneUUID`, etc.) pueden viajar como los regresó el GET; el servicio los ignora como entrada y los recalcula en la salida.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST .../Ventas/FacturaContado/Sustituye?IdUser=sis10
+       (con el registro ttFactura en el body)
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ### Sustitución (factura con UUID)
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Se ha sustituido la factura 12345AB por el folio 00871AC correctamente.",
+      "ttFactura": {
+        "ttFactura": [
+          {
+            "IdRemision": "00871AC",
+            "FecReg": "2026-07-11",
+            "UUID": "BBBB2222-CCCC-3333-DDDD-444455556666",
+            "TieneUUID": true,
+            "SustIdRemision": "12345AB",
+            "...": "resto de campos con los valores aplicados"
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  ### Actualización (factura sin UUID)
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Se actualizo la factura 12345AB y se solicito el folio electronico correctamente."
+    }
+  }
+  ```
+
+  ---
+
+  ## 8. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | Body vacío | `"No se recibieron datos de la factura."` |
+  | `IdUser` vacío | `"Se requiere el usuario (IdUser)."` |
+  | `IdUser` no existe en `Usuario` | `"Usuario inexistente (IdUser)."` |
+  | Factura inexistente / no contado / cancelada | `"Factura de contado inexistente, verifique..."` |
+  | Factura fuera de ventana de fechas | `"Solo se pueden modificar facturas de un anio anterior hasta el 31 de Marzo del anio actual..."` |
+  | Vendedor inexistente | `"Folio de vendedor inexistente, verifique..."` |
+  | Cliente inexistente (excepto cuenta `3`) | `"Folio de cliente inexistente, verifique..."` |
+  | RFC < 12 caracteres | `"RFC incorrecto, no puede tener menos de 12 caracteres, favor de verificar..."` |
+  | RFC con estructura inválida (caracteres/fecha) | `"RFC incorrecto, favor de verificar..."` |
+  | RFC no inscrito en el SAT (`sisd0002.p`) | `"El SAT informa que el RFC ingresado no existe en sus registros..."` |
+  | Régimen fiscal inexistente | `"Folio de regimen fiscal inexistente, favor de verificar."` |
+  | Régimen incompatible (física 13 chars: `601,603,620` · moral 12 chars: `605,612,616`) | `"Regimen fiscal no compatible con contribuyente, favor de verificar..."` |
+  | Ciudad inexistente | `"Folio de ciudad inexistente, verifique..."` |
+  | CP ≠ 5 dígitos | `"Longitud incorrecta de la captura del CP"` / `"Solo debe capturar digitos entre 0 y 9..."` |
+  | Entrega inexistente o inactiva | `"Folio de entrega inexistente, verifique..."` |
+  | Transporte inexistente (entregas foráneas) | `"Folio de transporte inexistente, verifique..."` |
+  | Forma de pago fuera de `01,02,03,04,28,99` | `"Forma de pago invalida, verifique valores..."` |
+  | Uso CFDI inexistente | `"Uso de CFDI incorrecto, favor de verificar..."` |
+  | Sin ningún cambio y con UUID | `"No se ha generado ningun cambio en la factura, no se generara ningun folio nuevo."` |
+  | PAC regresa error al timbrar (rama sin UUID) | `IdError: true`, pero **el cambio queda grabado** — `"...el PAC regreso error al timbrar; revise el archivo ... y reintente."` |
+
+  Reglas automáticas (igual que la pantalla):
+  - `IdVendedor` se completa con ceros a la izquierda a 4 posiciones.
+  - `RFC`, razón social, domicilios, contacto, forma de pago y uso CFDI se convierten a mayúsculas; al RFC se le quitan espacios.
+  - Si `IdEntrega ≤ 11` o `= 16` (entrega local), `IdTran` se fuerza a `0`.
+  - El RFC genérico (`XAXX010101000` / `XEXX010101000`) queda exento de la validación de compatibilidad de régimen.
+
+  ---
+
+  ## 9. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 10. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 11. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA.      |
+
+  ---
+
+  ## 12. Observaciones Técnicas
+
+  1. **Origen:** versión REST completa de `vtaa0190.p` (procedimientos `Generales` + `Actualiza`). Los mensajes de error son los mismos de la pantalla.
+  2. **Serie de folios:** con `Id-Ubicacion = "02B"` se usa `Folio` `REMCEDIS`; con cualquier otra ubicación se usa `VFolio` `REMISION` del almacén (para `"03A"` con `Id-Alm` vacío). Se conserva la lógica de rotación de prefijos (la letra `Z` se reserva para contingencias). Los folios se toman con `NO-WAIT` y reintentos para no dejar la sesión PASOE bloqueada.
+  3. **Transacción:** toda la sustitución (folio, factura nueva, detalle, reapuntes, timbrado y cancelación de la original) corre en una sola transacción: si algo truena, no queda nada a medias.
+  4. **Timbrado:** `vtac2070.p` (genera CFDI de la nueva) y `vtac2072.p` (cancela CFDI de la original) corren en la sesión PASOE; el PROPATH del agente debe incluir los programas de `/usr2/adosa`.
+  5. **Confirmaciones de la pantalla** (*"¿Desea continuar?"* y *"¿Desea realizar los cambios?"*): son responsabilidad del front (usar `TieneUUID` del GET); el POST ejecuta directo.
+  6. **Bitácora y auditoría:** la rama sin UUID escribe en `/usr2/adosa/logs/bitacoracfdi.txt` (igual que la pantalla; con `IdUser` en lugar del usuario de sesión) y ambas ramas registran en `programas/auditoria.p` (operación `SUSTITUYE` o `RETIMBRA`).
+  7. **Usuario de cancelación:** `UsuarioCanc` de la factura original se llena con el `IdUser` recibido (la pantalla usaba `USERID('dictdb')`, que en PASOE sería el usuario técnico de conexión).
+  8. **Consulta previa:** ver documento `facturasust-FacturaContadoConsulta.md` (`GET /Ventas/FacturaContado/Consulta`).
+  9. **Plan de pruebas:** ver documento `facturasust-Pruebas.md`.
+  10. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

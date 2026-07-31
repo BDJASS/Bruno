@@ -1,20 +1,17 @@
 info:
-  name: Enviar Correo
+  name: Visualizar Cotizacion PDF
   type: http
   seq: 1
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/EnviaCorreo?idCotiza=2083476&Mail=desarrollo10@adosa.com.mx&Contenido=Te mando la Cotizacion
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Ventas/PDF?IdCot=2083476&IdUser=sis10
   params:
-    - name: idCotiza
+    - name: IdCot
       value: "2083476"
       type: query
-    - name: Mail
-      value: desarrollo10@adosa.com.mx
-      type: query
-    - name: Contenido
-      value: Te mando la Cotizacion
+    - name: IdUser
+      value: sis10
       type: query
   body:
     type: json

@@ -1,0 +1,153 @@
+info:
+  name: Alta de Lista
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ListaArticulos/Alta?IdUser=olds&Descripcion=Ejemplo de Lista de Articulos 02
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: Descripcion
+      value: Ejemplo de Lista de Articulos 02
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Listas de Artículos (Alta)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Listas de Artículos — Alta**
+  Crea una lista de artículos (`ListaArt`). El folio **siempre** es el consecutivo (última + 1); no se recibe. Solo se piden la descripción y el usuario.
+  Programa servidor: `listaart.p` · Procedimiento: `altaLista` | Versión REST del alta de la pantalla `cnfa0810.p` (modo carácter).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ListaArticulos/Alta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`Descripcion`** · STRING · ✅ — Descripción de la lista; no puede quedar vacía (máx. 45 caracteres)
+
+  **`IdUser`** · STRING · ✅ — Usuario que realiza el alta (queda en la auditoría)
+
+  > El número de lista **no se envía**: siempre se asigna el consecutivo (última + 1).
+
+  ---
+
+  ## 5. Body
+
+  No aplica; los parámetros viajan por query string (mismo patrón que otros POST del módulo).
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST .../Ventas/ListaArticulos/Alta?Descripcion=PROMOCION%20ESCOLAR&IdUser=sis10
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Lista 948 - \"PROMOCION ESCOLAR\" generada correctamente."
+    }
+  }
+  ```
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "Descripcion no puede quedar vacia."
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `Descripcion` vacía | `IdError: true` — `"Descripcion no puede quedar vacia."` |
+  | Alta correcta | `IdError: false` — `"Lista N - \"DESCRIPCION\" generada correctamente."` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                  |
+  |---------------------|--------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Consecutivo:** el folio siempre es `FIND LAST ListaArt + 1`, igual que la pantalla al teclear `0` (no hay registro en la tabla `Folio` para este documento). El número de lista ya no se recibe como parámetro. Si dos altas simultáneas chocaran en el mismo folio, el índice único lo rechaza y el `CATCH` responde error pidiendo reintentar.
+  2. **Renombrar:** para cambiar la descripción de una lista existente se usa el servicio `/Modifica`.
+  3. **Auditoría:** operación `ALTA` en `programas/auditoria.p` (módulo `ListaArticulos`), no crítica.
+  4. **Artículos:** la lista nace vacía; se llenan con `POST /Ventas/ListaArticulos/AgregaArticulos`.
+  5. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

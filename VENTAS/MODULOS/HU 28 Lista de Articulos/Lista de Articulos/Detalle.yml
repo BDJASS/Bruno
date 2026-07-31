@@ -1,0 +1,188 @@
+info:
+  name: Detalle
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ListaArticulos/Detalle?IdLista=1
+  params:
+    - name: IdLista
+      value: "1"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Listas de Artículos (Detalle)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Listas de Artículos — Detalle**
+  Regresa una lista de artículos como **DATASET padre-hijo**: la cabecera (`ttListaEnc`) con los datos de la lista **una sola vez**, y el detalle (`ttDetLista`) con sus artículos. Así la descripción de la lista **no se repite** en cada renglón.
+  Programa servidor: `listaart.p` · Procedimiento: `leeDetalleLista` | Versión REST del browse de detalle de la pantalla `cnfa0810.p` (modo carácter).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ListaArticulos/Detalle
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdLista`** · STRING · ✅ — Número de la lista a consultar; debe existir en `ListaArt`
+
+  ---
+
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
+
+  | Header   | Valor              |
+  |----------|--------------------|
+  | `Accept` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/ListaArticulos/Detalle?IdLista=1
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Lista 1 (PAPELERIA BASICA): 2 articulo(s).",
+      "dsDetalleLista": {
+        "ttListaEnc": [
+          {
+            "IdLista": 1,
+            "Descripcion": "PAPELERIA BASICA",
+            "CantArticulos": 2
+          }
+        ],
+        "ttDetLista": [
+          {
+            "IdLista": 1,
+            "IdArticulo": "001234",
+            "DescrArticulo": "PAPEL BOND CARTA 75GRS"
+          },
+          {
+            "IdLista": 1,
+            "IdArticulo": "004567",
+            "DescrArticulo": "FOLDER MANILA T/CARTA"
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "Lista de articulos inexistente.",
+      "dsDetalleLista": {
+        "ttListaEnc": [],
+        "ttDetLista": []
+      }
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos del Response (DATASET `dsDetalleLista`)
+
+  Estructura padre-hijo ligada por `IdLista`.
+
+  ### Cabecera — `ttListaEnc` (un solo registro)
+
+  **`IdLista`** · INTEGER — Número de la lista
+  **`Descripcion`** · STRING — Descripción de la lista (una sola vez, no por renglón)
+  **`CantArticulos`** · INTEGER — Cantidad de artículos que contiene la lista
+
+  ### Detalle — `ttDetLista` (un renglón por artículo)
+
+  **`IdLista`** · INTEGER — Número de la lista (llave de relación con la cabecera)
+  **`IdArticulo`** · STRING — Clave del artículo (6 posiciones)
+  **`DescrArticulo`** · STRING — Descripción del artículo (catálogo `Articulo`; vacía si el artículo ya no existe)
+
+  ---
+
+  ## 10. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdLista` vacío, no numérico o `≤ 0` | `IdError: true` — `"Numero de lista invalido."` |
+  | Lista inexistente | `IdError: true` — `"Lista de articulos inexistente."` |
+  | Lista sin artículos | `IdError: false` — cabecera con `CantArticulos: 0` y `ttDetLista` vacío |
+  | Consulta correcta | `IdError: false` + cabecera `ttListaEnc` + renglones `ttDetLista` |
+
+  ---
+
+  ## 11. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 12. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 13. Resultado
+
+  | Estado              | Descripción                                                  |
+  |---------------------|--------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 14. Observaciones Técnicas
+
+  1. **Estructura DATASET:** el response es un dataset padre-hijo (`dsDetalleLista`) con la cabecera `ttListaEnc` (datos de la lista una sola vez) y el detalle `ttDetLista` (artículos), ligados por `IdLista`. Antes era un temp-table plano que repetía la descripción de la lista en cada renglón; el cambio reduce el tamaño del JSON y evita datos redundantes.
+  2. **Orden:** los artículos se regresan ordenados por clave (`Id-Articulo`), igual que el browse original.
+  3. **Mantenimiento del detalle:** ver `listaart-ListaArticulosAgrega.md` y `listaart-ListaArticulosQuita.md`.
+  4. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

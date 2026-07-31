@@ -1,0 +1,145 @@
+info:
+  name: Modifica Lista
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ListaArticulos/Modifica?IdUser=olds&Descripcion=Ejemplo de Lista de Articulos 078&IdLista=952
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: Descripcion
+      value: Ejemplo de Lista de Articulos 078
+      type: query
+    - name: IdLista
+      value: "952"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Listas de Artículos (Modifica)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Listas de Artículos — Modifica**
+  Cambia la descripción de una lista existente (en la pantalla: entrar al folio existente y reescribir la descripción).
+  Programa servidor: `listaart.p` · Procedimiento: `modificaLista` | Versión REST de `cnfa0810.p` (modo carácter).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  PUT
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ListaArticulos/Modifica
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdLista`** · STRING · ✅ — Número de la lista a renombrar; debe existir
+  **`Descripcion`** · STRING · ✅ — Nueva descripción; no puede quedar vacía (máx. 45 caracteres)
+  **`IdUser`** · STRING · ✅ — Usuario que realiza el cambio (queda en la auditoría)
+
+  ---
+
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  PUT .../Ventas/ListaArticulos/Modifica?IdLista=13&Descripcion=PROMOCION%20ESCOLAR%202026&IdUser=sis10
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Lista 13 modificada con exito."
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdLista` vacío, no numérico o `≤ 0` | `IdError: true` — `"Numero de lista invalido."` |
+  | `Descripcion` vacía | `IdError: true` — `"Descripcion no puede quedar vacia."` |
+  | Lista inexistente | `IdError: true` — `"Lista de articulos inexistente."` |
+  | Registro tomado por otro proceso | `IdError: true` — `"La lista esta siendo usada por otro proceso; intente de nuevo."` |
+  | Modificación correcta | `IdError: false` — `"Lista N modificada con exito."` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                  |
+  |---------------------|--------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Solo descripción:** el único dato editable de la cabecera es la descripción; el número de lista no se cambia (es la llave y el detalle cuelga de él).
+  2. **Bloqueos:** `EXCLUSIVE-LOCK NO-WAIT` — no deja la sesión PASOE esperando candados.
+  3. **Auditoría:** operación `MODIFICA` en `programas/auditoria.p` (módulo `ListaArticulos`), no crítica.
+  4. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

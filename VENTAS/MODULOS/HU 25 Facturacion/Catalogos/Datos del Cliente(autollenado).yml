@@ -1,0 +1,240 @@
+info:
+  name: Datos del Cliente(autollenado)
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/FacturaContado/DatosCliente?IdUser=olds&IdCliente=2
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdCliente
+      value: "2"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Factura de Contado: Datos Fiscales del Cliente (autollenado)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Factura de Contado — Datos Fiscales del Cliente**
+  Al cambiar el cliente en la captura, devuelve los datos fiscales que la pantalla original copia **automáticamente** del catálogo `Cliente`. Son los campos que el usuario **no** edita: el front debe pisarlos con lo que regrese este servicio y dejarlos de solo lectura.
+  Programa servidor: `facturasust.p` · Procedimiento: `datosClienteFactura` | Réplica del bloque `IF FRAME-FIELD = "Id-Cliente"` de `vtaa0190.p` (modo carácter).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/FacturaContado/DatosCliente
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdCliente`** · INTEGER · ✅ — Cliente que capturó el usuario
+  - Ej: `34561` · `3` = venta mostrador (caso especial, ver sección 8)
+
+  **`IdUser`** · STRING · ✅ — Usuario que consulta
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/FacturaContado/DatosCliente?IdCliente=34561&IdUser=sis10
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ### Cliente normal — hay autollenado
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Datos fiscales del cliente 34561 obtenidos.",
+      "ttCteFactura": {
+        "ttCteFactura": [
+          {
+            "IdCliente": 34561,
+            "EsMostrador": false,
+            "RazonSocial": "PAPELERA DEL NORTE SA DE CV",
+            "RFC": "PNO910101AB1",
+            "NomEmpresa": "PAPELERA DEL NORTE",
+            "RSocietario": "SA DE CV",
+            "IdRFiscal": "601",
+            "DescrRFiscal": "GENERAL DE LEY PERSONAS MORALES",
+            "CalleNo": "AV JUAREZ 100",
+            "Colonia": "CENTRO",
+            "IdCiudad": 1,
+            "NombreCiudad": "MONTERREY",
+            "NombreEstado": "NUEVO LEON",
+            "CP": "64000"
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  ### Venta mostrador (`IdCliente = 3`) — NO hay autollenado
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Venta mostrador: los datos fiscales se capturan a mano, no se toman del catalogo de clientes.",
+      "ttCteFactura": {
+        "ttCteFactura": [
+          { "IdCliente": 3, "EsMostrador": true, "RazonSocial": "", "RFC": "", "...": "resto vacío" }
+        ]
+      }
+    }
+  }
+  ```
+
+  > Con `EsMostrador: true` el front debe **habilitar** los campos fiscales para captura manual (así se comporta la pantalla: el cursor se va al RFC). En cualquier otro cliente, esos campos van de solo lectura.
+
+  ### Campos de `ttCteFactura` (siempre 1 registro)
+
+  **`IdCliente`** · INT — Cliente consultado
+  **`EsMostrador`** · BOOLEAN — `true` = cliente `3`: los datos fiscales se capturan a mano y vienen vacíos; `false` = se autollenan con lo que regresa este servicio
+
+  Los **9 campos que se pisan** en el formulario (origen: catálogo `Cliente`):
+
+  **`RazonSocial`** · STRING — ← `Cliente.RazonSocial`
+  **`RFC`** · STRING — ← `Cliente.RFC` (sin espacios)
+  **`NomEmpresa`** · STRING — ← `Cliente.NomEmpresa`
+  **`RSocietario`** · STRING — ← `Cliente.RSocietario`
+  **`IdRFiscal`** · STRING — ← `Cliente.Id-RFiscal`
+  **`CalleNo`** · STRING — ← `Cliente.CalleNo`
+  **`Colonia`** · STRING — ← `Cliente.Colonia`
+  **`IdCiudad`** · INT — ← `Cliente.Id-Ciudad`
+  **`CP`** · STRING — ← `Cliente.CP`
+
+  Descripciones **informativas** (no se guardan en la factura, solo para mostrar):
+
+  **`DescrRFiscal`** · STRING — Descripción del régimen fiscal (`RFiscal.Descr`)
+  **`NombreCiudad`** · STRING — Nombre de la ciudad (`Ciudad.Nombre`)
+  **`NombreEstado`** · STRING — Nombre del estado (`Estado.Nombre`)
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "Folio de cliente inexistente, verifique...",
+      "ttCteFactura": { "ttCteFactura": [] }
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdCliente` vacío o `≤ 0` | `IdError: true` — `"Se requiere el cliente (IdCliente)."` |
+  | Cliente inexistente | `IdError: true` — `"Folio de cliente inexistente, verifique..."` (mismo mensaje que la pantalla y que el POST) |
+  | `IdCliente = 3` (mostrador) | `IdError: false` — `EsMostrador: true`, campos vacíos |
+  | Cliente válido | `IdError: false` + los 9 campos y sus descripciones |
+
+  ---
+
+  ## 10. Lo que este servicio NO devuelve (y por qué)
+
+  | Campo | Por qué no |
+  |-------|-----------|
+  | **`IdUsoCFDI`** | El catálogo `Cliente` **sí** tiene `Id-UsoCFDI` (campo 1140), pero la pantalla **no lo aplica** al cambiar cliente: la factura conserva el suyo y el usuario lo captura. Se replica ese comportamiento |
+  | **`Email`** | No se autollena; es un campo capturable en la factura |
+  | **`RazonSocial1`, `CalleNo1`, `Colonia1`, `Ciudad1`, `Estado1`, `CP1`** (datos de embarque) | No se tocan al cambiar cliente; son capturables. De hecho el cursor de la pantalla salta justo a `RazonSocial1` después del autollenado |
+  | **`IdEntrega`, `IdTran`, `FEFormaPago`, `Referencia`, `Attn`, `Observaciones`, `Requisicion`** | No dependen del cliente; son capturables |
+
+  ---
+
+  ## 11. Flujo en el front
+
+  1. `GET /Ventas/FacturaContado/Consulta` (con `Confirmar=true` si ya está timbrada) → carga el formulario.
+  2. El usuario cambia el **cliente** → `GET /Ventas/FacturaContado/DatosCliente?IdCliente=<nuevo>&IdUser=<u>`:
+     - `EsMostrador: false` → pisar los 9 campos con la respuesta y dejarlos **de solo lectura**.
+     - `EsMostrador: true` → limpiar y **habilitar** los campos fiscales para captura manual.
+  3. El usuario edita los campos capturables (ver `facturasust-FacturaContadoSustituye.md`, sección 10).
+  4. `POST /Ventas/FacturaContado/Sustituye?IdUser=<u>` con el registro completo.
+
+  > El POST **revalida todo** de cualquier forma (cliente, RFC ante el SAT, régimen, ciudad, CP…), así que este servicio es de conveniencia para la vista, no la única defensa.
+
+  ---
+
+  ## 12. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 13. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 14. Resultado
+
+  | Estado | Descripción |
+  |--------|-------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 15. Observaciones Técnicas
+
+  1. **Origen exacto:** bloque `IF FRAME-FIELD = "Id-Cliente"` de `vtaa0190.p`. La pantalla hace el `ASSIGN` de los 9 campos y luego `NEXT-PROMPT ttRemision.RazonSocial1`, o sea **brinca el cursor** sobre los campos autollenados: de ahí que no sean editables.
+  2. **Solo lectura:** el servicio no escribe nada; es un `FIND` a `Cliente` más 3 lecturas de catálogo.
+  3. **Segundo autollenado, por RFC (no implementado aquí):** la pantalla también autollena al cambiar el **RFC**, buscando `FIND LAST CteSReg WHERE CteSReg.RFC = <nuevo>`; si existe copia `RazonSocial`, `NomEmpresa`, `RSocietario`, `RFC`, `CalleNo`, `Colonia`, `Id-Ciudad` y **limpia el `CP`**. Si se requiere, se puede exponer como un endpoint gemelo (`.../DatosRFC?RFC=`).
+  4. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

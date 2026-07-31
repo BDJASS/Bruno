@@ -1,0 +1,310 @@
+info:
+  name: Consulta
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/FacturaContado/Consulta?IdRemision=63241AK&IdUser=olds&Confirmar=true
+  params:
+    - name: IdRemision
+      value: 63241AK
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+    - name: Confirmar
+      value: "true"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Factura de Contado (Consulta para Sustitución)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Factura de Contado — Consulta para Sustitución**
+  Consulta los datos generales de una factura de contado vigente (`Remision` con `TipoVenta = 2`, no cancelada) para su edición, con las descripciones de catálogos (vendedor, régimen fiscal, ciudad/estado, entrega, transporte, forma de pago) y la bandera `TieneUUID`.
+  Si la factura **ya está timbrada**, primero **pide confirmación** (`Confirmar=true`), igual que la ventana del modo carácter: modificarla genera un folio electrónico nuevo.
+  Programa servidor: `facturasust.p` · Procedimiento: `consultaFactura` | Versión REST de la consulta inicial de la pantalla `vtaa0190.p` (modo carácter): "Cambio de información a facturas de contado con sustitución de facturas".
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/FacturaContado/Consulta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdRemision`** · STRING · ✅ — Folio de la factura de contado a consultar
+  - Debe existir en `Remision` con `TipoVenta = 2` y sin fecha de cancelación
+
+  **`IdUser`** · STRING · ✅ — Usuario que consulta
+
+  **`Confirmar`** · LOGICAL · ❌ — Confirmación de que se acepta generar un folio electrónico nuevo
+  - `false`/omitido = primer intento. Si la factura **ya está timbrada**, el servicio regresa el aviso con la pregunta y **no** devuelve el registro
+  - `true` = el usuario ya aceptó; devuelve el registro completo para editar
+  - Si la factura **no** tiene UUID, este parámetro **no aplica**: la consulta procede directo
+
+  ---
+
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/FacturaContado/Consulta?IdRemision=12345AB&IdUser=sis10
+  GET .../Ventas/FacturaContado/Consulta?IdRemision=12345AB&IdUser=sis10&Confirmar=true
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ### Factura YA TIMBRADA — paso 1: pide confirmación (`Confirmar` no enviado)
+
+  Réplica de la ventana del modo carácter. **No** devuelve el registro: la edición no procede hasta que el usuario acepte.
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "RequiereConfirmar": true,
+      "Respuesta": "La factura 63233AK ya cuenta con folio electronico, al realizar una modificacion se generara un nuevo folio electronico. Desea continuar?",
+      "ttFactura": { "ttFactura": [] }
+    }
+  }
+  ```
+
+  → El front detecta **`RequiereConfirmar: true`**, muestra el aviso con la pregunta y, si el usuario acepta, reenvía la misma URL agregando **`&Confirmar=true`**.
+
+  ### Factura YA TIMBRADA — paso 2: confirmada (`Confirmar=true`)
+
+  Devuelve el registro completo para editar; el mensaje conserva la advertencia como recordatorio.
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "RequiereConfirmar": false,
+      "Respuesta": "Factura 12345AB lista para edicion. La factura ya cuenta con folio electronico; al guardar cambios se generara un folio nuevo.",
+      "ttFactura": {
+        "ttFactura": [
+          {
+            "IdRemision": "12345AB",
+            "FecReg": "2026-05-14",
+            "IdVendedor": "0021",
+            "NombreVendedor": "JUAN PEREZ LOPEZ",
+            "IdCliente": 34561,
+            "RazonSocial": "PAPELERA DEL NORTE SA DE CV",
+            "RFC": "PNO910101AB1",
+            "NomEmpresa": "PAPELERA DEL NORTE",
+            "RSocietario": "SA DE CV",
+            "IdRFiscal": "601",
+            "DescrRFiscal": "General de Ley Personas Morales",
+            "CalleNo": "AV JUAREZ 100",
+            "Colonia": "CENTRO",
+            "IdCiudad": 1,
+            "NombreCiudad": "MONTERREY",
+            "NombreEstado": "NUEVO LEON",
+            "CP": "64000",
+            "RazonSocial1": "PAPELERA DEL NORTE SA DE CV",
+            "Email": "compras@papeleranorte.mx",
+            "CalleNo1": "AV JUAREZ 100",
+            "Colonia1": "CENTRO",
+            "Ciudad1": "MONTERREY",
+            "Estado1": "NUEVO LEON",
+            "CP1": "64000",
+            "Referencia": "",
+            "Attn": "LUIS GARZA",
+            "IdEntrega": 3,
+            "DescrEntrega": "MOSTRADOR",
+            "IdTran": 0,
+            "NombreTransporte": "",
+            "Observaciones1": "",
+            "Observaciones2": "",
+            "Requisicion": "",
+            "FEFormaPago": "03",
+            "DescrFormaPago": "TRANSFERENCIA",
+            "IdUsoCFDI": "G03",
+            "TieneUUID": true,
+            "UUID": "AAAA1111-BBBB-2222-CCCC-333344445555",
+            "SustIdRemision": ""
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  ### Factura SIN timbrar
+
+  No hay confirmación: devuelve el registro directo sin importar `Confirmar`, con `RequiereConfirmar: false`, el mensaje sin la advertencia (`"Factura 12345AB lista para edicion."`) y `ttFactura.TieneUUID: false`.
+
+  ### Response de error REAL
+
+  Nótese que `RequiereConfirmar` viene en **`false`**: es lo que distingue un error de verdad del aviso de UUID.
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "RequiereConfirmar": false,
+      "Respuesta": "Factura de contado inexistente, verifique...",
+      "ttFactura": { "ttFactura": [] }
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Salida de control — cómo debe ramificar el front
+
+  Además de `IdError` y `Respuesta`, el servicio devuelve una bandera lógica de primer nivel (fuera de `ttFactura`):
+
+  **`RequiereConfirmar`** · BOOLEAN — `true` **solo** cuando el proceso se detuvo esperando `Confirmar=true` porque la factura ya está timbrada. **No es un error**: es la pregunta del modo carácter. En cualquier otro caso (éxito o error real) viene en `false`
+
+  ### Lógica sugerida
+
+  ```
+  if (IdError && RequiereConfirmar)  → mostrar Respuesta como pregunta Sí/No
+                                       si acepta: reintentar con &Confirmar=true
+  else if (IdError)                  → mostrar Respuesta como error
+  else                               → cargar el formulario con ttFactura
+  ```
+
+  ### Por qué esta bandera y no una de "tiene UUID"
+
+  Ramificar con una bandera de "la factura tiene UUID" daría un falso positivo: una factura **timbrada** que además está **fuera de la ventana de fechas** devuelve `IdError: true` y sí tiene UUID. El front creería que es la confirmación, reintentaría con `Confirmar=true` y recibiría el **mismo error de fechas** — un ciclo sin salida.
+
+  `RequiereConfirmar` se pone en `true` **únicamente** en el caso de la confirmación, así que no tiene esa ambigüedad.
+
+  > Una excepción no controlada también regresa `RequiereConfirmar: false`, así que nunca se confunde con la confirmación.
+
+  Si el front necesita saber si la factura está timbrada **una vez cargada**, ese dato viene en el registro: **`ttFactura.TieneUUID`** (ver sección 10).
+
+  ---
+
+  ## 10. Campos del Response (ttFactura)
+
+  **`IdRemision`** · STRING — Folio de la factura
+  **`FecReg`** · DATE — Fecha de registro de la factura
+  **`IdVendedor`** · STRING — Clave del vendedor (4 posiciones)
+  **`NombreVendedor`** · STRING — Nombre del empleado del vendedor (informativo)
+  **`IdCliente`** · INTEGER — Cuenta del cliente (`3` = venta mostrador)
+  **`RazonSocial`** · STRING — Razón social fiscal del receptor
+  **`RFC`** · STRING — RFC sin espacios, en mayúsculas
+  **`NomEmpresa`** · STRING — Nombre de la empresa
+  **`RSocietario`** · STRING — Régimen societario (SA DE CV, etc.)
+  **`IdRFiscal`** · STRING — Clave del régimen fiscal SAT
+  **`DescrRFiscal`** · STRING — Descripción del régimen fiscal (informativo)
+  **`CalleNo`** / **`Colonia`** · STRING — Domicilio fiscal
+  **`IdCiudad`** · INTEGER — Clave de la ciudad (catálogo `Ciudad`)
+  **`NombreCiudad`** / **`NombreEstado`** · STRING — Descripciones (informativo)
+  **`CP`** · STRING — Código postal fiscal (5 dígitos)
+  **`RazonSocial1`** · STRING — Embarcar a
+  **`Email`** · STRING — Correo del receptor
+  **`CalleNo1` / `Colonia1` / `Ciudad1` / `Estado1` / `CP1`** · STRING — Domicilio de embarque
+  **`Referencia`** · STRING — Referencia de entrega
+  **`Attn`** · STRING — Contacto
+  **`IdEntrega`** · INTEGER — Clave de entrega (catálogo `Entrega`); `≤ 11` o `16` = local, sin transporte
+  **`DescrEntrega`** · STRING — Descripción de la entrega (informativo)
+  **`IdTran`** · INTEGER — Clave del transporte (`0` = sin transporte)
+  **`NombreTransporte`** · STRING — Nombre del transporte (informativo)
+  **`Observaciones1` / `Observaciones2`** · STRING — Observaciones de la factura
+  **`Requisicion`** · STRING — Requisición del cliente
+  **`FEFormaPago`** · STRING — Forma de pago SAT: `01,02,03,04,28,99`
+  **`DescrFormaPago`** · STRING — Descripción de la forma de pago (informativo)
+  **`IdUsoCFDI`** · STRING — Uso de CFDI (catálogo `UsoCFDI`)
+  **`TieneUUID`** · BOOLEAN — `true` = la factura ya está timbrada; al guardar cambios se generará un **folio nuevo** (el front debe pedir confirmación); `false` = solo se actualiza y timbra
+  **`UUID`** · STRING — Folio fiscal actual
+  **`SustIdRemision`** · STRING — Folio de la factura que ésta sustituyó (si aplica)
+
+  > Este registro es **exactamente** el que espera el `POST /Ventas/FacturaContado/Sustituye` en su body: el front solo edita los campos que el usuario cambió y lo reenvía **sin agregarle ni quitarle nada**. El usuario (`IdUser`) va como parámetro de query en ambos endpoints, no como campo de la tabla.
+
+  ---
+
+  ## 11. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdRemision` vacío | `IdError: true` — `"Se requiere el folio de la factura (IdRemision)."` |
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | Folio inexistente, no es de contado (`TipoVenta ≠ 2`) o ya cancelada | `IdError: true` — `"Factura de contado inexistente, verifique..."` |
+  | Factura fuera de la ventana de fechas | `IdError: true` — `"Solo se pueden modificar facturas de un anio anterior hasta el 31 de Marzo del anio actual..."` |
+  | **Factura ya timbrada y `Confirmar ≠ true`** | `IdError: true` + **`RequiereConfirmar: true`** — `"La factura <folio> ya cuenta con folio electronico, al realizar una modificacion se generara un nuevo folio electronico. Desea continuar?"` y `ttFactura` **vacío**. No es un error real: es la confirmación que el front debe mostrar |
+  | Factura ya timbrada y `Confirmar = true` | `IdError: false` + `RequiereConfirmar: false` + registro `ttFactura` (con `TieneUUID: true`) |
+  | Factura sin timbrar | `IdError: false` + `RequiereConfirmar: false` + registro `ttFactura` (con `TieneUUID: false`); ignora `Confirmar` |
+
+  > En **todos** los casos de error de la tabla salvo el de la confirmación, `RequiereConfirmar` viene en `false`. Ver sección 9.
+
+  **Regla de fechas** (misma de la pantalla): de abril a diciembre solo facturas del año en curso; de enero a marzo también se aceptan las del año anterior.
+
+  ---
+
+  ## 12. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 13. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 14. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA.      |
+
+  ---
+
+  ## 15. Observaciones Técnicas
+
+  1. **Origen:** versión REST de la fase de consulta de `vtaa0190.p` (modo carácter). El registro que regresa es el mismo que se manda de vuelta (editado) al POST `/Ventas/FacturaContado/Sustituye`.
+  2. **Confirmación de factura timbrada:** el servicio replica la ventana del modo carácter *"La factura … ya cuenta con folio electronico, al realizar una modificacion se generara un nuevo folio electronico. ¿Desea continuar?"*. El servidor la impone: sin `Confirmar=true` **no** entrega el registro, así que el front no puede entrar a editar una factura timbrada sin que el usuario acepte. `TieneUUID` sigue viniendo en el registro para que el front mantenga el aviso visible durante la edición.
+  3. **Autollenados de la pantalla** (al cambiar cliente se copian los datos fiscales del catálogo `Cliente`; al cambiar RFC se buscan datos en `CteSReg`): son responsabilidad del front; este servicio valida los datos finales.
+  4. **Flujo completo:** ver documento `facturasust-FacturaContadoSustituye.md`.
+  5. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

@@ -1,7 +1,7 @@
 info:
-  name: HU26 Descuentos Proveedor
+  name: "Catalogos "
   type: folder
-  seq: 10
+  seq: 3
 
 request:
   auth: inherit

@@ -1,0 +1,218 @@
+info:
+  name: Entregas
+  type: http
+  seq: 7
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Catalogo/Entregas?IdUser=olds
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Catálogo de Entregas
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Catálogo de Entregas — Consulta**
+  Devuelve el listado de tipos de entrega **activos** (tabla `Entrega`) para alimentar el combo de "Entrega" en captura de cotización, pedido y factura de contado.
+  Programa servidor: `ventas-cat-entrega.p` · Procedimiento: `GetEntregas` | Versión REST de las ayudas F2 de modo carácter `vtaf0010.p` (por clave) y `vtaf0011.p` (por descripción).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Catalogo/Entregas
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUser`** · STRING · ✅ — Usuario que consulta
+
+  **`Tipo`** · STRING · ❌ — Filtra locales o foráneas (réplica de la variable `l-Ver` de `vtaf0011.p`)
+  - `S` Foráneas (`Id-Entrega > 10`) · `N` Locales (`Id-Entrega <= 10`) · Vacío = todas
+
+  **`OrdenarPor`** · STRING · ❌ — Criterio de orden
+  - `D` Por descripción (como `vtaf0011.p`) · Vacío u otro valor = por clave `Id-Entrega` (como `vtaf0010.p`, **default**)
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header   | Valor              |
+  |----------|--------------------|
+  | `Accept` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Catalogo/Entregas?IdUser=sis10
+  GET .../Ventas/Catalogo/Entregas?IdUser=sis10&OrdenarPor=D
+  GET .../Ventas/Catalogo/Entregas?IdUser=sis10&Tipo=N            (solo locales)
+  GET .../Ventas/Catalogo/Entregas?IdUser=sis10&Tipo=S&OrdenarPor=D
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Consulta generada: 4 entrega(s).",
+      "ttEntrega": {
+        "ttEntrega": [
+          {
+            "Orden": 1,
+            "IdEntrega": 1,
+            "Descr": "MOSTRADOR",
+            "DescrLarga": "ENTREGA EN MOSTRADOR",
+            "Activo": true,
+            "EsLocal": true
+          },
+          {
+            "Orden": 2,
+            "IdEntrega": 3,
+            "Descr": "DOMICILIO",
+            "DescrLarga": "ENTREGA A DOMICILIO LOCAL",
+            "Activo": true,
+            "EsLocal": true
+          },
+          {
+            "Orden": 3,
+            "IdEntrega": 12,
+            "Descr": "OCURRE",
+            "DescrLarga": "OCURRE EN TERMINAL FORANEA",
+            "Activo": true,
+            "EsLocal": false
+          },
+          {
+            "Orden": 4,
+            "IdEntrega": 14,
+            "Descr": "FLETE PAGADO",
+            "DescrLarga": "FLETE PAGADO AL DESTINO",
+            "Activo": true,
+            "EsLocal": false
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  ### Campos de `ttEntrega` (1 registro por entrega)
+
+  **`Orden`** · INT — Consecutivo de despliegue (`1` = primero); conserva el orden pedido en `OrdenarPor` dentro del JSON
+  **`IdEntrega`** · INT — Clave de la entrega (`Entrega.Id-Entrega`); es el valor a guardar en el documento
+  **`Descr`** · STRING — Descripción corta, la que muestra el combo
+  **`DescrLarga`** · STRING — Descripción larga (`Entrega.DescrLarga`); la ayuda de carácter no la mostraba por el ancho de la pantalla
+  **`Activo`** · BOOLEAN — Siempre `true`: el servicio solo devuelve entregas activas
+  **`EsLocal`** · BOOLEAN — `true` = `Id-Entrega <= 10` (local); `false` = foránea. Mismo corte que la ayuda del carácter
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "Se requiere el usuario (IdUser).",
+      "ttEntrega": { "ttEntrega": [] }
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `Tipo` distinto de `S`, `N` o vacío | `IdError: true` — `"Tipo de entrega no valido; use S (foraneas), N (locales) o vacio para todas."` |
+  | `OrdenarPor` con valor no reconocido | Se ignora: ordena por `Id-Entrega` (default) |
+  | Sin resultados con los criterios | `IdError: false` — `"Sin entregas activas con los criterios indicados."` y tabla vacía |
+  | Consulta correcta | `IdError: false` — `"Consulta generada: N entrega(s)."` |
+
+  ---
+
+  ## 10. Nota sobre `EsLocal` y el transporte
+
+  En la captura de factura de contado (`facturasust.p`) la regla vigente es: si `IdEntrega <= 11` **o** `IdEntrega = 16`, se trata como entrega local y el servicio **fuerza `IdTran = 0`** (no se pide transporte).
+
+  Ojo: ese corte (`<= 11` y el caso `16`) **no es idéntico** al de este catálogo (`<= 10`), que replica el de la ayuda `vtaf0011.p`. Son dos reglas distintas heredadas del modo carácter:
+
+  | Regla | Dónde | Corte |
+  |-------|-------|-------|
+  | Filtro del catálogo / `EsLocal` | `vtaf0011.p` → este servicio | `Id-Entrega <= 10` |
+  | No pedir transporte | `vtaf0190.p` → `facturasust.p` | `Id-Entrega <= 11` **o** `= 16` |
+
+  **Para decidir si se habilita el combo de Transporte, el front debe usar la regla del documento (`<= 11` o `= 16`), no `EsLocal`.** `EsLocal` sirve para agrupar/filtrar el catálogo, que es para lo que existe en la ayuda original.
+
+  ---
+
+  ## 11. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 12. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 13. Resultado
+
+  | Estado | Descripción |
+  |--------|-------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 14. Observaciones Técnicas
+
+  1. **Origen:** ayudas F2 `vtaf0010.p` (orden por `Id-Entrega`) y `vtaf0011.p` (orden por `Descr` + filtro `l-Ver`), ambas construidas con el include `seeksoft.i`. Las dos se consolidan en un solo endpoint con el parámetro `OrdenarPor`.
+  2. **Solo activas:** `Entrega.Activo = TRUE`, igual que `&Where = "Entrega.Activo"` de la ayuda. La tabla tiene el índice `idx-act` (`Activo` + `Id-Entrega`) que acota la consulta.
+  3. **Índices:** `idx-ent` (PRIMARY UNIQUE, `Id-Entrega`) e `idx-act`. *Nota:* la ayuda de carácter declara `USE-INDEX Idx-Entrega`, índice que **no existe** con ese nombre en el diccionario; el servicio usa cláusulas `BY` en lugar de `USE-INDEX` para no depender de nombres de índice.
+  4. **Solo lectura:** el servicio no escribe nada; es un `FOR EACH ... NO-LOCK`.
+  5. **Catálogo pequeño:** no se paginó a propósito — la tabla `Entrega` tiene pocos registros y el front lo consume como combo completo.
+  6. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS
