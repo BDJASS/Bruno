@@ -5,10 +5,10 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Detalle?IdCot=2083416&IdCliente=35&IdUser=olds
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Detalle?IdCot=2083476&IdCliente=35&IdUser=olds
   params:
     - name: IdCot
-      value: "2083416"
+      value: "2083476"
       type: query
     - name: IdCliente
       value: "35"

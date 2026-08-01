@@ -25,15 +25,15 @@ settings:
   maxRedirects: 5
 
 docs: |
-  # Servicio REST — Listas de Artículos (Alta)
+  # Servicio REST — Listas de Artículos (Agregar Artículos)
 
   ---
 
   ## 1. Título del Servicio
 
-  **Listas de Artículos — Alta**
-  Crea una lista de artículos (`ListaArt`). El folio **siempre** es el consecutivo (última + 1); no se recibe. Solo se piden la descripción y el usuario.
-  Programa servidor: `listaart.p` · Procedimiento: `altaLista` | Versión REST del alta de la pantalla `cnfa0810.p` (modo carácter).
+  **Listas de Artículos — Agregar Artículos**
+  Agrega uno o varios artículos (separados por coma) a una lista, con las mismas validaciones que la pantalla: artículo existente en el catálogo y no repetido en la lista.
+  Programa servidor: `listaart.p` · Procedimiento: `agregaArticulos` | Versión REST del alta de artículos de `cnfa0810.p` / `cnfa0810.i` (modo carácter).
 
   ---
 
@@ -48,7 +48,7 @@ docs: |
   ## 3. URL Completa
 
   ```
-  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ListaArticulos/Alta
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ListaArticulos/AgregaArticulos
   ```
 
   ---
@@ -57,17 +57,18 @@ docs: |
 
   > ✅ = Requerido · ❌ = Opcional
 
-  **`Descripcion`** · STRING · ✅ — Descripción de la lista; no puede quedar vacía (máx. 45 caracteres)
+  **`IdLista`** · STRING · ✅ — Número de la lista; debe existir en `ListaArt`
+  **`IdArticulos`** · STRING · ✅ — Clave(s) de artículo separadas por coma
+  - Las claves numéricas se completan con ceros a la izquierda a 6 posiciones (ej. `1234` → `001234`)
+  - Ej: `001234` · `1234,4567,7890`
 
   **`IdUser`** · STRING · ✅ — Usuario que realiza el alta (queda en la auditoría)
-
-  > El número de lista **no se envía**: siempre se asigna el consecutivo (última + 1).
 
   ---
 
   ## 5. Body
 
-  No aplica; los parámetros viajan por query string (mismo patrón que otros POST del módulo).
+  No aplica.
 
   ---
 
@@ -83,7 +84,7 @@ docs: |
   ## 7. Ejemplo de Request
 
   ```
-  POST .../Ventas/ListaArticulos/Alta?Descripcion=PROMOCION%20ESCOLAR&IdUser=sis10
+  POST .../Ventas/ListaArticulos/AgregaArticulos?IdLista=13&IdArticulos=1234,4567&IdUser=sis10
   ```
 
   ---
@@ -94,18 +95,18 @@ docs: |
   {
     "response": {
       "IdError": false,
-      "Respuesta": "Lista 948 - \"PROMOCION ESCOLAR\" generada correctamente."
+      "Respuesta": "Lista 13: 2 articulo(s) agregado(s)."
     }
   }
   ```
 
-  ### Response de error controlado
+  ### Response parcial (algunos artículos no procesados)
 
   ```json
   {
     "response": {
-      "IdError": true,
-      "Respuesta": "Descripcion no puede quedar vacia."
+      "IdError": false,
+      "Respuesta": "Lista 13: 1 articulo(s) agregado(s). No procesados: 999999: el articulo no existe. 001234: ya existe en la lista."
     }
   }
   ```
@@ -117,8 +118,13 @@ docs: |
   | Caso | Comportamiento |
   |------|----------------|
   | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
-  | `Descripcion` vacía | `IdError: true` — `"Descripcion no puede quedar vacia."` |
-  | Alta correcta | `IdError: false` — `"Lista N - \"DESCRIPCION\" generada correctamente."` |
+  | `IdLista` vacío, no numérico o `≤ 0` | `IdError: true` — `"Numero de lista invalido."` |
+  | Lista inexistente | `IdError: true` — `"Lista de articulos inexistente."` |
+  | `IdArticulos` vacío | `IdError: true` — `"Se requiere al menos un articulo (IdArticulos)."` |
+  | Artículo inexistente | Se omite y se reporta: `"<clave>: el articulo no existe."` |
+  | Artículo ya en la lista | Se omite y se reporta: `"<clave>: ya existe en la lista."` |
+  | Ningún artículo procesado | `IdError: true` + detalle de fallas |
+  | Al menos un artículo agregado | `IdError: false` + total agregados y detalle de omitidos |
 
   ---
 
@@ -146,10 +152,10 @@ docs: |
 
   ## 13. Observaciones Técnicas
 
-  1. **Consecutivo:** el folio siempre es `FIND LAST ListaArt + 1`, igual que la pantalla al teclear `0` (no hay registro en la tabla `Folio` para este documento). El número de lista ya no se recibe como parámetro. Si dos altas simultáneas chocaran en el mismo folio, el índice único lo rechaza y el `CATCH` responde error pidiendo reintentar.
-  2. **Renombrar:** para cambiar la descripción de una lista existente se usa el servicio `/Modifica`.
-  3. **Auditoría:** operación `ALTA` en `programas/auditoria.p` (módulo `ListaArticulos`), no crítica.
-  4. **Artículos:** la lista nace vacía; se llenan con `POST /Ventas/ListaArticulos/AgregaArticulos`.
+  1. **Procesamiento por artículo:** cada clave se valida y graba por separado (la pantalla original es captura uno a uno); los válidos se agregan aunque otros fallen. `IdError: true` solo cuando **ninguno** procede.
+  2. **Normalización:** mismo criterio que `cnfa0001.i` picture `'999999'` — claves numéricas se rellenan con ceros a 6 posiciones; claves alfanuméricas se usan tal cual.
+  3. **Idempotencia:** reintentar el mismo alta reporta los artículos como `"ya existe en la lista"` sin duplicarlos.
+  4. **Auditoría:** operación `AGREGA-ART` en `programas/auditoria.p` (módulo `ListaArticulos`), no crítica; solo se registra si se agregó al menos un artículo.
   5. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
 
   ---
