@@ -1,0 +1,234 @@
+info:
+  name: Consulta Detalle
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/MetaGrupo/Detalle?Anio=2026&Grupo=10A&IdUser=olds&Mes=1
+  params:
+    - name: Anio
+      value: "2026"
+      type: query
+    - name: Grupo
+      value: 10A
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+    - name: Mes
+      value: "1"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Meta por Grupo (Detalle de Venta Real)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Meta por Grupo — Detalle de Venta Real**
+  Devuelve el detalle por vendedor de la venta real de **un mes**, con **exactamente las mismas columnas y los mismos números** que imprime el reporte carácter `vtac2020.p` ("Ventas por Vendedor por Departamento (Sin/IVA)"), incluido el subtotal por departamento.
+  Programa servidor: `metagrupo.p` · Procedimiento: `leeDetalleReal`
+  Lee la tabla `VtaRealVend`, que llena de noche `metagrupo-real.p`. **No recalcula nada**: la consulta es instantánea.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/MetaGrupo/Detalle
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUser`** · STRING · ✅ — Usuario que consulta
+  - Ej: `"olds"`
+
+  **`Mes`** · INTEGER · ✅ — Mes del periodo
+  - `1` al `12` · El rango del mes lo resuelve el servicio (día 1 al último día)
+
+  **`Grupo`** · STRING · ❌ — Ubicación(es) de venta. Acepta **lista** y comodines, igual que el reporte
+  - Ej: `"02B"` · `"02B,11A"` · `"11*"` · Vacío = **TODAS**
+
+  **`Anio`** · INTEGER · ❌ — Año del periodo
+  - Vacío = año actual · No puede ser mayor al año actual
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/MetaGrupo/Detalle?Grupo=02B&Mes=1&Anio=2026&IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Equivalencia columna por columna con el reporte
+
+  Las 14 columnas del `DISPLAY` de `vtac2020.p`, en el mismo orden. El nombre del campo es legible para el JSON y el `LABEL` del temp-table conserva la **etiqueta original del reporte**, para que la vista pinte los mismos encabezados.
+
+  | Reporte | Campo | Origen |
+  |---|---|---|
+  | `Ubc` | `IdUbiVta` | `VtaRealVend.Id-UbiVta` |
+  | `Vend` | `IdVendedor` | `VtaRealVend.Id-Vendedor` |
+  | `Nombre` | `Nombre` | `Vendedor` → `Empleado.Nombre` |
+  | `CO` | `NumContado` | `NContado` |
+  | `Total Contado` | `TotContado` | `TContado` |
+  | `CR` | `NumCredito` | `NCredito` |
+  | `Total Credito` | `TotCredito` | `TCredito` |
+  | `##` | `NumTotal` | `NContado + NCredito` |
+  | `Gran Total` | `GranTotal` | `TContado + TCredito` |
+  | `DEV` | `NumDev` | `NDev` |
+  | `Total DEV` | `TotDev` | `TDev` |
+  | `CANC` | `NumCanc` | `NCanc` |
+  | `Total CANC` | `TotCanc` | `TCanc` |
+  | `TOTAL NETO` | `TotalNeto` | `TNeto` |
+
+  **Importes en pesos enteros.** `VtaRealVend` guarda los importes con centavos (`deci-2`) y el batch los graba así; es solo esta consulta la que los entrega redondeados a pesos — los campos son `INT64` y se llenan con `ROUND(x, 0)`, así que el JSON nunca trae parte decimal. El reporte carácter también despliega sin decimales (formato `zzzzz,zzz,zz9`), así que esto lo acerca más al reporte, no menos.
+
+  **Los subtotales se redondean una sola vez.** `ttTotalGrupo` acumula los importes **con centavos** y redondea al entregar, igual que el `(TOTAL BY)` del reporte, que suma los valores exactos y solo el despliegue va sin decimales. Por eso el subtotal puede diferir en uno o dos pesos de sumar los renglones ya redondeados: es el mismo comportamiento del reporte.
+
+  **Las derivadas viajan ya resueltas.** `##`, `Gran Total` y `TOTAL NETO` se calculan en el servidor. Si el front las recalculara podría desviarse del reporte — que es justo lo que se quiere evitar.
+
+  **El subtotal por departamento también.** El reporte imprime `(TOTAL BY w-Ventas.Id-UbiVta)` en las 11 columnas numéricas y deja una línea en blanco entre grupos; eso es `ttTotalGrupo`, con los mismos campos ya sumados. El reporte **no** imprime gran total de todos los departamentos, así que aquí tampoco se devuelve.
+
+  ---
+
+  ## 9. Ejemplo de Response
+
+  `dsDetalleReal` trae tres tablas en el orden en que se lee el reporte: encabezado del periodo → renglones → subtotales.
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Consulta generada: 3 vendedor(es) en 1 departamento(s).",
+      "dsDetalleReal": {
+        "ttPeriodo": [
+          {
+            "Anio": 2026,
+            "Mes": 1,
+            "NombreMes": "ENERO",
+            "FecIni": "2026-01-01",
+            "FecFin": "2026-01-31",
+            "Periodo": "Del 1 de ENERO de 2026 Al 31 de ENERO de 2026",
+            "Grupos": "02B"
+          }
+        ],
+        "ttDetalle": [
+          {
+            "Orden": 1,
+            "IdUbiVta": "02B",
+            "Departamento": "PAPELERIA CEDIS",
+            "IdVendedor": "0104",
+            "Nombre": "MARTINEZ LOPEZ JUAN",
+            "NumContado": 82,   "TotContado": 415321,
+            "NumCredito": 143,  "TotCredito": 1128740,
+            "NumTotal": 225,    "GranTotal": 1544061,
+            "NumDev": 6,        "TotDev": 18240,
+            "NumCanc": 2,       "TotCanc": 9875,
+            "TotalNeto": 1515945
+          }
+        ],
+        "ttTotalGrupo": [
+          {
+            "Orden": 1,
+            "IdUbiVta": "02B",
+            "Departamento": "PAPELERIA CEDIS",
+            "Vendedores": 3,
+            "NumContado": 210,  "TotContado": 1004880,
+            "NumCredito": 388,  "TotCredito": 2841206,
+            "NumTotal": 598,    "GranTotal": 3846086,
+            "NumDev": 14,       "TotDev": 41870,
+            "NumCanc": 5,       "TotCanc": 22141,
+            "TotalNeto": 3782075
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  ### Mes todavía no calculado
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "El mes de MARZO de 2026 todavia no se ha calculado.",
+      "dsDetalleReal": {
+        "ttPeriodo": [ { "Mes": 3, "NombreMes": "MARZO", "FecFin": null } ],
+        "ttDetalle": [],
+        "ttTotalGrupo": []
+      }
+    }
+  }
+  ```
+
+  ### Campos de `ttPeriodo` (siempre 1 registro)
+
+  **`Anio`** · INT — Año consultado
+  **`Mes`** · INT — Mes consultado (1..12)
+  **`NombreMes`** · STRING — Nombre del mes en mayúsculas, como el reporte (`"ENERO"`)
+  **`FecIni`** · DATE — Día 1 del mes
+  **`FecFin`** · DATE — Último día del mes, o el **día de corte** si el mes va en curso; `null` si el mes no se ha calculado
+  **`Periodo`** · STRING — El encabezado del reporte armado: `"Del 1 de ENERO de 2026 Al 31 de ENERO de 2026"`
+  **`Grupos`** · STRING — Lista de ubicaciones pedida, o `"TODAS"` (igual que el reporte cuando no se filtra)
+
+  ---
+
+  ## 10. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `Mes` vacío | `IdError: true` — `"Se requiere el mes (1 al 12)."` |
+  | `Mes` fuera de 1..12 | `IdError: true` — `"Mes invalido; debe ser del 1 al 12."` |
+  | `Anio` no numérico | `IdError: true` — `"Anio invalido. Favor de revisar."` |
+  | `Anio` mayor al actual | `IdError: true` — `"Anio invalido; no puede ser mayor al anio actual (N)."` |
+  | Ubicación de la lista no existe *(sin comodín)* | `IdError: true` — `"No se encuentra la ubicacion de venta <id>."` |
+  | Mes sin calcular | Consulta OK; `FecFin: null`, detalle vacío |
+  | Mes calculado sin movimiento | Consulta OK; detalle vacío — `"Sin movimiento en <MES> de <año>..."` |
+  | Con movimiento | Consulta OK — `"Consulta generada: N vendedor(es) en M departamento(s)."` |
+
+  ---
+
+
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

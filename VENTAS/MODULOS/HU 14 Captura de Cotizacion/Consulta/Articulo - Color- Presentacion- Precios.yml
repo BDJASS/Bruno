@@ -5,19 +5,19 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Cotizacion/Captura/Partidas?IdArticulo=096340&IdColor=2&IdPres=4&IdCliente=877&PrecioTemp=no&TipoPrecio=M&Vigencia=75&PrecCalc=no&PlazoTV=75&IdUbiVta=MLO
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Cotizacion/Captura/Partidas?IdArticulo=024503&IdColor=0&IdPres=0&IdCliente=26&PrecioTemp=no&TipoPrecio=M&Vigencia=75&PrecCalc=no&PlazoTV=75&IdUbiVta=MLO
   params:
     - name: IdArticulo
-      value: "096340"
+      value: "024503"
       type: query
     - name: IdColor
-      value: "2"
+      value: "0"
       type: query
     - name: IdPres
-      value: "4"
+      value: "0"
       type: query
     - name: IdCliente
-      value: "877"
+      value: "26"
       type: query
     - name: PrecioTemp
       value: no

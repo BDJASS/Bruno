@@ -5,13 +5,13 @@ info:
 
 http:
   method: POST
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ClienteMoneda/Alta?IdMoneda=3&IdCliente=29886&IdUser=olds
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ClienteMoneda/Alta?IdMoneda=3&IdCliente=575&IdUser=olds
   params:
     - name: IdMoneda
       value: "3"
       type: query
     - name: IdCliente
-      value: "29886"
+      value: "575"
       type: query
     - name: IdUser
       value: olds

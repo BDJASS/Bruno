@@ -1,0 +1,185 @@
+info:
+  name: Consulta
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/MetaGrupo/Consulta?Anio=2026&Grupo=&IdUser=olds
+  params:
+    - name: Anio
+      value: "2026"
+      type: query
+    - name: Grupo
+      value: ""
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Meta por Grupo (Consulta)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Meta por Grupo — Consulta**
+  Devuelve, por grupo (ubicación de venta), **un solo renglón con tres bloques de 12 meses**: la meta capturada del año, la venta real del mismo año y la venta real del año anterior (el histórico).
+  Programa servidor: `metagrupo.p` · Procedimiento: `leeMetaGrupo` | Tabla: `MetaGrupo`
+  Reemplaza a `metavendedor.p` / `leeMetaVendedor`, que trabajaba por **vendedor** sobre `EstVendedor`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/MetaGrupo/Consulta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUser`** · STRING · ✅ — Usuario que consulta
+  - Ej: `"olds"`
+
+  **`Grupo`** · STRING · ❌ — Grupo(s) / ubicación de venta. Acepta **lista** y comodines
+  - Ej: `"02B"` · `"02B,11A"` · `"11*"` · Vacío = todos los grupos
+
+  **`Anio`** · INTEGER · ❌ — Año consultado
+  - Vacío = año actual · No puede ser mayor al año actual · El histórico es siempre `Anio - 1`
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/MetaGrupo/Consulta?Grupo=02B&Anio=2026&IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  `dsMetaGrupo` anida `ttMetaGrupo` dentro de `ttUbicacion`. Un registro de meta por grupo.
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Consulta generada: 1 grupo(s), anios 2026 y 2025.",
+      "dsMetaGrupo": {
+        "ttUbicacion": [
+          {
+            "IdUbiVta": "02B",
+            "Descripcion": "PAPELERIA CEDIS",
+            "ttMetaGrupo": [
+              {
+                "IdUbiVta": "02B",
+                "Anio": 2026,
+                "AnioAnt": 2025,
+
+                "MetaEne": 3500000, "MetaFeb": 3500000, "MetaMar": 3800000,
+                "MetaAbr": 3800000, "MetaMay": 4000000, "MetaJun": 4000000,
+                "MetaJul": 4200000, "MetaAgo": 4200000, "MetaSep": 4500000,
+                "MetaOct": 4500000, "MetaNov": 4800000, "MetaDic": 5000000,
+                "MetaTotal": 49800000,
+
+                "RealEne": 3782075, "RealFeb": 3410880, "RealMar": 3915440,
+                "RealAbr": 3644121, "RealMay": 4102331, "RealJun": 3988740,
+                "RealJul": 4310905, "RealAgo": 1204880, "RealSep": 0,
+                "RealOct": 0, "RealNov": 0, "RealDic": 0,
+                "RealTotal": 28359372,
+
+                "HistRealEne": 3204118, "HistRealFeb": 3011751, "HistRealMar": 3450900,
+                "HistRealAbr": 3288400, "HistRealMay": 3705210, "HistRealJun": 3610880,
+                "HistRealJul": 3902445, "HistRealAgo": 3844101, "HistRealSep": 4001230,
+                "HistRealOct": 4188905, "HistRealNov": 4402119, "HistRealDic": 4655330,
+                "HistRealTotal": 45265389
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  ### Campos de `ttMetaGrupo` (1 registro por grupo)
+
+  **`IdUbiVta`** · STRING — Grupo / ubicación de venta
+  **`Anio`** · INT — Año consultado
+  **`AnioAnt`** · INT — Año del histórico (`Anio - 1`)
+  **`MetaEne`** … **`MetaDic`** · INT — Meta **capturada** (pesos enteros) del año consultado (`MetaGrupo.Presup[1..12]`)
+  **`MetaTotal`** · INT — Suma de las 12 metas
+  **`RealEne`** … **`RealDic`** · INT — Venta real neta del año consultado (pesos enteros) (`MetaGrupo.Real[1..12]`)
+  **`RealTotal`** · INT — Suma de los 12 reales
+  **`HistRealEne`** … **`HistRealDic`** · INT — Venta real neta del año **anterior** (pesos enteros) (`Real[1..12]` del registro de `Anio - 1`)
+  **`HistRealTotal`** · INT — Suma de los 12 históricos
+
+  ### Sin datos
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Sin metas registradas con los criterios indicados.",
+      "dsMetaGrupo": { "ttUbicacion": [] }
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `Anio` no numérico | `IdError: true` — `"Anio invalido. Favor de revisar."` |
+  | `Anio` mayor al actual | `IdError: true` — `"Anio invalido; no puede ser mayor al anio actual (N)."` |
+  | Grupo de la lista no existe *(sin comodín)* | `IdError: true` — `"No se encuentra el grupo <id>."` |
+  | Grupo sin registro en ninguno de los 2 años | No se lista |
+  | Grupo solo con registro del año anterior | Se lista; meta y real en 0, histórico con datos |
+  | Con datos | Consulta OK — `"Consulta generada: N grupo(s), anios A y A-1."` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

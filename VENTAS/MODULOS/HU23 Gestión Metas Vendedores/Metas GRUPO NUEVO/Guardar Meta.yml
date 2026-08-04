@@ -1,0 +1,188 @@
+info:
+  name: Guardar Meta
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/MetaGrupo/Guarda?Anio=2026&IdUser=olds
+  params:
+    - name: Anio
+      value: "2026"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  body:
+    type: json
+    data: |-
+      {
+          "dsMetaCaptura": {
+            "ttMetaCaptura": [
+              {
+                "IdUbiVta": "10A",
+                "MetaEne": 150000.00, "MetaFeb": 150000.00, "MetaMar": 165000.00,
+                "MetaAbr": 150000.00, "MetaMay": 170000.00, "MetaJun": 160000.00,
+                "MetaJul": 150000.00, "MetaAgo": 155000.00, "MetaSep": 160000.00,
+                "MetaOct": 110000.00, "MetaNov": 180000.00, "MetaDic": 200000.00
+              }
+            ]
+          }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Meta por Grupo (Guardar Metas)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Meta por Grupo — Guardar Metas**
+  Guardado **masivo** de las 12 metas mensuales por grupo (ubicación de venta) para un año. Upsert por grupo-año: actualiza el registro si existe, lo da de alta si no. Todo o nada.
+  Programa servidor: `metagrupo.p` · Procedimiento: `guardaMetaGrupo` | Tabla: `MetaGrupo`
+  Escribe **únicamente** `Presup[1..12]` más la huella de captura. **Nunca** toca la venta real.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/MetaGrupo/Guarda
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUser`** · STRING · ✅ — Usuario que captura. Se guarda en `MetaGrupo.Id-User`
+  - Ej: `"olds"`
+
+  **`Anio`** · INTEGER · ❌ — Año de las metas
+  - Vacío = año actual · No puede ser mayor al año actual
+
+  ---
+
+  ## 5. Body
+
+  Dataset `dsMetaCaptura` con N registros. **Las 12 metas son obligatorias en cada registro.**
+
+  ```json
+  {
+    "dsMetaCaptura": {
+      "ttMetaCaptura": [
+        {
+          "IdUbiVta": "02B",
+          "MetaEne": 3500000.00, "MetaFeb": 3500000.00, "MetaMar": 3800000.00,
+          "MetaAbr": 3800000.00, "MetaMay": 4000000.00, "MetaJun": 4000000.00,
+          "MetaJul": 4200000.00, "MetaAgo": 4200000.00, "MetaSep": 4500000.00,
+          "MetaOct": 4500000.00, "MetaNov": 4800000.00, "MetaDic": 5000000.00
+        },
+        {
+          "IdUbiVta": "11A",
+          "MetaEne": 1200000.00, "MetaFeb": 1200000.00, "MetaMar": 1250000.00,
+          "MetaAbr": 1250000.00, "MetaMay": 1300000.00, "MetaJun": 1300000.00,
+          "MetaJul": 1350000.00, "MetaAgo": 1350000.00, "MetaSep": 1400000.00,
+          "MetaOct": 1400000.00, "MetaNov": 1450000.00, "MetaDic": 1500000.00
+        }
+      ]
+    }
+  }
+  ```
+
+  ### Campos de `ttMetaCaptura`
+
+  **`IdUbiVta`** · STRING · ✅ — Grupo / ubicación de venta. Debe existir en `UbiVta` y no venir repetido en el lote
+  **`MetaEne`** … **`MetaDic`** · DECIMAL · ✅ — Meta de cada mes. **Los 12 son obligatorios**; un mes ausente o `null` rechaza el lote completo. Meta en cero se envía como `0`, no como `null`. No se aceptan negativos
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                |
+  |----------------|----------------------|
+  | `Accept`       | `application/json`   |
+  | `Content-Type` | `application/json`   |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST .../Ventas/MetaGrupo/Guarda?Anio=2026&IdUser=olds
+  ```
+  Con el body de la sección 5.
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  Sin tabla de salida. La respuesta solo indica **éxito o falla**: en éxito un mensaje fijo, y en falla el motivo concreto.
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Metas guardadas correctamente."
+    }
+  }
+  ```
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Grupo 02B: la meta del mes de MAR es obligatoria y no puede venir nula."
+  }
+  ```
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Alguno de los registros esta siendo usado por otro proceso; no se guardo nada. Intente de nuevo."
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  > Las validaciones corren **todas antes** de escribir. Si alguna falla no se guarda ningún registro del lote.
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `Anio` no numérico | `IdError: true` — `"Anio invalido. Favor de revisar."` |
+  | `Anio` mayor al actual | `IdError: true` — `"Anio invalido; no puede ser mayor al anio actual (N)."` |
+  | Body vacío | `IdError: true` — `"No se recibio ningun registro de metas..."` |
+  | `IdUbiVta` vacío | `IdError: true` — `"Registro N: falta la clave del grupo (IdUbiVta)."` |
+  | Grupo no existe en `UbiVta` | `IdError: true` — `"Registro N: no se encuentra el grupo <id>."` |
+  | Grupo repetido en el lote | `IdError: true` — `"El grupo <id> viene mas de una vez en el lote..."` |
+  | Un mes nulo o ausente | `IdError: true` — `"Grupo <id>: la meta del mes de <MES> es obligatoria..."` |
+  | Un mes negativo | `IdError: true` — `"Grupo <id>: meta invalida (negativa) para el mes de <MES>."` |
+  | Registro bloqueado por otro proceso | `IdError: true`; **no se guarda nada** |
+  | Lote correcto | Guardado OK — `"Metas guardadas correctamente."` |
+
+  ---
+
+  .
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

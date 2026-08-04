@@ -1,0 +1,278 @@
+info:
+  name: Consulta
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/FacturaContado/VerPago?IdRemision=10473CB&IdUser=olds
+  params:
+    - name: IdRemision
+      value: 10473CB
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Factura de Contado (Ver Pago)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Factura de Contado — Ver Pago**
+  Devuelve, en **un solo dataset**, lo que muestra el botón **“Ver Pago”** de la consulta de facturas de tesorería: los datos fiscales y de caja de la factura, las formas de pago con que se liquidó y los totales (subtotal, descuento, IVA, total) junto con recibido, cambio y monto del pago.
+  Programa servidor: `facverpago.p` · Procedimiento: `consultaVerPago`
+  Origen en modo carácter: `tesb0050.p` → `tesb0070.p` → `tesb0060.p`, opción de menú **`MenuOpc12 "Ver Pago"`** → `tesb0180.i`.
+
+  > El botón **solo existe para facturas de CONTADO**. En modo carácter, al elegir `Tipo_Vta = Contado` la consulta salta de `tesb0070.p` (tabla `Factura`, crédito) a `tesb0060.p` (tabla `Remision`), y es ahí — y solo ahí — donde aparece “Ver Pago”. El servicio respeta esa regla: rechaza cualquier factura que no sea `Remision.TipoVenta = 2`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/FacturaContado/VerPago
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · Ambos parámetros son obligatorios
+
+  **`IdRemision`** · STRING · ✅ — Factura de contado a consultar (debe existir y ser de contado)
+  - Ej: `"F0123456"`
+
+  **`IdUser`** · STRING · ✅ — Usuario que consulta
+  - Ej: `"olds"`
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/FacturaContado/VerPago?IdRemision=F0123456&IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  El dataset `dsVerPago` trae las tres tablas **en el orden de lectura de la pantalla**: datos fiscales/caja → pagos → totales.
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Consulta generada: 2 forma(s) de pago.",
+      "dsVerPago": {
+        "ttFacContado": [
+          {
+            "IdRFiscal": "612",
+            "DescrRFiscal": "PERSONAS FISICAS CON ACTIVIDADES EMPRESARIALES",
+            "IdUsoCFDI": "G03",
+            "DescrUsoCFDI": "GASTOS EN GENERAL",
+            "BuzonFiscal": "cliente@correo.com",
+            "FEFormaPago": "03",
+            "DescrFormaPago": "TRANSFERENCIA",
+            "IdCaja": 3,
+            "Iniciales": "LMR"
+          }
+        ],
+        "ttPago": [
+          {
+            "IdRemision": "F0123456",
+            "Orden": 1,
+            "Descr": "EFECTIVO",
+            "Pago": 500.00,
+            "IdBanco": 0,
+            "Nombre": "",
+            "Cheque": "",
+            "CtaCheq": "",
+            "FecCheque": null
+          },
+          {
+            "IdRemision": "F0123456",
+            "Orden": 2,
+            "Descr": "TARJETA DE CREDITO",
+            "Pago": 296.80,
+            "IdBanco": 12,
+            "Nombre": "BANAMEX",
+            "Cheque": "",
+            "CtaCheq": "",
+            "FecCheque": null
+          }
+        ],
+        "ttTotales": [
+          {
+            "IdRemision": "F0123456",
+            "Subtotal": 687.00,
+            "Descuento": 0.00,
+            "Flete": 0.00,
+            "Seguro": 0.00,
+            "IVA": 109.92,
+            "Total": 796.92,
+            "Recibido": 796.80,
+            "Cambio": 3.20,
+            "MontoPago": 796.92
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  ### Factura sin información de pagos (no es error)
+
+  `ttPago` vacío **es** el indicador de que no hay pago que mostrar; `IdCaja` e `Iniciales` quedan en `0` / vacío.
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "La factura no tiene informacion de pagos.",
+      "dsVerPago": {
+        "ttFacContado": [ { "IdRFiscal": "612", "IdCaja": 0, "Iniciales": "" } ],
+        "ttPago":       [],
+        "ttTotales":    [ { "Recibido": 0.00, "Cambio": 0.00, "MontoPago": 0.00 } ]
+      }
+    }
+  }
+  ```
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "La factura F0123456 no es de contado; la consulta de pago solo aplica a facturas de contado.",
+    "dsVerPago": { "ttFacContado": [], "ttPago": [], "ttTotales": [] }
+  }
+  ```
+
+  ---
+
+  ## 8.1 Campos de `ttFacContado` (siempre 1 registro)
+
+  Corresponde al frame `f` de `tesb0180.i` — los datos fiscales y de caja que despliega el propio Ver Pago.
+
+  **`IdRFiscal`** · STRING — Régimen fiscal
+  **`DescrRFiscal`** · STRING — Descripción del régimen fiscal
+  **`IdUsoCFDI`** · STRING — Uso del CFDI
+  **`DescrUsoCFDI`** · STRING — Descripción del uso del CFDI
+  **`BuzonFiscal`** · STRING — Buzón fiscal
+  **`FEFormaPago`** · STRING — Clave(s) SAT de forma de pago, separadas por coma
+  **`DescrFormaPago`** · STRING — Descripción de esas claves
+  **`IdCaja`** · INT — Caja en que se cobró; `0` si no hay pago
+  **`Iniciales`** · STRING — Iniciales del cajero; vacío si no hay pago
+
+  ## 8.2 Campos de `ttPago` (N registros)
+
+  **`IdRemision`** · STRING — Factura a la que pertenece el pago
+  **`Orden`** · INT — Consecutivo de despliegue
+  **`Descr`** · STRING — Concepto: descripción del tipo de pago, o `DEV. #`, `ANTICIPO #`, `FALTANTE`, `DESC.PP #` según el movimiento
+  **`Pago`** · DECIMAL — Monto recibido en ese renglón (`DetMovC.MontoRec`)
+  **`IdBanco`** · INT — Banco / tarjeta del pago; `0` si no aplica
+  **`Nombre`** · STRING — Nombre del banco, o de la tarjeta cuando el tipo de pago es de tarjeta
+  **`Cheque`** · STRING — Número de cheque
+  **`CtaCheq`** · STRING — Cuenta bancaria
+  **`FecCheque`** · DATE — Fecha del cheque; `null` si no aplica
+
+  ## 8.3 Campos de `ttTotales` (siempre 1 registro)
+
+  **`IdRemision`** · STRING — Factura
+  **`Subtotal`** · DECIMAL — Subtotal de la factura
+  **`Descuento`** · DECIMAL — Descuento de la factura
+  **`Flete`** · DECIMAL — Flete; **siempre `0`** en contado (ver observación 5)
+  **`Seguro`** · DECIMAL — Seguro; **siempre `0`** en contado (ver observación 5)
+  **`IVA`** · DECIMAL — IVA de la factura
+  **`Total`** · DECIMAL — Total de la factura
+  **`Recibido`** · DECIMAL — Suma de `DetMovC.MontoRec` (lo que entregó el cliente)
+  **`Cambio`** · DECIMAL — Suma de `DetMovC.MontoCambio`
+  **`MontoPago`** · DECIMAL — Suma de `DetMovC.MontoPago` (lo aplicado a la factura)
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdRemision` vacío | `IdError: true` — `"Se requiere la factura de contado."` |
+  | Factura no existe | `IdError: true` — `"La factura <id> no existe."` |
+  | Factura no es de contado (`TipoVenta <> 2`) | `IdError: true` — `"La factura <id> no es de contado; la consulta de pago solo aplica a facturas de contado."` |
+  | Factura sin movimiento de caja | Consulta OK; `ttPago` vacío — `"La factura no tiene informacion de pagos."` |
+  | Factura de contado con pagos | Consulta OK — `"Consulta generada: N forma(s) de pago."` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilar en PDSOE (generar `.pidl`) y ejecutar por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Solo contado, por diseño del programa original:** el botón “Ver Pago” es `MenuOpc12` de `tesb0060.p`, la rama de `Remision`, a la que la consulta solo entra cuando el usuario elige `Tipo_Vta = Contado` en `tesb0071.i`. La rama de crédito (`tesb0070.p`, tabla `Factura`) no tiene esa opción. Por eso el servicio valida `Remision.TipoVenta = 2` y rechaza lo demás. *(Nota: en carácter el mismo botón también alcanza a los Tickets, `TipoVenta = 1`, porque comparten pantalla. Si más adelante se quiere habilitar para tickets, es abrir la validación a `TipoVenta = 1 OR 2`.)*
+  2. **Origen de los pagos:** `MovCaja` por `Referencia` + `TipoVenta`, y sus renglones en `DetMovC` por `Folio` + `Id-Caja` — exactamente la misma búsqueda de `tesb0180.i`.
+  3. **Concepto de cada renglón de pago:** se replica el `CASE DetMovC.Mov` original — `"D"` → `DEV. #<Id-Dev>`; `"A"` → `ANTICIPO #<Id-Acuse>` (o la devolución si no hay anticipo); `"F"` → `FALTANTE`; `"R"` → `DESC.PP #<Id-Ncr>`; cualquier otro → `TipoPago.Descr`. El campo `Nombre` toma `Banco.NomCto`, o `TarjetaC.Nombre` cuando el tipo de pago contiene “TARJETA”.
+  4. **Sin pagos no es error:** si la factura no tiene `MovCaja`, la pantalla saca el aviso *“Factura sin informacion de Pagos”*. Aquí se devuelve `IdError: false` con los datos fiscales y los totales, y `ttPago` vacío, para que la vista pueda mostrar el aviso sin tratarlo como falla. **`ttPago` vacío es el indicador**: no hay bandera aparte.
+  5. **Flete y Seguro van en `0` a propósito:** `tesb0070.i` despliega `0.00 @ l-Flete` y `0.00 @ l-Seguro` — en la pantalla de contado esos dos importes están fijos en cero; solo la rama de crédito usa `Factura.ImpFlete` / `Factura.ImpSeguro`. Se conserva el mismo valor para que el servicio cuadre con lo que hoy ve tesorería.
+  6. **Factura con más de un movimiento de caja:** `tesb0180.i` localiza la caja con un `FIND` único (sin `FIRST`/`LAST`); si una factura tuviera más de un `MovCaja` con el mismo `TipoVenta`, el buffer queda sin registro y la pantalla reporta *“sin informacion de Pagos”*. El servicio replica ese criterio para no divergir de la pantalla. **Conviene confirmar con el área si ese caso existe en producción**; si existe y debe mostrarse, se cambia a `FIND LAST` (que es lo que ya usa `tesb0070.i` para el Seguricheq).
+  7. **Tablas en paralelo, sin `DATA-RELATION`:** el dataset expone las tres tablas al mismo nivel y en el orden pedido (datos fiscales/caja → pagos → totales), de modo que el front las lee como tres arreglos y no como estructura anidada. `IdRemision` viaja en `ttPago` y `ttTotales` para poder correlacionarlas; `ttFacContado` no lo trae porque es un registro único de la factura que ya se envió como parámetro.
+  8. **Los datos generales de la factura no van aquí:** encabezado (razón social, RFC, domicilio, vendedor), artículos y leyendas de estado se obtienen con `GET /Ventas/FacturaContado/Consulta` (`facturasust.p`). Este servicio se limita a lo que muestra la ventana de Ver Pago.
+  9. **Solo lectura:** todos los `FIND`/`FOR EACH` son `NO-LOCK` y no hay transacción; el servicio no modifica nada. No registra auditoría (`programas/auditoria.p`) porque es una consulta que la vista puede repetir varias veces por factura.
+  10. **Servicios relacionados de la misma factura:** `GET /Ventas/FacturaContado/Consulta` y `POST /Ventas/FacturaContado/Sustituye` (programa `facturasust.p`) para editar/sustituir la factura de contado.
+  11. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

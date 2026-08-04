@@ -5,16 +5,16 @@ info:
 
 http:
   method: POST
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Corte/Desbloquear?IdUser=olds&IdCliente=39742&Motivo=u
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Corte/Desbloquear?IdUser=olds&IdCliente=608&Motivo=Desbloqueo 608
   params:
     - name: IdUser
       value: olds
       type: query
     - name: IdCliente
-      value: "39742"
+      value: "608"
       type: query
     - name: Motivo
-      value: u
+      value: Desbloqueo 608
       type: query
   body:
     type: json

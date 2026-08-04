@@ -1,7 +1,7 @@
 info:
-  name: HU 28 Lista de Articulos
+  name: Ver Pago
   type: folder
-  seq: 13
+  seq: 1
 
 request:
   auth: inherit
