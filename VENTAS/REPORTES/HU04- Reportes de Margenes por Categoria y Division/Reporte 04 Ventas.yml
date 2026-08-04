@@ -40,7 +40,7 @@ docs: |
 
   ## 1. Título del Servicio
 
-  **Reporte 04 — Márgenes por Categoría y División (s/Costo, sin IVA)**
+  **Reporte 04 — Márgenes por Categoría y División (s/Venta, sin IVA)**
   Retorna el análisis de márgenes de venta agrupado jerárquicamente: **División → Categorías**.
   El response es un dataset anidado donde cada división contiene sus categorías como hijos directos.
   Programa servidor: `ventas-rep004.p` | Basado en: `vtac1250.p / vtac1250.i`
@@ -235,7 +235,7 @@ docs: |
   **`PctNeto`** · DECIMAL — % que representa el neto de esta división sobre el total general
   **`Costo`** · DECIMAL — Costo total de artículos vendidos en la división
   **`Dif`** · DECIMAL — Diferencia (Neto − Costo)
-  **`Margen`** · DECIMAL — % de margen sobre costo `((Neto/Costo)−1)×100`
+  **`Margen`** · DECIMAL — % de margen **sobre venta**: `(1 − (Costo / Neto)) × 100`. Ver observación 3
 
   ### Campos de `ttCatego` *(nivel categoría — hijos anidados en `ttDiv`)*
 
@@ -250,7 +250,7 @@ docs: |
   **`PctNeto`** · DECIMAL — % que representa el neto de esta categoría sobre el total general
   **`Costo`** · DECIMAL — Costo total de la categoría
   **`Dif`** · DECIMAL — Diferencia (Neto − Costo)
-  **`Margen`** · DECIMAL — % de margen sobre costo `((Neto/Costo)−1)×100`
+  **`Margen`** · DECIMAL — % de margen **sobre venta**: `(1 − (Costo / Neto)) × 100`. Ver observación 3
 
   ### Response de error controlado
 
@@ -296,10 +296,22 @@ docs: |
 
   1. **Dataset anidado (`NESTED FOREIGN-KEY-HIDDEN`):** El servidor retorna un único objeto `dsOutput` donde `ttCatego` está embebido dentro de cada objeto `ttDiv`. No se devuelven dos arreglos planos separados. La clave de relación (`IdDiv`) se oculta del hijo para evitar duplicidad.
   2. **`PctNeto` en ambos niveles:** Tanto `ttDiv` como `ttCatego` incluyen el campo `PctNeto`, que representa el porcentaje del neto de ese registro sobre el **total general** de todas las divisiones/categorías. Permite comparar el peso relativo a cualquier nivel sin cálculos adicionales en el frontend.
-  3. **Cálculo de `Margen`:** Se calcula sobre costo: `((Neto / Costo) − 1) × 100`. Si el costo es `0`, el margen se retorna como `0`.
-  4. **Cálculo de `PorDes`:** `(((Importe − Descto) / Importe) − 1) × 100`. Valor negativo indica descuento. Si el importe es `0`, se retorna `0`.
-  5. **`Descto` = Descuento pronto pago (FactorPP):** No es el descuento comercial de la línea. Es el descuento de pronto pago prorrateado por línea de detalle usando el factor `(1 − Desc1/SubTot) × (1 − Desc2/Tot)`.
-  6. **`Seleccionar=4` (ListaCte), `Seleccionar=5` (Contratos) y `Seleccionar=7` (Segmento):** El servidor construye internamente una tabla de clientes elegibles (`t-liscte`) antes de procesar las ventas. En `4` la `Lista` trae IDs de lista (no de clientes); en `7` trae claves de segmento de distribución.
-  7. **`Seleccionar=7` (Segmento de distribución):** los clientes elegibles son los que tienen el segmento asignado en `Cliente.Id-Segmento`. Si `Lista` viene vacía entran **todos los clientes con segmento**; si trae segmentos (CSV, ej. `"DIST01,DIST02"`) solo esos, y **cada segmento debe existir** en el catálogo (`Segmento`) — si alguno no existe regresa `IdError: true` con `"No existe el segmento de distribucion: X."`. Nota de costo: `Cliente.Id-Segmento` **no tiene índice**, por lo que armar `t-liscte` hace **un** barrido secuencial de `Cliente` por request (lectura mínima con `FIELDS`), mismo costo fijo que el conteo de clientes de `segmentodist.p`.
-  8. **`ConAsociados=true`:** Solo tiene efecto con `Seleccionar=3`. Amplía el universo de facturas/remisiones al cliente indicado en `Lista` y a todos sus clientes asociados registrados en el catálogo.
-  9. **Volumen de datos:** Con `Seleccionar=1` (General) y periodos amplios, el response puede ser extenso. El número de registros se indica en el campo `Respuesta` (ej: `"12 categorias encontradas."`).
+  3. **Cálculo de `Margen` — cambió a SOBRE VENTA (03/08/2026).** Por indicación del área, `ttDiv.Margen` y `ttCatego.Margen` pasaron de margen sobre costo a margen **sobre venta**. Se conservan **los mismos nombres de campo**: cambia el valor, no la columna, así que el front no cambia de contrato.
+
+     | | Fórmula |
+     |---|---|
+     | Antes (s/costo) | `((Neto / Costo) − 1) × 100` |
+     | Ahora (s/venta) | `(1 − (Costo / Neto)) × 100` |
+
+     donde `Neto = Importe − Descto`.
+
+     **Las dos escalas no son comparables:** un 30% sobre costo equivale a ~23.08% sobre venta. **Los números de este reporte bajan** respecto a lo que se veía antes, y eso es lo esperado — no es un error de cálculo.
+
+     Cuando `Neto = 0` el margen se retorna como `0` (antes el guard era sobre el costo; se movió al nuevo denominador para no dejar expuesta la división entre cero).
+  4. **`Dif` y `PorDes` no cambiaron.** Siguen siendo `Neto − Costo` y el % de descuento promedio.
+  5. **Cálculo de `PorDes`:** `(((Importe − Descto) / Importe) − 1) × 100`. Valor negativo indica descuento. Si el importe es `0`, se retorna `0`.
+  6. **`Descto` = Descuento pronto pago (FactorPP):** No es el descuento comercial de la línea. Es el descuento de pronto pago prorrateado por línea de detalle usando el factor `(1 − Desc1/SubTot) × (1 − Desc2/Tot)`.
+  7. **`Seleccionar=4` (ListaCte), `Seleccionar=5` (Contratos) y `Seleccionar=7` (Segmento):** El servidor construye internamente una tabla de clientes elegibles (`t-liscte`) antes de procesar las ventas. En `4` la `Lista` trae IDs de lista (no de clientes); en `7` trae claves de segmento de distribución.
+  8. **`Seleccionar=7` (Segmento de distribución):** los clientes elegibles son los que tienen el segmento asignado en `Cliente.Id-Segmento`. Si `Lista` viene vacía entran **todos los clientes con segmento**; si trae segmentos (CSV, ej. `"DIST01,DIST02"`) solo esos, y **cada segmento debe existir** en el catálogo (`Segmento`) — si alguno no existe regresa `IdError: true` con `"No existe el segmento de distribucion: X."`. Nota de costo: `Cliente.Id-Segmento` **no tiene índice**, por lo que armar `t-liscte` hace **un** barrido secuencial de `Cliente` por request (lectura mínima con `FIELDS`), mismo costo fijo que el conteo de clientes de `segmentodist.p`.
+  9. **`ConAsociados=true`:** Solo tiene efecto con `Seleccionar=3`. Amplía el universo de facturas/remisiones al cliente indicado en `Lista` y a todos sus clientes asociados registrados en el catálogo.
+  10. **Volumen de datos:** Con `Seleccionar=1` (General) y periodos amplios, el response puede ser extenso. El número de registros se indica en el campo `Respuesta` (ej: `"12 categorias encontradas."`).

@@ -5,13 +5,16 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Consulta/MargenFactura?IdUser=olds&Factura=99526CA
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Consulta/MargenFactura?IdUser=olds&Factura=77898AJ&Margen=2
   params:
     - name: IdUser
       value: olds
       type: query
     - name: Factura
-      value: 99526CA
+      value: 77898AJ
+      type: query
+    - name: Margen
+      value: "2"
       type: query
   auth: inherit
 
@@ -21,7 +24,7 @@ settings:
   followRedirects: true
   maxRedirects: 5
 
-docs: |-
+docs: |
   # Servicio REST — Consulta de Margen de Factura
 
   ---
@@ -60,6 +63,10 @@ docs: |-
 
   **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta (auditoría)
   - Ej: `"olds"`
+
+  **`Margen`** · INTEGER · ❌ — Tipo de margen con que se calcula `MargenBruto`
+  - `1` Sobre costo · `2` Sobre venta · Vacío o fuera de rango = `1`
+  - Debe enviarse el **mismo valor** que se mandó al reporte de Márgenes por Cliente para que las cifras cuadren
 
   ---
 
@@ -198,12 +205,12 @@ docs: |-
   **`CostoTotal`** · DECIMAL — Costo total del documento (Σ costo × cantidad)
   **`PrecioFactura`** · DECIMAL — Precio facturado (Σ precio neto × cantidad)
   **`DesctoIncluido`** · DECIMAL — Descuento incluido; solo aplica en remisiones, `0` en facturas
-  **`MargenBruto`** · DECIMAL — Margen bruto de venta (%)
+  **`MargenBruto`** · DECIMAL — Margen (%) según el parámetro `Margen` (`1` sobre costo, `2` sobre venta), calculado con el **mismo criterio del reporte de Márgenes por Cliente**. Es la cifra que cuadra con el renglón de esa factura en el reporte — ver observación 4
   **`Pagos`** · DECIMAL — Pagos aplicados (cartera para facturas, caja para remisiones)
   **`Desctos`** · DECIMAL — Descuentos otorgados en el pago
   **`Devoluciones`** · DECIMAL — Devoluciones aplicadas
   **`PorcDescPago`** · DECIMAL — Porcentaje de descuento en el pago (%); `0` si no hay pagos
-  **`MargenNeto`** · DECIMAL — Margen neto (%) — **no contempla pago de comisiones**
+  **`MargenNeto`** · DECIMAL — Margen neto (%) — **no contempla pago de comisiones**. Sigue derivándose de `PrecioFactura`/`CostoTotal`, o sea del criterio **anterior**; ya no es comparable contra `MargenBruto` — ver observación 5
 
   ### Response de error controlado
 
@@ -231,7 +238,8 @@ docs: |-
   | Factura no existe | Busca como **remisión**; si tampoco existe: `"Factura inexistente."` |
   | Factura/remisión cancelada | `IdError: true` — `"Factura cancelada."` |
   | Documento sin pagos en cartera | `PorcDescPago = 0` (no se calcula la división) |
-  | Costo total = 0 | `MargenBruto` y `MargenNeto` = `100` |
+  | Costo = 0 | `MargenBruto` y `MargenNeto` = `100` (criterio conservado) |
+  | Importe neto = 0 | `MargenBruto` = `0` (no revienta la consulta) |
 
   ---
 
@@ -266,8 +274,22 @@ docs: |-
   1. **Factura o remisión:** El servicio primero busca el número en la tabla `Factura`; si no existe, lo busca en `Remision`. El campo `EsRemision` del encabezado indica cuál se encontró. La estructura de la respuesta es idéntica en ambos casos.
   2. **Cálculo del margen por partida:** `PrecUnit = PrecioUnitario × (1 − Descto/100)`; `Margen = (PrecUnit / Costo − 1) × 100`. Cuando el costo de la partida es `0`, el margen se reporta como `100`.
   3. **Pagos en cartera (facturas):** Se acumulan de `MovCliente` + `HistMovCte` por `RefSaldo`: tipos de movimiento `57-62`, `90`, `96` = pagos; `63`, `64`, `66`, `68` = descuentos; `65` = devoluciones.
-  4. **Pagos en caja (remisiones):** Se acumulan de `MovCaja`/`DetMovC` por referencia y fecha de la remisión, con los mismos rangos de tipo de pago. El `DesctoIncluido` proviene del descuento de la remisión y se resta del precio antes de calcular los márgenes.
-  5. **Margen neto:** `MargenNeto = ((PrecioFactura × (1 − PorcDescPago/100)) / CostoTotal − 1) × 100`. No contempla pago de comisiones (misma leyenda del reporte original).
-  6. **Guardas de división entre cero:** A diferencia del programa de modo carácter, el servicio no truena cuando no hay pagos (`PorcDescPago = 0`) ni cuando el costo total es `0` (márgenes = `100`).
-  7. **Auditoría:** Cada ejecución se registra vía `programas/auditoria.p` con el usuario recibido en `IdUser`.
-  8. **Autenticación:** El servicio corre sobre OpenEdge PASOE. Si el ambiente requiere autenticación Bearer, incluir el header `Authorization: Bearer <token>`.
+  4. **`MargenBruto` cambió de criterio.** Ya no se calcula con la fórmula propia de esta consulta: ahora lo resuelve el procedimiento `margenReporte` con el mismo criterio del reporte de Márgenes por Cliente (`ventas-rep001`, `ttDetalle.Margen`) y respetando el parámetro `Margen`, para que la pantalla muestre exactamente lo que el usuario vio en el reporte.
+
+     | | Antes | Ahora |
+     |---|---|---|
+     | Tipo | Siempre sobre costo | Sobre costo o sobre venta, según `Margen` |
+     | Partidas | Todas las del documento | Solo `Tipo 1`, y `Tipo 2` que sean remisión / de importe negativo |
+     | Devoluciones | Cantidad completa | Resta `CantDev` |
+     | Descuento del doc. | Solo en remisión | En factura y en remisión |
+     | Flete | No lo consideraba | En crédito lo suma al costo |
+     | Precisión | Centavos | Pesos enteros |
+
+     Enviando `Margen=1` el número **no** es el mismo que devolvía antes el servicio: es el que da el reporte en modo sobre costo.
+  5. **`CostoTotal`, `PrecioFactura`, `DesctoIncluido` y `MargenNeto` siguen con el criterio viejo.** Se dejaron intactos para no mover lo que la pantalla ya despliega. Consecuencia a tener presente: **`MargenBruto` ya no es `(PrecioFactura / CostoTotal − 1) × 100`**, y bruto/neto ya no son comparables entre sí. Si se quiere alinear todo al criterio del reporte, hay que cambiar también esas cuatro columnas.
+  6. **La lógica de `MargenBruto` está duplicada a propósito.** Es una copia de la acumulación de `ventas-rep001.p` (`DetCredito` para crédito, el loop de `Remision` para contado), porque aquél es un `PRIVATE` de otro programa. **Si se cambia el cálculo del margen en `ventas-rep001`, hay que cambiarlo también en `vtab0060` o las dos pantallas dejan de cuadrar.**
+  7. **Pagos en caja (remisiones):** Se acumulan de `MovCaja`/`DetMovC` por referencia y fecha de la remisión, con los mismos rangos de tipo de pago. El `DesctoIncluido` proviene del descuento de la remisión y se resta del precio antes de calcular los márgenes.
+  8. **Margen neto:** `MargenNeto = ((PrecioFactura × (1 − PorcDescPago/100)) / CostoTotal − 1) × 100`. No contempla pago de comisiones (misma leyenda del reporte original).
+  9. **Guardas de división entre cero:** A diferencia del programa de modo carácter, el servicio no truena cuando no hay pagos (`PorcDescPago = 0`) ni cuando el costo total es `0` (márgenes = `100`).
+  10. **Auditoría:** Cada ejecución se registra vía `programas/auditoria.p` con el usuario recibido en `IdUser`.
+  11. **Autenticación:** El servicio corre sobre OpenEdge PASOE. Si el ambiente requiere autenticación Bearer, incluir el header `Authorization: Bearer <token>`.
