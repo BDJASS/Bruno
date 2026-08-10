@@ -1,7 +1,7 @@
 info:
   name: HU 28 Lista de Articulos
   type: folder
-  seq: 13
+  seq: 15
 
 request:
   auth: inherit

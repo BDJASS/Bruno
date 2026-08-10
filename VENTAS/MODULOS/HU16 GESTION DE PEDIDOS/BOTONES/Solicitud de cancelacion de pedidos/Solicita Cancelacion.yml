@@ -1,0 +1,136 @@
+info:
+  name: Solicita Cancelacion
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/SolicitudCancelacion?IdPedido=1548819&Resto=0&Motivo=Cancelacion Adcorex&IdUser=olds
+  params:
+    - name: IdPedido
+      value: "1548819"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+    - name: Motivo
+      value: Cancelacion Adcorex
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Pedidos: Solicita Cancelación
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedidos — Solicita Cancelación**
+  Registra la solicitud de cancelación de un pedido (`SolCancPed` + usuario/fecha/hora/motivo). Si el pedido está en estatus 0 (ORIGINAL) y no tiene tareas activas, ejecuta la **cancelación completa de inmediato** (respaldo en `CancPed`/`CancDetPed`, descompromiso de inventario, baja en embarques, bitácora y eliminación del pedido). En ambos casos avisa por correo a los responsables.
+  Programa servidor: `pedsolcanc.p` · Procedimiento: `solicitaCancelacion` (POST) | Versión REST de `vtaa0060.p` (modo carácter). Módulo `/Ventas/Pedidos/`.
+
+  > Para leer los datos del pedido y validar antes usar `GET /Ventas/Pedidos/SolicitudCancelacion` (ver `pedsolcanc-ConsultaSolicitudCancelacion.md`).
+
+  ---
+
+  ## 2. Método HTTP y URL
+
+  ```
+  POST http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/SolicitudCancelacion
+  ```
+
+  ---
+
+  ## 3. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido (se normaliza: primer carácter + resto a 6 dígitos)
+  **`Resto`** · STRING · ❌ — Resto; vacío = `0`
+  **`Motivo`** · STRING · ✅ — Motivo de la cancelación (máx. 100)
+  **`IdUser`** · STRING · ✅ — Usuario que solicita (auditoría y correo)
+
+  ---
+
+  ## 4. Ejemplo de Request
+
+  ```
+  POST .../Ventas/Pedidos/SolicitudCancelacion?IdPedido=1123456&Resto=0&Motivo=Cliente%20cancela&IdUser=sis10
+  ```
+
+  ---
+
+  ## 5. Campos del Response
+
+  **`IdError`** · BOOLEAN — `true` = no se registró (ver `Respuesta`); `false` = solicitud registrada (o cancelación ejecutada)
+  **`Respuesta`** · STRING — Mensaje del resultado (o del rechazo); puede anteponer los avisos de factura/cortes.
+
+  ---
+
+  ## 6. Validaciones (mensajes exactos)
+
+  Antes de registrar corre las mismas reglas del pedido (`ValidaPedido`) que el GET, más:
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `"Se requiere el usuario (IdUser)."` |
+  | `Motivo` vacío | `"Se requiere el motivo de la cancelacion (Motivo)."` |
+  | Ya tiene solicitud | `"El pedido ya tiene solicitud de cancelacion (solicito <usuario> el <fecha>)."` |
+  | Pedido/resto inexistente | `"Folio de pedido-resto inexistente, verifique..."` |
+  | Ligado en facturación | `"El pedido se encuentra ligado en facturacion, favor de eliminar la liga antes de solicitar su cancelacion."` |
+  | Estatus > 5 o `EstPedido.FecEmb` asignada | `"El pedido ya fue embarcado."` |
+  | No autorizado por créditos | `"El pedido no ha sido autorizado aun, para cancelarlo debe avisar al departamento de CREDITOS."` |
+  | Con factura asignada / con cortes | **Aviso** (no bloquea) — se antepone a la `Respuesta` |
+
+  ---
+
+  ## 7. Efectos del POST
+
+  1. `Pedido.SolCancPed/UsuSolCancPed/FecSolCancPed/HorSolCancPed/MotivoSolCancPed`.
+  2. **Solo si estatus 0 y sin tareas activas (Tarea.Estatus 1-2):** respalda cada renglón en `CancDetPed`, descompromete inventario (`ArtUbic.Exist += CantCom`, `BO -= CantBO`, `Compro -= CantCom`), cancela tareas (`bodd1050.p`), baja en embarques (`embd0010.p` opción 2), respalda `CancPed` (`FecCancel/FecCanc/UsuarioCanc`), bitácora `LogBaja` (`vtaa0117.p` código 750) y `DELETE Pedido` — todo en una transacción.
+  3. **Correo** con el HTML de la pantalla; destinatarios según estatus (< 5: surtido/mguerrero/jchacon/gcortez; ≥ 5: embarques), almacén 11 (Saltillo), almacén 12 (mostrador 12A vs telemarketing) y `+cortes@` si tiene cortes.
+  4. Auditoría: `pOperacion = "POST"`, `pResource = "/Ventas/Pedidos/SolicitudCancelacion"`, `pArea = "oeVentas"`, módulo `Pedidos`; la `Respuesta` auditada indica si fue solo solicitud o cancelación inmediata.
+
+  ---
+
+  ## 8. Plan de Pruebas
+
+  | # | Caso | Esperado |
+  |---|------|----------|
+  | P1 | POST sin `Motivo` | `"Se requiere el motivo..."` |
+  | P2 | POST sin `IdUser` | `"Se requiere el usuario (IdUser)."` |
+  | P3 | POST pedido en estatus 1-4 | Solo marca la solicitud (verificar banderas en BD); correo a surtido |
+  | P4 | POST pedido en estatus 0 sin tareas | Cancelación completa: verificar `CancPed`/`CancDetPed`, `ArtUbic` descomprometido, `Pedido` eliminado, `LogBaja`, correo |
+  | P5 | POST pedido en estatus 0 con tarea activa | Solo marca la solicitud (no elimina) |
+  | P6 | POST repetido | `"El pedido ya tiene solicitud de cancelacion..."` |
+  | P7 | Pedidos de almacén 11 y 12 | Verificar destinatarios de correo por almacén/ubicación |
+  | P8 | Auditoría tras P3 y P4 | `pArea=oeVentas`, `pOperacion=POST`, `pResource=/Ventas/Pedidos/SolicitudCancelacion` |
+
+  ---
+
+  ## 9. Resultado
+
+  | Estado              | Descripción                                                  |
+  |---------------------|--------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 10. Observaciones Técnicas
+
+  1. **Correo antes del borrado:** la pantalla original arma el correo después del `DELETE Pedido` (en la cancelación inmediata el buffer ya no está disponible); en REST el correo se arma antes, dentro de la transacción, para que siempre salga.
+  2. **`CancPed` por pedido+resto:** la pantalla tiene la condición del resto comparada contra sí misma (`CancPed.Resto = CancPed.Resto`); se corrigió al intento evidente.
+  3. **Confirmación del menú** ("Solicitar cancelación"/"Salir"): responsabilidad del front.
+  4. **Resultado:** ⏳ pendiente de compilación/deploy y QA.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

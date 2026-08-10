@@ -1,0 +1,149 @@
+info:
+  name: Cambio Precio
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/CambioPrecios/Cambio?IdUser=olds&IdPedido=2955590&Resto=0&IdArticulo=066406&Pass=olds&NuevoPrecio=7.89
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdPedido
+      value: "2955590"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+    - name: IdArticulo
+      value: "066406"
+      type: query
+    - name: Pass
+      value: olds
+      type: query
+    - name: NuevoPrecio
+      value: "7.89"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Pedidos: Actualiza Precio
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedidos — Actualiza Precio**
+  Cambia el precio unitario de un artículo en un pedido no facturado, con autorización por password, reglas de margen mínimo por usuario, bitácora `BtcAutPrec` y correo de análisis de márgenes a gerencia cuando el precio baja 5% o más.
+  Programa servidor: `pedprecio.p` · Procedimiento: `actualizaPrecio` (POST) | Versión REST de `vtad0270.p` (modo carácter). Módulo `/Ventas/Pedidos/`.
+
+  > Para obtener los renglones y precios actuales usar primero `GET /Ventas/Pedidos/Precio` (ver `pedprecio-ConsultaPrecio.md`).
+
+  ---
+
+  ## 2. Método HTTP y URL
+
+  ```
+  POST http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/ActualizaPrecio
+  ```
+
+  ---
+
+  ## 3. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`Pass`** · STRING · ✅ — Password de autorización **Tipo 6** (sin él, rechaza)
+  **`IdPedido`** · STRING · ✅ — Folio del pedido
+  **`Resto`** · STRING · ❌ — Resto; vacío = `0`
+  **`IdArticulo`** · STRING · ✅ — Clave del artículo (se rellena a 6 dígitos)
+  **`NuevoPrecio`** · STRING · ✅ — Nuevo precio unitario (≥ 0)
+  **`IdUser`** · STRING · ✅ — Usuario que captura (reglas de margen y auditoría)
+
+  ---
+
+  ## 4. Ejemplo de Request
+
+  ```
+  POST .../Ventas/Pedidos/ActualizaPrecio?Pass=****&IdPedido=2955590&Resto=0&IdArticulo=066406&NuevoPrecio=125.50&IdUser=olds
+  ```
+
+  ---
+
+  ## 5. Campos del Response
+
+  **`IdError`** · BOOLEAN — `true` = no se aplicó (ver `Respuesta`); `false` = aplicado
+  **`Respuesta`** · STRING — En éxito solo indica que fue exitoso (`"Precio del articulo <art> actualizado correctamente."`, o `"El precio indicado es el mismo; no hubo cambios."`). En error, el mensaje del problema.
+
+  ### Mini tabla `ttAjuste` (una fila por renglón del artículo)
+
+  Contiene lo que se recalcula/actualiza al ajustar el precio, para que el front lo integre en la misma consulta:
+
+  **`Reng`** · INTEGER — Renglón
+  **`Iva`** · DECIMAL — IVA recalculado (`PUnit × PorcIva/100 × CantPed`)
+  **`Importe`** · DECIMAL — Importe recalculado (`PUnit × CantPed`)
+  **`Descto`** · DECIMAL — `% Descuento` resultante (queda en `0` al bajar el precio)
+  **`PorcDescto`** · DECIMAL — Label **"% Descto"**: % de cambio del precio = `((PrecioNuevo / PrecioAnterior) - 1) × 100` (equivale a `l-Porc` del carácter). `0` si no hubo cambio.
+  **`MargenBruto`** · DECIMAL — Label **"Margen Bruto"**: margen con el precio autorizado = `((PrecioNuevo / Costo) - 1) × 100` (equivale a `l-MbPorc`), redondeado a 2 decimales. `0` si no hubo cambio (igual que carácter).
+
+  ---
+
+  ## 6. Validaciones (mensajes exactos)
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `"Se requiere el usuario (IdUser)."` |
+  | Password Tipo 6 inválido | `"Password de autorizacion invalido."` |
+  | `NuevoPrecio` inválido / negativo | `"Precio unitario invalido."` |
+  | Pedido inexistente | `"PEDIDO INEXISTENTE"` |
+  | Estatus ≥ 5, o -2 con factura | `"PEDIDO YA FACTURADO, IMPOSIBLE CAMBIAR PRECIOS"` |
+  | Artículo no está en el pedido | `"ARTICULO INEXISTENTE EN EL PEDIDO"` |
+  | Precio baja de `Costo × 1.1` (usuarios normales) o de `Costo` (JJLG/MLLR/AGL) | `"Usuario no autorizado para dar precios con menos de un margen del [10%\|0%] del costo."` — usuarios ALEX,FRANC,GEE,JGGG,OGG,JGE,AGE,SGE,OLDS sin restricción |
+
+  ---
+
+  ## 7. Efectos del POST
+
+  1. Aplica a **todos los renglones** del artículo en el pedido (la pantalla usa FOR EACH).
+  2. Al bajar el precio marca `IndicaPre = "*"` (si no es X/Y). Recalcula `IVA = PUnit × PorcIva/100 × CantPed`, `Importe = PUnit × CantPed` y pone `Descto = 0`.
+  3. Bitácora **`BtcAutPrec`** por renglón cambiado (precio anterior/autorizado, usuario, fecha, hora).
+  4. Si el nuevo precio ≤ 95% del anterior: recalcula `Pedido.Subtotal`, y **envía el correo** (asunto `"Cambio de precio en Pedido <folio>"`) con: % de cambio, margen bruto por artículo y por pedido, margen con pronto pago, margen con TC del día (si hay renglones nacionales de proveedor extranjero), condición de venta, días cartera (`cxcd0015.p`) y promedio de pago (`cxcd0010.p`); destinatarios por usuario y margen (≤ 15% agrega a sgomez).
+     - El envío usa **`programas/correo02_rest.p`** (regla dev/prod: en DEV redirige a desarrollo y antepone `"DESARROLLO "` al asunto; en prod va a los gerentes reales con BCC de monitoreo). El cuerpo se arma como HTML (`<pre>`) en `/usr3/tmp` y se envía **después** de cerrar la transacción, como aviso **no crítico**. Ya **no** se crea un registro en la tabla `e-mail` para un cron; se envía **un** correo consolidado (antes uno por renglón).
+  5. Auditoría: `pOperacion = "POST"`, `pResource = "/Ventas/Pedidos/ActualizaPrecio"`, `pArea = "oeVentas"`; la `Respuesta` auditada incluye el autorizador del password.
+
+  ---
+
+  ## 8. Plan de Pruebas
+
+  | # | Caso | Esperado |
+  |---|------|----------|
+  | P1 | POST con password inválido | `"Password de autorizacion invalido."` |
+  | P2 | POST a pedido facturado | `"PEDIDO YA FACTURADO..."` |
+  | P3 | POST artículo ajeno al pedido | `"ARTICULO INEXISTENTE EN EL PEDIDO"` |
+  | P4 | Usuario normal bajando precio a < costo×1.1 | Mensaje de margen 10%; sin cambios en BD |
+  | P5 | Usuario JJLG bajando a costo×1.05 | **Pasa** (su piso es 0%) |
+  | P6 | Subir precio (cualquier usuario) | Pasa sin regla de margen; `IndicaPre` sin cambio |
+  | P7 | Bajar precio 3% | Cambia + `BtcAutPrec`; **sin** correo |
+  | P8 | Bajar precio 10% | Cambia + `BtcAutPrec` + correo por `correo02_rest.p` (en DEV llega a desarrollo con "DESARROLLO " en el asunto); `Pedido.Subtotal` recalculado; `Respuesta` = "...actualizado correctamente." |
+  | P9 | Verificar en BD tras P8 | `IVA`/`Importe`/`Descto=0` por renglón; `IndicaPre="*"` |
+  | P10 | POST que baja precio | Response trae la mini tabla `ttAjuste` con una fila por renglón: `Iva`/`Importe`/`Descto` recalculados, `PorcDescto` (% de cambio) y `MargenBruto` |
+
+  ---
+
+  ## 9. Observaciones Técnicas
+
+  1. **Passwords tipo 6 y listas de usuarios hardcodeadas** (decisiones #1/#2 del plan): se replican tal cual; el `IdUser` sustituye a `USERID('dictdb')` para las reglas de margen.
+  2. **`Pedido.Subtotal` solo se recalcula cuando se dispara el correo** — mismo comportamiento del original.
+  3. La cláusula de copia a aayala vigente hasta 31/10/2020 es código muerto y no se replicó.
+  4. **Correo fuera de la transacción:** el contenido se arma en una variable dentro de la transacción (con los datos ya calculados) y el envío se hace tras el commit; si el correo falla, el cambio de precio ya quedó aplicado y la respuesta sigue siendo de éxito. Requiere que el PROPATH del agente PASOE alcance `programas/correo02_rest.p` y que `programas/desarrollo.flag` exista en el servidor DEV para redirigir.
+  5. **Mini tabla `ttAjuste`:** los campos que la pantalla recalcula/actualiza tras el ajuste (`Iva`, `Importe`, `Descto`, `% Descto`, `Margen Bruto`) se entregan por renglón en el POST, no en el GET, para que el front los pinte en la misma consulta.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

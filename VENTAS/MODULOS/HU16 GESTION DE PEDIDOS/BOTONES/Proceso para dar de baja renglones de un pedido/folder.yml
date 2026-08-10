@@ -1,0 +1,7 @@
+info:
+  name: Proceso para dar de baja renglones de un pedido
+  type: folder
+  seq: 1
+
+request:
+  auth: inherit

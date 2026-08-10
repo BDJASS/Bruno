@@ -1,0 +1,152 @@
+info:
+  name: Consulta
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Backorder?IdUser=olds&IdPedido=2955590&Resto=0&IdArticulo=066406
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdPedido
+      value: "2955590"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+    - name: IdArticulo
+      value: "066406"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Pedidos: Consulta de Backorder
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedidos — Consulta de Backorder**
+  Consulta el tipo de backorder (`Pedido.BckOrd`) y la fecha límite (`Pedido.FecBck`) de un pedido, con sus datos de cabecera.
+  Programa servidor: `pedbackorder.p` · Procedimiento: `consultaBackorder` (GET) | Versión REST de `vtaa0230.p` (modo carácter). Módulo `/Ventas/Pedidos/`.
+
+  > El cambio se hace con `PUT /Ventas/Pedidos/Backorder` (ver `pedbackorder-CambiaBackorder.md`). El catálogo de tipos está en `ventas-cat-backorder-CatalogoTiposBackorder.md`.
+
+  ---
+
+  ## 2. Método HTTP y URL
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Backorder
+  ```
+
+  ---
+
+  ## 3. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido; se normaliza como en pantalla (primer carácter + resto a 6 dígitos: `1123` → `1000123`)
+  **`Resto`** · STRING · ❌ — Resto del pedido; vacío = `0`
+
+  ---
+
+  ## 4. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Pedidos/Backorder?IdPedido=1123456&Resto=0
+  ```
+
+  ---
+
+  ## 5. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Pedido 1123456-0 consultado.",
+      "ttBackorder": {
+        "ttBackorder": [
+          {
+            "IdPedido": "1123456",
+            "Resto": 0,
+            "IdCliente": 34561,
+            "RazonSocial": "PAPELERA DEL NORTE SA DE CV",
+            "FecReg": "2026-07-08",
+            "IdUbiVta": "MT",
+            "DescrUbiVta": "MOSTRADOR MTY",
+            "BckOrd": 2,
+            "FecBck": "2026-07-20",
+            "EnFirme": true,
+            "YaFacturado": false
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  ---
+
+  ## 6. Campos del Response (`ttBackorder`)
+
+  **`IdPedido`** · STRING — Folio del pedido normalizado
+  **`Resto`** · INTEGER — Resto del pedido
+  **`IdCliente`** · INTEGER — Cuenta del cliente
+  **`RazonSocial`** · STRING — Razón social (catálogo `Cliente`; si no existe, la del pedido)
+  **`FecReg`** · DATE — Fecha de registro del pedido
+  **`IdUbiVta`** / **`DescrUbiVta`** · STRING — Ubicación de venta y su descripción
+  **`BckOrd`** · INTEGER — Tipo de backorder actual (1..4). La descripción se obtiene del catálogo `ventas-cat-backorder-CatalogoTiposBackorder.md`.
+  **`FecBck`** · DATE — Fecha límite de backorder
+  **`EnFirme`** · BOOLEAN — Pedido autorizado por créditos
+  **`YaFacturado`** · BOOLEAN — `true` = estatus ≥ 5; el cambio sigue permitido (útil para restos), solo se avisa
+
+  ---
+
+  ## 7. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | Pedido/resto inexistente | `IdError: true` — `"El Pedido <folio> no esta registrado."` |
+  | Pedido ya facturado | **No bloquea** — `YaFacturado: true` y aviso en la `Respuesta` |
+
+  ---
+
+  ## 8. Plan de Pruebas
+
+  > Preparación: identificar en DEV un pedido vigente (`PED_OK`, estatus < 5) y uno facturado (`PED_FAC`).
+
+  | # | Request | Esperado |
+  |---|---------|----------|
+  | C1 | GET `?IdPedido=Z999999` | `"El Pedido Z999999 no esta registrado."` |
+  | C2 | GET `?IdPedido=<PED_OK>&Resto=0` | `IdError: false`; verificar `BckOrd`, `DescrBckOrd`, `FecBck`, `EnFirme` contra la pantalla carácter |
+  | C3 | GET con folio corto (`1123` si existe `1000123`) | Normaliza y encuentra el pedido |
+  | C4 | GET `?IdPedido=<PED_FAC>` | `YaFacturado: true` + aviso en `Respuesta` (no error) |
+
+  ---
+
+  ## 9. Resultado
+
+  | Estado              | Descripción                                                  |
+  |---------------------|--------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 10. Observaciones Técnicas
+
+  1. **No bloquea pedidos facturados:** la pantalla original solo muestra el aviso y permite el cambio (útil para restos); se conserva con el aviso en la `Respuesta` y la bandera `YaFacturado`.
+  2. **Normalización del folio:** réplica de `capfolio.i` (primer carácter + resto a entero con formato `999999`).
+  3. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

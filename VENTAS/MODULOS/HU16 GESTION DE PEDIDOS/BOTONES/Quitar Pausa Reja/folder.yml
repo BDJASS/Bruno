@@ -1,0 +1,7 @@
+info:
+  name: Quitar Pausa Reja
+  type: folder
+  seq: 9
+
+request:
+  auth: inherit

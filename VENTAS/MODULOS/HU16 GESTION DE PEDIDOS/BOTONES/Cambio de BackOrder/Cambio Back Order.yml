@@ -1,0 +1,155 @@
+info:
+  name: Cambio Back Order
+  type: http
+  seq: 3
+
+http:
+  method: PUT
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Backorder?IdUser=olds&IdPedido=2955590&Resto=0&IdArticulo=066406&BckOrd=2&FecBck=2026-07-27
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdPedido
+      value: "2955590"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+    - name: IdArticulo
+      value: "066406"
+      type: query
+    - name: BckOrd
+      value: "2"
+      type: query
+    - name: FecBck
+      value: 2026-07-27
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Pedidos: Cambia Backorder
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedidos — Cambia Backorder**
+  Cambia el tipo de backorder (`Pedido.BckOrd`) y la fecha límite de backorder (`Pedido.FecBck`) de un pedido.
+  Programa servidor: `pedbackorder.p` · Procedimiento: `cambiaBackorder` (PUT) | Versión REST de `vtaa0230.p` (modo carácter). Módulo `/Ventas/Pedidos/`.
+
+  > Para leer los valores actuales usar primero `GET /Ventas/Pedidos/Backorder` (ver `pedbackorder-ConsultaBackorder.md`). El catálogo de tipos está en `ventas-cat-backorder-CatalogoTiposBackorder.md`.
+
+  ---
+
+  ## 2. Método HTTP y URL
+
+  ```
+  PUT http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Backorder
+  ```
+
+  ---
+
+  ## 3. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido (se normaliza: primer carácter + resto a 6 dígitos)
+  **`Resto`** · STRING · ❌ — Resto; vacío = `0`
+  **`BckOrd`** · STRING · ✅ — Tipo de backorder
+  - `1` Solo existencia · `2` Existencia + Backorder · `3` Enviar completo · `4` Todo o cancelar
+
+  **`FecBck`** · DATE · ❌ — Fecha límite de backorder en formato ISO (`aaaa-mm-dd`, p. ej. `2026-07-27`)
+  - Vacía/omitida = conserva la fecha actual del pedido
+
+  **`IdUser`** · STRING · ✅ — Usuario que realiza el cambio (queda en la auditoría)
+
+  ---
+
+  ## 4. Ejemplo de Request
+
+  ```
+  PUT .../Ventas/Pedidos/Backorder?IdPedido=1123456&Resto=0&BckOrd=3&FecBck=2026-07-31&IdUser=sis10
+  ```
+
+  ---
+
+  ## 5. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Pedido 1123456-0: backorder tipo 3, fecha limite 31/07/2026 aplicado correctamente."
+    }
+  }
+  ```
+
+  ---
+
+  ## 6. Campos del Response
+
+  **`IdError`** · BOOLEAN — `true` = no se aplicó (ver `Respuesta`); `false` = aplicado
+  **`Respuesta`** · STRING — Mensaje del resultado (o del rechazo); en pedidos facturados antepone el aviso `"Pedido ya Facturado. Accion solo util para restos de pedido."`
+
+  ---
+
+  ## 7. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `"Se requiere el usuario (IdUser)."` |
+  | Pedido/resto inexistente | `"El Pedido <folio> no esta registrado."` |
+  | `BckOrd` fuera de 1-4 | `"RANGO PERMITIDO DE TIPO DE BO = 1 - 4."` |
+  | `FecBck` con fecha malformada | La rechaza la capa REST (DATE ISO `aaaa-mm-dd`); el servicio ya no valida formato |
+  | Registro tomado por otro proceso | `"El pedido esta siendo usado por otro proceso; intente de nuevo."` |
+  | Pedido ya facturado | **No bloquea** (igual que la pantalla) — la `Respuesta` antepone `"Pedido ya Facturado. Accion solo util para restos de pedido."` |
+
+  ---
+
+  ## 8. Efectos del PUT
+
+  1. `Pedido.BckOrd` = tipo indicado; `Pedido.FecBck` = fecha indicada (o se conserva si `FecBck` viene vacía).
+  2. Auditoría: `pOperacion = "PUT"`, `pResource = "/Ventas/Pedidos/Backorder"`, `pArea = "oeVentas"`, módulo `Pedidos`.
+
+  ---
+
+  ## 9. Plan de Pruebas
+
+  > Preparación: pedido vigente (`PED_OK`, estatus < 5) y uno facturado (`PED_FAC`).
+
+  | # | Request | Esperado |
+  |---|---------|----------|
+  | P1 | PUT `BckOrd=5` | `"RANGO PERMITIDO DE TIPO DE BO = 1 - 4."` |
+  | P2 | PUT sin `IdUser` | `"Se requiere el usuario (IdUser)."` |
+  | P3 | PUT `BckOrd=3&FecBck=2026-07-31` sobre `PED_OK` | `IdError: false`; verificar con GET que ambos campos cambiaron |
+  | P4 | PUT `BckOrd=2` sin `FecBck` | Cambia solo el tipo; la fecha se conserva (verificar con GET) |
+  | P5 | PUT sobre `PED_FAC` | Aplica el cambio con el aviso `"Pedido ya Facturado..."` antepuesto |
+  | P6 | PUT con el pedido tomado por otra sesión | `"El pedido esta siendo usado por otro proceso; intente de nuevo."` |
+  | P7 | Auditoría tras P3 | Registro en `programas/auditoria.p`: `pArea=oeVentas`, módulo `Pedidos`, `pOperacion=PUT`, `pResource=/Ventas/Pedidos/Backorder` |
+
+  ---
+
+  ## 10. Resultado
+
+  | Estado              | Descripción                                                  |
+  |---------------------|--------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 11. Observaciones Técnicas
+
+  1. **No bloquea pedidos facturados:** la pantalla original solo muestra el aviso y permite el cambio (útil para restos); se conserva con el aviso en la `Respuesta`.
+  2. **Normalización del folio:** réplica de `capfolio.i` (primer carácter + resto a entero con formato `999999`).
+  3. **`FecBck` vacía conserva la fecha actual** — a diferencia de la pantalla que siempre recaptura ambos campos; decisión para hacer el API más seguro ante omisiones.
+  4. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

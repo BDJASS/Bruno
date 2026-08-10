@@ -1,0 +1,7 @@
+info:
+  name: Generar Remision (IMPRESION)
+  type: folder
+  seq: 11
+
+request:
+  auth: inherit

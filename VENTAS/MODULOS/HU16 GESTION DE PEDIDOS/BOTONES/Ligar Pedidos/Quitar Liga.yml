@@ -1,0 +1,191 @@
+info:
+  name: Quitar Liga
+  type: http
+  seq: 3
+
+http:
+  method: DELETE
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Liga?IdPedido=2944595&Resto=1&IdUser=olds
+  params:
+    - name: IdPedido
+      value: "2944595"
+      type: query
+    - name: Resto
+      value: "1"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Pedidos: Quitar Liga
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedidos — Quitar Liga**
+  Elimina la liga (de facturación o de embarque) de un pedido, dejando `Pedido.Id-Liga` en blanco. Es la opción **"Quitar liga"** del editor de pedidos.
+  Programa servidor: `pedcambio.p` · Procedimiento: `quitaLiga` | Versión REST de `vtab0130.p`, `PROCEDURE Liga` (líneas 1522-1554), que la pantalla invoca desde el índice 4 del menú (`vtab0130.p:192-195`). Módulo `/Ventas/Pedidos/`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  DELETE
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Liga
+  ```
+
+  Misma ruta que el POST de ligar; los distingue el verbo.
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido. Se normaliza a 7 posiciones con ceros
+  **`Resto`** · INTEGER · ❌ — Resto del pedido. Vacío = `0`
+  **`IdUser`** · STRING · ✅ — Usuario que quita la liga (auditoría)
+
+  ---
+
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
+
+  ```
+  Content-Type: application/json
+  ```
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  DELETE .../Ventas/Pedidos/Liga?IdPedido=2965291&Resto=0&IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ### Liga eliminada
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Liga de facturacion eliminada del pedido 2965291-0."
+    }
+  }
+  ```
+
+  Si la liga era de embarque, la respuesta dice `"Liga de embarque eliminada..."`.
+
+  ### El pedido no estaba ligado
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "El pedido 2965291-0 No esta ligado a ningun otro pedido, verifique..."
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  **`"Se requiere el usuario (IdUser)."`**
+  **`"Pedido inexistente, verifique..."`**
+  **`"El pedido <folio>-<resto> No esta ligado a ningun otro pedido, verifique..."`** — `Pedido.Id-Liga` vacío. Mensaje literal de `vtab0130.p:1548`
+  **`"El pedido esta siendo usado por otro proceso; intente de nuevo."`** — registro bloqueado. El candado usa `NO-WAIT`, así que falla en segundos en lugar de esperar hasta `-lkwtmo`
+
+  > El servicio **no** valida el estatus del pedido. La pantalla tampoco: `PROCEDURE Liga` sólo revisa que `Id-Liga` no esté vacío. Un pedido ya facturado puede quedar sin liga.
+
+  ---
+
+  ## 10. Cómo se distingue el tipo de liga
+
+  Por la primera letra del folio (`vtab0130.p:1531`):
+
+  ```progress
+  IF Pedido.Id-Liga BEGINS "E" THEN "de embarque" ELSE "de facturacion"
+  ```
+
+  Es una convención del **prefijo del folio**: el `Folio` con `Id-Doc = 'LigaEmb'` tiene que traer un `Prefijo` que empiece con `"E"` para que esto funcione. Sólo afecta el texto de la respuesta, no el comportamiento.
+
+  ---
+
+  ## 11. Efectos
+
+  Dentro de una transacción:
+
+  **`Pedido.Id-Liga = ""`** — se limpia la liga de **este** pedido únicamente.
+
+  > ⚠️ Los demás pedidos del grupo **conservan** su `Id-Liga`. La liga es un folio compartido en un campo por pedido, no una relación con integridad: quitarla de uno lo saca del grupo y deja a los otros ligados entre sí. Si el grupo queda con un solo pedido, ése se queda con una liga que ya no agrupa nada. Es el comportamiento del carácter — la pantalla también quita la liga de uno a la vez.
+  >
+  > Si el negocio necesita disolver el grupo completo, hay que llamar el servicio una vez por pedido, o pedir un endpoint nuevo que borre por folio de liga.
+
+  ---
+
+  ## 12. La confirmación es del front
+
+  La pantalla pregunta antes de quitar (`vtab0130.p:1529-1537`):
+
+  > *"Desea eliminar la liga de facturacion del pedido 2965291 - 0 ?"*
+
+  El servicio **no** tiene parámetro `Confirmar`: la confirmación es responsabilidad del front, porque no hay nada que el servidor necesite validar entre la pregunta y la acción. Si el front la omite, la liga se quita directo.
+
+  ---
+
+  ## 13. Auditoría
+
+  **Area** = `oeVentas` · **Modulo** = `Pedidos` · **Programa** = `pedcambio`
+  **Operacion** = `DELETE` · **Resource** = `/Ventas/Pedidos/Liga`
+  **Respuesta** = `Pedido: <folio>-<resto>`
+
+  ---
+
+  ## 14. Registro en el resourceModel
+
+  `pedcambio.p` **no está publicado**. El XML de esta operación va junto con el POST de ligar, en el recurso `_Pedidos_Liga` — ver [pedcambio-LigaPedidos.md](pedcambio-LigaPedidos.md) §14.
+
+  ---
+
+  ## 15. Plan de Pruebas
+
+  | # | Caso | Esperado |
+  |---|------|----------|
+  | P1 | Pedido sin liga | `"...No esta ligado a ningun otro pedido, verifique..."` |
+  | P2 | Pedido con liga de facturación | `"Liga de facturacion eliminada..."` y `Id-Liga` vacío |
+  | P3 | Pedido con liga que empieza con `"E"` | `"Liga de embarque eliminada..."` |
+  | P4 | Pedido inexistente | `"Pedido inexistente, verifique..."` |
+  | P5 | Sin `IdUser` | `"Se requiere el usuario (IdUser)."` |
+  | P6 | Grupo de 3 ligados, quitar a uno | Los otros 2 **conservan** su `Id-Liga` |
+  | P7 | Pedido facturado con liga | Se quita igual (la pantalla tampoco lo impide) |
+  | P8 | Auditoría | Registro con `Operacion = DELETE` |
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

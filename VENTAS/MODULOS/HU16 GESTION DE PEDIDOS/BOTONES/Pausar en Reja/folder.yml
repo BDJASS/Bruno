@@ -1,0 +1,7 @@
+info:
+  name: Pausar en Reja
+  type: folder
+  seq: 8
+
+request:
+  auth: inherit

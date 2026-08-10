@@ -1,0 +1,296 @@
+info:
+  name: Actualiza
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/ActualizaGenerales
+  body:
+    type: json
+    data: |2-
+       {
+            "ttPedido": [
+              {
+                "IdPedido": "4122888",
+                "Resto": 0,
+                "FecReg": "2026-05-04",
+                "MetodoPPD": false,
+                "IdVendedor": "2747",
+                "NombreVendedor": "JESUS GUADALUPE GARCIA LUNA",
+                "IdForPed": "",
+                "IdCliente": 51876,
+                "RazonSocial": "LAURA GARZA HERNANDEZ",
+                "RFC": "GAHL770619RR6",
+                "NomEmpresa": "",
+                "RSocietario": "",
+                "CalleNo": "BENITO JUAREZ 1532",
+                "Colonia": "20 DE NOVIEMBRE",
+                "IdCiudad": 13,
+                "NombreCiudad": "GUADALUPE",
+                "NombreEstado": "NUEVO LEON",
+                "CP": "",
+                "RazonSocial1": "",
+                "Email": "aayala@adosa.com.mx",
+                "CalleNo1": "",
+                "Colonia1": "",
+                "Ciudad1": "",
+                "Estado1": "",
+                "CP1": "",
+                "Referencia": "",
+                "Attn": "",
+                "Vigentes": true,
+                "EnTarima": false,
+                "Adelantado": false,
+                "SurtParcial": false,
+                "BckOrd": 1,
+                "Seguro": false,
+                "DescPP1": 0.0,
+                "IdEntrega": 4,
+                "DescrEntrega": "ESTAN X MERCANCIA",
+                "IdTran": 0,
+                "NombreTran": "",
+                "ReqCte": "",
+                "Notas1": "",
+                "Notas2": "",
+                "PagAnt": false,
+                "SolCancPed": false,
+                "FEFormaPago": "",
+                "FEDigitosCuenta": "",
+                "IdRFiscal": "",
+                "IdUsoCFDI": "",
+                "IdRemision": "",
+                "IdCond": 0,
+                "Plazo": 0,
+                "IdEstatus": 4,
+                "IdFactura": "",
+                "IdLiga": "",
+                "PausaReja": false,
+                "Importe": 0.0,
+                "IdUser": "olds"
+              }
+            ]
+          }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Pedidos: Actualiza Generales (Guardar Edición)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedidos — Actualiza Datos Generales**
+  Guarda los cambios de la vista **Generales** del editor de pedidos. Recibe el mismo `ttPedido` que devolvió [Consulta](pedcambio-ConsultaPedido.md), ya editado, más `IdUser`. Aplica **todas** las validaciones de la pantalla y sus efectos, y graba la **bitácora de cambios `CambioPed`** (un renglón por campo modificado).
+  Programa servidor: `pedcambio.p` · Procedimiento: `actualizaGenerales` | Versión REST de `vtab0130.p`, `PROCEDURE Generales` + `PROCEDURE Actualiza`. Módulo `/Ventas/Pedidos/`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/ActualizaGenerales
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  No aplica. Todo viaja en el **body** (§5).
+
+  ---
+
+  ## 5. Body
+
+  El registro `ttPedido` **editado** (el mismo que regresó Consulta) con el campo `IdUser`. Solo se guardan los campos editables; los descriptivos (`NombreVendedor`, `NombreCiudad`, `DescrEntrega`, …) se ignoran.
+
+  > ✅ = Requerido en el body
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido a guardar
+  **`Resto`** · INTEGER · ✅ — Resto del pedido
+  **`IdUser`** · STRING · ✅ — Usuario que hace el cambio (auditoría + bitácora)
+  **`MetodoPPD`** · BOOLEAN · ✅ — Mandar siempre el valor del GET (omitirlo lo apaga; ver §12)
+  **`IdVendedor`** · STRING · ✅ — Debe existir en `Vendedor`
+  **`IdCliente`** · INTEGER · ✅ — Debe existir (salvo `3` = sin registro)
+  **`RFC`** · STRING · ✅ — Se valida estructura + SAT
+  **`IdCiudad`** · INTEGER · ✅ — Debe existir en `Ciudad`
+  **`CP`** · STRING · ✅ — 5 dígitos
+  **`IdEntrega`** · INTEGER · ✅ — Debe existir y estar activa
+  **`IdTran`** · INTEGER · ❌ — Requerido si la entrega usa transporte (> 11, ≠ 16)
+  **`IdRFiscal`** · STRING · ✅ — Régimen fiscal válido y compatible
+  **`IdUsoCFDI`** · STRING · ✅ — Uso CFDI válido para el régimen
+  **`IdRemision`** · STRING · ✅ — `S`/`N`
+  Resto de campos editables (dirección de embarque, banderas, notas, etc.): opcionales, se guardan tal cual llegan.
+
+  ### Ejemplo de body
+
+  ```json
+  {
+    "ttPedido": [
+      {
+        "IdPedido": "2965291", "Resto": 0, "IdUser": "olds",
+        "MetodoPPD": false, "IdVendedor": "0123", "IdForPed": "",
+        "IdCliente": 45210, "RazonSocial": "COMERCIAL X SA DE CV", "RFC": "CXX010101ABC",
+        "NomEmpresa": "COMERCIAL X", "RSocietario": "SA DE CV",
+        "CalleNo": "AV REFORMA 100", "Colonia": "CENTRO", "IdCiudad": 12, "CP": "64000",
+        "RazonSocial1": "BODEGA NORTE", "Email": "compras@x.com",
+        "CalleNo1": "CALLE 5 200", "Colonia1": "INDUSTRIAL", "Ciudad1": "APODACA",
+        "Estado1": "NUEVO LEON", "CP1": "66600", "Referencia": "PORTON AZUL", "Attn": "LIC. GOMEZ",
+        "Vigentes": true, "EnTarima": false, "Adelantado": false, "SurtParcial": false,
+        "BckOrd": 3, "Seguro": false, "DescPP1": 0, "IdEntrega": 12, "IdTran": 184,
+        "ReqCte": "OC-8891", "Notas1": "ENTREGAR MATUTINO", "Notas2": "",
+        "PagAnt": false, "SolCancPed": false, "FEFormaPago": "99", "FEDigitosCuenta": "",
+        "IdRFiscal": "601", "IdUsoCFDI": "G03", "IdRemision": "N"
+      }
+    ]
+  }
+  ```
+
+  ---
+
+  ## 6. Headers
+
+  ```
+  Content-Type: application/json
+  ```
+
+  ---
+
+  ## 7. Ejemplo de Response
+
+  ### Éxito
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Cambios aplicados al pedido 2965291-0 correctamente.",
+      "ttPedido": [ ... ]
+    }
+  }
+  ```
+
+  ### Éxito con cancelación (SolCancPed en estatus 0 sin tareas)
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Cambios aplicados y pedido 2965291-0 CANCELADO (solicitud de cancelacion con estatus original sin tareas)."
+    }
+  }
+  ```
+
+  ### Error de validación (ejemplo)
+
+  ```json
+  { "response": { "IdError": true, "Respuesta": "Folio de vendedor inexistente, verifique..." } }
+  ```
+
+  ---
+
+  ## 8. Validaciones del Servicio (mensajes exactos)
+
+  Réplica de la pantalla; cada regla devuelve `IdError = true` y **no** guarda nada (salvo el aviso de facturado, que no bloquea):
+
+  **`"No se recibieron datos del pedido."`** — body vacío
+  **`"Se requiere el usuario (IdUser)."`**
+  **`"Pedido inexistente, verifique..."`**
+  **`"El pedido ya fue facturado..."`** — *aviso*, `IdError = false` (estatus > 4 o < -1 con factura)
+  **`"Folio de vendedor inexistente, verifique..."`**
+  **`"Folio de cliente inexistente, verifique..."`** — cliente ≠ 3
+  **`"Folio de ciudad inexistente, verifique..."`**
+  **`"RFC incorrecto..."`** — estructura (longitud, posiciones, fecha embebida)
+  **`"El SAT informa que el RFC ingresado no existe en sus registros..."`** — `sisd0002.p`
+  **Mensajes de CP** (`vtad0015.p`) — CP ≠ 5 dígitos
+  **`"El pedido esta ligado en facturacion y no puede cambiarse el tipo de facturacion..."`** — cambiar `Adelantado` con liga `F`
+  **`"El cliente no tiene condiciones de surtido parcial."`**
+  **Backorder** — 3 mensajes: adelantado ≠ BO 3; surtido parcial ≠ BO 2; adelantado+parcial ≠ BO 2
+  **Descuento PP** (`DescPP1 ≠ 0`): `"Descuento Solo Valido Para Ventas de Contado...."` · precios de contrato (`IndicaPre C`) · distribuidor (`D`) · `"CLIENTE TIENE FACTOR DE DESCUENTO ..."` · `"CLIENTE TIENE SALDO VENCIDO A MAS DE 30 DIAS..."` · `"CALIDAD DEFINIDA NO APLICA PARA DESCUENTOS..."`
+  **`"Folio de entrega inexistente, verifique..."`** / **`"Folio de transporte inexistente, verifique..."`**
+  **Quitar `PagAnt`** (contado): cheque sin protección · formas 03/04/28 solo anticipado · efectivo > $5,000 (salvo entregas 16/20/21 y trans 184/185)
+  **`"Forma de pago invalida, verifique valores..."`** / dígitos no numéricos o serie < 4
+  **`"Regimen fiscal inexistente..."`** / **incompatible** (601,603,620 vs 605,612,616)
+  **`"Uso de CFDI incorrecto..."`** / **`"El regimen fiscal del cliente no es valido para el uso del CFDI ingresado..."`**
+  **`"El cliente no tiene las condiciones de embarque especial o envio con remision, cambio no procede."`** — `IdRemision = "S"` sin `Cliente.EmbEsp`
+  **`"El pedido esta siendo usado por otro proceso; intente de nuevo."`** — pedido bloqueado (candado `EXCLUSIVE-LOCK NO-WAIT`)
+
+  ---
+
+  ## 9. Efectos (réplica de `PROCEDURE Actualiza`)
+
+  Dentro de una transacción:
+
+  1. **`Pedido`** — se asignan los ~39 campos editables.
+  2. **`Pedido.DobleEmb`** — `true` si entrega 20/21 desde almacén `02B`/`FUG`.
+  3. **`EstPedido`** — `Id-Vendedor`, `Id-Cliente`, `Adelantado`.
+  4. **`Cliente.MetodoPPD`** (o **`CteSReg.MetodoPPD`** si cliente 3) se sincroniza.
+  5. **`Factura`/`Remision`** — `Id-Entrega` y `Id-Tran` si el pedido ya facturó (estatus 5).
+  6. **`CteSReg`** — respaldo del cliente 3 con RFC real.
+  7. **Cancelación inmediata** si `SolCancPed = true` con estatus 0 y sin tareas: `CancPed`/`CancDetPed`, reversa de inventario, `bodd1050.p`, `embd0010.p`, bitácora `vtaa0117_rest.p`, `DELETE Pedido`.
+  8. **Correo** por cambio de cliente en pedidos con cortes ≥ 3 o de transformación (folio "3").
+  9. **Bitácora `CambioPed`** — ver §10.
+
+  ---
+
+  ## 10. Bitácora de cambios `CambioPed`
+
+  Antes de guardar, se compara el valor actual del pedido contra el que llega y se graba **un renglón en `CambioPed` por cada campo que cambió** (misma transacción; si el guardado se deshace, la bitácora también). El número de `Campo` es el **ORDER de la columna en el esquema `Pedido`** (único por columna). Los campos sin cambio no generan renglón.
+
+  Para el detalle de la tabla, el mapa campo→ORDER y la consulta del historial, ver **[pedcambio-ConsultaBitacora.md](pedcambio-ConsultaBitacora.md)**.
+
+  ---
+
+  ## 11. Auditoría (`programas/auditoria.p`)
+
+  **Area** = `oeVentas` · **Modulo** = `Pedidos` · **Programa** = `pedcambio`
+  **Operacion** = `POST` · **Resource** = `/Ventas/Pedidos/ActualizaGenerales`
+  **Respuesta** = `Pedido: <folio>-<resto>`
+
+  Es la auditoría **operacional** (quién ejecutó el servicio). La auditoría **de campos** (qué columna cambió) es `CambioPed` (§10).
+
+  ---
+
+  ## 12. Reglas importantes del contrato
+
+  1. **El POST asigna TODOS los campos de `ttPedido` sin diff.** Un campo omitido en el body llega con su valor por defecto y **sobrescribe** el actual. En particular `MetodoPPD` omitido = `false` y lo apaga; y en `CambioPed` quedará registrado como cambio real. **El front debe reenviar siempre lo que devolvió Consulta.**
+  2. **`PagAnt` / `FEFormaPago` / `FEDigitosCuenta` solo son editables en contado** (`Id-Cond = 0`); en crédito el servicio conserva los valores actuales, igual que la pantalla los brinca.
+  3. **Autollenados de la pantalla** (cliente → datos fiscales, RFC → `CteSReg`) son responsabilidad del front; el servicio valida los datos finales.
+  4. La **confirmación** ("¿Desea realizar los cambios…?") es del front; el servicio no tiene parámetro `Confirmar`.
+
+  ---
+
+  ## 13. Registro en el resourceModel
+
+  Recurso `_Ventas_Pedidos_ActualizaGenerales`, path `/Ventas/Pedidos/ActualizaGenerales`, verbo **POST**, operación `pedcambio..actualizaGenerales`. El binding ya existe en `pedcambio.pidl`.
+
+  ---
+
+  ## 14. Plan de Pruebas
+
+  | # | Caso | Esperado |
+  |---|------|----------|
+  | P1 | Cada validación de §8 (una por request) | Mensaje exacto, sin cambios en BD |
+  | P2 | POST válido cambiando dirección de embarque y notas | Cambios en `Pedido` + auditoría + renglones en `CambioPed` |
+  | P3 | POST cambiando cliente en pedido con cortes | Cambia + correo "Cambio de cliente al pedido..." |
+  | P4 | POST con `SolCancPed = true` en estatus 0 sin tareas | Cancelación completa (CancPed/CancDetPed, inventario, DELETE) |
+  | P5 | POST sin cambios reales | Guarda, pero **no** crea renglones en `CambioPed` |
+  | P6 | Body sin `IdUser` | `"Se requiere el usuario (IdUser)."` |
+  | P7 | Pedido bloqueado por otra sesión | `"El pedido esta siendo usado por otro proceso..."` |
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

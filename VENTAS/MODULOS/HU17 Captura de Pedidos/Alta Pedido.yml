@@ -1,0 +1,200 @@
+info:
+  name: Alta Pedido
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/Captura/Alta
+  body:
+    type: json
+    data: |-
+      {
+        "dsPedAlta": {
+          "ttEncPed": [
+            {
+              "IdCliente": 575, "Iniciales": "OLDS", "TipoPrecio": "M",
+              "IdMoneda": 1, "IdCond": 0, "Enviar": false, "BckOrd": 1,
+              "IdRemision": "N", "ReqCte": "OC-8891", "Attn": "COMPRAS"
+            }
+          ],
+          "ttPartPed": [
+            { "IdArticulo": "021118", "IdColor": 2, "IdPres": 0, "Descr": "LAPIZ ADHESIVO",
+              "Cant": 12, "PUnit": 18.50, "Descto": 0, "PorcIVA": 16 }
+          ]
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Pedido / Captura / Alta — Alta de pedido con JSON limpio
+
+  ## 1. Descripción
+
+  Da de alta un **pedido de venta** a partir de un JSON limpio (lo que el usuario captura). El servidor:
+
+  1. **Valida** el encabezado y las partidas (tipos, obligatorios, existencia de catálogos).
+  2. **Deriva** del cliente los datos fijos (razón social, RFC, teléfono, dirección) y del usuario el vendedor / ubicación / almacén origen.
+  3. **Calcula** Importe, IVA y existencia por partida, y los totales (subtotal, IVA, total, y subtotal con existencia).
+  4. **Evalúa las políticas de venta/crédito** con la misma lógica de `vtad0125.p` y decide `EnFirme` igual que el modo carácter `vtaa0110.p`.
+  5. **Delega el grabado** al motor probado `pedido2.p / creaPedidos` (folio real, costos, inventario comprometido, requisición).
+
+  Tercera y última llamada del flujo: `/Pedido/Captura/Consulta` → `/Pedido/Captura/Partidas` → `/Pedido/Captura/Alta` (esta).
+
+  ## 2. Método y URL
+
+  `POST` `http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/Captura/Alta`
+
+  Programa: `pedaltaped.p` · Procedimiento: `creaPedidoLimpio`
+
+  ## 3. Headers
+
+  `Content-Type: application/json`
+
+  ## 4. Cuerpo (body) — DATASET `dsPedAlta`
+
+  El body es un dataset con **un encabezado (`ttEncPed`)** y **n partidas (`ttPartPed`)**.
+
+  ### 4.1. Campos de `ttEncPed` (encabezado)
+
+  > ✅ = Requerido · ❌ = Opcional · Vacío/0 = el servidor lo deriva o usa default
+
+  **`IdCliente`** · INTEGER · ✅ — Cliente del pedido.
+  **`Iniciales`** · STRING · ✅ — Usuario que captura (Id-User); deriva almacén y capturador.
+  **`IdVendedor`** · STRING · ❌ — Vendedor; si vacío se deriva del usuario (o `0104`).
+  **`IdAlm`** · STRING · ❌ — Almacén origen; si vacío deriva de `Usuario.Id-Ubicacion` / AlmPrior.
+  **`IdUbiVta`** · STRING · ❌ — Ubicación de venta; si vacío deriva del usuario/vendedor.
+  **`IdCaptura`** · STRING · ❌ — `"0104"` = CallCenter (recalcula existencia); si vacío = vendedor.
+  **`TipoPrecio`** · STRING · ✅ — `M` / `II` / `MX` / `TC` / `EX`.
+  **`IdMoneda`** · INTEGER · ❌ — `1` = pesos (default). `>1` fuerza pendiente de autorización.
+  **`IdCond`** · INTEGER · ❌ — `0` = contado; `<>0` = crédito.
+  **`Plazo`** · INTEGER · ❌ — Plazo de crédito.
+  **`PagAnt`** · BOOLEAN · ❌ — Pago anticipado.
+  **`Enviar`** · BOOLEAN · ❌ — Envío (CEDIS) — afecta el cálculo del monto de políticas.
+  **`Seguro`** · BOOLEAN · ❌ — Seguro.
+  **`Sust`** · BOOLEAN · ❌ — Sustituir.
+  **`Vigentes`** · BOOLEAN · ❌ — Permite precios no vigentes.
+  **`BckOrd`** · INTEGER · ❌ — Backorder (default `1`).
+  **`FecBck`** · DATE · ❌ — Fecha límite de backorder.
+  **`IdEntrega`** · INTEGER · ❌ — Tipo de entrega.
+  **`IdTran`** · INTEGER · ❌ — Transporte.
+  **`IdRutaEmb`** · INTEGER · ❌ — Ruta de embarque.
+  **`IdRemision`** · STRING · ❌ — `S` / `N`.
+  **`IdForPed`** · STRING · ❌ — Folio de forma de pedido.
+  **`ReqCte`** · STRING · ❌ — Requisición del cliente / orden de compra.
+  **`OrdComCte`** · STRING · ❌ — Orden de compra del cliente.
+  **`Attn`** · STRING · ❌ — Atención.
+  **`Adelantado`** · BOOLEAN · ❌ — Facturar por adelantado.
+  **`SurtParcial`** · BOOLEAN · ❌ — Surtido parcial.
+  **`IdCot`** · STRING · ❌ — Cotización origen.
+  **`Nota1` / `Nota2`** · STRING · ❌ — Observaciones (Notas).
+  **`Obs1` / `Obs2`** · STRING · ❌ — Memos (Observaciones).
+  **`IdRFiscal`** · STRING · ❌ — Régimen fiscal; si vacío se usa el del cliente.
+  **`IdUsoCFDI`** · STRING · ❌ — Uso CFDI; si vacío se usa el del cliente.
+  **`FEFormaPago`** · STRING · ❌ — Forma de pago; si vacío se usa la del cliente.
+  **`FEDigitosCuenta`** · STRING · ❌ — Dígitos de cuenta.
+  **`Email` / `Email2`** · STRING · ❌ — Correos; `Email` vacío usa el del cliente.
+  **`RazonSocial1`, `CalleNo1`, `Colonia1`, `IdCiudad1`, `Delegacion1`, `Ciudad1`, `Estado1`, `Pais1`, `CP1`, `Referencia`, `TelEmb`, `FaxEmb`** · ❌ — Datos de **embarque alterno**; si se omiten se usa la dirección del cliente.
+  **`IvaGlobal`** · DECIMAL · ❌ — % de IVA general para el cálculo del monto de políticas (default `16`).
+
+  ### 4.2. Campos de `ttPartPed` (partidas)
+
+  **`IdArticulo`** · STRING · ✅ — Artículo (activo).
+  **`IdColor`** · INTEGER · ❌ — Color.
+  **`IdPres`** · INTEGER · ❌ — Presentación.
+  **`Descr`** · STRING · ✅ — Descripción de la partida.
+  **`Cant`** · DECIMAL · ✅ — Cantidad (> 0).
+  **`PUnit`** · DECIMAL · ✅ — Precio unitario (ya calculado por `/Pedido/Captura/Partidas`).
+  **`Descto`** · INTEGER · ❌ — % de descuento.
+  **`PorcIVA`** · DECIMAL · ❌ — % IVA; si `0` se deriva del artículo.
+  **`IndicaPre`** · STRING · ❌ — Indicador de precio (``, D, C, *…).
+  **`IdMoneda`** · INTEGER · ❌ — Moneda de la partida (default `1`).
+  **`Costo`** · DECIMAL · ❌ — Costo; si `0` lo calcula el motor.
+  **`Tipo`** · INTEGER · ❌ — `1` = artículo (default).
+  **`IdCot`** · STRING · ❌ — Cotización origen de la partida.
+
+  ### 4.3. Ejemplo de body
+
+  ```json
+  {
+    "dsPedAlta": {
+      "ttEncPed": [
+        {
+          "IdCliente": 575, "Iniciales": "jass", "TipoPrecio": "M",
+          "IdMoneda": 1, "IdCond": 0, "Enviar": false, "BckOrd": 1,
+          "IdRemision": "N", "ReqCte": "OC-8891", "Attn": "COMPRAS"
+        }
+      ],
+      "ttPartPed": [
+        { "IdArticulo": "021118", "IdColor": 2, "IdPres": 0, "Descr": "LAPIZ ADHESIVO",
+          "Cant": 12, "PUnit": 18.50, "Descto": 0, "PorcIVA": 16 }
+      ]
+    }
+  }
+  ```
+
+  ## 5. Decisión de firmeza (`EnFirme`) — mismo proceso que el modo carácter
+
+  El pedido queda **EN FIRME** (`EnFirme=true`) sólo si no hay problema de política y ningún bloqueo; de lo contrario se graba **PENDIENTE DE AUTORIZACIÓN** (`EnFirme=false`). Reglas (fieles a `vtaa0110.p` + `vtad0125.p`):
+
+  1. **Moneda ≠ pesos** (`IdMoneda>1`) → `CodErr=7`, `EnFirme=false` (no evalúa más políticas).
+  2. En pesos se evalúa la política con el **monto**:
+     - Local (`Enviar=false` y no FUG): crédito = Total; contado = Subtotal neto.
+     - Envío/foráneo: crédito = SubtotalConExistencia × (1 + IVA/100); contado = SubtotalConExistencia.
+  3. Códigos de política (`CodErr`):
+     - `1–6` = **monto mínimo** (pedido demasiado chico) → **se bloquea el alta** (`IdError=true`).
+     - `7–10` = crédito (excede límite / vencido / cheques devueltos / deuda vencida) → se graba `EnFirme=false`.
+     - `0` = sin problema → `EnFirme=true`.
+     - `Calidad.PolVenta` con código `<7` → `0`. Contado que excede límite (`>6` con `IdCond=0`) → `0`.
+  4. Fuerzan `EnFirme=false` aunque `CodErr=0`: cliente en `BlkAut`; RFC en `blkRFC`; Calidad 37 que excede cantidad/límite de ChequePF (marca ` *CHPF*`); `(SaldoMov + SubtotalNeto) > Cliente.Saldo × 1.3` con `Plazo>0` y `SubtotalNeto ≥ 20000`.
+
+  ## 6. Respuesta
+
+  **`IdError`** · BOOLEAN — `true` si no se pudo grabar (validación, monto mínimo o error).
+  **`Respuesta`** · STRING — Mensaje amigable del resultado.
+  **`Folio`** · STRING — Folio real del pedido generado (vacío si no se grabó).
+  **`EnFirme`** · BOOLEAN — `true` = pedido en firme; `false` = pendiente de autorización.
+  **`CodErr`** · INTEGER — Código de política (0..10) evaluado.
+  **`MensajePolitica`** · STRING — Mensaje textual de la política aplicada (si aplica).
+
+  ## 7. Validaciones (bloquean el alta)
+
+  | Condición | Mensaje |
+  |-----------|---------|
+  | Sin encabezado | "Falta el encabezado (ttEncPed)." |
+  | `IdCliente <= 0` | "Se requiere IdCliente." |
+  | `Iniciales` vacío | "Se requiere Iniciales (usuario)." |
+  | `TipoPrecio` fuera de M/II/MX/TC/EX | "TipoPrecio invalido (M, II, MX, TC o EX): X." |
+  | Cliente inexistente | "No existe el cliente N." |
+  | RFC del cliente < 12 caracteres | "Es Necesario Alimentar Completo el R.F.C. del Cliente, si no cuenta con uno utilice: XAXX-010101-000" |
+  | Cliente 4763 (TERRA) sin embarque | "Se necesitan datos completos de embarque para ventas a TERRA NETWORKS." |
+  | Usuario inexistente | "Usuario no encontrado: X." |
+  | No se determina vendedor | "No se pudo determinar un vendedor valido para el usuario X." |
+  | No se determina almacén | "No se pudo determinar el almacen origen del usuario X." |
+  | Partida sin artículo | "Hay una partida sin IdArticulo." |
+  | Artículo inexistente/inactivo | "Articulo inexistente o inactivo: X." |
+  | Partida sin descripción | "Falta la descripcion en el articulo X." |
+  | Cantidad ≤ 0 | "Cantidad invalida en articulo X." |
+  | Sin partidas | "El pedido no tiene partidas." |
+  | Política de monto mínimo (CodErr 1–6) | Texto exacto de `vtad0125.p` (p.ej. "NO SE PUEDEN HACER VENTAS DE CREDITO POR MENOS DE $X") |
+
+  ## 8. Observaciones técnicas
+
+  - El endpoint **arma el dataset completo** `dsPedido2` (encabezado + partidas con Importe/IVA/Existencia) y delega a `pedido2.p/creaPedidos`, que asigna el folio real, calcula costos, compromete inventario y crea requisición (si `EnFirme` y almacén 02B/FUG).
+  - La política se **porta** de `vtad0125.p` (no se ejecuta el programa carácter) para correr headless sin prompts ni dependencias de terminal. Es equivalente porque `vtaa0110.p` invoca `vtad0125.p` con `p-Factor=1`, lo que anula la disminución de monto mínimo y el password de autorización.
+  - Los datos fijos del cliente (razón social, RFC, teléfono, dirección) se **derivan en el servidor**; no es necesario enviarlos en el body.
+  - El pedido pendiente de autorización se procesa después por el flujo de autorización de Créditos.
+
+  ## 9. Relacionados
+
+  - `/Pedido/Captura/Consulta` — [pedcliente-CapturaPedidoCliente.md](pedcliente-CapturaPedidoCliente.md)
+  - `/Pedido/Captura/Partidas` — [pedpartida-CapturaPedidoPartidas.md](pedpartida-CapturaPedidoPartidas.md)
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

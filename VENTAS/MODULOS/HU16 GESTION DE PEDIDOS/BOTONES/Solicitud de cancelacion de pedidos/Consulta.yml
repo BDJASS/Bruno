@@ -1,0 +1,107 @@
+info:
+  name: Consulta
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/SolicitudCancelacion?IdPedido=1548803&Resto=0
+  params:
+    - name: IdPedido
+      value: "1548803"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Pedidos: Consulta de Solicitud de Cancelación
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedidos — Consulta de Solicitud de Cancelación**
+  Regresa los datos del pedido para la pantalla de solicitud de cancelación (cliente, RFC, estatus en texto, dirección, importe, factura, cortes) y la solicitud existente si ya hay una.
+  Programa servidor: `pedsolcanc.p` · Procedimiento: `leeSolicitudCancelacion` (GET) | Versión REST de `vtaa0060.p` (modo carácter). Módulo `/Ventas/Pedidos/`.
+
+  > El registro de la solicitud (y la cancelación inmediata si aplica) se hace con `POST /Ventas/Pedidos/SolicitudCancelacion` (ver `pedsolcanc-SolicitaCancelacion.md`).
+
+  ---
+
+  ## 2. Método HTTP y URL
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/SolicitudCancelacion
+  ```
+
+  ---
+
+  ## 3. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido (se normaliza: primer carácter + resto a 6 dígitos)
+  **`Resto`** · STRING · ❌ — Resto del pedido; vacío = `0`
+
+  ---
+
+  ## 4. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Pedidos/SolicitudCancelacion?IdPedido=1123456&Resto=0
+  ```
+
+  ---
+
+  ## 5. Campos del Response (`ttSolCanc`)
+
+  Datos del pedido más la solicitud existente:
+
+  - **Pedido:** cliente, RFC, **estatus en texto** (PAUSA EN EMBARQUE/SURTIDO, ORIGINAL, SURTIENDOSE, POR EMPACAR, EMPACANDOSE, POR FACTURAR, FACTURADO, EMBARCADO), dirección, importe, factura, bandera **`TieneCortes`**.
+  - **Solicitud existente:** `SolCancPed`, usuario + nombre, fecha, hora, motivo (vacíos si aún no hay solicitud).
+
+  **`Respuesta`** — confirma la consulta; puede anteponer los avisos (factura / cortes). En error trae el motivo del bloqueo.
+
+  ---
+
+  ## 6. Validaciones (mensajes exactos)
+
+  Las reglas del pedido (`ValidaPedido`) se corren igual que en el POST:
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | Pedido/resto inexistente | `"Folio de pedido-resto inexistente, verifique..."` |
+  | Ligado en facturación (`Id-Liga` inicia con F) | `"El pedido se encuentra ligado en facturacion, favor de eliminar la liga antes de solicitar su cancelacion."` |
+  | Estatus > 5 o `EstPedido.FecEmb` asignada | `"El pedido ya fue embarcado."` |
+  | No autorizado por créditos (`EnFirme = false`) | `"El pedido no ha sido autorizado aun, para cancelarlo debe avisar al departamento de CREDITOS."` |
+  | Con factura asignada | **Aviso** (no bloquea): `"El pedido ya cuenta con folio de factura <folio>; favor de verificar que el documento ya haya sido cancelado."` |
+  | Con cortes | **Aviso** (no bloquea): `"El pedido contiene cortes."` |
+
+  ---
+
+  ## 7. Plan de Pruebas
+
+  | # | Caso | Esperado |
+  |---|------|----------|
+  | C1 | GET pedido inexistente / ligado / embarcado / sin EnFirme | Mensajes de bloqueo exactos |
+  | C2 | GET pedido con factura o cortes | `IdError: false` + avisos en `Respuesta` |
+  | C3 | GET pedido con solicitud previa | Datos de la solicitud (usuario, fecha, motivo) en `ttSolCanc` |
+
+  ---
+
+  ## 8. Resultado
+
+  | Estado              | Descripción                                                  |
+  |---------------------|--------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

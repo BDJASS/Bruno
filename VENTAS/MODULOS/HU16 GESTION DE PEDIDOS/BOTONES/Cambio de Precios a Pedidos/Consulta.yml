@@ -1,0 +1,115 @@
+info:
+  name: Consulta
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/CambioPrecios/Consulta?IdUser=olds&IdPedido=2955590&Resto=0&IdArticulo=066406
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdPedido
+      value: "2955590"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+    - name: IdArticulo
+      value: "066406"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Pedidos: Consulta de Precio
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedidos — Consulta de Precio**
+  Regresa **solo la información inicial** de los renglones de un artículo en un pedido (lo que se ve al enviar pedido+resto+artículo), para la pantalla de captura de precios.
+  Programa servidor: `pedprecio.p` · Procedimiento: `consultaPrecio` (GET) | Versión REST de `vtad0270.p` (modo carácter). Módulo `/Ventas/Pedidos/`.
+
+  > La modificación del precio se hace con el endpoint `POST /Ventas/Pedidos/ActualizaPrecio` (ver `pedprecio-ActualizaPrecio.md`).
+
+  ---
+
+  ## 2. Método HTTP y URL
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Precio
+  ```
+
+  ---
+
+  ## 3. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido (se normaliza: primer carácter + resto a 6 dígitos)
+  **`Resto`** · STRING · ❌ — Resto del pedido; vacío = `0`
+  **`IdArticulo`** · STRING · ✅ — Clave del artículo (se rellena a 6 dígitos)
+
+  ---
+
+  ## 4. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Pedidos/Precio?IdPedido=2955590&Resto=0&IdArticulo=066406
+  ```
+
+  ---
+
+  ## 5. Campos del Response (`ttPrecio`, por renglón)
+
+  Solo la información inicial que se ve al consultar (los campos que cambian al ajustar el precio se regresan en el POST):
+
+  **`Reng`** · INTEGER — Número de renglón
+  **`CantPed`** · DECIMAL — Cantidad pedida
+  **`Kolor`** · STRING — Color (descripción)
+  **`Presentacion`** · STRING — Presentación
+  **`PUnit`** · DECIMAL — Precio unitario actual
+
+  > **No** incluye `Iva`, `Importe`, `Descto`, `% Descto` ni `Margen Bruto`: esos se recalculan/actualizan al modificar el precio y se regresan en la **mini tabla `ttAjuste`** del POST `ActualizaPrecio`, para que el front los integre en la misma consulta.
+
+  **`Respuesta`** — en éxito no cuenta renglones; solo confirma el contexto (`"Articulo <art> en pedido <folio>-<resto>."`). La información viene en `ttPrecio`. En error trae el mensaje del problema.
+
+  ---
+
+  ## 6. Validaciones (mensajes exactos)
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | Pedido inexistente | `"PEDIDO INEXISTENTE"` |
+  | Estatus ≥ 5, o -2 con factura | `"PEDIDO YA FACTURADO, IMPOSIBLE CAMBIAR PRECIOS"` |
+  | Artículo no está en el pedido | `"ARTICULO INEXISTENTE EN EL PEDIDO"` |
+
+  ---
+
+  ## 7. Plan de Pruebas
+
+  | # | Caso | Esperado |
+  |---|------|----------|
+  | C1 | GET a pedido inexistente | `"PEDIDO INEXISTENTE"` |
+  | C2 | GET a pedido facturado | `"PEDIDO YA FACTURADO..."` |
+  | C3 | GET artículo ajeno al pedido | `"ARTICULO INEXISTENTE EN EL PEDIDO"` |
+  | C4 | GET válido | `ttPrecio` con `CantPed`/`Kolor`/`Presentacion`/`PUnit` por renglón; sin `Iva`/`Importe`/`Descto`/`% Descto`/`Margen Bruto` |
+
+  ---
+
+  ## 8. Resultado
+
+  | Estado              | Descripción                                                  |
+  |---------------------|--------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

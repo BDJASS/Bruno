@@ -1,0 +1,196 @@
+info:
+  name: Consulta Inicial copy
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Gestion/Consulta?IdUser=olds&IdPedido=2892049
+  params:
+    - name: ctFecRegIni
+      value: 01/06/2026
+      type: query
+      disabled: true
+    - name: ctFecRegFin
+      value: 07/08/2026
+      type: query
+      disabled: true
+    - name: IdEstatus
+      value: "99"
+      type: query
+      disabled: true
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdPedido
+      value: "2892049"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Pedidos: Consulta (con banderas de facturación)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedidos — Consulta de Pedidos**
+  Consulta de pedidos por folio / resto / vendedor / cliente / RFC / rango de fechas / requisición, con **banderas que indican si el pedido es facturable, de qué tipo (crédito/contado) y si es de cliente especial**, más las banderas de backorder, cortes, ligado y adelantado. Reemplaza al flujo carácter `vtaa0500.p` (que abría un grid aparte con botones Crédito/Contado/Ctes.Esp): ahora esa información viaja en el mismo grid de la consulta.
+  Programa servidor: `pedido2.p` · Procedimiento: `leePedidos`. Módulo `/Ventas/Pedidos/`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL (ruta de la operación)
+
+  ```
+  .../pedido/leePedidos
+  ```
+
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · Todos son texto; vacíos = sin filtrar (salvo IdUser).
+
+  **`IdUser`** · STRING · ✅ — Usuario que consulta. Vacío → *"Se requiere el usuario (IdUser)."*
+  **`Id-Pedido`** · STRING · ❌ — Folio exacto (7 posiciones para búsqueda puntual)
+  **`Resto`** · STRING · ❌ — Resto del pedido
+  **`Id-Vendedor`** · STRING · ❌ — Folio del vendedor
+  **`Id-Cliente`** · STRING · ❌ — Número de cliente
+  **`RFC`** · STRING · ❌ — Coincidencia parcial (`MATCHES "*rfc*"`)
+  **`ctFecRegIni`** · STRING(fecha) · ❌ — Fecha de registro desde
+  **`ctFecRegFin`** · STRING(fecha) · ❌ — Fecha de registro hasta
+  **`Id-Estatus`** · STRING · ❌ — Con `-99` deja solo los "pendientes" (buckets de estatus); otros valores no filtran
+  **`ReqCte`** · STRING · ❌ — Requisición del cliente (exacta)
+
+  ---
+
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
+
+  ```
+  Content-Type: application/json
+  ```
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../pedido/leePedidos?IdUser=olds&ctFecRegIni=08/01/2026&ctFecRegFin=08/07/2026
+  GET .../pedido/leePedidos?IdUser=olds&Id-Pedido=2965291&Resto=0
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Consulta ejecutada correctamente.",
+      "ttPedidoLee": [
+        {
+          "IdPedido": "2965291", "Resto": 0, "IdCliente": 45210,
+          "RazonSocial": "COMERCIAL X SA DE CV", "IdVendedor": "0123",
+          "VendNombre": "JUAN PEREZ", "FecReg": "2026-07-30",
+          "IdEstatus": 4, "Estatus": "P/Facturar", "IdCond": 30, "Pago": "CREDITO",
+          "Total": 15230.50, "IVA": 2101.45,
+          "Facturable": true, "TipoFactura": "CREDITO", "EsEspecial": false,
+          "Adelantado": false, "BO": false, "Cortes": false, "Ligado": false
+        }
+      ]
+    }
+  }
+  ```
+
+  ### Errores (mismo sobre)
+
+  ```json
+  { "response": { "IdError": true, "Respuesta": "Se requiere el usuario (IdUser)." } }
+  { "response": { "IdError": true, "Respuesta": "No existe pedido con ese folio." } }
+  { "response": { "IdError": true, "Respuesta": "Pedido Cancelado: FECHA: 07/30/2026 HORA: 10:12:03 AUT: olds" } }
+  ```
+
+  ---
+
+  ## 9. Banderas de facturación (NUEVO)
+
+  Se calculan por pedido con la misma regla del proceso carácter (`vtaa0496.i`/`vtaa0493.i`). En `ttPedidoLee`:
+
+  **`Facturable`** · BOOLEAN — `true` cuando el pedido está listo para facturar: `EstPedido.Estatus = 4` (empacado), **o** `Adelantado = true` con `EstPedido.Estatus` en `0/1/2`. Un pedido ya facturado (estatus 5) sale `false`.
+  **`TipoFactura`** · STRING — `"CONTADO"` si `Id-Cond = 0`; `"CREDITO"` si `Id-Cond <> 0` (equivale a la columna `C!R` del grid carácter).
+  **`EsEspecial`** · BOOLEAN — `true` si `Cliente.EmbEsp = true` (los del botón "Ctes. Esp."). Los normales son `false`.
+  **`Adelantado`** · BOOLEAN — `Pedido.Adelantado` (usa un motor de factura distinto; columna `F!A`).
+  **`BO`** · BOOLEAN — Backorder real: `BckOrd` 3 o 4 **y** con al menos un renglón `Tipo 1` pendiente (`CantEnt < CantPed`).
+  **`Cortes`** · BOOLEAN — `Id-Corte3 <> ""` o `Id-Corte4 <> ""`.
+  **`Ligado`** · BOOLEAN — `Id-Liga <> ""`.
+
+  > El join a `EstPedido` es por `Id-Pedido + Id-Seq (= Resto)`. La almacén/prefijo del folio y las validaciones previas a facturar (RFC ≥ 12, `Filler-1 = "*** GRAFICO"`, cortes completos, cliente 3 solo contado, día > 20 para ciertos clientes) se aplicarán en el servicio de facturación, no en esta consulta.
+
+  ---
+
+  ## 10. Campos de respuesta `ttPedidoLee` (principales)
+
+  Además de las banderas (§9), la fila trae el pedido completo **en camelCase** (sin columnas duplicadas con guion). Los más usados en el grid:
+
+  **`IdPedido`** · STRING — Folio · **`Resto`** · INTEGER
+  **`IdCliente`** · INTEGER · **`RazonSocial`** · STRING · **`RFC`** · STRING
+  **`IdVendedor`** · STRING · **`VendNombre`** · STRING — Nombre del vendedor
+  **`FecReg`** · DATE — Fecha de registro
+  **`IdEstatus`** · INTEGER · **`Estatus`** · STRING — Descripción/bucket (`P/Facturar`, `Mcia-Pdte`, …)
+  **`IdCond`** · INTEGER — Condición de venta · **`Pago`** · STRING — `PAGADO`/`PDTE. PAGO`/`CONTRA ENTREGA`/`PDTE. CHEQUE`/`CREDITO`
+  **`Total`** · DECIMAL · **`IVA`** · DECIMAL · **`SubTotal`** · DECIMAL
+  **`IdAlm`** · STRING — Almacén · **`IdLiga`** · STRING — Liga · **`IdFactura`** · STRING
+  **`Condicion`** · STRING · **`Entrega`** · STRING · **`Transporte`** · STRING (descripciones de catálogo)
+
+  > La respuesta incluye ~160 campos del pedido en camelCase (fiscales, envío, banderas del pedido, fechas, etc.). Las columnas antiguas con guion (`Id-Pedido`, `Id-Cliente`, `e-mail`, …) ya **no** se envían (eran duplicados); usar las camelCase.
+
+  ---
+
+  ## 11. Notas técnicas / despliegue
+
+  1. **Contrato nuevo:** la consulta ahora exige `IdUser` y devuelve el sobre `{ IdError, Respuesta, ttPedidoLee }`. El front debe mandar `IdUser` y leer ese formato.
+  2. **Salida limpia:** `leePedidos` devuelve `ttPedidoLee` (temp-table de solo lectura, camelCase). No se tocó `ttPedido` (lo usan `creaPedidos`/`actPedidos`), por eso desaparecieron los duplicados sin afectar crear/actualizar.
+  3. **Regenerar el servicio** en PDSOE (usa anotaciones `@progress.service.resourceMapping`) tras el cambio de firma, y compilar `pedido2.p`.
+  4. El filtro por almacén no está en esta consulta; si se requiere separar por CEDIS/tienda como en carácter, se agrega un parámetro de almacén después.
+
+  ---
+
+  ## 12. Plan de Pruebas
+
+  | # | Caso | Esperado |
+  |---|------|----------|
+  | P1 | Sin `IdUser` | `"Se requiere el usuario (IdUser)."` |
+  | P2 | Rango de fechas | Lista de pedidos con banderas pobladas |
+  | P3 | Pedido empacado (EstPedido.Estatus=4) | `Facturable = true` |
+  | P4 | Pedido adelantado en estatus 1 | `Facturable = true` |
+  | P5 | Pedido ya facturado (estatus 5) | `Facturable = false` |
+  | P6 | Pedido contado (Id-Cond=0) | `TipoFactura = "CONTADO"` |
+  | P7 | Cliente con `EmbEsp=true` | `EsEspecial = true` |
+  | P8 | Pedido con `Id-Corte3` | `Cortes = true` · con liga → `Ligado = true` |
+  | P9 | Folio inexistente / cancelado | Mensaje exacto en `Respuesta`, `IdError=true` |
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

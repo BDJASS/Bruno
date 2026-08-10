@@ -1,0 +1,310 @@
+info:
+  name: Ligar Pedidos
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Liga?IdPedido=2944602&Resto=0&IdUser=olds
+  params:
+    - name: IdPedido
+      value: "2944602"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  body:
+    type: json
+    data: |-
+      {
+        "ttLigaIn": [
+          { "IdPedido": "2944595", "Resto": 1 }
+        ]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Pedidos: Ligar Pedidos
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedidos — Ligar**
+  Liga varios pedidos del mismo cliente para que se facturen (o se embarquen) juntos: toma el folio de liga y lo estampa en `Pedido.Id-Liga` de todos los seleccionados **y** del pedido de origen. Es la segunda mitad de la opción **"Ligar"** del editor de pedidos; la lista de candidatos la da `GET .../Liga/Candidatos`.
+  Programa servidor: `pedcambio.p` · Procedimiento: `ligaPedidos` | Versión REST de `vtad0380.p` (líneas 90-122), que la pantalla invoca desde `vtab0130.p:179-191`. Módulo `/Ventas/Pedidos/`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Liga
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Pedido de origen. Se liga junto con los del body. Se normaliza a 7 posiciones con ceros
+  **`Resto`** · INTEGER · ❌ — Resto del pedido de origen. Vacío = `0`
+  **`Opcion`** · INTEGER · ❌ — Tipo de liga. Vacío = `1`
+  - `1` **FACTURACIÓN** — folio `Liga`
+  - `2` **EMBARQUES** — folio `LigaEmb` · ⚠️ **bloqueada temporalmente**
+
+  **`IdUser`** · STRING · ✅ — Usuario que liga (auditoría)
+
+  ---
+
+  ## 5. Body
+
+  **TABLE `ttLigaIn`** — los pedidos que el usuario eligió de la lista de candidatos.
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido a ligar
+  **`Resto`** · INTEGER · ❌ — Resto. Vacío = `0`
+
+  ```json
+  {
+    "ttLigaIn": [
+      { "IdPedido": "2965305", "Resto": 0 },
+      { "IdPedido": "2965318", "Resto": 0 }
+    ]
+  }
+  ```
+
+  > La temp-table va **plana**: el arreglo directo bajo el nombre del parámetro. **No** se anida `{ "ttLigaIn": { "ttLigaIn": [...] } }` — esa forma es la que usa PASOE para serializar la salida y en la entrada provoca `Error parsing JSON: unexpected token: bracket. (15360)`.
+
+  > No hace falta incluir el pedido de origen en el body: si viene, se ignora (se liga una sola vez, al final).
+
+  ---
+
+  ## 6. Headers
+
+  ```
+  Content-Type: application/json
+  ```
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST .../Ventas/Pedidos/Liga?IdPedido=2965291&Resto=0&Opcion=1&IdUser=olds
+  ```
+
+  ```json
+  {
+    "ttLigaIn": [
+      { "IdPedido": "2965305", "Resto": 0 },
+      { "IdPedido": "2965318", "Resto": 0 }
+    ]
+  }
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ### Liga aplicada
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Se ligaron 3 pedidos en facturacion con la liga L0000046.",
+      "IdLiga": "L0000046"
+    }
+  }
+  ```
+
+  Son **3**: los dos del body más el de origen.
+
+  ### Un pedido del grupo se facturó mientras se ligaba
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "El pedido 2965318-0 fue facturado mientras se ligaba el grupo de pedidos.",
+      "IdLiga": ""
+    }
+  }
+  ```
+
+  ### Pedido de otro cliente
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "El pedido 2965400-0 es de otro cliente; solo se pueden ligar pedidos del mismo cliente.",
+      "IdLiga": ""
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de response
+
+  **`IdError`** · BOOLEAN — `true` = no se ligó ninguno
+  **`Respuesta`** · STRING — resultado o motivo del rechazo
+  **`IdLiga`** · STRING — folio de liga generado. Vacío cuando hubo error. El front lo puede usar para refrescar el grid sin volver a consultar
+
+  ---
+
+  ## 10. Validaciones del Servicio
+
+  ### Antes de abrir la transacción
+
+  **`"Se requiere el usuario (IdUser)."`**
+  **`"Opcion invalida: 1 = ligar en facturacion, 2 = ligar en embarques."`**
+  **`"Temporalmente se encuentra bloqueada la opcion para ligar en embarques."`** — `Opcion = 2`, réplica de `vtad0380.p:46-53`
+  **`"Indique al menos un pedido para ligar."`** — body vacío
+
+  ### Pedido de origen
+
+  **`"Pedido inexistente, verifique..."`**
+  **`"El pedido esta siendo usado por otro proceso; intente de nuevo."`** — registro bloqueado
+  **`"El pedido <folio>-<resto> ya no admite liga por su estatus."`** — estatus ≥ 5 en facturación, ≥ 6 en embarques
+
+  ### Folio de liga
+
+  **`"El folio de ligas esta siendo usado por otro usuario; espere unos segundos y vuelva a intentar."`**
+  **`"No esta definido el folio de ligas (<Liga|LigaEmb>); avise al Departamento de Sistemas."`** — el carácter no revisa `AVAILABLE Folio` y dejaría la liga en blanco en silencio (`vtad0380.p:97`); aquí se corta con mensaje
+
+  ### Cada pedido del body
+
+  **`"El pedido <folio>-<resto> no existe."`**
+  **`"El pedido <folio>-<resto> esta siendo usado por otro proceso; no se ligo ninguno, intente de nuevo."`**
+  **`"El pedido <folio>-<resto> es de otro cliente; solo se pueden ligar pedidos del mismo cliente."`**
+  **`"El pedido <folio>-<resto> fue facturado mientras se ligaba el grupo de pedidos."`** — mismo mensaje que `vtad0380.p:114`
+  **`"El pedido <folio>-<resto> tiene otra condicion de venta; en facturacion solo se ligan pedidos de la misma condicion."`**
+
+  El browse ya filtra por cliente, estatus y condición, pero por REST puede llegar cualquier folio, así que las tres se revalidan al aplicar.
+
+  ---
+
+  ## 11. Todo o nada
+
+  Toda la liga va en **una sola transacción**. Si cualquier pedido del grupo no se puede tomar o no cumple, **no se liga ninguno** y no se consume folio.
+
+  Es una diferencia deliberada con el carácter. `vtad0380.p:103-118` recorre la lista, y ante un pedido bloqueado sólo muestra un mensaje y **sigue** con el siguiente:
+
+  ```progress
+  DO l-Paso = 1 TO NUM-ENTRIES(l-Lista):
+      FIND LAST Pedido WHERE ... EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+      IF AVAILABLE Pedido THEN
+          ASSIGN Pedido.Id-Liga = STRING(l-Folio).
+      ELSE DO:
+          IF LOCKED(Pedido) THEN MESSAGE "...fue facturado mientras se ligaba..."
+      END.
+  END.
+  ```
+
+  Eso deja el grupo **a medias**: unos pedidos con la liga nueva y otros sin ella, con el folio ya consumido. Un grupo parcial es peor que ninguno, porque se facturarían juntos sólo algunos. Por eso aquí se deshace todo y el usuario reintenta.
+
+  > **Otro detalle del carácter que no se replicó:** el `FIND LAST Pedido WHERE Pedido.id-Pedido = ENTRY(...)` de la línea 104 **no filtra por `Resto`**, así que toma el último resto que exista y puede ligar un resto distinto al que el usuario eligió. El servicio recibe `IdPedido` **y** `Resto` por renglón y liga exactamente ése.
+
+  ---
+
+  ## 12. Efectos
+
+  Dentro de la transacción:
+
+  1. Folio de liga — `Folio.Id-Doc = 'Liga'` (facturación) o `'LigaEmb'` (embarques), con `Id-Alm = ""`. Formato `Prefijo + 7 dígitos`.
+  2. `Pedido.Id-Liga = <folio>` en cada pedido del body.
+  3. `Pedido.Id-Liga = <folio>` en el pedido de origen (`vtad0380.p:120-121`).
+
+  > El prefijo del folio `LigaEmb` **debe empezar con "E"**: así lo distingue `quitaLiga` para decir si la liga era "de embarque" o "de facturacion" (`vtab0130.p:1531`, `Pedido.Id-Liga BEGINS "E"`).
+
+  ---
+
+  ## 13. Auditoría
+
+  **Area** = `oeVentas` · **Modulo** = `Pedidos` · **Programa** = `pedcambio`
+  **Operacion** = `POST` · **Resource** = `/Ventas/Pedidos/Liga`
+  **Respuesta** = `Liga <folio>: <origen>,<pedido1>,<pedido2>...`
+
+  Queda el grupo completo en el registro, así que se puede reconstruir qué se ligó con qué.
+
+  ---
+
+  ## 14. Registro en el resourceModel
+
+  `pedcambio.p` **no está publicado**: no tiene entrada en `resourceModel.xml` ni `.pidl` generado. Para liberar este servicio y el de candidatos:
+
+  ```xml
+  <prgs:resource consumes="application/json" name="_Pedidos_Liga"
+                 path="/Ventas/Pedidos/Liga" produces="application/json">
+    <prgs:operation consumes="application/json"
+                    idls="RestADOSAVentas/.services/AppServer/pedcambio.pidl::com.progress.openedge.pdt.bpmbindings"
+                    name="pedcambio..ligaPedidos" produces="application/json" verb="POST">
+      <prgs:param name="IdPedido" type="QUERY"/>
+      <prgs:param name="Resto" type="QUERY"/>
+      <prgs:param name="Opcion" type="QUERY"/>
+      <prgs:param name="IdUser" type="QUERY"/>
+    </prgs:operation>
+    <prgs:operation consumes="application/json"
+                    idls="RestADOSAVentas/.services/AppServer/pedcambio.pidl::com.progress.openedge.pdt.bpmbindings"
+                    name="pedcambio..quitaLiga" produces="application/json" verb="DELETE">
+      <prgs:param name="IdPedido" type="QUERY"/>
+      <prgs:param name="Resto" type="QUERY"/>
+      <prgs:param name="IdUser" type="QUERY"/>
+    </prgs:operation>
+  </prgs:resource>
+  <prgs:resource consumes="application/json" name="_Pedidos_Liga_Candidatos"
+                 path="/Ventas/Pedidos/Liga/Candidatos" produces="application/json">
+    <prgs:operation consumes="application/json"
+                    idls="RestADOSAVentas/.services/AppServer/pedcambio.pidl::com.progress.openedge.pdt.bpmbindings"
+                    name="pedcambio..ligaCandidatos" produces="application/json" verb="GET">
+      <prgs:param name="IdPedido" type="QUERY"/>
+      <prgs:param name="Resto" type="QUERY"/>
+      <prgs:param name="Opcion" type="QUERY"/>
+    </prgs:operation>
+  </prgs:resource>
+  ```
+
+  El orden de los `<prgs:param>` debe coincidir con el de los parámetros del procedimiento.
+
+  ---
+
+  ## 15. Plan de Pruebas
+
+  | # | Caso | Esperado |
+  |---|------|----------|
+  | P1 | `Opcion = 2` | `"Temporalmente se encuentra bloqueada..."` |
+  | P2 | Body vacío | `"Indique al menos un pedido para ligar."` |
+  | P3 | Pedido de origen inexistente | `"Pedido inexistente, verifique..."` |
+  | P4 | Origen con estatus ≥ 5 | `"...ya no admite liga por su estatus."` |
+  | P5 | Un pedido del body de otro cliente | Rechazo, **ninguno** se liga |
+  | P6 | Un pedido del body con estatus ≥ 5 | `"...fue facturado mientras se ligaba el grupo..."`, ninguno se liga |
+  | P7 | Un pedido del body con otra condición de venta | Rechazo, ninguno se liga |
+  | P8 | Liga válida de 2 + origen | `Id-Liga` igual en los 3, `IdLiga` en la respuesta, folio incrementado |
+  | P9 | Incluir el propio origen en el body | Se liga una sola vez; el conteo no lo duplica |
+  | P10 | Pedido del body ya ligado a otro grupo | Se **sobrescribe** su `Id-Liga` (comportamiento del carácter) |
+  | P11 | Folio `Liga` no definido | `"No esta definido el folio de ligas (Liga)..."` |
+  | P12 | Verificar que un rechazo **no** consume folio | `Folio.Folio` sin cambio |
+  | P13 | Auditoría | Registro con el grupo completo en `Respuesta` |
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

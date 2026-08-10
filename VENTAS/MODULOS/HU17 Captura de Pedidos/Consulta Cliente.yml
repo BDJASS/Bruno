@@ -1,0 +1,165 @@
+info:
+  name: Consulta Cliente
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/Captura/Consulta?IdCliente=575&IdUser=olds
+  params:
+    - name: IdCliente
+      value: "575"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Pedido / Captura / Consulta — Carga inicial del cliente
+
+  ## 1. Descripción
+
+  Devuelve, en una sola llamada, todo lo necesario para **iniciar la captura de un pedido de venta** a partir del cliente: datos fiscales del cliente, sus contactos, sus direcciones de embarque y las **condiciones del pedido pre-armadas** (condición de venta, tipo de precio, backorder, envío/entrega según zona, ruta de embarque). Replica la derivación que hace el modo carácter (`vtaa0110.p` / `vtaa0114.p`) al teclear el número de cliente en el alta.
+
+  Es la primera de tres llamadas del flujo de captura:
+  `/Pedido/Captura/Consulta` (esta) → `/Pedido/Captura/Partidas` → `/Pedido/Captura/Alta`.
+
+  ## 2. Método y URL
+
+  `GET` `http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/Captura/Consulta`
+
+  Programa: `pedcliente.p` · Procedimiento: `leeClientePedido`
+
+  ## 3. Headers
+
+  `Content-Type: application/json`
+
+  ## 4. Parámetros de entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdCliente`** · STRING(numérico) · ✅ — Clave del cliente.
+  **`IdUser`** · STRING · ✅ — Usuario que consulta (para bitácora).
+
+  ## 5. Ejemplo de invocación
+
+  ```
+  GET /Pedido/Captura/Consulta?IdCliente=34561&IdUser=jass
+  ```
+
+  ## 6. Respuesta (envltura)
+
+  **`IdError`** · BOOLEAN — `true` si hubo error o no se encontró el cliente.
+  **`Respuesta`** · STRING — Mensaje amigable (incluye conteo de contactos y direcciones).
+  **`dsPedCliente`** · DATASET — `ttClientePed` (1 registro) + `ttContactoPed` (n) + `ttEmbarquePed` (n) + `ttCondPed` (1).
+
+  ## 7. Estructura del dataset
+
+  Relaciones anidadas: `ttContactoPed` y `ttEmbarquePed` cuelgan de `ttClientePed` por `IdCliente`.
+
+  ## 8. Campos de `ttClientePed` (encabezado del cliente)
+
+  **`IdCliente`** · INTEGER — Clave del cliente.
+  **`RazonSocial`** · STRING — Razón social / nombre.
+  **`Propietario`** · STRING — Propietario / atención sugerida.
+  **`RFC`** · STRING — RFC del cliente.
+  **`Telefono`** · STRING — Teléfono principal (Tel1).
+  **`Email`** · STRING — Correo del cliente.
+  **`CalleNo`** · STRING — Calle y número.
+  **`Colonia`** · STRING — Colonia.
+  **`Direccion`** · STRING — Dirección compuesta (calle, colonia, ciudad, estado, C.P.).
+  **`IdCiudad`** · INTEGER — Clave de ciudad.
+  **`Ciudad`** · STRING — Nombre de ciudad.
+  **`Estado`** · STRING — Nombre de estado.
+  **`CP`** · STRING — Código postal.
+  **`Pais`** · STRING — País.
+  **`IdZona`** · INTEGER — Zona del cliente.
+  **`ZonaUbic`** · INTEGER — `1` = local; otro = foráneo (define envío/seguro/entrega).
+  **`IdCalidad`** · INTEGER — Calidad del cliente.
+  **`EsCredito`** · BOOLEAN — `true` si la calidad permite crédito.
+  **`EsMayoreo`** · BOOLEAN — `true` si la calidad es de mayoreo (tipo precio "M").
+  **`PolVenta`** · BOOLEAN — `true` = calidad exenta del monto mínimo de venta.
+  **`Limite`** · DECIMAL — Límite de crédito.
+  **`Saldo`** · DECIMAL — Saldo del cliente.
+  **`Plazo`** · INTEGER — Plazo de crédito (días).
+  **`BackOrder`** · INTEGER — Backorder por default del cliente.
+  **`DesCtdo`** · DECIMAL — Descuento de contado.
+  **`OCYes`** · BOOLEAN — `true` = el cliente exige Orden de Compra (ReqCte obligatoria en el alta).
+  **`SurtParcial`** · BOOLEAN — `true` = el cliente permite surtido parcial.
+  **`EmbEsp`** · BOOLEAN — `true` = embarque especial (define IdRemision).
+  **`IdRutaEmb`** · INTEGER — Ruta de embarque por default.
+  **`Bloqueado`** · BOOLEAN — `true` = cliente en `BlkAut`; el pedido quedará pendiente de autorización.
+  **`RFCBloqueado`** · BOOLEAN — `true` = RFC en `blkRFC`; el pedido quedará pendiente de autorización.
+  **`IdRFiscal`** · STRING — Régimen fiscal por default.
+  **`DescrRFiscal`** · STRING — Descripción del régimen fiscal.
+  **`IdUsoCFDI`** · STRING — Uso de CFDI por default.
+  **`FEFormaPago`** · STRING — Forma de pago por default.
+  **`IdSegmento`** · STRING — Segmento de distribución.
+  **`TotalCortes`** · INTEGER — Total de cortes del cliente.
+  **`MontoCorte`** · DECIMAL — Monto devuelto.
+  **`FechaCorte`** · DATE — Fecha de última devolución.
+  **`HayDstArt`** · BOOLEAN — `true` = el cliente tiene descuentos por artículo activos.
+
+  ## 9. Campos de `ttContactoPed` (contactos — CteEmp)
+
+  **`IdCliente`** · INTEGER — Cliente.
+  **`Nombre`** · STRING — Nombre del contacto.
+  **`Correo`** · STRING — Correo del contacto.
+
+  ## 10. Campos de `ttEmbarquePed` (direcciones de embarque — CliEmb)
+
+  **`IdCliente`** · INTEGER — Cliente.
+  **`RazonSocial`** · STRING — Razón social de la dirección.
+  **`CalleNo`** · STRING — Calle y número.
+  **`Colonia`** · STRING — Colonia.
+  **`Delegacion`** · STRING — Delegación / municipio.
+  **`Ciudad`** · STRING — Ciudad.
+  **`Estado`** · STRING — Estado.
+  **`Pais`** · STRING — País.
+  **`CP`** · STRING — Código postal.
+  **`Referencia`** · STRING — Referencia de embarque.
+  **`IdRutaEmb`** · INTEGER — Ruta de embarque de esta dirección.
+  **`Telefono`** · STRING — Teléfono.
+  **`Fax`** · STRING — Fax.
+  **`Correo`** · STRING — Correo.
+  **`Attn`** · STRING — Atención.
+
+  ## 11. Campos de `ttCondPed` (condiciones pre-armadas del pedido)
+
+  **`TipoPrecio`** · STRING — `"M"` si hay calidad; `"II"` si no.
+  **`IdMoneda`** · INTEGER — `1` = pesos (default).
+  **`IdCond`** · INTEGER — `2` (crédito) si la calidad lo permite; `0` (contado) si no.
+  **`Plazo`** · INTEGER — Plazo del cliente si es crédito.
+  **`PagAnt`** · BOOLEAN — `true` en contado, `false` en crédito.
+  **`Enviar`** · BOOLEAN — Zona local → `false`; foráneo → `true`.
+  **`Seguro`** · BOOLEAN — Zona local → `false`; foráneo → `true`.
+  **`IdEntrega`** · INTEGER — Local `11`; foráneo `18`.
+  **`IdTran`** · INTEGER — Transporte (default `0`).
+  **`IdRutaEmb`** · INTEGER — Ruta de embarque del cliente.
+  **`BckOrd`** · INTEGER — Backorder del cliente.
+  **`IdRemision`** · STRING — `""` si embarque especial; `"N"` si no.
+
+  ## 12. Validaciones
+
+  | Condición | Resultado |
+  |-----------|-----------|
+  | `IdUser` vacío | `IdError=true`, "Se requiere el usuario (IdUser)." |
+  | `IdCliente` vacío | `IdError=true`, "Se requiere el cliente." |
+  | `IdCliente` no numérico o 0 | `IdError=true`, "Numero de cliente invalido." |
+  | Cliente inexistente | `IdError=true`, "No se encontro el cliente N." |
+
+  ## 13. Observaciones técnicas
+
+  - Las condiciones son **sugerencias**; el front puede modificarlas y el alta (`/Pedido/Captura/Alta`) las revalida.
+  - `Bloqueado` / `RFCBloqueado` son informativos: aunque el front los ignore, el alta forzará `EnFirme=false`.
+  - El servidor no guarda estado entre llamadas; el front acumula el pedido.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

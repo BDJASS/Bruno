@@ -1,0 +1,135 @@
+info:
+  name: Cambio Costo
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/ActualizaCosto?IdUser=olds&IdPedido=2955590&Resto=0&IdArticulo=066406&Pass=olds&NuevoCosto=7.89
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdPedido
+      value: "2955590"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+    - name: IdArticulo
+      value: "066406"
+      type: query
+    - name: Pass
+      value: olds
+      type: query
+    - name: NuevoCosto
+      value: "7.89"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Pedidos: Actualiza Costo
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedidos — Actualiza Costo**
+  Cambia el costo de un artículo en un pedido, con autorización por password; si el pedido ya está facturado (solo usuarios autorizados) **propaga el costo a `DetFactura`/`DetRemis`**; siempre envía el correo de análisis con histórico de costos (vía `correo02_rest.p`, regla dev/prod).
+  Programa servidor: `pedcosto.p` · Procedimiento: `actualizaCosto` (POST) | Versión REST de `vtad0275.p` (modo carácter). Módulo `/Ventas/Pedidos/`.
+
+  > Para obtener los renglones y costos actuales usar primero `GET /Ventas/Pedidos/Costo` (ver `pedcosto-ConsultaCosto.md`).
+
+  ---
+
+  ## 2. Método HTTP y URL
+
+  ```
+  POST http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/ActualizaCosto
+  ```
+
+  ---
+
+  ## 3. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`Pass`** · STRING · ✅ — Password de autorización **Tipo 6**
+  **`IdPedido`** · STRING · ✅ — Folio del pedido
+  **`Resto`** · STRING · ❌ — Resto; vacío = `0`
+  **`IdArticulo`** · STRING · ✅ — Clave del artículo (se rellena a 6 dígitos)
+  **`NuevoCosto`** · STRING · ✅ — Nuevo costo (> 0)
+  **`IdUser`** · STRING · ✅ — Usuario que captura (regla de facturado y auditoría)
+
+  ---
+
+  ## 4. Ejemplo de Request
+
+  ```
+  POST .../Ventas/Pedidos/ActualizaCosto?Pass=****&IdPedido=2955590&Resto=0&IdArticulo=066406&NuevoCosto=98.30&IdUser=olds
+  ```
+
+  ---
+
+  ## 5. Campos del Response
+
+  **`IdError`** · BOOLEAN — `true` = no se aplicó (ver `Respuesta`); `false` = aplicado
+  **`Respuesta`** · STRING — En éxito solo indica que fue exitoso (`"Costo del articulo <art> actualizado correctamente."`, o `"Sin cambio: el costo es el mismo."`), con el aviso de facturado antepuesto si aplica. En error, el mensaje del problema.
+  **`VariacionCosto`** · DECIMAL — Label **"Variacion en costo"** de la pantalla = `((CostoNuevo / CostoAnterior) - 1) × 100` (equivale a `l-Porc` del carácter); `0` si no hubo cambio. Se entrega para que el front lo integre en la misma consulta.
+
+  ---
+
+  ## 6. Validaciones (mensajes exactos)
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `"Se requiere el usuario (IdUser)."` |
+  | Password Tipo 6 inválido | `"Password de autorizacion invalido."` |
+  | Costo ≤ 0 | `"El costo no debe ser cero."` |
+  | Pedido inexistente | `"PEDIDO INEXISTENTE"` |
+  | Facturado y usuario NO en OLDS/ALEX/FRANC | `"PEDIDO YA FACTURADO, IMPOSIBLE CAMBIAR PRECIOS"` |
+  | Facturado y usuario autorizado | **Aviso** (no bloquea): `"EL PEDIDO YA ESTA FACTURADO, EL CAMBIO DE COSTO SE AFECTARA A SU FACTURA TAMBIEN."` |
+  | Artículo no está en el pedido | `"ARTICULO INEXISTENTE EN EL PEDIDO"` |
+
+  ---
+
+  ## 7. Efectos del POST
+
+  1. `DetPedido.Costo` en todos los renglones del artículo.
+  2. Si el pedido tiene factura: `DetFactura.Costo` / `DetRemis.Costo` del artículo (buscando por `Factura.Pedidos` / `Remision.Pedidos`).
+  3. **Correo** (asunto `"Cambio de costo en Pedido <folio>"`): variación %, tipo de artículo (de `ArtCol` si aplica), presentación, costo actual/anterior con fechas (histórico `HCosto` × `ArtPres.Equiv`), costo ponderado (`Articulo.PCosto`), última entrada (`DetEC`/`EC`), monto del pedido, condición de venta, días cartera y promedio de pago. Destinatarios: odelgado, ogomez, ogomezdelag, sgomez, flucio (+ aayala hasta 31/03/2026, cláusula replicada tal cual).
+     - Se envía con **`programas/correo02_rest.p`** (regla dev/prod: en DEV redirige a desarrollo y antepone `"DESARROLLO "` al asunto; en prod va a gerencia real con BCC de monitoreo). El cuerpo se arma como HTML (`<pre>`) en `/usr3/tmp` y se envía **después** de la transacción, como aviso **no crítico**. Ya **no** se crea registro en la tabla `e-mail` para un cron; se envía **un** correo consolidado.
+  4. Auditoría: `pOperacion = "POST"`, `pResource = "/Ventas/Pedidos/ActualizaCosto"`, `pArea = "oeVentas"`; la `Respuesta` auditada incluye el autorizador.
+
+  ---
+
+  ## 8. Plan de Pruebas
+
+  | # | Caso | Esperado |
+  |---|------|----------|
+  | P1 | POST password inválido / pedido inexistente / artículo ajeno | Mensajes exactos |
+  | P2 | POST `NuevoCosto=0` | `"El costo no debe ser cero."` |
+  | P3 | POST a pedido facturado con usuario normal | Bloqueado |
+  | P4 | POST a pedido facturado con usuario `ALEX` | Aplica + propaga a `DetFactura`/`DetRemis` (verificar en BD) + aviso |
+  | P5 | POST a pedido vigente | `DetPedido.Costo` cambiado; `VariacionCosto` en la respuesta; correo por `correo02_rest.p` (en DEV llega a desarrollo con "DESARROLLO " en el asunto) |
+  | P6 | POST con el mismo costo | `"Sin cambio: el costo es el mismo."`; `VariacionCosto = 0`; sin correo |
+  | P7 | Verificar el contenido del correo de P5 contra el de la pantalla carácter | Mismos renglones de análisis |
+  | P8 | Auditoría tras P5 | `pOperacion=POST`, `pResource=/Ventas/Pedidos/ActualizaCosto` |
+
+  ---
+
+  ## 9. Observaciones Técnicas
+
+  1. **Lista OLDS/ALEX/FRANC hardcodeada** (decisión #2 del plan): se replica; `IdUser` sustituye a `USERID('dictdb')`.
+  2. **Correo fuera de la transacción:** el contenido se arma en una variable dentro de la transacción (con los datos ya calculados) y el envío se hace tras el commit; si el correo falla, el cambio de costo ya quedó aplicado y la respuesta sigue siendo de éxito. Requiere que el PROPATH del agente PASOE alcance `programas/correo02_rest.p` y que `programas/desarrollo.flag` exista en el servidor DEV para redirigir.
+  3. **`VariacionCosto`** es el único label que la pantalla actualiza tras el cambio (equivalente a `% Descto`/`Margen Bruto` en `pedprecio`); se entrega como salida del POST para que el front lo pinte en la misma consulta.
+  4. **Resultado:** ⏳ pendiente de compilación/deploy y QA.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

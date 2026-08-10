@@ -1,7 +1,7 @@
 info:
   name: HU26 Descuentos Proveedor
   type: folder
-  seq: 11
+  seq: 13
 
 request:
   auth: inherit

@@ -1,0 +1,198 @@
+info:
+  name: Pedidos para Ligar
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Liga/Candidatos?IdPedido=2944602&Resto=0&Opcion=1
+  params:
+    - name: IdPedido
+      value: "2944602"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+    - name: Opcion
+      value: "1"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Pedidos: Pedidos Candidatos para Ligar
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedidos — Candidatos para Ligar**
+  Devuelve los pedidos que se pueden ligar a un pedido dado, para que el front los liste y el usuario elija cuáles. Es la primera mitad de la opción **"Ligar"** del editor de pedidos: la pantalla lo resuelve con un browse interactivo y en REST se parte en dos — este GET arma la lista y `POST .../Liga` la aplica.
+  Programa servidor: `pedcambio.p` · Procedimiento: `ligaCandidatos` | Versión REST del browse `seeksoft.i` de `vtad0380.p` (líneas 58-84), que la pantalla invoca desde `vtab0130.p:179-191`. Módulo `/Ventas/Pedidos/`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Liga/Candidatos
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Pedido de origen, el que se quiere ligar. Se normaliza a 7 posiciones con ceros
+  **`Resto`** · INTEGER · ❌ — Resto del pedido. Vacío = `0`
+  **`Opcion`** · INTEGER · ❌ — Tipo de liga. Vacío = `1`
+  - `1` **FACTURACIÓN** — ligar para facturarse juntos
+  - `2` **EMBARQUES** — ligar para embarcarse juntos · ⚠️ **bloqueada temporalmente**
+
+  ---
+
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
+
+  ```
+  Content-Type: application/json
+  ```
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Pedidos/Liga/Candidatos?IdPedido=2965291&Resto=0&Opcion=1
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ### Con candidatos
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Se encontraron 2 pedido(s) que se pueden ligar.",
+      "ttLigaCand": [
+        {
+          "IdPedido": "2965305", "Resto": 0, "FecReg": "2026-07-22",
+          "IdFactura": "", "Adelantado": false, "IdLiga": "", "IdEstatus": 2
+        },
+        {
+          "IdPedido": "2965318", "Resto": 0, "FecReg": "2026-07-24",
+          "IdFactura": "", "Adelantado": false, "IdLiga": "L0000045", "IdEstatus": 0
+        }
+      ]
+    }
+  }
+  ```
+
+  ### Sin candidatos
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "No hay pedidos que se puedan ligar a este.",
+      "ttLigaCand": []
+    }
+  }
+  ```
+
+  ### Liga en embarques
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "Temporalmente se encuentra bloqueada la opcion para ligar en embarques."
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de response (`ttLigaCand`)
+
+  **`IdPedido`** · STRING — Folio del pedido candidato. Es lo que se manda en el body del POST
+  **`Resto`** · INTEGER — Resto del pedido candidato
+  **`FecReg`** · DATE — Fecha de registro
+  **`IdFactura`** · STRING — Factura, si ya la tiene
+  **`Adelantado`** · BOOLEAN — Bandera de pedido adelantado
+  **`IdLiga`** · STRING — Liga **actual** del candidato. Si trae valor, ese pedido ya está ligado a otro grupo y ligarlo aquí lo **saca** del grupo anterior
+  **`IdEstatus`** · INTEGER — Estatus del pedido
+
+  Ordenado por folio y resto.
+
+  > ⚠️ El campo `IdLiga` merece atención en el front: el carácter también muestra la liga actual en el browse (`vtad0380.p:60`) pero no impide elegir un pedido ya ligado. Como `Id-Liga` es un solo campo, asignar la liga nueva **sobrescribe** la anterior sin avisar a los demás pedidos de ese grupo. Vale la pena que el front lo advierta.
+
+  ---
+
+  ## 10. Criterio de selección
+
+  Réplica del `&Where` del browse (`vtad0380.p:64-74`). Un pedido es candidato si cumple **todas**:
+
+  **Siempre**
+  - Mismo cliente que el pedido de origen (`Id-Cliente`)
+  - Mismo `SurtParcial`
+  - Mismo `Id-Entrega`
+  - Mismo `Id-Tran`
+  - No es el pedido de origen
+
+  **Sólo en facturación (`Opcion = 1`)**
+  - `Id-Estatus < 5`
+  - Misma condición de venta (`Id-Cond`)
+  - Mismo `Adelantado`
+  - Mismo `FEFormaPago`
+  - Mismo `PagAnt`
+
+  **Sólo en embarques (`Opcion = 2`)**
+  - `Id-Estatus < 6`
+  - Mismo `Enviar`
+
+  El `HELP` de la pantalla lo resume así para la opción 1: *"En esta opcion solo se pueden ligar pedidos de la misma condicion de venta"*.
+
+  ---
+
+  ## 11. Validaciones del Servicio
+
+  **`"Pedido inexistente, verifique..."`**
+  **`"Opcion invalida: 1 = ligar en facturacion, 2 = ligar en embarques."`**
+  **`"Temporalmente se encuentra bloqueada la opcion para ligar en embarques."`** — `Opcion = 2`. La pantalla la bloquea en `vtad0380.p:46-53` con un `RETURN` antes de llegar al browse; el servicio replica ese bloqueo en los dos endpoints. La lógica de embarques está escrita y lista para cuando se reactive: basta quitar el bloqueo en los dos lugares
+
+  ---
+
+  ## 12. Flujo de uso
+
+  ```
+  GET  .../Ventas/Pedidos/Liga/Candidatos?IdPedido=2965291&Resto=0&Opcion=1
+          ↓ el usuario elige uno o varios de la lista
+  POST .../Ventas/Pedidos/Liga?IdPedido=2965291&Resto=0&Opcion=1&IdUser=olds
+       body: { "ttLigaIn": [ { "IdPedido": "2965305", "Resto": 0 } ] }
+  ```
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

@@ -1,0 +1,270 @@
+info:
+  name: Actualiza Condicion
+  type: http
+  seq: 2
+
+http:
+  method: PUT
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/CondicionVenta?IdPedido=2955590&Resto=0&IdCond=2&Plazo=10&IdUser=olds
+  params:
+    - name: IdPedido
+      value: "2955590"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+    - name: IdCond
+      value: "2"
+      type: query
+    - name: Plazo
+      value: "10"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Pedidos: Condición de Venta
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedidos — Condición de Venta y Plazo**
+  Cambia la condición de venta (`Pedido.Id-Cond`) y el plazo otorgado al cliente (`Pedido.Plazo`) de un pedido. Es la opción **"Cond Vta"** del editor de pedidos, la última del menú de secciones. Deja marca en la bitácora `Filler-1` cuando alguno de los dos cambia.
+  Programa servidor: `pedcambio.p` · Procedimiento: `actualizaCondVta` | Versión REST de `vtab0130.p`, `PROCEDURE CondVta` (líneas 239-272) + su escritura en `PROCEDURE Actualiza` (líneas 1636-1683). Módulo `/Ventas/Pedidos/`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  PUT
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/CondicionVenta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido. Se normaliza a 7 posiciones con ceros a la izquierda
+  **`Resto`** · INTEGER · ❌ — Resto del pedido. Vacío = `0`
+  **`IdCond`** · INTEGER · ✅ — Condición de venta (`CondVta.Id-Cond`). Debe existir y estar activa
+  - `0` = **CONTADO** (no tiene registro en `CondVta`)
+  - `<> 0` = **CRÉDITO** con el plazo de `Plazo`
+
+  **`Plazo`** · INTEGER · ❌ — Días de plazo otorgados al cliente. Vacío = `0`
+  - Se **fuerza a 0** cuando `IdCond = 0`, igual que la pantalla
+  - No puede ser negativo
+
+  **`IdUser`** · STRING · ✅ — Usuario que hace el cambio. Debe estar en la lista autorizada (ver §9). Queda en la bitácora `Filler-1` y en la auditoría
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Todo va por query string.
+
+  ---
+
+  ## 6. Headers
+
+  ```
+  Content-Type: application/json
+  ```
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  Pedido a crédito, se le cambia el plazo a 30 días con la condición 2:
+
+  ```
+  PUT .../Ventas/Pedidos/CondicionVenta?IdPedido=2965291&Resto=0&IdCond=2&Plazo=30&IdUser=olds
+  ```
+
+  Pedido a crédito que se pasa a contado (el plazo se fuerza a 0 aunque se mande otro valor):
+
+  ```
+  PUT .../Ventas/Pedidos/CondicionVenta?IdPedido=2965291&Resto=0&IdCond=0&IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ### Cambio aplicado
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Condicion de venta del pedido 2965291-0 actualizada (condicion 2, plazo 30)."
+    }
+  }
+  ```
+
+  ### Usuario no autorizado
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "Usuario no autorizado para cambiar la condicion de venta."
+    }
+  }
+  ```
+
+  ### Pedido ya facturado
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "Pedido ya facturado, cambio no procede."
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  ### Autorización
+
+  **`"Se requiere el usuario (IdUser)."`**
+  **`"Usuario no autorizado para cambiar la condicion de venta."`** — el usuario no está en la lista autorizada
+
+  La lista está **parametrizada** en `adosa.URL`:
+
+  ```
+  Parametro = "Pedido-CondVta-Usuarios"
+  Valor     = "OLDS,MLLR,ALEX,FRANC,JJLG"
+  ```
+
+  Mismo patrón que `"Cotizacion-Margen-Usuarios"` en `cotdetalle.p`. Si el registro no existe, viene vacío o alguien lo borra, se usa la lista fija de `vtab0130.p:247-251`. En la pantalla esa lista está hardcodeada dentro del `IF` sobre `USERID("dictdb")`; al parametrizarla se puede cambiar quién autoriza sin recompilar.
+
+  La comparación no distingue mayúsculas: `olds` pasa contra `OLDS`.
+
+  ### Estado del pedido
+
+  **`"Pedido inexistente, verifique..."`**
+  **`"Pedido ya facturado, cambio no procede."`** — `Pedido.Id-Estatus >= 5`
+  **`"El pedido esta siendo usado por otro proceso; intente de nuevo."`** — registro bloqueado. El candado usa `NO-WAIT`, así que falla en segundos en lugar de esperar hasta `-lkwtmo`
+
+  ### Contado y crédito
+
+  **`"El pedido es de contado; la condicion de venta no se puede cambiar a credito desde esta opcion."`**
+
+  En la pantalla el campo se declara así (`vtab0130.p:253`):
+
+  ```progress
+  UPDATE ttPedido.Id-Cond LABEL "Condicion de venta del pedido" WHEN ttPedido.Id-Cond <> 0
+  ```
+
+  El `WHEN` deshabilita el campo cuando el pedido ya es de contado, así que **de contado no se puede pasar a crédito** por esta vía. Al revés sí: poner `IdCond = 0` en un pedido a crédito lo pasa a contado y fuerza `Plazo = 0`.
+
+  ### Condición de venta
+
+  **`"La condicion de venta <n> no existe, verifique..."`** — no hay registro en `CondVta`
+  **`"La condicion de venta <n> (<descr>) esta inactiva."`** — `CondVta.Activo = false`
+
+  Sólo se validan cuando `IdCond <> 0`. La pantalla resuelve la condición con un lookup y por eso nunca entra una inexistente; por REST puede llegar cualquier entero, así que la validación es explícita aquí.
+
+  ### Plazo
+
+  **`"El plazo no puede ser negativo."`**
+
+  ---
+
+  ## 10. Efectos del cambio
+
+  Todo dentro de una transacción, sobre el registro `Pedido`:
+
+  **`Pedido.Id-Cond`** — la condición recibida
+  **`Pedido.Plazo`** — el plazo recibido, o `0` si `IdCond = 0`
+  **`Pedido.Filler-1`** — se le **concatena** la marca de bitácora, sólo si `Id-Cond` o `Plazo` realmente cambiaron:
+
+  ```
+  [Act Cond/Pzo: <IdUser>-<fecha y hora>]
+  ```
+
+  Si `Filler-1` ya traía contenido, se separa con `"; "`. Es el mismo formato de `vtab0130.p:1638`, con una diferencia: la pantalla graba `USERID("dictdb")` y aquí va el `IdUser` de la petición. En PASOE el agente se conecta a la base con una sola cuenta de servicio, así que `USERID` devolvería siempre ese usuario técnico y se perdería el rastro de quién hizo el cambio.
+
+  > El servicio **no** recalcula precios ni descuentos al cambiar de crédito a contado. La pantalla tampoco: `DescPP1` (descuento por pronto pago) sólo se valida contra `Id-Cond` en la sección **Generales** (`vtab0130.p:1073`, `"Descuento Solo Valido Para Ventas de Contado...."`), no en Cond Vta. Si el pedido tenía `DescPP1` y se pasa a crédito, queda una combinación que la pantalla no habría dejado capturar de origen — es comportamiento del carácter, no una omisión del port.
+
+  ---
+
+  ## 11. Auditoría
+
+  Registro en `AuditLog` vía `programas/auditoria.p`:
+
+  **`Area`** = `oeVentas` · **`Modulo`** = `Pedidos` · **`Programa`** = `pedcambio`
+  **`Operacion`** = `PUT` · **`Resource`** = `/Ventas/Pedidos/CondicionVenta`
+  **`Respuesta`** = `Pedido: <folio>-<resto> Cond: <n> Plazo: <n>`
+
+  Va con `NO-ERROR`: una falla al auditar no tumba el cambio.
+
+  ---
+
+  ## 12. Registro en el resourceModel
+
+  El procedimiento ya está anotado con `@openapi.openedge.export`, pero **`pedcambio.p` no está publicado**: no tiene entrada en `resourceModel.xml` ni `.pidl` generado. Para liberarlo hay que agregar el recurso y regenerar el `.pidl` desde PDS.
+
+  ```xml
+  <prgs:resource consumes="application/json" name="_Pedidos_CondicionVenta"
+                 path="/Ventas/Pedidos/CondicionVenta" produces="application/json">
+    <prgs:operation consumes="application/json"
+                    idls="RestADOSAVentas/.services/AppServer/pedcambio.pidl::com.progress.openedge.pdt.bpmbindings"
+                    name="pedcambio..actualizaCondVta" produces="application/json" verb="PUT">
+      <prgs:param name="IdPedido" type="QUERY"/>
+      <prgs:param name="Resto" type="QUERY"/>
+      <prgs:param name="IdCond" type="QUERY"/>
+      <prgs:param name="Plazo" type="QUERY"/>
+      <prgs:param name="IdUser" type="QUERY"/>
+    </prgs:operation>
+  </prgs:resource>
+  ```
+
+  El orden de los `<prgs:param>` debe coincidir con el de los parámetros del procedimiento.
+
+  ---
+
+  ## 13. Plan de Pruebas
+
+  | # | Caso | Esperado |
+  |---|------|----------|
+  | P1 | Usuario fuera de la lista | `"Usuario no autorizado para cambiar la condicion de venta."` |
+  | P2 | Usuario en la lista, en minúsculas (`olds`) | Pasa la autorización |
+  | P3 | Pedido con estatus ≥ 5 | `"Pedido ya facturado, cambio no procede."` |
+  | P4 | Pedido inexistente | `"Pedido inexistente, verifique..."` |
+  | P5 | Pedido de contado (`Id-Cond = 0`) mandando `IdCond = 2` | Rechazo: no se puede pasar a crédito |
+  | P6 | Pedido a crédito mandando `IdCond = 0` y `Plazo = 30` | Se graba `Id-Cond = 0` y **`Plazo = 0`** |
+  | P7 | `IdCond` inexistente en `CondVta` | `"La condicion de venta <n> no existe, verifique..."` |
+  | P8 | `IdCond` existente pero `Activo = false` | `"...esta inactiva."` |
+  | P9 | `Plazo` negativo | `"El plazo no puede ser negativo."` |
+  | P10 | Cambio válido de plazo | `Pedido.Plazo` actualizado + marca en `Filler-1` con el `IdUser` |
+  | P11 | Reenviar los **mismos** valores | Se graba igual, pero **sin** nueva marca en `Filler-1` |
+  | P12 | `Filler-1` que ya traía contenido | La marca nueva se concatena con `"; "` |
+  | P13 | Auditoría | Registro con `Programa = pedcambio`, `Operacion = PUT` |
+  | P14 | Parámetro `adosa.URL` registrado con otra lista | Manda el valor del parámetro, no la lista fija |
+  | P15 | Parámetro `adosa.URL` borrado | Vuelve a la lista fija de la pantalla |
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

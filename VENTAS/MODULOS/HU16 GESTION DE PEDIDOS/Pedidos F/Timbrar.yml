@@ -1,0 +1,164 @@
+info:
+  name: Timbrar
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/timbraFactura?IdUser=olds&IdFactura=
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdFactura
+      value: ""
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Facturación: Timbra Factura (CFDI)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Facturación — Timbrado CFDI**
+  Timbra el CFDI de una factura ya generada (envuelve `vtac2060.p`, que arma el XML v4.0 y timbra contra el PAC por web service). Es un paso **separado** de la generación: la factura ya es válida, y el timbrado se puede **reintentar** sin duplicar.
+  Programa servidor: `pedfactura.p` · Procedimiento: `timbraFactura`. Módulo `/Ventas/Pedidos/`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/timbraFactura
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido
+
+  **`IdUser`** · STRING · ✅ — Usuario. Vacío → *"Se requiere el usuario (IdUser)."*
+  **`IdFactura`** · STRING · ✅ — Folio de la factura a timbrar. Vacío → *"Se requiere el folio de la factura (IdFactura)."*
+
+  ---
+
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
+
+  ```
+  Content-Type: application/json
+  ```
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST .../Pedido/timbraFactura?IdUser=olds&IdFactura=0012345
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ### Timbrada
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Factura 0012345 timbrada correctamente. UUID: A1B2C3D4-1234-5678-9ABC-DEF012345678",
+      "UUID": "A1B2C3D4-1234-5678-9ABC-DEF012345678",
+      "Folioe": "33001000000512345678"
+    }
+  }
+  ```
+
+  ### Ya estaba timbrada (idempotente)
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "La factura 0012345 ya estaba timbrada. UUID: A1B2C3D4-...",
+      "UUID": "A1B2C3D4-...", "Folioe": "3300100000..."
+    }
+  }
+  ```
+
+  ### Falla del PAC (reintentable)
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "No se pudo timbrar la factura 0012345; verifique la conexion con el PAC e intente de nuevo (la factura sigue valida, es reintentable).",
+      "UUID": "", "Folioe": ""
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de respuesta
+
+  **`IdError`** · BOOLEAN — `true` si no se pudo timbrar
+  **`Respuesta`** · STRING — mensaje al usuario
+  **`UUID`** · STRING — folio fiscal (UUID del SAT) — de `Factura.UUID`
+  **`Folioe`** · STRING — folio electrónico — de `Factura.Folioe`
+
+  ---
+
+  ## 10. Reglas y comportamiento
+
+  1. **Idempotente:** si la factura ya tiene `UUID`/`Folioe`, **no re-timbra**; devuelve el timbre existente con `IdError = false`.
+  2. **Reintentable:** si el PAC falla, la factura **sigue válida** (solo queda sin timbrar); se puede volver a llamar.
+  3. **Bloqueos:** factura inexistente → error; factura cancelada (`FecCancel <> ?`) → error.
+  4. **No imprime:** la impresión del CFDI (`vtac2063.p`) es responsabilidad del front.
+  5. Llama `vtac2060.p(IdFactura, IdFactura, 3)` — mismo llamado que el motor de crédito.
+
+  > **Requisito de infraestructura:** el servidor PASOE debe tener **acceso de red al PAC** (web service). El timbrado es una llamada **bloqueante** (el cliente REST espera la respuesta del PAC).
+
+  ---
+
+  ## 11. Registro en el resourceModel
+
+  Recurso a dar de alta (aún **no registrado**): path `/Pedido/timbraFactura`, verbo **POST**, operación `pedfactura..timbraFactura`, params `IdFactura`, `IdUser`. Regenerar `pedfactura.pidl` en PDSOE.
+
+  ---
+
+  ## 12. Plan de Pruebas
+
+  | # | Caso | Esperado |
+  |---|------|----------|
+  | P1 | Sin `IdUser` / sin `IdFactura` | Mensaje "Se requiere..." correspondiente |
+  | P2 | Factura inexistente | `"La factura X no existe."` |
+  | P3 | Factura recién generada, PAC OK | `UUID`/`Folioe` poblados; `IdError=false` |
+  | P4 | Volver a timbrar la misma | "ya estaba timbrada" + mismo UUID (no duplica) |
+  | P5 | PAC caído | `IdError=true`, mensaje reintentable, factura intacta |
+  | P6 | Factura cancelada | `"La factura X esta cancelada."` |
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

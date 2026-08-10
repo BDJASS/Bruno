@@ -1,0 +1,164 @@
+info:
+  name: Baja Renglon
+  type: http
+  seq: 2
+
+http:
+  method: DELETE
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Renglon?IdUser=olds&IdPedido=4122888&Reng=10&Resto=0
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdPedido
+      value: "4122888"
+      type: query
+    - name: Reng
+      value: "10"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Pedidos: Baja de un Renglón
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedidos — Baja de un Renglón**
+  Elimina un renglón individual de un pedido: regresa el comprometido a existencia, borra el `DetPedido`, recalcula el `Subtotal` y el `Total` del pedido, deja auditoría y avisa por correo al vendedor y supervisores del CEDIS.
+  Programa servidor: `pedbajareng.p` · Procedimiento: `bajaRenglon` (DELETE) | Versión REST de `vtad0370.p` + `vtad0371.i` + `vtad0370.i` + `vtad0115.p` (modo carácter). Módulo `/Ventas/Pedidos/`.
+
+  > Para obtener los renglones elegibles y sus números de `Reng`, usar primero el endpoint `GET /RenglonesBaja` (ver `pedbajareng-ConsultaRenglonesBaja.md`).
+
+  ---
+
+  ## 2. Método HTTP y URL
+
+  ```
+  DELETE http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Renglon
+  ```
+
+  ---
+
+  ## 3. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido (se normaliza: primer carácter + resto a 6 dígitos)
+  **`Resto`** · STRING · ❌ — Resto del pedido; vacío = `0`
+  **`Reng`** · STRING · ✅ — Número de renglón a eliminar (campo `Reng` del `GET /RenglonesBaja`)
+  **`IdUser`** · STRING · ✅ — Usuario que realiza la baja (auditoría y destinatario del correo de aviso)
+
+  ---
+
+  ## 4. Ejemplo de Request
+
+  ```
+  DELETE .../Ventas/Pedidos/Renglon?IdPedido=1123456&Resto=0&Reng=3&IdUser=sis10
+  ```
+
+  ---
+
+  ## 5. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Renglon 3 (articulo 001234) eliminado del pedido 1123456-0; totales recalculados y aviso enviado."
+    }
+  }
+  ```
+
+  ---
+
+  ## 6. Campos del Response
+
+  **`IdError`** · BOOLEAN — `true` = no se pudo eliminar (ver `Respuesta`); `false` = renglón eliminado
+  **`Respuesta`** · STRING — Mensaje amigable del resultado (o del motivo del rechazo). Puede llevar antepuesto el aviso de empaque cuando el pedido está en estatus 3/4.
+
+  ---
+
+  ## 7. Validaciones del Servicio
+
+  Antes de eliminar corre las **mismas validaciones de pedido** que el `GET /RenglonesBaja` (`ValidaPedido`), y además las de renglón:
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `"Se requiere el usuario (IdUser)."` |
+  | Pedido/resto inexistente | `"Folio inexistente de pedido, favor de verificar."` |
+  | Estatus > 4 con factura asignada | `"El pedido o resto de pedido ya esta asignado a la factura <folio>."` |
+  | `BckOrd ≥ 3` (surtir completo) | `"El pedido es de surtir completo, imposible eliminar partidas."` |
+  | Vendedor `0100` + condición contado (Internet) | `"Pedidos de Internet de Contado, imposible eliminar partidas."` |
+  | Estatus 5 (facturado) | `"El pedido o resto de pedido tiene estatus de facturado."` — bloquea |
+  | Estatus 6 (embarcado) | `"El pedido o resto de pedido tiene estatus de embarcado."` — bloquea |
+  | `Reng` inválido | `"Numero de renglon invalido."` |
+  | Renglón inexistente | `"Renglon inexistente en el pedido, favor de verificar."` |
+  | Renglón con entregas | `"El renglon ya tiene cantidad entregada, no puede eliminarse."` |
+  | Renglón bloqueado por otro proceso | `"El renglon esta siendo usado por otro proceso; intente de nuevo."` |
+  | Existencia (`ArtUbic`) bloqueada por otro proceso | `"La existencia del articulo <clave> (almacen <alm>) esta siendo usada por otro proceso; intente de nuevo."` |
+  | Pedido bloqueado por otro proceso (recálculo) | `"El pedido esta siendo usado por otro proceso; intente de nuevo."` |
+
+  > En cualquier bloqueo o error dentro de la transacción **se deshace todo** (`UNDO`) y no queda nada a medias; la `Respuesta` indica exactamente qué falló.
+
+  ---
+
+  ## 8. Efectos de la baja
+
+  Todo dentro de **una sola transacción**:
+
+  1. **Inventario:** `ArtUbic.Exist += CantCom` y `ArtUbic.Compro -= CantCom` del artículo/color/almacén del renglón (réplica de `vtad0371.i`). Si el renglón no tiene existencia asociada (`ArtUbic` no encontrado), no se toca inventario (igual que el modo carácter).
+  2. **Renglón:** `DELETE DetPedido`.
+  3. **Totales:** `Pedido.Subtotal` = Σ `CantPed × PUnit × (1 − Descto/100)` de los renglones restantes (réplica de `vtad0370.i`) y `Pedido.Tot` = Subtotal + Σ IVA (réplica de `vtad0115.p`, inlineado para no depender de variables compartidas de sesión carácter).
+  4. **Auditoría:** operación `BAJA-RENGLON` en `programas/auditoria.p` (módulo `Pedidos`).
+  5. **Correo de aviso** (fuera de la transacción, **no crítico**): se envía con **`programas/correo02_rest.p`** (asunto `"BAJA DE ARTICULO EN PEDIDO..."`). Destinatarios (`TO`): el **usuario que da la baja** (`IdUser`) + el vendedor del pedido + supervisores del CEDIS (vhernandez, cdominguez, gcortez, surtido, mguerrero, jnunez, flucio). Regla dev/prod: en **DEV** (marcador `programas/desarrollo.flag` en el servidor) redirige a los buzones de desarrollo y antepone `"DESARROLLO "` al asunto; en **producción** va a los reales con BCC de monitoreo. El HTML se arma en `/usr3/tmp` (correo02_rest recibe la ruta). Ya **no** se crea un registro en la tabla `e-mail` para un cron.
+
+  > El correo se envía **después** de confirmar (commit) la transacción; si el envío falla, la baja ya quedó aplicada y la respuesta sigue siendo de éxito.
+
+  ---
+
+  ## 9. Plan de Pruebas
+
+  > Preparación: pedido vigente con renglones sin entregas (`PED_OK`).
+
+  | # | Request | Esperado |
+  |---|---------|----------|
+  | B1 | DELETE sin `IdUser` | `"Se requiere el usuario (IdUser)."` |
+  | B2 | DELETE `Reng=999` | `"Renglon inexistente en el pedido, favor de verificar."` |
+  | B3 | DELETE renglón con `CantEnt > 0` | `"El renglon ya tiene cantidad entregada, no puede eliminarse."` |
+  | B4 | DELETE renglón válido de `PED_OK` | `IdError: false`; verificar en BD: renglón eliminado, `ArtUbic.Exist/Compro` ajustados por `CantCom`, `Pedido.Subtotal`/`Tot` recalculados, correo enviado por `correo02_rest.p` (en DEV llega a desarrollo con "DESARROLLO " en el asunto), auditoría `BAJA-RENGLON` |
+  | B5 | Repetir B4 con el mismo `Reng` | Error B2 (ya no existe) |
+  | B6 | DELETE con el renglón tomado por otra sesión | `"El renglon esta siendo usado por otro proceso..."` — sin cambios en BD |
+  | B7 | DELETE con el `ArtUbic` tomado por otra sesión | `"La existencia del articulo ... esta siendo usada por otro proceso..."` — sin cambios en BD |
+
+  ---
+
+  ## 10. Resultado
+
+  | Estado              | Descripción                                                  |
+  |---------------------|--------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 11. Observaciones Técnicas
+
+  1. **Lógica idéntica al modo carácter:** la baja replica `vtad0371.i` / `vtad0370.i` / `vtad0115.p` sin cambios de negocio.
+  2. **Manejo de `EXCLUSIVE` en REST:** las tomas exclusivas (`bfDetPedido`, `ArtUbic`, `bfPedido`) usan `EXCLUSIVE-LOCK NO-WAIT`; si algún registro está bloqueado por otro proceso, el servicio **avisa qué falló y deshace** la baja en lugar de quedarse esperando (a diferencia del carácter, que espera). No cambia el proceso, solo evita que el servicio se cuelgue.
+  3. **Renglón identificado por `Reng`:** el browse original selecciona por posición; en REST la llave natural es el número de renglón dentro de pedido+resto (índice `idx-reng`).
+  4. **Reply-To vacío:** el correo va sin `Reply-To` porque la regla dev/prod de `correo02_rest.p` solo redirige `TO`/`CC`/`BCC`; el usuario que da la baja va en el `TO` (así en DEV también se redirige y no le llega el correo real).
+  5. **Destinatarios del correo hardcodeados:** se replicaron tal cual (decisión abierta #3 del plan del módulo — ver `Pedidos-ModuloREST-Plan.md`).
+  6. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

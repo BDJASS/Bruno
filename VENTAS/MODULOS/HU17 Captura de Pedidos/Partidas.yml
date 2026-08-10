@@ -1,0 +1,162 @@
+info:
+  name: Partidas
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/Captura/Partidas?IdArticulo=021118&IdColor=2&IdPres=0&IdCliente=575&PrecioTemp=no&TipoPrecio=M&Vigencia=75&PrecCalc=no&PlazoTV=75&IdUbiVta=MLO
+  params:
+    - name: IdArticulo
+      value: "021118"
+      type: query
+    - name: IdColor
+      value: "2"
+      type: query
+    - name: IdPres
+      value: "0"
+      type: query
+    - name: IdCliente
+      value: "575"
+      type: query
+    - name: PrecioTemp
+      value: no
+      type: query
+    - name: TipoPrecio
+      value: M
+      type: query
+    - name: Vigencia
+      value: "75"
+      type: query
+    - name: PrecCalc
+      value: no
+      type: query
+    - name: PlazoTV
+      value: "75"
+      type: query
+    - name: IdUbiVta
+      value: MLO
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Pedido / Captura / Partidas — Armado progresivo de una partida
+
+  ## 1. Descripción
+
+  Servicio progresivo para capturar una **partida de pedido**: dado un artículo (y opcionalmente color, presentación, cliente y criterios de precio) devuelve en un solo dataset el artículo, sus colores con existencia y sus presentaciones con **dos precios** (mayoreo simple y precio real del cliente vía `obtprecdesc.p`), más existencia por almacén de surtido y existencia total (semáforo). Es la copia específica de pedidos del servicio de cotización `cotpartida.p` (misma lógica hoy; separado para poder divergir a futuro: existencia comprometida, backorder, multiplicidad).
+
+  Segunda llamada del flujo: `/Pedido/Captura/Consulta` → `/Pedido/Captura/Partidas` (esta) → `/Pedido/Captura/Alta`.
+
+  ## 2. Método y URL
+
+  `GET` `http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/Captura/Partidas`
+
+  Programa: `pedpartida.p` · Procedimiento: `leeArticuloPedido`
+
+  ## 3. Headers
+
+  `Content-Type: application/json`
+
+  ## 4. Parámetros de entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · Todos son STRING
+
+  **`IdArticulo`** · ✅ — Clave del artículo.
+  **`IdColor`** · ❌ — Color elegido; resuelve presentaciones. Vacío = `0`.
+  **`IdPres`** · ❌ — Presentación (informativo).
+  **`IdCliente`** · ❌ — Necesario para calcular el precio del cliente.
+  **`PlazoTV`** · ❌ — Plazo para el motor de precios. Vacío = `0`.
+  **`IdUbiVta`** · ❌ — Ubicación de venta (criterio de precio).
+  **`Vigencia`** · ❌ — Vigencia. Vacío = `10`.
+  **`PrecioTemp`** · ❌ — `si`/`no`. Vacío = `no`.
+  **`PrecCalc`** · ❌ — `si`/`no` (recalcular al tipo de cambio). Vacío = `no`.
+  **`TipoPrecio`** · ❌ — `M` / `MX`… Vacío = `M`.
+  **`IdAlm`** · ❌ — Almacén de surtido "Surtir desde". Vacío = `02B` (CEDIS).
+
+  ## 5. Flujo
+
+  - **Solo `IdArticulo`:** `ttArticulo` siempre; si tiene colores → `ttColor`; si no → `ttPresentacion` con precios.
+  - **`IdArticulo` + `IdColor`:** `ttArticulo` + `ttPresentacion` con precios.
+
+  ## 6. Ejemplos de invocación
+
+  ```
+  GET /Pedido/Captura/Partidas?IdArticulo=021118
+  GET /Pedido/Captura/Partidas?IdArticulo=021118&IdColor=2&IdCliente=575&TipoPrecio=M&Vigencia=75&IdUbiVta=MLO&IdAlm=02B
+  ```
+
+  ## 7. Respuesta (envltura)
+
+  **`IdError`** · BOOLEAN — `true` si no se encontró el artículo o hubo error.
+  **`Respuesta`** · STRING — Mensaje amigable (p.ej. "Articulo con colores; seleccione un color.").
+  **`dsPedPartida`** · DATASET — `ttArticulo` (1) + `ttColor` (n) + `ttPresentacion` (n), anidados por `IdArticulo`.
+
+  ## 8. Campos de `ttArticulo`
+
+  **`IdArticulo`** · STRING — Código.
+  **`Descr`** · STRING — Descripción.
+  **`Generico`** · STRING — Descripción genérica.
+  **`PorcIVA`** · INTEGER — % de IVA del artículo.
+  **`TieneColores`** · BOOLEAN — `true` = requiere elegir color antes de presentaciones.
+  **`IdGrupo`** · INTEGER — Grupo.
+  **`IdMarca`** · INTEGER — Marca.
+  **`IdFamilia`** · INTEGER — Familia (del grupo).
+  **`IdProv`** · INTEGER — Proveedor.
+  **`Multiplo`** · DECIMAL — Equiv de la presentación default (Tipo 3, Flag 'M'); `0` = sin restricción de multiplicidad.
+  **`TipoCorte`** · INTEGER — Tipo de corte del artículo.
+
+  ## 9. Campos de `ttColor`
+
+  **`IdArticulo`** · STRING — Código.
+  **`IdColor`** · INTEGER — Color.
+  **`Descr`** · STRING — Nombre del color.
+  **`ExistenciaCEDIS`** · DECIMAL — Existencia en 02B (compatibilidad).
+  **`Existencia`** · DECIMAL — Existencia en el almacén de surtido `IdAlm` (unidad mínima).
+  **`ExistenciaTotal`** · DECIMAL — Existencia sumando almacenes (regla valpres.p) — semáforo amarillo vs rojo.
+
+  ## 10. Campos de `ttPresentacion`
+
+  **`IdArticulo`** · STRING — Código.
+  **`IdPres`** · INTEGER — Presentación.
+  **`Descr`** · STRING — Nombre de la presentación.
+  **`Abrev`** · STRING — Abreviatura.
+  **`Equiv`** · DECIMAL — Equivalencia en unidad mínima.
+  **`PrecioMay`** · DECIMAL — Precio mayoreo simple.
+  **`PrecioMayUM`** · DECIMAL — Mayoreo por unidad mínima.
+  **`PrecioCliente`** · DECIMAL — Precio del cliente con descuento (obtprecdesc / Precio2).
+  **`PrecioClienteSinDesc`** · DECIMAL — Precio del cliente sin descuento (Precio1).
+  **`Precio1` / `Precio2`** · DECIMAL — Nombres del legado (paridad call center).
+  **`Descto`** · DECIMAL — % de descuento del cliente.
+  **`IndicaPre`** · STRING — Indicador de precio del motor (``, F, D, Z, X).
+  **`PrecioCto`** · DECIMAL — Precio de contrato; `0` = sin contrato.
+  **`Existencia`** · DECIMAL — Existencia del artículo(+color) en `IdAlm` (unidad mínima).
+  **`ExistenciaTotal`** · DECIMAL — Existencia sumando almacenes (semáforo).
+  **`IdMoneda`** · INTEGER — Moneda del precio.
+  **`SimboloMoneda`** · STRING — Símbolo.
+  **`TCambio`** · DECIMAL — Tipo de cambio.
+  **`Costo` / `CostoOrg` / `CostoEsp`** · DECIMAL — Costos del motor de precios.
+  **`VigenciaOfer`** · STRING — Días restantes de oferta vigente; `""` sin oferta.
+  **`CostoOrig`** · DECIMAL — Compatibilidad (= CostoOrg).
+
+  ## 11. Validaciones
+
+  | Condición | Resultado |
+  |-----------|-----------|
+  | `IdArticulo` vacío | `IdError=true`, "Se requiere el articulo." |
+  | Artículo inexistente o inactivo | `IdError=true`, "No se encontro el articulo X." |
+
+  ## 12. Observaciones técnicas
+
+  - CEDIS = almacén `02B`. Si `IdAlm` viene vacío se usa `02B`.
+  - El precio del cliente se **degrada** limpiamente: si `obtprecdesc.p` no está desplegado, se devuelve solo el precio mayoreo simple sin error.
+  - `ExistenciaTotal` sigue la regla de `valpres.p`: almacén origen + (02A/02C si origen 02B) + almacenes fijos 6,7,8,9,10,03A.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

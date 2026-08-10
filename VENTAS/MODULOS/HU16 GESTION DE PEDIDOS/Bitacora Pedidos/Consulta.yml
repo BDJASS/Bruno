@@ -1,0 +1,211 @@
+info:
+  name: Consulta
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Bitacora?IdPedido=4122888&Resto=0
+  params:
+    - name: IdPedido
+      value: "4122888"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Pedidos: Consulta de Bitácora de Cambios
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedidos — Bitácora de Cambios (`CambioPed`)**
+  Consulta el historial de modificaciones hechas a un pedido desde [ActualizaGenerales](pedcambio-ActualizaGenerales.md): qué campo cambió, valor anterior y nuevo, quién y cuándo. Filtros opcionales por rango de fechas y usuario. Ordena del cambio más reciente al más antiguo.
+  Programa servidor: `pedcambio.p` · Procedimiento: `leeBitacoraPed` | Mismo patrón que la bitácora `CambioCte` de clientes (`DatosGenerales.p`, módulo CyC). Módulo `/Ventas/Pedidos/`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Bitacora
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido. Se normaliza a 7 posiciones
+  **`Resto`** · STRING · ❌ — Resto del pedido. Vacío = `0`
+  **`FechaInicio`** · DATE · ❌ — Desde. Vacío = sin límite inferior (`01/01/1990`)
+  **`FechaFin`** · DATE · ❌ — Hasta. Vacío = `TODAY`
+  **`FiltroUser`** · STRING · ❌ — Filtra por usuario. Vacío = todos los usuarios
+
+  ---
+
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
+
+  ```
+  Content-Type: application/json
+  ```
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Pedidos/Bitacora?IdPedido=2965291&Resto=0
+  GET .../Ventas/Pedidos/Bitacora?IdPedido=2965291&Resto=0&FechaInicio=08/01/2026&FechaFin=08/31/2026&FiltroUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Consulta ejecutada correctamente.",
+      "ttBitacoraPed": [
+        {
+          "IdPedido": "2965291", "Resto": 0, "IdUser": "olds",
+          "Campo": 430, "Descr": "RazonSocial",
+          "ValorOld": "COMERCIAL X SA", "ValorNuevo": "COMERCIAL X SA DE CV",
+          "FecReg": "2026-08-05", "Hora": "10:32:15"
+        },
+        {
+          "IdPedido": "2965291", "Resto": 0, "IdUser": "olds",
+          "Campo": 260, "Descr": "Id-Entrega",
+          "ValorOld": "11", "ValorNuevo": "12",
+          "FecReg": "2026-08-05", "Hora": "10:32:15"
+        }
+      ]
+    }
+  }
+  ```
+
+  ### Pedido no indicado
+
+  ```json
+  { "response": { "IdError": true, "Respuesta": "Se requiere el pedido (IdPedido)." } }
+  ```
+
+  Un pedido sin cambios registrados regresa `IdError = false` con `ttBitacoraPed` vacío.
+
+  ---
+
+  ## 9. Campos de la respuesta `ttBitacoraPed`
+
+  Ordenados por `FecReg` y `Hora` descendente (lo más reciente primero):
+
+  **`IdPedido`** · STRING — Folio del pedido
+  **`Resto`** · INTEGER — Resto del pedido
+  **`IdUser`** · STRING — Usuario que hizo el cambio
+  **`Campo`** · INTEGER — Número de campo = ORDER de la columna en `Pedido`
+  **`Descr`** · STRING — Nombre del campo que cambió (p.ej. `RazonSocial`)
+  **`ValorOld`** · STRING — Valor anterior (lógicos como `SI/NO`, numéricos en texto)
+  **`ValorNuevo`** · STRING — Valor nuevo (mismo formato)
+  **`FecReg`** · DATE — Fecha del cambio
+  **`Hora`** · STRING — Hora del cambio (`HH:MM:SS`)
+
+  ---
+
+  ## 10. Tabla `CambioPed` (cómo se llena)
+
+  Cada vez que **ActualizaGenerales** guarda un pedido, se graba un renglón por cada campo que cambió, comparando el valor actual contra el que llega en el body. Se escribe **dentro de la transacción** del guardado (si el guardado se deshace, la bitácora también). Campos:
+
+  **`Id-Pedido`** · CHAR(7) — Folio
+  **`Resto`** · INTEGER — Resto
+  **`Id-User`** · CHAR(12) — Usuario (`IdUser` del body)
+  **`Campo`** · INTEGER — ORDER de la columna en `Pedido` (único por columna, no se repite)
+  **`Descr`** · CHAR(40) — Nombre del campo de `Pedido`
+  **`ValorNuevo`** · CHAR(80) — Valor nuevo
+  **`ValorOld`** · CHAR(80) — Valor anterior
+  **`FecReg`** · DATE — `TODAY`
+  **`Hora`** · INTEGER — `TIME` (segundos desde medianoche)
+
+  Índice primario `Idx-Campo`: `Id-Pedido + Resto + Campo + FecReg desc + Hora desc`.
+
+  > **Requisito:** la tabla `CambioPed` debe existir en la BD `adosa` (dump de esquema en `tablas/CambioPed.txt`). Si al compilar marca *"Unknown table CambioPed"*, falta darla de alta en el diccionario.
+
+  ---
+
+  ## 11. Mapa de campos auditados → número de `Campo`
+
+  El `Campo` es el ORDER de la columna en `Pedido`, lo que garantiza que **no se repita**. Se auditan los 39 campos editables de Generales:
+
+  | Campo | Columna `Pedido` | | Campo | Columna `Pedido` |
+  |------:|------------------|-|------:|------------------|
+  | 30   | Id-Vendedor     | | 410  | CP              |
+  | 60   | Id-Cliente      | | 420  | Id-Ciudad       |
+  | 80   | Attn            | | 430  | RazonSocial     |
+  | 90   | CalleNo1        | | 440  | RFC             |
+  | 100  | Colonia1        | | 590  | Id-ForPed       |
+  | 110  | Ciudad1         | | 640  | DescPP1         |
+  | 120  | Estado1         | | 810  | Adelantado      |
+  | 140  | CP1             | | 830  | BckOrd          |
+  | 160  | ReqCte          | | 891  | e-Mail          |
+  | 210  | Notas[1]        | | 901  | Id-Remision     |
+  | 211  | Notas[2] *(210+1)* | | 921 | RazonSocial1  |
+  | 250  | Id-Tran         | | 1090 | PagAnt          |
+  | 260  | Id-Entrega      | | 1140 | FEFormaPago     |
+  | 270  | Seguro          | | 1150 | FEDigitosCuenta |
+  | 320  | Vigentes        | | 1160 | Id-UsoCFDI      |
+  | 390  | CalleNo         | | 1180 | MetodoPPD       |
+  | 400  | Colonia         | | 1210 | SurtParcial     |
+  | 1300 | SolCancPed      | | 1350 | Referencia      |
+  | 1370 | Id-RFiscal      | | 1380 | NomEmpresa      |
+  | 1520 | EnTarima        | |      |                 |
+
+  > `Notas` es un arreglo `char[2]` (ORDER 210); para no repetir número se usa `210` para `Notas[1]` y `211` para `Notas[2]` (211 no existe como ORDER real en `Pedido`).
+
+  ---
+
+  ## 12. Registro en el resourceModel
+
+  Recurso `_Ventas_Pedidos_Bitacora`, path `/Ventas/Pedidos/Bitacora`, verbo **GET**, operación `pedcambio..leeBitacoraPed`.
+
+  > **`leeBitacoraPed` es operación nueva:** regenerar `pedcambio.pidl` en PDSOE (Update service definitions) para que el binding exista; el resourceModel ya tiene el recurso dado de alta.
+
+  ---
+
+  ## 13. Plan de Pruebas
+
+  | # | Caso | Esperado |
+  |---|------|----------|
+  | P1 | Editar un pedido y consultar su bitácora | Un renglón por cada campo cambiado, más reciente primero |
+  | P2 | POST sin cambios reales, luego consultar | Sin renglones nuevos |
+  | P3 | Filtro `FiltroUser` | Solo cambios de ese usuario |
+  | P4 | Rango `FechaInicio`/`FechaFin` | Solo cambios en el rango |
+  | P5 | Sin `IdPedido` | `"Se requiere el pedido (IdPedido)."` |
+  | P6 | Pedido sin cambios | `IdError = false`, lista vacía |
+  | P7 | Verificar `Campo` = ORDER de la columna | Coincide con el mapa de §11, sin repetidos |
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

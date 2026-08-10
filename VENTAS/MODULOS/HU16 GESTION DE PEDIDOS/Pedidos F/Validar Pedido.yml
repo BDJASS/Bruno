@@ -1,0 +1,152 @@
+info:
+  name: Validar Pedido
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/validaPedidoFacturable?IdPedido=2892049&Resto=0
+  params:
+    - name: IdPedido
+      value: "2892049"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Facturación: Valida Pedido Facturable
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Facturación — Validación previa a facturar**
+  Aplica todas las validaciones que hace la pantalla antes de facturar un pedido: los **bloqueos** (devuelven `IdError = true`) y los **avisos/banderas** para el front (van en `Respuesta` con `IdError = false`). Réplica de `vtaa0498.i` + el arranque de `vtaa0499.p`.
+  Programa servidor: `pedfactura.p` · Procedimiento: `validaPedidoFacturable`. Módulo `/Ventas/Pedidos/`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/validaPedidoFacturable
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido (se normaliza a 7 posiciones)
+  **`Resto`** · STRING · ❌ — Resto del pedido. Vacío = `0`
+
+  ---
+
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
+
+  ```
+  Content-Type: application/json
+  ```
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Pedido/validaPedidoFacturable?IdPedido=2965291&Resto=0
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ### Facturable (con avisos)
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Pedido 2965291-0 es facturable. PEDIDO CON CONDICION DE CONTADO, FAVOR DE VERIFICAR. (La generacion de la factura se realiza por el proceso de caracter en esta fase.)"
+    }
+  }
+  ```
+
+  ### Bloqueado
+
+  ```json
+  { "response": { "IdError": true, "Respuesta": "PEDIDO YA FACTURADO, FOLIO: F0012345" } }
+  ```
+
+  ---
+
+  ## 9. Bloqueos (devuelven `IdError = true`, no se puede facturar)
+
+  **`"FOLIO DE PEDIDO INEXISTENTE..."`** — no existe el pedido
+  **`"PEDIDO YA FACTURADO, FOLIO: <folio>"`** — `Id-Estatus >= 5` o `Id-Factura <> ""`
+  **`"Pedido con solicitud de cancelacion, no se permite facturar, consultar con el vendedor."`** — `SolCancPed = true`
+  **`"El Pedido se genero en una sucursal, su facturacion debe hacerse en la misma tienda en el area de cajas, no debe ser facturado en un almacen."`** — `Filler-1 = "*** GRAFICO"`
+  **`"El RFC del cliente esta incompleto, corregir para poder facturar."`** — RFC (sin espacios) < 12
+  **`"Cliente no se puede facturar despues del dia 20."`** — día > 20 y cliente (o su asociado) en la lista `000165,033233`
+
+  ---
+
+  ## 10. Avisos / banderas (van en `Respuesta`, `IdError = false`)
+
+  Se concatenan al mensaje; el front los usa para advertir o pedir datos:
+
+  **`PEDIDOS DE CLIENTE 3 SOLO PUEDEN FACTURARSE EN CONTADO.`** — `Id-Cond = 0` y `Id-Cliente = 3`
+  **`Cliente requiere Certificado de Calidad...`** — `Id-Cliente = 4243`
+  **`Cliente con embarque especial, asegurese de haber hecho antes su remision.`** — `Id-Cliente = 4763`
+  **`[RequiereReqCte] El cliente exige requisicion; capturela antes de facturar.`** — `Id-Cliente = 222` sin `ReqCte`
+  **`Este Pedido tiene cortes, favor de verificar que este completo para su facturacion.`** — hay `DetPedido.Tipo` 3 o 4
+  **`[RequierePasswordBO] ...se requiere password Tipo 10 para facturar incompleto.`** — `BckOrd` 3/4 con renglón Tipo 1 con `CantEnt < CantPed`
+  **`PEDIDO CON CONDICION DE CONTADO, FAVOR DE VERIFICAR.`** — `Id-Cond = 0`
+  **`[Adelantado] Pedido de facturacion por adelantado (usa el motor vtaa0572/vtaa0573).`** — `Adelantado = true`
+
+  > Los tags entre corchetes (`[RequiereReqCte]`, `[RequierePasswordBO]`, `[Adelantado]`) son marcas para que el front decida el flujo (pedir requisición, exigir password Tipo 10, o usar el flujo de adelantado).
+
+  ---
+
+  ## 11. Registro en el resourceModel
+
+  Recurso a dar de alta (aún **no registrado**): path `/Pedido/validaPedidoFacturable`, verbo **GET**, operación `pedfactura..validaPedidoFacturable`, params `IdPedido`, `Resto`. Regenerar `pedfactura.pidl` en PDSOE.
+
+  ---
+
+  ## 12. Plan de Pruebas
+
+  | # | Caso | Esperado |
+  |---|------|----------|
+  | P1 | Pedido inexistente | `"FOLIO DE PEDIDO INEXISTENTE..."` |
+  | P2 | Pedido ya facturado | `"PEDIDO YA FACTURADO, FOLIO: ..."` |
+  | P3 | RFC < 12 | `"El RFC del cliente esta incompleto..."` |
+  | P4 | Pedido de sucursal (`*** GRAFICO`) | Bloqueo con el mensaje de sucursal |
+  | P5 | Cliente 222 sin requisición | Facturable + `[RequiereReqCte]` |
+  | P6 | BckOrd 3/4 incompleto | Facturable + `[RequierePasswordBO]` |
+  | P7 | Pedido facturable normal | `"...es facturable."` sin tags de bloqueo |
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

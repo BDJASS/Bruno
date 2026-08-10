@@ -1,0 +1,172 @@
+info:
+  name: Consulta
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/RenglonesBaja?IdUser=olds&IdPedido=4122888&Resto=0
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdPedido
+      value: "4122888"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Pedidos: Consulta de Renglones Elegibles para Baja
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedidos — Consulta de Renglones para Baja**
+  Valida el pedido con las reglas de la pantalla y regresa el **encabezado** del pedido más los **renglones elegibles para baja** (solo los que tienen `CantEnt = 0`), con descripción de artículo, color, presentación, cantidades, precio e importe.
+  Programa servidor: `pedbajareng.p` · Procedimiento: `leeRenglonesBaja` (GET) | Versión REST de `vtad0370.p` (modo carácter): "Da de baja renglones de pedidos sin mantenimiento". Módulo `/Ventas/Pedidos/`.
+
+  > Este endpoint es de **solo lectura**: no modifica nada. La eliminación se hace con el endpoint `DELETE /Renglon` (ver `pedbajareng-BajaRenglon.md`).
+
+  ---
+
+  ## 2. Método HTTP y URL
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/RenglonesBaja
+  ```
+
+  ---
+
+  ## 3. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido (se normaliza: primer carácter + resto a 6 dígitos)
+  **`Resto`** · STRING · ❌ — Resto del pedido; vacío = `0`
+  **`IdUser`** · STRING · ✅ — Usuario que hace la consulta (se mapea al parámetro interno `pIdUser`)
+
+  ---
+
+  ## 4. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Pedidos/RenglonesBaja?IdPedido=1123456&Resto=0&IdUser=sis10
+  ```
+
+  ---
+
+  ## 5. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Pedido 1123456-0: 2 renglon(es) elegible(s) para baja.",
+      "ttEncabezado": { "ttEncabezado": [
+        {
+          "IdPedido": "1123456", "Resto": 0, "FecReg": "2026-07-08",
+          "IdVendedor": "0021", "NombreVendedor": "JUAN PEREZ LOPEZ",
+          "IdCliente": 34561, "RazonSocial": "PAPELERA DEL NORTE SA DE CV",
+          "ReqCte": "", "IdEstatus": 0, "Aviso": ""
+        }
+      ]},
+      "ttRenglon": { "ttRenglon": [
+        {
+          "IdPedido": "1123456", "Resto": 0, "Reng": 3, "Tipo": 1,
+          "IdArticulo": "001234", "Descr": "PAPEL BOND CARTA 75GRS",
+          "IdColor": 0, "Color": "", "IdPres": 1, "Presentacion": "CAJA",
+          "IdAlm": "02B", "CantPed": 10, "CantEnt": 0, "CantFac": 0,
+          "CantPend": 10, "CantCom": 10, "PUnit": 850.00, "Descto": 0,
+          "Importe": 8500.00, "IndicaPre": "", "Simbolo": ""
+        }
+      ]}
+    }
+  }
+  ```
+
+  ---
+
+  ## 6. Campos del Response
+
+  ### ttEncabezado
+  **`IdPedido` / `Resto`** — Identificación del pedido
+  **`FecReg`** · DATE — Fecha de registro
+  **`IdVendedor` / `NombreVendedor`** — Vendedor y nombre del empleado
+  **`IdCliente` / `RazonSocial`** — Cliente
+  **`ReqCte`** · STRING — Requisición del cliente
+  **`IdEstatus`** · INTEGER — Estatus del pedido
+  **`Aviso`** · STRING — `PAUS` (pausado, estatus -1) · `PEMB` (pausado embarque, -2) · vacío
+
+  ### ttRenglon (solo renglones con `CantEnt = 0`, como el browse original)
+  **`Reng`** · INTEGER — Número de renglón (la llave para el `DELETE /Renglon`)
+  **`Tipo`** · INTEGER — Tipo de renglón (`1` = artículo; `> 1` = comentarios/cortes)
+  **`IdArticulo` / `Descr`** — Clave y descripción
+  **`IdColor` / `Color`** — Color (abreviatura)
+  **`IdPres` / `Presentacion`** — Presentación
+  **`IdAlm`** · STRING — Almacén que surte el renglón
+  **`CantPed` / `CantEnt` / `CantFac` / `CantPend` / `CantCom`** · DECIMAL — Cantidades pedida, entregada, facturada, pendiente y comprometida
+  **`PUnit` / `Descto` / `Importe`** · DECIMAL — Precio unitario, % descuento e importe neto
+  **`IndicaPre`** · STRING — Indicador de precio (`*` = precio autorizado)
+  **`Simbolo`** · STRING — Símbolo de moneda (vacío = nacional)
+
+  ---
+
+  ## 7. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `"Se requiere usuario (pIdUser)."` |
+  | Pedido/resto inexistente | `"Folio inexistente de pedido, favor de verificar."` |
+  | Estatus > 4 con factura asignada | `"El pedido o resto de pedido ya esta asignado a la factura <folio>."` |
+  | `BckOrd ≥ 3` (surtir completo) | `"El pedido es de surtir completo, imposible eliminar partidas."` |
+  | Vendedor `0100` + condición contado (Internet) | `"Pedidos de Internet de Contado, imposible eliminar partidas."` |
+  | Estatus 5 (facturado) | `"El pedido o resto de pedido tiene estatus de facturado."` — bloquea |
+  | Estatus 6 (embarcado) | `"El pedido o resto de pedido tiene estatus de embarcado."` — bloquea |
+  | Estatus 3 / 4 (empaque) | **Solo avisa** (igual que la pantalla) — el aviso se antepone a la `Respuesta` |
+
+  > Estas validaciones son las mismas que aplica el `DELETE /Renglon` antes de eliminar (se corren en `ValidaPedido`, compartido por ambos endpoints).
+
+  ---
+
+  ## 8. Plan de Pruebas
+
+  > Preparación: pedido vigente con renglones sin entregas (`PED_OK`), pedido con `BckOrd=3` (`PED_BO3`), pedido facturado (`PED_FAC`), pedido en estatus 3 o 4 (`PED_EMP`).
+
+  | # | Request | Esperado |
+  |---|---------|----------|
+  | C0 | GET sin `IdUser` | `"Se requiere usuario (pIdUser)."` |
+  | C1 | GET `?IdPedido=Z999999&IdUser=sis10` | `"Folio inexistente de pedido, favor de verificar."` |
+  | C2 | GET `?IdPedido=<PED_OK>` | Encabezado + solo renglones con `CantEnt=0`; comparar contra la pantalla carácter |
+  | C3 | GET `?IdPedido=<PED_BO3>` | `"El pedido es de surtir completo, imposible eliminar partidas."` |
+  | C4 | GET `?IdPedido=<PED_FAC>` | `"...estatus de facturado."` |
+  | C5 | GET `?IdPedido=<PED_EMP>` | `IdError: false` con el aviso de empaque antepuesto en `Respuesta` |
+
+  ---
+
+  ## 9. Resultado
+
+  | Estado              | Descripción                                                  |
+  |---------------------|--------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 10. Observaciones Técnicas
+
+  1. **Estatus 3/4 no bloquean:** en la pantalla original el mensaje de inicio/fin de empaque se muestra pero permite continuar (solo 5 y 6 regresan al prompt); se replicó ese comportamiento como aviso.
+  2. **Chequeo de usuario autorizado:** la pantalla lo tiene **comentado** (lista alex, franc, JVHQ...); no se implementó, igual que el original vigente.
+  3. **Renglón identificado por `Reng`:** el browse original selecciona por posición; en REST la llave natural es el número de renglón dentro de pedido+resto (índice `idx-reng`).
+  4. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

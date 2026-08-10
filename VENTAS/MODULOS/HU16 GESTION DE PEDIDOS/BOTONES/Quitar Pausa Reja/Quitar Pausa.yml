@@ -1,0 +1,195 @@
+info:
+  name: Quitar Pausa
+  type: http
+  seq: 1
+
+http:
+  method: DELETE
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/PausaReja?IdPedido=2955590&Resto=0&IdUser=olds
+  params:
+    - name: IdPedido
+      value: "2955590"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Pedidos: Quitar Pausa en Reja
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedidos — Quitar Pausa en Reja**
+  Libera el pedido de la pausa en reja para que pueda pasar al área de embarque. Marca `Pedido.PausaReja = FALSE` y sella quién, cuándo y a qué hora la quitó. Es la opción **"Quitar pausa"** del editor de pedidos.
+  Programa servidor: `pedcambio.p` · Procedimiento: `quitaPausaReja` | Versión REST de `vtab0130.p`, `PROCEDURE QuitaPausa` (líneas 1579-1600) más la guarda del despachador (líneas 209-213). Módulo `/Ventas/Pedidos/`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  DELETE
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/PausaReja
+  ```
+
+  Misma ruta que el PUT de pausar; los distingue el verbo.
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido. Se normaliza a 7 posiciones con ceros
+  **`Resto`** · INTEGER · ❌ — Resto del pedido. Vacío = `0`
+  **`IdUser`** · STRING · ✅ — Usuario que quita la pausa. Queda en `Pedido.UFPausaReja` y en la auditoría
+
+  ---
+
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
+
+  ```
+  Content-Type: application/json
+  ```
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  DELETE .../Ventas/Pedidos/PausaReja?IdPedido=2965291&Resto=0&IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ### Pausa eliminada
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Pausa en reja eliminada del pedido 2965291-0."
+    }
+  }
+  ```
+
+  ### No estaba pausado
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "El pedido 2965291-0 no esta pausado en reja."
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  **`"Se requiere el usuario (IdUser)."`**
+  **`"Pedido inexistente, verifique..."`**
+  **`"El pedido esta siendo usado por otro proceso; intente de nuevo."`** — registro bloqueado. Candado con `NO-WAIT`
+  **`"El pedido <folio>-<resto> no esta pausado en reja."`** — `Pedido.PausaReja` está en `FALSE`
+
+  ### De dónde sale la última
+
+  No está en `PROCEDURE QuitaPausa`: la pantalla la evalúa **antes** de llamarlo, en el despachador del menú (`vtab0130.p:209-213`):
+
+  ```progress
+  WHEN 6 THEN DO:
+      IF Pedido.PausaReja = TRUE THEN
+          RUN QuitaPausa.
+  END.
+  ```
+
+  Sin esa guarda, el servicio sellaría `UFPausaReja` / `FFPausaReja` / `HFPausaReja` en un pedido que nunca estuvo pausado, ensuciando la bitácora con un fin de pausa que no corresponde a ningún inicio.
+
+  > A diferencia de pausar, aquí **no** se revisa `EstPedido.PasoReja`: quitar la pausa de un pedido que ya pasó reja no tiene sentido práctico pero tampoco daño, y la pantalla no lo impide.
+
+  ---
+
+  ## 10. Efectos
+
+  Dentro de una transacción, sobre el registro `Pedido`:
+
+  **`PausaReja`** = `FALSE`
+  **`UFPausaReja`** = el `IdUser` de la petición — Usuario de **F**in de pausa
+  **`FFPausaReja`** = `TODAY` — Fecha de fin
+  **`HFPausaReja`** = `TIME` — Hora de fin
+
+  Los campos de inicio (`UIPausaReja`, `FIPausaReja`, `HIPausaReja`) **no se limpian**: quedan como registro de quién puso la pausa. Entre los dos tríos se reconstruye el periodo completo de la pausa.
+
+  > La pantalla graba `USERID("dictdb")` en `UFPausaReja` (`vtab0130.p:1594`). En PASOE el agente se conecta a la base con una sola cuenta de servicio, así que `USERID` devolvería siempre ese usuario técnico; el servicio usa el `IdUser` de la petición.
+
+  ---
+
+  ## 11. La confirmación es del front
+
+  La pantalla pregunta antes de quitar (`vtab0130.p:1585-1591`):
+
+  > *"Desea eliminar la pausa al pedido 2965291 - 0 ?"*
+
+  El servicio no tiene parámetro `Confirmar`: la confirmación es del front. La guarda del §9 sí es del servidor y se aplica siempre.
+
+  ---
+
+  ## 12. Auditoría
+
+  **Area** = `oeVentas` · **Modulo** = `Pedidos` · **Programa** = `pedcambio`
+  **Operacion** = `PUT` · **Resource** = `/Ventas/Pedidos/PausaReja`
+  **Respuesta** = `Pedido: <folio>-<resto>`
+
+  > La operación se registra como `PUT` aunque el verbo HTTP sea `DELETE`: pausar y quitar pausa comparten el helper interno `AplicaPausa`, que audita igual en los dos sentidos. Para distinguirlos en `AuditLog` hay que leer el `Respuesta` junto con el estado del pedido. Si necesitan diferenciarlos en el reporte de auditoría, es un ajuste de una línea.
+
+  ---
+
+  ## 13. Registro en el resourceModel
+
+  `pedcambio.p` **no está publicado**. El XML de esta operación va junto con el PUT de pausar, en el recurso `_Pedidos_PausaReja` — ver [pedcambio-PausaReja.md](pedcambio-PausaReja.md) §13.
+
+  ---
+
+  ## 14. Plan de Pruebas
+
+  | # | Caso | Esperado |
+  |---|------|----------|
+  | P1 | Pedido pausado | Pausa eliminada, los 3 campos de fin sellados con el `IdUser` |
+  | P2 | Pedido **no** pausado | `"...no esta pausado en reja."`, sin tocar los campos |
+  | P3 | Verificar que los campos de inicio se conserven | `UIPausaReja` / `FIPausaReja` / `HIPausaReja` intactos |
+  | P4 | Pedido inexistente | `"Pedido inexistente, verifique..."` |
+  | P5 | Sin `IdUser` | `"Se requiere el usuario (IdUser)."` |
+  | P6 | Verificar `UFPausaReja` | Trae el `IdUser`, **no** el usuario de conexión de PASOE |
+  | P7 | Ciclo completo: pausar → quitar → consultar | Los 6 campos cuentan la historia de la pausa |
+  | P8 | Auditoría | Registro con `Resource = /Ventas/Pedidos/PausaReja` |
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

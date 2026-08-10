@@ -1,0 +1,231 @@
+info:
+  name: Pausar en Reja
+  type: http
+  seq: 1
+
+http:
+  method: PUT
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/PausaReja?IdPedido=2955590&Resto=0&IdUser=olds
+  params:
+    - name: IdPedido
+      value: "2955590"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Pedidos: Pausar en Reja
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedidos — Pausar en Reja**
+  Pausa el pedido en reja para que **no pase al área de embarque**. Marca `Pedido.PausaReja = TRUE` y sella quién, cuándo y a qué hora. Es la opción **"Pausar en reja"** del editor de pedidos.
+  Programa servidor: `pedcambio.p` · Procedimiento: `pausaReja` | Versión REST de `vtab0130.p`, `PROCEDURE Pausa` (líneas 1556-1577) más las guardas del despachador (líneas 196-208). Módulo `/Ventas/Pedidos/`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  PUT
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/PausaReja
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido. Se normaliza a 7 posiciones con ceros
+  **`Resto`** · INTEGER · ❌ — Resto del pedido. Vacío = `0`
+  **`IdUser`** · STRING · ✅ — Usuario que pausa. Queda en `Pedido.UIPausaReja` y en la auditoría
+
+  ---
+
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
+
+  ```
+  Content-Type: application/json
+  ```
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  PUT .../Ventas/Pedidos/PausaReja?IdPedido=2965291&Resto=0&IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ### Pausa aplicada
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Pedido 2965291-0 pausado en reja: no pasara al area de embarque."
+    }
+  }
+  ```
+
+  ### Ya pasó reja
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "Verifique que el pedido no haya pasado reja."
+    }
+  }
+  ```
+
+  ### Ya estaba pausado
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "El pedido 2965291-0 ya esta pausado en reja."
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  **`"Se requiere el usuario (IdUser)."`**
+  **`"Pedido inexistente, verifique..."`**
+  **`"El pedido esta siendo usado por otro proceso; intente de nuevo."`** — registro bloqueado. Candado con `NO-WAIT`
+  **`"El pedido <folio>-<resto> ya esta pausado en reja."`** — `Pedido.PausaReja` ya está en `TRUE`
+  **`"Verifique que el pedido no haya pasado reja."`** — no existe un `EstPedido` del pedido con `PasoReja = FALSE`
+
+  ### De dónde salen las dos últimas
+
+  No están en `PROCEDURE Pausa`: la pantalla las evalúa **antes** de llamarlo, en el despachador del menú (`vtab0130.p:196-208`):
+
+  ```progress
+  WHEN 5 THEN DO:
+      IF Pedido.PausaReja = FALSE THEN DO:
+          FIND EstPedido WHERE EstPedido.Id-Pedido = Pedido.Id-Pedido
+                           AND EstPedido.Id-Seq = Pedido.Resto
+                           AND EstPedido.PasoReja = FALSE NO-LOCK NO-ERROR.
+          IF AVAILABLE EstPedido THEN
+              RUN Pausa.
+          ELSE
+              MESSAGE "Verifique que el pedido no haya pasado reja."
+      END.
+  END.
+  ```
+
+  Un pedido que ya pasó reja no se puede pausar: la pausa sirve justamente para detenerlo **antes** de que llegue a embarque.
+
+  ---
+
+  ## 10. Efectos
+
+  Dentro de una transacción, sobre el registro `Pedido`:
+
+  **`PausaReja`** = `TRUE`
+  **`UIPausaReja`** = el `IdUser` de la petición — Usuario de **I**nicio de pausa
+  **`FIPausaReja`** = `TODAY` — Fecha de inicio
+  **`HIPausaReja`** = `TIME` — Hora de inicio
+
+  Los campos de fin (`UFPausaReja`, `FFPausaReja`, `HFPausaReja`) los llena el servicio de quitar pausa; aquí no se tocan, así que conservan los de la pausa anterior si el pedido ya se pausó y despausó antes.
+
+  > La pantalla graba `USERID("dictdb")` en `UIPausaReja` (`vtab0130.p:1571`). En PASOE el agente se conecta a la base con una sola cuenta de servicio, así que `USERID` devolvería siempre ese usuario técnico; el servicio usa el `IdUser` de la petición para no perder el rastro de quién pausó.
+
+  ---
+
+  ## 11. La confirmación es del front
+
+  La pantalla pregunta antes de pausar (`vtab0130.p:1562-1568`):
+
+  > *"Desea pausar el pedido 2965291 - 0 para que no pase al area de embarque?"*
+
+  El servicio no tiene parámetro `Confirmar`: la confirmación es del front. Las dos guardas del §9 sí son del servidor y se aplican siempre.
+
+  ---
+
+  ## 12. Auditoría
+
+  **Area** = `oeVentas` · **Modulo** = `Pedidos` · **Programa** = `pedcambio`
+  **Operacion** = `PUT` · **Resource** = `/Ventas/Pedidos/PausaReja`
+  **Respuesta** = `Pedido: <folio>-<resto>`
+
+  ---
+
+  ## 13. Registro en el resourceModel
+
+  `pedcambio.p` **no está publicado**: no tiene entrada en `resourceModel.xml` ni `.pidl` generado.
+
+  ```xml
+  <prgs:resource consumes="application/json" name="_Pedidos_PausaReja"
+                 path="/Ventas/Pedidos/PausaReja" produces="application/json">
+    <prgs:operation consumes="application/json"
+                    idls="RestADOSAVentas/.services/AppServer/pedcambio.pidl::com.progress.openedge.pdt.bpmbindings"
+                    name="pedcambio..pausaReja" produces="application/json" verb="PUT">
+      <prgs:param name="IdPedido" type="QUERY"/>
+      <prgs:param name="Resto" type="QUERY"/>
+      <prgs:param name="IdUser" type="QUERY"/>
+    </prgs:operation>
+    <prgs:operation consumes="application/json"
+                    idls="RestADOSAVentas/.services/AppServer/pedcambio.pidl::com.progress.openedge.pdt.bpmbindings"
+                    name="pedcambio..quitaPausaReja" produces="application/json" verb="DELETE">
+      <prgs:param name="IdPedido" type="QUERY"/>
+      <prgs:param name="Resto" type="QUERY"/>
+      <prgs:param name="IdUser" type="QUERY"/>
+    </prgs:operation>
+  </prgs:resource>
+  ```
+
+  Las dos operaciones comparten ruta y se distinguen por el verbo. El orden de los `<prgs:param>` debe coincidir con el de los parámetros del procedimiento.
+
+  ---
+
+  ## 14. Plan de Pruebas
+
+  | # | Caso | Esperado |
+  |---|------|----------|
+  | P1 | Pedido no pausado, con `EstPedido.PasoReja = FALSE` | Pausa aplicada, los 4 campos sellados con el `IdUser` |
+  | P2 | Pedido **ya** pausado | `"...ya esta pausado en reja."`, sin tocar los campos |
+  | P3 | Pedido cuyo `EstPedido` tiene `PasoReja = TRUE` | `"Verifique que el pedido no haya pasado reja."` |
+  | P4 | Pedido sin registro en `EstPedido` | `"Verifique que el pedido no haya pasado reja."` |
+  | P5 | Pedido inexistente | `"Pedido inexistente, verifique..."` |
+  | P6 | Sin `IdUser` | `"Se requiere el usuario (IdUser)."` |
+  | P7 | Verificar `UIPausaReja` | Trae el `IdUser`, **no** el usuario de conexión de PASOE |
+  | P8 | Pedido pausado y despausado antes, se vuelve a pausar | Los campos de inicio se sobrescriben; los de fin conservan la pausa anterior |
+  | P9 | Auditoría | Registro con `Operacion = PUT` |
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

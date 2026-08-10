@@ -1,0 +1,146 @@
+info:
+  name: Lista por Facturar
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/listaPedidosPorFacturar?Origen=02B
+  params:
+    - name: Origen
+      value: 02B
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Facturación: Lista de Pedidos por Facturar
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Facturación — Pedidos por Facturar (por origen)**
+  Browse de los pedidos pendientes de facturar de un almacén de origen: empacados (estatus 4) y adelantados (estatus 0-2), de clientes **sin** embarque especial, con las banderas de facturación. Réplica REST del browse carácter `vtaa0498.p` + `vtaa0496.i` (que lanza `vtaa0500.p`).
+  Programa servidor: `pedfactura.p` · Procedimiento: `listaPedidosPorFacturar`. Módulo `/Ventas/Pedidos/`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/listaPedidosPorFacturar
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`Origen`** · STRING · ✅ — Almacén de origen. Determina el prefijo del folio de pedido:
+  - `02B` = CEDIS (pedidos "2") · `FUG` = "3" · `12` = "6" y > 1000000 · `11` = "1" · otros = "8" (adelantados)
+
+  > Vacío → *"Se requiere el almacen de origen (Origen)."*. Se puede derivar de `Usuario.Id-Ubicacion`.
+
+  ---
+
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
+
+  ```
+  Content-Type: application/json
+  ```
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Pedido/listaPedidosPorFacturar?Origen=02B
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Origen 02B: 2 pedido(s) por facturar.",
+      "ttPorFacturar": [
+        {
+          "IdPedido": "2965291", "Resto": 0, "IdCliente": 45210,
+          "RazonSocial": "COMERCIAL X SA DE CV", "FFinEmp": "2026-08-06", "Hora": "10:32",
+          "Adelantado": false, "BO": false, "Ligado": false, "Cortes": false, "Credito": true
+        }
+      ]
+    }
+  }
+  ```
+
+  Sin pedidos: `IdError=false`, `Respuesta="No hay pedidos por facturar; vea clientes especiales."`, `ttPorFacturar` vacío.
+
+  ---
+
+  ## 9. Campos de respuesta `ttPorFacturar`
+
+  **`IdPedido`** · STRING — Folio del pedido
+  **`Resto`** · INTEGER — Resto (Id-Seq del EstPedido)
+  **`IdCliente`** · INTEGER — Cliente
+  **`RazonSocial`** · STRING — Razón social
+  **`FFinEmp`** · DATE — Fecha de fin de empaque
+  **`Hora`** · STRING — Hora de fin de empaque (`HH:MM`)
+  **`Adelantado`** · BOOLEAN — Facturación por adelantado (`F/A`)
+  **`BO`** · BOOLEAN — Backorder incompleto (`BckOrd` 3/4 con renglón Tipo 1 pendiente)
+  **`Ligado`** · BOOLEAN — Tiene liga (`Id-Liga <> ""`)
+  **`Cortes`** · BOOLEAN — Con cortes (`Id-Corte3`/`Id-Corte4`)
+  **`Credito`** · BOOLEAN — `true` = crédito (`Id-Cond <> 0`); `false` = contado
+
+  ---
+
+  ## 10. Reglas (réplica de `vtaa0496.i`)
+
+  - **Empacados:** `EstPedido.Estatus = 4`, del prefijo del origen, con `Cliente.EmbEsp = FALSE`.
+  - **Adelantados:** `EstPedido.Estatus` en `0/1/2` con `Pedido.Adelantado = TRUE` y `Cliente.EmbEsp = FALSE`.
+  - Los pedidos de clientes **con** embarque especial (`EmbEsp = TRUE`) NO salen aquí; van en el flujo de "Ctes. Esp." (browse carácter `vtaa0497.p` / `vtaa0493.i`).
+
+  ---
+
+  ## 11. Registro en el resourceModel
+
+  Recurso `_Pedido_listaPedidosPorFacturar`, path `/Pedido/listaPedidosPorFacturar`, verbo **GET**, operación `pedfactura..listaPedidosPorFacturar`. **Ya registrado.**
+
+  ---
+
+  ## 12. Plan de Pruebas
+
+  | # | Caso | Esperado |
+  |---|------|----------|
+  | P1 | Sin `Origen` | `"Se requiere el almacen de origen (Origen)."` |
+  | P2 | Origen 02B con pedidos empacados | Lista con banderas; `Credito` según `Id-Cond` |
+  | P3 | Pedido adelantado en estatus 1 | Aparece en la lista |
+  | P4 | Cliente con `EmbEsp=true` | NO aparece (es de Ctes. Esp.) |
+  | P5 | Origen sin pedidos | Lista vacía + mensaje de "vea clientes especiales" |
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

@@ -1,0 +1,118 @@
+info:
+  name: Catalogo Tipos de Back Order
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Catalogo/TiposBackorder?IdUser=olds
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Catálogo: Tipos de Backorder
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Catálogo — Tipos de Backorder**
+  Listado fijo de los tipos de surtido/backorder de un pedido (`Pedido.BckOrd`), para alimentar el combo de "Backorder" en la captura y en el servicio `pedbackorder.p`.
+  Programa servidor: `ventas-cat-backorder.p` · Procedimiento: `GetTiposBackorder` (GET). Módulo `/Ventas/Catalogo/`.
+
+  ---
+
+  ## 2. Método HTTP y URL
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Catalogo/TiposBackorder
+  ```
+
+  ---
+
+  ## 3. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUser`** · STRING · ✅ — Usuario que consulta (se mapea al parámetro interno `pIdUser`)
+
+  ---
+
+  ## 4. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Catalogo/TiposBackorder?IdUser=olds
+  ```
+
+  ---
+
+  ## 5. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Consulta generada: 4 tipo(s) de backorder.",
+      "ttBackorder": { "ttBackorder": [
+        { "Id": 1, "Abrev": "SOLO EXIST.",     "Descr": "Solo existencia" },
+        { "Id": 2, "Abrev": "EXIST.+BO",       "Descr": "Existencia + Backorder" },
+        { "Id": 3, "Abrev": "ENVIAR COMPLETO", "Descr": "Enviar completo" },
+        { "Id": 4, "Abrev": "TODO O CANCELAR", "Descr": "Todo o cancelar" }
+      ]}
+    }
+  }
+  ```
+
+  ---
+
+  ## 6. Campos del Response (`ttBackorder`)
+
+  **`Id`** · INTEGER — Valor de `Pedido.BckOrd` (1..4)
+  **`Abrev`** · STRING — Etiqueta corta, como aparece en el modo carácter
+  **`Descr`** · STRING — Descripción larga (misma que el helper `DescrBckOrd` de `pedbackorder.p`)
+
+  ---
+
+  ## 7. Tabla de valores
+
+  | `Id` | `Abrev` | `Descr` |
+  |------|---------|---------|
+  | `1` | `SOLO EXIST.` | Solo existencia |
+  | `2` | `EXIST.+BO` | Existencia + Backorder |
+  | `3` | `ENVIAR COMPLETO` | Enviar completo |
+  | `4` | `TODO O CANCELAR` | Todo o cancelar |
+
+  ---
+
+  ## 8. Validaciones
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `"Se requiere el usuario (IdUser)."` |
+
+  ---
+
+  ## 9. Resultado
+
+  | Estado              | Descripción                                                  |
+  |---------------------|--------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 10. Observaciones Técnicas
+
+  1. **Lista fija (sin tabla):** los 4 tipos están declarados en el programa, igual que el helper `DescrBckOrd` de `pedbackorder.p` y las opciones del modo carácter. Si se agrega/cambia un tipo, actualizar **también** `DescrBckOrd`.
+  2. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

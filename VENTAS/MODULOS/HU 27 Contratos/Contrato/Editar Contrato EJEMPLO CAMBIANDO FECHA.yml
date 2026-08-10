@@ -39,8 +39,8 @@ docs: |
   ## 1. Título del Servicio
 
   **Contratos — Edita**
-  Edita un contrato existente recibiendo en el **body** el dataset `dsContrato` ya modificado por el front (partidas dadas de baja quitadas, `FecFin` y monedas/precios ya ajustados). El servidor calcula qué cambió contra la BD y lo persiste en una transacción.
-  Programa servidor: `contrato.p` · Procedimiento: `editaContrato` | Versión REST del guardado `vtaa0027.i` disparado por las opciones de `vtaa0020.i` (Baja `vtaa0024.i`, Fechas `vtaa0025.i`, Moneda `vtaa0026.i`).
+  Edita un contrato existente recibiendo en el **body** el dataset `dsContrato` ya modificado por el front (partidas dadas de baja quitadas, partidas **nuevas** de cotizaciones adicionales agregadas, `FecFin` y monedas/precios ya ajustados). El servidor calcula qué cambió contra la BD —bajas, actualizaciones y **altas**— y lo persiste en una transacción.
+  Programa servidor: `contrato.p` · Procedimiento: `editaContrato` | Versión REST del guardado `vtaa0027.i` disparado por las opciones de `vtaa0020.i` (Baja `vtaa0024.i`, Fechas `vtaa0025.i`, Moneda `vtaa0026.i`), extendida con **alta multi-cotización** (misma capacidad que `altaContrato`: integrar varias cotizaciones del mismo cliente).
 
   ---
 

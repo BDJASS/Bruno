@@ -1,0 +1,251 @@
+info:
+  name: Consulta
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Consulta?IdUser=olds&IdPedido=4122888&Resto=0
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdPedido
+      value: "4122888"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Pedidos: Consulta para Edición
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedidos — Consulta de Pedido para Edición**
+  Regresa el pedido completo (generales, fiscales, envío, banderas) más los renglones de comentarios (`Tipo > 1`), listo para que el front lo edite y lo reenvíe a **ActualizaGenerales**. Es la carga inicial de la vista **Generales** del editor de pedidos.
+  Programa servidor: `pedcambio.p` · Procedimiento: `leePedido` | Versión REST de `vtab0130.p` (modo carácter, `PROCEDURE Generales`). Módulo `/Ventas/Pedidos/`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Consulta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido. Se normaliza a 7 posiciones (prefijo + 6 dígitos con ceros)
+  **`Resto`** · STRING · ❌ — Resto del pedido. Vacío o no numérico = `0`
+
+  ---
+
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
+
+  ```
+  Content-Type: application/json
+  ```
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Pedidos/Consulta?IdPedido=2965291&Resto=0
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Pedido 2965291-0 listo para edicion.",
+      "ttPedido": [
+        {
+          "IdPedido": "2965291", "Resto": 0, "FecReg": "2026-07-30",
+          "MetodoPPD": false, "IdVendedor": "0123", "NombreVendedor": "JUAN PEREZ",
+          "IdForPed": "", "IdCliente": 45210, "RazonSocial": "COMERCIAL X SA DE CV",
+          "RFC": "CXX010101ABC", "NomEmpresa": "COMERCIAL X", "RSocietario": "SA DE CV",
+          "CalleNo": "AV REFORMA 100", "Colonia": "CENTRO", "IdCiudad": 12,
+          "NombreCiudad": "MONTERREY", "NombreEstado": "NUEVO LEON", "CP": "64000",
+          "RazonSocial1": "BODEGA NORTE", "Email": "compras@x.com",
+          "CalleNo1": "CALLE 5 200", "Colonia1": "INDUSTRIAL", "Ciudad1": "APODACA",
+          "Estado1": "NUEVO LEON", "CP1": "66600", "Referencia": "PORTON AZUL",
+          "Attn": "LIC. GOMEZ", "Vigentes": true, "EnTarima": false,
+          "Adelantado": false, "SurtParcial": false, "BckOrd": 3, "Seguro": false,
+          "DescPP1": 0, "IdEntrega": 12, "DescrEntrega": "OCURRE", "IdTran": 184,
+          "NombreTran": "PAQUETEXPRESS", "ReqCte": "OC-8891",
+          "Notas1": "ENTREGAR EN HORARIO MATUTINO", "Notas2": "",
+          "PagAnt": false, "SolCancPed": false, "FEFormaPago": "99",
+          "FEDigitosCuenta": "", "IdRFiscal": "601", "IdUsoCFDI": "G03",
+          "IdRemision": "N", "IdCond": 30, "Plazo": 30, "IdEstatus": 0,
+          "IdFactura": "", "IdLiga": "", "PausaReja": false, "Importe": 15230.50
+        }
+      ],
+      "ttComentario": [
+        { "IdPedido": "2965291", "Resto": 0, "Reng": 3, "Tipo": 2, "Descr": "SURTIR COMPLETO" }
+      ]
+    }
+  }
+  ```
+
+  ### Pedido inexistente
+
+  ```json
+  { "response": { "IdError": true, "Respuesta": "Pedido inexistente, verifique..." } }
+  ```
+
+  ### Pedido ya facturado (avisa, no bloquea)
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "El pedido ya fue facturado, verifique que los cambios realizados no afecten al mismo pedido.",
+      "ttPedido": [ ... ], "ttComentario": [ ... ]
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la respuesta `ttPedido`
+
+  **Generales**
+  **`IdPedido`** · STRING — Folio del pedido
+  **`Resto`** · INTEGER — Resto del pedido
+  **`FecReg`** · DATE — Fecha de registro (solo lectura)
+  **`MetodoPPD`** · BOOLEAN — `true` = PPD; `false` = PUE. Viaja como booleano, no `"SI"/"NO"`
+  **`IdVendedor`** · STRING — Folio del vendedor (4 dígitos)
+  **`NombreVendedor`** · STRING — Nombre del empleado del vendedor (solo lectura)
+  **`IdForPed`** · STRING — Folio de agente / forma de pedido
+  **`IdCliente`** · INTEGER — Número de cliente (`3` = cliente sin registro)
+  **`RazonSocial`** · STRING — Razón social
+  **`RFC`** · STRING — RFC (sin espacios)
+  **`NomEmpresa`** · STRING — Nombre de empresa
+  **`RSocietario`** · STRING — Régimen societario
+  **`CalleNo`** · STRING — Calle y número fiscal
+  **`Colonia`** · STRING — Colonia fiscal
+  **`IdCiudad`** · INTEGER — Folio de ciudad fiscal
+  **`NombreCiudad`** · STRING — Nombre de la ciudad (solo lectura)
+  **`NombreEstado`** · STRING — Nombre del estado (solo lectura)
+  **`CP`** · STRING — Código postal fiscal
+
+  **Envío / embarque**
+  **`RazonSocial1`** · STRING — Embarcar a
+  **`Email`** · STRING — Correo del pedido
+  **`CalleNo1`** · STRING — Calle de embarque
+  **`Colonia1`** · STRING — Colonia de embarque
+  **`Ciudad1`** · STRING — Ciudad de embarque (texto)
+  **`Estado1`** · STRING — Estado de embarque (texto)
+  **`CP1`** · STRING — CP de embarque
+  **`Referencia`** · STRING — Referencia de entrega
+  **`Attn`** · STRING — Contacto
+  **`IdEntrega`** · INTEGER — Folio de tipo de entrega
+  **`DescrEntrega`** · STRING — Descripción de la entrega (solo lectura)
+  **`IdTran`** · INTEGER — Folio de transporte (`0` si entrega ≤ 11 o 16)
+  **`NombreTran`** · STRING — Nombre del transporte (solo lectura)
+
+  **Banderas / condiciones**
+  **`Vigentes`** · BOOLEAN — Precios vigentes
+  **`EnTarima`** · BOOLEAN — Tipo de empaque en tarima
+  **`Adelantado`** · BOOLEAN — Facturar por adelantado
+  **`SurtParcial`** · BOOLEAN — Surtido parcial
+  **`BckOrd`** · INTEGER — Tipo de backorder
+  **`Seguro`** · BOOLEAN — Seguro
+  **`DescPP1`** · DECIMAL — % de descuento pronto pago
+  **`ReqCte`** · STRING — Requisición del cliente
+  **`Notas1`** · STRING — Observación 1
+  **`Notas2`** · STRING — Observación 2
+  **`PagAnt`** · BOOLEAN — Pago anticipado (editable solo en contado)
+  **`SolCancPed`** · BOOLEAN — Solicitud de cancelación
+
+  **Fiscales (CFDI)**
+  **`FEFormaPago`** · STRING — Forma de pago SAT (editable solo en contado)
+  **`FEDigitosCuenta`** · STRING — Dígitos de cuenta (editable solo en contado)
+  **`IdRFiscal`** · STRING — Régimen fiscal
+  **`IdUsoCFDI`** · STRING — Uso de CFDI
+  **`IdRemision`** · STRING — Envío con remisión (`S`/`N`)
+
+  **Solo lectura (contexto, no editables)**
+  **`IdCond`** · INTEGER — Condición de venta (se cambia con **CondicionVenta**)
+  **`Plazo`** · INTEGER — Plazo (se cambia con **CondicionVenta**)
+  **`IdEstatus`** · INTEGER — Estatus del pedido
+  **`IdFactura`** · STRING — Folio de factura si ya facturó
+  **`IdLiga`** · STRING — Liga del pedido
+  **`PausaReja`** · BOOLEAN — Pausado en reja
+  **`Importe`** · DECIMAL — Total del pedido (`Pedido.Tot`)
+
+  ---
+
+  ## 10. Campos de la respuesta `ttComentario`
+
+  Renglones de comentarios/cortes del detalle (`DetPedido.Tipo > 1`):
+
+  **`IdPedido`** · STRING — Folio del pedido
+  **`Resto`** · INTEGER — Resto
+  **`Reng`** · INTEGER — Renglón del detalle
+  **`Tipo`** · INTEGER — Tipo de renglón (`> 1`)
+  **`Descr`** · STRING — Texto del comentario (editable con **ComentariosDetalle**)
+
+  ---
+
+  ## 11. Reglas y Notas
+
+  1. **Normalización de folio:** el `IdPedido` se pasa por `NormalizaFolio` (prefijo de 1 letra + 6 dígitos con ceros), igual que la captura.
+  2. **Descripciones de catálogos** (`NombreVendedor`, `NombreCiudad`, `NombreEstado`, `DescrEntrega`, `NombreTran`) se resuelven en el GET para que el front las muestre sin llamadas extra. Son **solo lectura**; no se reenvían para guardar.
+  3. **Aviso de facturado:** si `Id-Estatus > 4` o `< -1` con factura, el `Respuesta` trae el aviso pero **`IdError = false`** — la pantalla tampoco bloquea, solo advierte.
+  4. **`MetodoPPD` es booleano** (`true`/`false`), no `"SI"/"NO"` ni `"1"/"0"`. Al reenviar a ActualizaGenerales hay que mandarlo con el valor que devolvió este GET (ver la nota del contrato en [pedcambio-ActualizaGenerales.md](pedcambio-ActualizaGenerales.md)).
+  5. Este GET **no** valida `IdUser` (es solo lectura); el usuario se exige en el POST.
+
+  ---
+
+  ## 12. Registro en el resourceModel
+
+  Recurso `_Ventas_Pedidos_Consulta`, path `/Ventas/Pedidos/Consulta`, verbo **GET**, operación `pedcambio..leePedido`. El binding ya existe en `pedcambio.pidl`.
+
+  ---
+
+  ## 13. Plan de Pruebas
+
+  | # | Caso | Esperado |
+  |---|------|----------|
+  | P1 | Pedido válido | `ttPedido` completo + `ttComentario`; comparar contra la pantalla |
+  | P2 | Pedido inexistente | `"Pedido inexistente, verifique..."` |
+  | P3 | Pedido facturado | Devuelve datos + aviso, `IdError = false` |
+  | P4 | Folio sin ceros (`P2965291` vs `2965291`) | Normaliza y encuentra el mismo pedido |
+  | P5 | `Resto` vacío | Toma `0` |
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

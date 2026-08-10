@@ -1,0 +1,7 @@
+info:
+  name: Bitacora Pedidos
+  type: folder
+  seq: 3
+
+request:
+  auth: inherit

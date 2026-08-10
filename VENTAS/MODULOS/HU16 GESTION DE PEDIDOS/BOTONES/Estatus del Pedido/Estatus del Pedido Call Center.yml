@@ -1,0 +1,395 @@
+info:
+  name: Estatus del Pedido Call Center
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Seguimiento?IdPedido=2944602&Resto=0&IdUser=olds
+  params:
+    - name: IdPedido
+      value: "2944602"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Seguimiento de Pedido (Estatus)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Seguimiento de Pedido**
+  Devuelve el renglón de `EstPedido` del pedido-resto solicitado con los nombres ya resueltos (cliente, vendedor, quien recibió, surtidores de área C y D, empacador, surtidor y empacador de cortes, transporte y chofer), la descripción del estatus, los tiempos de pausa, las horas formateadas y el porcentaje de avance de surtido.
+  Programa servidor: `estpedido_p.p` · Procedimiento: `leeEstpedido` | Tabla principal: `EstPedido`
+  Include del temp-table: `estpedido.i` (`ttEstPedido` / `dsEstPedido`)
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Seguimiento
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Número de pedido (`EstPedido.Id-Pedido`, `X(7)`)
+  - Ej: `"334433"` · Se compara con `TRIM()`, sin relleno de ceros
+
+  **`Resto`** · STRING · ❌ — Resto del pedido (`EstPedido.Id-Seq`)
+  - Ej: `"0"` · Vacío o no enviado = **`0`**, el resto original *(default)*
+
+  **`IdUser`** · STRING · ✅ — Usuario que consulta
+  - Ej: `"olds"`
+
+  > **Nota sobre el nombre del resto.** En la tabla `Pedido` el campo se llama `Resto`; en `EstPedido` se llama `Id-Seq`. Son el mismo dato. El parámetro se llama `Resto` porque es el nombre que ve el usuario en pantalla.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Seguimiento?IdPedido=334433&Resto=0&IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  `ttEstPedido` devuelve **0 o 1 registro**: el índice `idx-sur` de `EstPedido` es `UNIQUE` por (`Id-Pedido`, `Id-Seq`).
+
+  El JSON trae **muchos campos** — el temp-table arrastra por `BUFFER-COPY` todos los campos de `EstPedido` y además los alias sin guion. El ejemplo muestra los de uso real; el detalle completo va en 8.1 a 8.9.
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Consulta generada correctamente.",
+    "ttEstPedido": [
+      {
+        "IdPedido": "334433",
+        "IdSeq": 0,
+        "IdCliente": 4763,
+        "RazonSocial": "COMERCIALIZADORA DEL NORTE SA DE CV",
+        "IdVendedor": "JASS",
+        "VendNombre": "JUAN ANTONIO SANCHEZ SANTOS",
+        "IdUbivta": "10A",
+        "IdUbiBod": "CED",
+        "IdCono": "C1",
+        "Estatus": 5,
+        "EstatusDescr": "FACTURADO",
+        "IdFactura": "A0012345",
+        "EmpRecibio": "MARIA LOPEZ GARCIA",
+        "EmpSurAreaC": "PEDRO RAMIREZ SOLIS",
+        "EmpSurAreaD": "ANA TORRES VEGA",
+        "EmpEmpaco": "LUIS MENDEZ RUIZ",
+        "EmpSurCor": "",
+        "EmpEmpCor": "",
+        "Bultos": 12,
+        "Tarimas": 2,
+        "IdTran": 3,
+        "TranNom": "PAQUETEXPRESS",
+        "IdChofer": "RGM",
+        "ChoferNom": "ROBERTO GOMEZ MARTINEZ",
+        "GuiaImporte": 850.00,
+        "FecPed": "2026-08-01",
+        "FecReg": "2026-08-01",
+        "sHorReg": "08:14:22",
+        "sHIniSur": "09:02:10",
+        "sHFinSur": "10:45:33",
+        "sHIniEmp": "11:05:00",
+        "sHFinEmp": "12:20:41",
+        "sHorFac": "13:02:15",
+        "sHorEmb": "15:30:00",
+        "TiempoPausa": "1:25:00",
+        "TiempoPausaEmb": "",
+        "PausaReja": false,
+        "PorcR": 98.5,
+        "PorcD": 99.2,
+        "Coment1": "",
+        "Coment2": ""
+      }
+    ]
+  }
+  ```
+
+  ---
+
+  ## 8.1 Identificación del pedido
+
+  > Estos son los alias **sin guion**, llenados explícitamente. Úsalos desde el front (ver observación 9).
+
+  **`IdPedido`** · STRING — Número de pedido
+  **`IdSeq`** · INT — Resto del pedido
+  **`IdCliente`** · INT — Clave del cliente
+  **`IdVendedor`** · STRING — Clave del vendedor
+  **`IdUbivta`** · STRING — Ubicación de venta (grupo)
+  **`IdUbiBod`** · STRING — Ubicación de bodega
+  **`IdCono`** · STRING — Cono asignado
+  **`IdFactura`** · STRING — Factura generada; vacío si aún no se factura
+
+  ---
+
+  ## 8.2 Nombres resueltos
+
+  Cada uno sale de un `FIND` propio; si no se encuentra el registro, el campo queda **vacío** (excepto `EmpSurAreaD`, ver observación 7).
+
+  **`RazonSocial`** · STRING — Razón social del cliente (`Cliente.RazonSocial`)
+  **`VendNombre`** · STRING — Nombre del vendedor (`Vendedor` → `Empleado.Nombre`)
+  **`EmpRecibio`** · STRING — Quien recibió el pedido (`Id-Recibio` → `EmpSurtido` → `Empleado`)
+  **`EmpSurAreaC`** · STRING — Surtidor de área C (`Id-Surtio`)
+  **`EmpSurAreaD`** · STRING — Surtidor de área D (`Id-Surtio2`)
+  **`EmpEmpaco`** · STRING — Empacador (`Id-Empaco`)
+  **`EmpSurCor`** · STRING — Surtidor de cortes (`Id-SurCor`)
+  **`EmpEmpCor`** · STRING — Empacador de cortes (`Id-EmpCor`)
+  **`TranNom`** · STRING — Nombre del transporte (`Transporte.Nombre`)
+  **`ChoferNom`** · STRING — Nombre del chofer (`Chofer` → `Empleado.Nombre`)
+
+  > La cadena de resolución de empleados es siempre la misma: la clave de `EstPedido` apunta a `EmpSurtido`, de ahí se toman las `Iniciales` y con ellas se busca el `Empleado` para obtener el `Nombre`. Si falta cualquier eslabón, el nombre sale vacío.
+
+  ---
+
+  ## 8.3 Estatus
+
+  **`Estatus`** · INT — Estatus numérico de `EstPedido`
+  **`EstatusDescr`** · STRING — Descripción del estatus, con **tres niveles de precedencia** (ver observación 10)
+  **`PausaReja`** · BOOLEAN — `true` = pedido pausado en reja (`Pedido.PausaReja`)
+  **`Coment1`** · STRING — Comentario; si el pedido trae `BckOrd >= 3` se le **agrega** el aviso de back order (ver observación 11)
+  **`Coment2`** · STRING — Comentario libre
+
+  ---
+
+  ## 8.4 Fechas del flujo
+
+  **`FecPed`** · DATE — Fecha del pedido
+  **`FecReg`** · DATE — Fecha de registro en bodega
+  **`FIniSur`** / **`FFinSur`** · DATE — Inicio / fin de surtido área C
+  **`FIniSur2`** / **`FFinSur2`** · DATE — Inicio / fin de surtido área D
+  **`FFinSurR`** · DATE — Fin de surtido en racks
+  **`FIniEmp`** / **`FFinEmp`** · DATE — Inicio / fin de empaque
+  **`FecFac`** · DATE — Fecha de factura
+  **`FecEmb`** · DATE — Fecha de embarque
+  **`FecSubEmb`** · DATE — Fecha de subembarque
+  **`FecGui`** · DATE — Fecha de guía
+  **`FecPasoReja`** · DATE — Fecha de paso por reja
+
+  ---
+
+  ## 8.5 Horas formateadas (`sHxxx`)
+
+  En `EstPedido` las horas se guardan como INTEGER de segundos desde medianoche. Estos campos son la versión legible: `HH:MM:SS` si el valor es `> 0`, **cadena vacía** si es `0`.
+
+  **`sHorReg`** · STRING — Hora de registro
+  **`sHIniSur`** / **`sHFinSur`** · STRING — Inicio / fin de surtido área C
+  **`sHIniSur2`** / **`sHFinSur2`** · STRING — Inicio / fin de surtido área D
+  **`sHFinSurR`** · STRING — Fin de surtido en racks
+  **`sHIniSC`** / **`sHFinSC`** · STRING — Inicio / fin de surtido de cortes
+  **`sHIniEC`** / **`sHFinEC`** · STRING — Inicio / fin de empaque de cortes
+  **`sHIniEmp`** / **`sHFinEmp`** · STRING — Inicio / fin de empaque
+  **`sHorFac`** · STRING — Hora de factura
+  **`sHorEmb`** · STRING — Hora de embarque
+  **`sHorSubEmb`** · STRING — Hora de subembarque
+  **`sHorPasoReja`** · STRING — Hora de paso por reja
+
+  > El campo INTEGER original (`HorReg`, `HIniSur`, …) también viaja en el JSON por el `BUFFER-COPY`. Para mostrar, usa el `sHxxx`; para calcular, el numérico.
+
+  ---
+
+  ## 8.6 Pausas
+
+  **`TiempoPausa`** · STRING — Duración de la pausa general en `H:MM:SS`
+  **`TiempoPausaEmb`** · STRING — Duración de la pausa de embarque en `H:MM:SS`
+
+  Ambos se calculan con `caldiase.p` en modo `"H"` (horas). Si la pausa **no ha cerrado** (`FFinPausa` / `FFinPE` en `?`), el cálculo se hace **contra `TODAY` y `TIME`**, es decir, mide la pausa *en curso* al momento de la consulta. Si nunca hubo pausa (`FIniPausa` / `FIniPE` en `?`), el campo sale vacío.
+
+  Los campos crudos que alimentan el cálculo también viajan: `FIniPausa`, `HIniPausa`, `FFinPausa`, `HFinPausa`, `AutIniPausa`, `AutFinPausa` y sus equivalentes `xxPE` para la pausa de embarque.
+
+  ---
+
+  ## 8.7 Avance de surtido
+
+  **`PorcR`** · DECIMAL — % de **renglones** surtidos: renglones con `CantEnt > 0` entre el total de renglones, contando **solo** los de `DetPedido.Tipo < 3`
+  **`PorcD`** · DECIMAL — % de **dinero** surtido: `PUnit × CantEnt` entre `PUnit × CantPed`, contando **todos** los renglones
+
+  > Los dos porcentajes no usan el mismo universo de renglones — ver observación 12. Se devuelven en `0` cuando el denominador es `0`.
+
+  También viajan los porcentajes que ya venían guardados en la tabla: `porcsurtido`, `PorcSurtD`, `PorcEfiComp`, `PorcEfiCte`.
+
+  ---
+
+  ## 8.8 Embarque, transporte y guía
+
+  **`Bultos`** · INT — Bultos del pedido
+  **`BultosEmp`** · INT — Bultos de empaque
+  **`BultosCorte`** · INT — Bultos de cortes
+  **`Tarimas`** · INT — Tarimas
+  **`IdTran`** · INT — Clave del transporte
+  **`IdChofer`** · STRING — Clave del chofer
+  **`IdEmbarque`** · STRING — Clave del embarque
+  **`IdSubEmbarque`** · STRING — Clave del subembarque
+  **`FleteYes`** · BOOLEAN — `true` = el pedido lleva flete
+  **`GuiaImporte`** · DECIMAL — Importe de la guía (`Guia.Importe`, buscada por `Id-Factura`); `0` si no hay guía
+  **`Guia`** · STRING — Número de guía guardado en `EstPedido`
+
+  ---
+
+  ## 8.9 Cortes
+
+  **`Cortes`** · STRING — Tipos de corte solicitados
+  **`EstCorte`** · INT — Estatus del corte
+  **`IdSurCor`** / **`IdEmpCor`** · STRING — Claves del surtidor y empacador de cortes
+  **`SoloCorte`** · BOOLEAN — `true` = el pedido es únicamente de corte
+  **`FIniSC`** / **`FFinSC`** / **`FIniEC`** / **`FFinEC`** · DATE — Fechas del flujo de cortes
+
+  ---
+
+  ## 8.10 Sin resultados
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "No existe informacion de seguimiento para el pedido 999999 resto 0.",
+    "ttEstPedido": []
+  }
+  ```
+
+  ## 8.11 Error de validación
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Se requiere el numero de pedido.",
+    "ttEstPedido": []
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  Se ejecutan en este orden; la primera que falla responde y termina, siempre con `ttEstPedido` vacío.
+
+  | # | Condición | `Respuesta` |
+  |---|-----------|-------------|
+  | 1 | `IdUser` vacío o no enviado | `Se requiere el usuario (IdUser).` |
+  | 2 | `IdPedido` vacío o no enviado | `Se requiere el numero de pedido.` |
+  | 3 | `Resto` no numérico o negativo | `Resto invalido; debe ser numerico.` |
+  | 4 | No existe el pedido-resto en `EstPedido` | `No existe informacion de seguimiento para el pedido N resto R.` |
+  | 5 | Excepción no prevista | `Error al consultar el seguimiento del pedido: <detalle>` |
+
+  Éxito: `IdError = false` con `Respuesta = "Consulta generada correctamente."`.
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción |
+  |---------------------|-------------|
+  | ⏳ Pendiente prueba | Servicio ajustado. Pendiente **compilar `estpedido_p.p` en PDSOE** (nunca se había compilado como REST: no existe el `.pidl`), **activar el recurso en `resourceModel.xml`** (está comentado) y ejecutar por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  **1. El programa nunca se había publicado.** No existe `estpedido_p.pidl` en `.services/AppServer`, el recurso no aparece en ningún `resourceModel.xml` de ningún servicio, y ningún programa lo invoca con `RUN`. Existía desde 2016 con las anotaciones REST puestas, pero sin compilar. Por eso los cambios de contrato de esta entrega no rompen a nadie.
+
+  **2. `IdError` / `Respuesta` en lugar de excepción.** Antes, un pedido no numérico lanzaba `Progress.Lang.AppError` que, con `BLOCK-LEVEL ON ERROR UNDO, THROW`, subía hasta la capa REST y llegaba al front como un bloque `_errors` sin mensaje aprovechable. Ahora se responde con los dos campos de la convención del resto de `RestADOSAVentas`, y el `CATCH` de cierre atrapa cualquier excepción no prevista.
+
+  **3. Se quitaron dos `MESSAGE "DEBUG:"`.** Estaban justo después de cada conversión de parámetro. En PASOE un `MESSAGE` sin `VIEW-AS ALERT-BOX` no truena, pero escribe en el log del agente en cada llamada.
+
+  **4. `INTEGER("")` aborta.** El código anterior hacía `iResto = INTEGER(Resto) NO-ERROR.` y en el renglón siguiente lanzaba el error si `ERROR-STATUS:ERROR`. Con `Resto` vacío eso siempre lanzaba, y la línea `IF iResto = ? THEN iResto = 0` que venía después **era inalcanzable**. Ahora el vacío se resuelve como `0` *antes* de intentar la conversión. `INTEGER(?)` sí devuelve `?` sin error, y ese caso era el único que llegaba a la línea del `0`.
+
+  **5. Se retiró la lectura sin filtro.** La versión anterior, cuando `INTEGER(IdPedido)` no daba `> 0`, ejecutaba `FOR EACH EstPedido NO-LOCK` **sin ninguna condición**. Con un `FIND` por cliente, vendedor, seis empleados, transporte, chofer y guía, más un recorrido de `DetPedido`, por **cada renglón de la tabla completa**, eso no es una consulta: es un volcado que revienta el heap de la JVM de PASOE al serializar el JSON. No era un modo de uso —se activaba solo cuando la llamada venía incompleta— así que ahora el pedido es obligatorio y la llamada incompleta se responde como error de validación. Si en algún momento se necesita un listado, debe ser un endpoint propio con filtro de fecha o de estatus y su propio tope.
+
+  **6. Faltaba el `CREATE ttEstPedido`.** `Llenado` empezaba con `BUFFER-COPY EstPedido TO ttEstPedido` y terminaba con `RELEASE ttEstPedido`. `BUFFER-COPY` copia **sobre el registro actual** del buffer destino, no lo crea; y con el `RELEASE` al final, en la segunda vuelta el buffer llegaba sin registro. Se agregó el `CREATE` que faltaba.
+
+  **7. `EmpSurAreaD` regresa su propio nombre cuando no hay dato.** En `estpedido.i` el campo está definido sin la palabra `LABEL`:
+
+  ```progress
+  FIELD EmpSurAreaC AS CHARACTER INITIAL "" LABEL "EmpSurAreaC"
+  FIELD EmpSurAreaD AS CHARACTER INITIAL "EmpSurAreaD"        /* <-- falta LABEL */
+  ```
+
+  Al faltar `LABEL`, la cadena quedó como valor **`INITIAL`**. Consecuencia: cuando el pedido no tiene surtidor de área D, el campo no viene vacío como sus nueve hermanos, viene con el texto literal `"EmpSurAreaD"`. **No se corrigió en esta entrega** porque el include es compartido y toca a quien más lo use; el arreglo es agregar `LABEL` antes de la cadena. Mientras no se corrija, el front debe tratar `"EmpSurAreaD"` como vacío.
+
+  **8. Se repararon dos textos con byte corrupto.** Los valores de `EstatusDescr` `"PAUSADO EN REJA"` y `"PAUSADO POR PAGO"` traían `U+FFFD` —el carácter que Unicode usa para "este byte no se pudo decodificar"— en lugar del espacio. Llegaban al front como rombo o signo de interrogación. Lo más probable es que el original fuera un espacio duro de la página 1252 que se perdió en alguna conversión del archivo. Se repusieron como espacio normal.
+
+  **9. Cada dato viene dos veces: con guion y sin guion.** `BUFFER-COPY` copia los campos de `EstPedido` con su nombre de tabla (`Id-Pedido`, `Id-Seq`, `Id-Cliente`, `id-ubivta`, …) y además el programa llena a mano los alias sin guion (`IdPedido`, `IdSeq`, `IdCliente`, `IdUbivta`, …). Los dos juegos viajan en el JSON con el mismo valor. **El front debe usar los que no llevan guion**: son los que el programa garantiza, y un nombre con guion en JavaScript obliga a notación de corchetes.
+
+  **10. `EstatusDescr` tiene tres niveles de precedencia.** Se calcula en este orden y **cada nivel sobrescribe al anterior**:
+
+  1. `EstVta.Descr` según `Pedido.Id-Estatus` — la descripción normal.
+  2. Si `Pedido.PausaReja` → `"PAUSADO EN REJA"`.
+  3. Si `PagAnt` y **no** `Pagado` y `Id-Cond = 0` y `Id-Estatus >= 4` → `"PAUSADO POR PAGO"`.
+
+  O sea, un pedido de contado con pago anticipado pendiente y ya empacado se muestra como pausado por pago **aunque también esté pausado en reja**. Es el comportamiento heredado y se conservó tal cual.
+
+  **11. El aviso de back order se *agrega* a `Coment1`.** Marcado en el programa como `RNPC - 2021-02-02`: cuando `Pedido.BckOrd >= 3`, se concatena a lo que ya trae `Coment1` el texto `"> BO=n EN ESPERA DE MERCANCIA"` (si el estatus es 4) o `"> BO=n PAUSADO POR MERCANCIA"` (si el estatus es `>= 5` o `-2` y las fechas de empaque son incongruentes). No reemplaza el comentario: lo alarga. El front debe esperar que `Coment1` traiga el comentario del capturista *y* el aviso.
+
+  **12. `PorcR` y `PorcD` no cuentan los mismos renglones.** El de renglones filtra `DetPedido.Tipo < 3`; el de dinero suma **todos** los renglones sin filtrar el tipo. Es el comportamiento original y no se tocó, pero explica que un pedido pueda salir con `PorcR = 100` y `PorcD < 100`.
+
+  **13. La consulta devuelve 0 o 1 registro.** `idx-sur` es `PRIMARY UNIQUE` por (`Id-Pedido`, `Id-Seq`). Se dejó `FOR EACH` en lugar de `FIND FIRST` porque `Llenado` trabaja con el buffer `EstPedido` posicionado por el bloque, pero funcionalmente es una búsqueda por llave. Por eso "no existe" se responde con `IdError = true` y no como lista vacía: no hay criterio de filtrado que pueda "no encontrar nada" legítimamente.
+
+  **14. `Llenado` quedó `PRIVATE`.** No tiene anotación REST, así que nunca fue endpoint; `PRIVATE` lo deja explícito y sigue siendo invocable con `RUN` desde el mismo programa.
+
+  **15. Los otros tres procedimientos siguen vacíos.** `creaEstpedido`, `actEstpedido` y `borraEstpedido` tienen las anotaciones REST puestas desde 2016 pero **sin una sola línea de código**. No se tocaron porque no formaban parte del pedido. Al compilar entrarán al `.pidl`; conviene **no registrarlos** en `resourceModel.xml` hasta que hagan algo, porque publicados responderían éxito sin haber hecho nada.
+
+  **16. El `.pidl` debe existir antes de publicar.** El recurso quedó agregado a `resourceModel.xml` **comentado**, con la nota del motivo. Registrar una operación cuyo `.pidl` no existe impide que PASOE publique el **servicio completo** — no solo ese recurso — y tira los demás endpoints que ya funcionan. El orden es: compilar, verificar que aparezca `estpedido_p.pidl` en `.services/AppServer`, quitar las marcas de comentario, republicar.
+
+  **17. `writeDataSetBeforeImage="false"`.** El temp-table se define con `BEFORE-TABLE bttEstPedido` en el include, pero la anotación del archivo desactiva la imagen previa, así que el JSON no la incluye. Es lo correcto para una consulta de solo lectura.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

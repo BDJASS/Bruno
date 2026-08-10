@@ -1,0 +1,154 @@
+info:
+  name: Catalogo Condicion Venta
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Catalogo/CondicionVenta?IdUser=olds
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Catálogo de Condiciones de Venta
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Catálogo de Condiciones de Venta**
+  Devuelve el catálogo `CondVta` para alimentar el combo de **"Cond Vta"** en captura de cotización, pedido y en el cambio de condición de venta.
+  Programa servidor: `ventas-cat-condvta.p` · Procedimiento: `GetCondVta` | Tabla: `CondVta`
+  Basado en: `vtaf0040.p` (ayuda F2 del modo carácter, FLC 29-Oct-96)
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Catalogo/CondicionVenta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUser`** · STRING · ✅ — Usuario que consulta
+  - Ej: `"olds"`
+
+  **`Activo`** · STRING · ❌ — Filtro por vigencia
+  - `S` solo activas · `N` solo inactivas · Vacío = **todas** *(default)*
+
+  **`OrdenarPor`** · STRING · ❌ — Orden de salida
+  - `D` por descripción · Cualquier otro valor o vacío = por `Id-Cond` *(default)*
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Catalogo/CondicionVenta?IdUser=olds
+  GET .../Ventas/Catalogo/CondicionVenta?IdUser=olds&Activo=S&OrdenarPor=D
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Consulta generada: 5 condicion(es) de venta.",
+    "ttCondVta": [
+      {
+        "Orden": 1,
+        "IdCond": 0,
+        "Descr": "CONTADO",
+        "Activo": true,
+        "EsContado": true,
+        "FecVen": null,
+        "Usuario": "OLDS"
+      },
+      {
+        "Orden": 2,
+        "IdCond": 1,
+        "Descr": "15 DIAS",
+        "Activo": true,
+        "EsContado": false,
+        "FecVen": null,
+        "Usuario": "OLDS"
+      }
+    ]
+  }
+  ```
+
+  ### Campos de `ttCondVta`
+
+  **`Orden`** · INT — Consecutivo de despliegue; conserva en el JSON el orden pedido en `OrdenarPor`
+  **`IdCond`** · INT — Clave de la condición de venta (`CondVta.Id-Cond`)
+  **`Descr`** · STRING — Descripción de la condición
+  **`Activo`** · BOOLEAN — `true` = condición vigente
+  **`EsContado`** · BOOLEAN — `true` cuando `IdCond = 0`; ver observación 3
+  **`FecVen`** · DATE — Fecha de vencimiento de la condición; `null` si no tiene
+  **`Usuario`** · STRING — Usuario que registró la condición
+
+  ### Sin resultados
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Sin condiciones de venta con los criterios indicados.",
+    "ttCondVta": []
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `Activo` distinto de `S` / `N` / vacío | `IdError: true` — `"Valor no valido para Activo; use S (solo activas), N (solo inactivas) o vacio para todas."` |
+  | `OrdenarPor` con valor no reconocido | Se ordena por `Id-Cond` (no es error) |
+  | Sin coincidencias | Consulta OK; tabla vacía |
+
+  ---
+
+
+  ---
+  **Desarrollado por:** SIS10 - JASS
