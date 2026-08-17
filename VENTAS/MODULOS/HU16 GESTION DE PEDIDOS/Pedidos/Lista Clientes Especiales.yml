@@ -1,0 +1,165 @@
+info:
+  name: Lista Clientes Especiales
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/listaPedidosEspeciales?IdUser=olds
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Facturación: Lista Pedidos de Clientes Especiales
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Facturación — Pedidos por Facturar de Clientes Especiales**
+  Lista los pedidos **por facturar de clientes con embarque especial** (`Cliente.EmbEsp = TRUE`) de un almacén de origen. Es el equivalente REST del botón **"CTES. ESP."** de la ventana de facturación de carácter (`vtaa0498.p` → `vtaa0497.p`, grid `{vtaa0493.i}`).
+  Es la **lista hermana** de [ListaPedidosPorFacturar](pedfactura-ListaPedidosPorFacturar.md) (pedidos normales, `EmbEsp = FALSE`): juntas cubren lo del carácter y **no se traslapan**.
+  Programa servidor: `pedfactura.p` · Procedimiento: `listaPedidosEspeciales`. Módulo `/Ventas/Pedidos/`.
+
+  > **Crédito/Contado son los MISMOS que para pedidos normales.** Se validó (motores `vtaa0499.p`/`vtaa0399.p`) que **no hay ninguna lógica dependiente de `EmbEsp`**. Por eso **no se crean servicios nuevos** de crédito/contado: tras elegir un pedido especial, el front reusa `datosGeneralesCredito`/`datosGeneralesContado` → `generaFactura`/`generaRemisionContado` → `timbraFactura`/`timbraRemision`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/listaPedidosEspeciales
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido
+
+  **`IdUser`** · STRING · ✅ — Usuario. Vacío → *"Se requiere el usuario (IdUser)."*
+
+  > El **almacén de origen ya NO se recibe**: se **deriva del usuario** (`Usuario.Id-Ubicacion` donde `Usuario.Id-User = IdUser`). Usuario inexistente / sin ubicación → *"El usuario X no existe o no tiene ubicacion/almacen asignado."*. Origen: `02B` CEDIS · `FUG` · `12` · `11` · otros.
+
+  ---
+
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
+
+  ```
+  Content-Type: application/json
+  ```
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Pedido/listaPedidosEspeciales?IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response (`ttPorFacturar`)
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Origen 02B: 3 pedido(s) de clientes especiales por facturar.",
+      "ttPorFacturar": [
+        {
+          "IdPedido": "2965310", "Resto": 0, "IdCliente": 4763, "RazonSocial": "CLIENTE EMB ESPECIAL SA",
+          "FFinEmp": "2026-08-05", "Hora": "14:32",
+          "Adelantado": false, "BO": false, "Ligado": false, "Cortes": false,
+          "Credito": true, "Remisionado": false
+        },
+        {
+          "IdPedido": "2965222", "Resto": 0, "IdCliente": 4763, "RazonSocial": "CLIENTE EMB ESPECIAL SA",
+          "FFinEmp": "2026-08-04", "Hora": "10:05",
+          "Adelantado": false, "BO": false, "Ligado": false, "Cortes": false,
+          "Credito": true, "Remisionado": true
+        }
+      ]
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de respuesta (`ttPorFacturar`)
+
+  **`IdPedido`** · STRING · **`Resto`** · INTEGER · **`IdCliente`** · INTEGER · **`RazonSocial`** · STRING
+  **`FFinEmp`** · DATE — fin de empaque · **`Hora`** · STRING
+  **`Adelantado`** · BOOLEAN — facturación por adelantado (motor `vtaa0572`/`vtaa0573`)
+  **`BO`** · BOOLEAN — BackOrder incompleto (renglón Tipo 1 con `CantEnt < CantPed`)
+  **`Ligado`** · BOOLEAN — `Id-Liga <> ""` · **`Cortes`** · BOOLEAN — `Id-Corte3/4 <> ""`
+  **`Credito`** · BOOLEAN — `true` = crédito (`Id-Cond <> 0`); `false` = contado → determina qué flujo usa el front
+  **`Remisionado`** · BOOLEAN — `true` = pedido ya **remisionado** sin facturar (`Estatus = -2`); ver §11
+
+  ---
+
+  ## 10. Diferencias vs `ListaPedidosPorFacturar` (normal)
+
+  Replican `vtaa0493.i` (especial) vs `vtaa0496.i` (normal):
+
+  | Punto | Normal | Especial (este) |
+  |---|---|---|
+  | Filtro cliente | `Cliente.EmbEsp = FALSE` | **`Cliente.EmbEsp = TRUE`** |
+  | Empacados: estatus | `Estatus = 4` | **`Estatus = 4 OR (Estatus = -2 AND Id-Factura = "")`** |
+  | Origen `02B` (empacados) | prefijo `"2"` | **`"2"` o BEGINS `"3"`** |
+  | Adelantados: rama `11` | sí (`BEGINS "1"`) | **no** (cae a `BEGINS "8"`) |
+
+  Las columnas/banderas y el resto de la lógica (empacados + adelantados 0-2, refinamiento de `BO`) son **idénticos** — se usa el mismo helper `CreaFila`.
+
+  ---
+
+  ## 11. Regla y nota fiscal — pedidos remisionados (`Remisionado = true`)
+
+  La lista especial incluye pedidos ya **remisionados** (`Estatus = -2`, sin factura), igual que el carácter. El motor de crédito los permite (`vtaa0499.p`: `Id-Estatus <= 4 OR (FecRemision <> ? AND Id-Estatus = -2 AND Id-Factura = "")`) por la **misma** vía de facturación.
+
+  > ⚠️ **QA de inventario antes de producción:** al remisionar, el inventario **ya se movió**. `generaFactura`/`generaRemisionContado` se validaron para el caso **empacado (Estatus = 4)**. Antes de facturar remisionados en producción, comparar contra el carácter que **no se doble-afecte** `ArtUbic`. El front puede usar la bandera `Remisionado` para avisar o gate-ear esa facturación hasta cerrar el QA.
+
+  ---
+
+  ## 12. Registro en el resourceModel
+
+  Recurso a dar de alta (aún **no registrado**): path `/Pedido/listaPedidosEspeciales`, verbo **GET**, operación `pedfactura..listaPedidosEspeciales`, param `IdUser` (**sin `Origen`** — se deriva de `Usuario.Id-Ubicacion`). Regenerar `pedfactura.pidl` en PDSOE.
+
+  ---
+
+  ## 13. Plan de Pruebas
+
+  | # | Caso | Esperado |
+  |---|------|----------|
+  | P1 | Sin `Origen` | `"Se requiere el almacen de origen (Origen)."` |
+  | P2 | Usuario con ubicación `02B` y clientes especiales | Lista de pedidos `EmbEsp=TRUE`; banderas correctas |
+  | P3 | Comparar vs carácter (`vtaa0497.p`/`vtaa0493.i`) | Mismos folios (incluidos `Estatus=-2`) |
+  | P4 | No traslape con lista normal | Un pedido no aparece en ambas listas (EmbEsp FALSE vs TRUE) |
+  | P5 | Pedido remisionado | Aparece con `Remisionado=true` |
+  | P6 | Origen sin especiales | `"No hay pedidos de clientes especiales..."` |
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

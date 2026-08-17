@@ -1,0 +1,460 @@
+info:
+  name: Genera Remision
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/generaRemisionContado?IdPedido=2981608&Resto=0&Origen=02B&IdUser=olds
+  params:
+    - name: IdPedido
+      value: "2981608"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+    - name: Origen
+      value: 02B
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  body:
+    type: json
+    data: |2-
+       {
+              "ttFacturaGral": [
+                {
+                  "IdPedido": "2981608",
+                  "Resto": 0,
+                  "FecReg": "2026-08-07",
+                  "IdVendedor": "4708",
+                  "NombreVendedor": "LORENA IVON MU¥OZ GOMEZ",
+                  "Ubicacion": "FORANEOS",
+                  "IdCliente": 47494,
+                  "RazonSocial": "JESSICA GONZALEZ CALZADO",
+                  "Propietario": "JESSICA",
+                  "CalleNo": "LOTO 609",
+                  "Colonia": "PRIVADA MAGNOLIA EN LA JOYA RESIDENCIAL",
+                  "Poblacion": "MONTERREY",
+                  "Estado": "NUEVO LEON",
+                  "RFC": "XAXX010101000",
+                  "Tel": "8110798737",
+                  "Fax": "",
+                  "Cotizacion": "2127792",
+                  "TipoPrecio": "M",
+                  "IdCond": 0,
+                  "Condicion": "CONTADO",
+                  "Bultos": 0,
+                  "Tarimas": 0,
+                  "IdEntrega": 11,
+                  "Entrega": "NUESTRA CAMIONETA",
+                  "ImpFlete": 0.0,
+                  "Notas1": "",
+                  "Notas2": "",
+                  "EsCredito": false,
+                  "TipoFactura": "CONTADO",
+                  "IdRFiscal": "616",
+                  "IdUsoCFDI": "S01",
+                  "IdTran": 0,
+                  "Plazo": 0,
+                  "FecVence": "2026-08-17",
+                  "SerieFolio": "REMCEDIS",
+                  "FolioTentativo": "24993CB (tentativo)",
+                  "IvaZona": 16.0,
+                  "EsFrontera": false,
+                  "SubTotal": 713.1,
+                  "IVA": 114.096,
+                  "Total": 827.196,
+                  "NotasCargo": 0,
+                  "DiasVencido": 0,
+                  "CreditoDisp": 0.0,
+                  "SaldoVencido": 0.0,
+                  "ChequesDev": 0,
+                  "LimiteCredito": 0.0,
+                  "Requisicion": "",
+                  "RazonSocial1": "",
+                  "CalleNo1": "",
+                  "Colonia1": "",
+                  "IdCiudad1": 0,
+                  "Ciudad1": "",
+                  "Estado1": "",
+                  "Delegacion1": "",
+                  "CP1": "",
+                  "IdRutaEmb": 0,
+                  "RutaEmb": "",
+                  "Tel1": "",
+                  "Fax1": "",
+                  "Email": "jessicagonzalezcalzado@hotmail.com",
+                  "Attn1": "",
+                  "Observaciones1": "",
+                  "Observaciones2": ""
+                }
+              ],
+              "ttFacturaDet": [
+                {
+                  "Reng": 10,
+                  "IdArticulo": "049470",
+                  "Descr": "MASA MODELADORA 112 GR. PLAY DOH B5517 PAQ/4 COLS.SURTIDOS",
+                  "IdColor": 0,
+                  "IdPres": 3,
+                  "Tipo": 1,
+                  "Cant": 1.0,
+                  "PrecUnit": 66.75,
+                  "Descto": 0,
+                  "Importe": 66.75,
+                  "PorcIVA": 16.0,
+                  "IVA": 10.68,
+                  "IdAlm": "02B"
+                },
+                {
+                  "Reng": 20,
+                  "IdArticulo": "088892",
+                  "Descr": "PINTURA TEMPERA CRAYOLA 445953 BLANCA 59 ML. C/6 LAVABLE",
+                  "IdColor": 0,
+                  "IdPres": 3,
+                  "Tipo": 1,
+                  "Cant": 1.0,
+                  "PrecUnit": 59.91,
+                  "Descto": 0,
+                  "Importe": 59.91,
+                  "PorcIVA": 16.0,
+                  "IVA": 9.5856,
+                  "IdAlm": "02B"
+                },
+                {
+                  "Reng": 30,
+                  "IdArticulo": "016836",
+                  "Descr": "ESTUCHE C/12 COLORES CRAYOLA 684012 REDONDOS",
+                  "IdColor": 0,
+                  "IdPres": 3,
+                  "Tipo": 1,
+                  "Cant": 1.0,
+                  "PrecUnit": 50.42,
+                  "Descto": 0,
+                  "Importe": 50.42,
+                  "PorcIVA": 16.0,
+                  "IVA": 8.0672,
+                  "IdAlm": "02B"
+                },
+                {
+                  "Reng": 40,
+                  "IdArticulo": "156846",
+                  "Descr": "FOAMY T/CARTA ROYAL 3796 DIAMANTADO C/10 G.C.",
+                  "IdColor": 0,
+                  "IdPres": 3,
+                  "Tipo": 1,
+                  "Cant": 2.0,
+                  "PrecUnit": 21.37,
+                  "Descto": 0,
+                  "Importe": 42.74,
+                  "PorcIVA": 16.0,
+                  "IVA": 6.8384,
+                  "IdAlm": "02B"
+                },
+                {
+                  "Reng": 50,
+                  "IdArticulo": "156849",
+                  "Descr": "FOAMY T/CARTA ROYAL LISO C/10 PZAS",
+                  "IdColor": 0,
+                  "IdPres": 3,
+                  "Tipo": 1,
+                  "Cant": 1.0,
+                  "PrecUnit": 18.72,
+                  "Descto": 0,
+                  "Importe": 18.72,
+                  "PorcIVA": 16.0,
+                  "IVA": 2.9952,
+                  "IdAlm": "02B"
+                },
+                {
+                  "Reng": 60,
+                  "IdArticulo": "016618",
+                  "Descr": "LAPIZ DE GRAFITO HB TURQUOISE 1789548 C/12",
+                  "IdColor": 0,
+                  "IdPres": 3,
+                  "Tipo": 1,
+                  "Cant": 1.0,
+                  "PrecUnit": 109.35,
+                  "Descto": 0,
+                  "Importe": 109.35,
+                  "PorcIVA": 16.0,
+                  "IVA": 17.496,
+                  "IdAlm": "02B"
+                },
+                {
+                  "Reng": 70,
+                  "IdArticulo": "127809",
+                  "Descr": "FOLDER INTENSOS FORTEC FF0388 ARCOIRIS C/25 CARTA SURTIDOS",
+                  "IdColor": 0,
+                  "IdPres": 3,
+                  "Tipo": 1,
+                  "Cant": 1.0,
+                  "PrecUnit": 87.91,
+                  "Descto": 0,
+                  "Importe": 87.91,
+                  "PorcIVA": 16.0,
+                  "IVA": 14.0656,
+                  "IdAlm": "02B"
+                },
+                {
+                  "Reng": 80,
+                  "IdArticulo": "049118",
+                  "Descr": "CUADERNO F.I.COS.PASTA SR SCRIBE 4520 RAYA 100 H. CLASICO",
+                  "IdColor": 0,
+                  "IdPres": 4,
+                  "Tipo": 1,
+                  "Cant": 1.0,
+                  "PrecUnit": 25.0,
+                  "Descto": 0,
+                  "Importe": 25.0,
+                  "PorcIVA": 16.0,
+                  "IVA": 4.0,
+                  "IdAlm": "02B"
+                },
+                {
+                  "Reng": 90,
+                  "IdArticulo": "051522",
+                  "Descr": "BOND COLORES BRILLANTES EUROCOLORS EC0032 ARCOIRIS CARTA 75 GMS. C/50",
+                  "IdColor": 0,
+                  "IdPres": 3,
+                  "Tipo": 1,
+                  "Cant": 1.0,
+                  "PrecUnit": 25.82,
+                  "Descto": 0,
+                  "Importe": 25.82,
+                  "PorcIVA": 16.0,
+                  "IVA": 4.1312,
+                  "IdAlm": "02B"
+                },
+                {
+                  "Reng": 100,
+                  "IdArticulo": "026014",
+                  "Descr": "BOND BLANCO ROYAL ESCO 21.5 X 28 CMS. CARTA  75 GMS. C/100",
+                  "IdColor": 0,
+                  "IdPres": 3,
+                  "Tipo": 1,
+                  "Cant": 1.0,
+                  "PrecUnit": 13.82,
+                  "Descto": 0,
+                  "Importe": 13.82,
+                  "PorcIVA": 16.0,
+                  "IVA": 2.2112,
+                  "IdAlm": "02B"
+                },
+                {
+                  "Reng": 110,
+                  "IdArticulo": "051513",
+                  "Descr": "CART. COLORES NEON FACIA CARTA 180 GMS. C/100 5 COLORES",
+                  "IdColor": 0,
+                  "IdPres": 3,
+                  "Tipo": 1,
+                  "Cant": 1.0,
+                  "PrecUnit": 95.56,
+                  "Descto": 0,
+                  "Importe": 95.56,
+                  "PorcIVA": 16.0,
+                  "IVA": 15.2896,
+                  "IdAlm": "02B"
+                },
+                {
+                  "Reng": 120,
+                  "IdArticulo": "043032",
+                  "Descr": "REPUESTO DE CARP. 3 PERF. SCRIBE 3401 BLANCO CARTA 100 H.",
+                  "IdColor": 0,
+                  "IdPres": 3,
+                  "Tipo": 1,
+                  "Cant": 1.0,
+                  "PrecUnit": 28.43,
+                  "Descto": 0,
+                  "Importe": 28.43,
+                  "PorcIVA": 16.0,
+                  "IVA": 4.5488,
+                  "IdAlm": "02B"
+                },
+                {
+                  "Reng": 130,
+                  "IdArticulo": "047914",
+                  "Descr": "ACUARELA C/16 C/PINCEL CRAYOLA 53-0516 ESTUCHE",
+                  "IdColor": 0,
+                  "IdPres": 3,
+                  "Tipo": 1,
+                  "Cant": 1.0,
+                  "PrecUnit": 88.67,
+                  "Descto": 0,
+                  "Importe": 88.67,
+                  "PorcIVA": 16.0,
+                  "IVA": 14.1872,
+                  "IdAlm": "02B"
+                }
+              ]
+            }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Facturación: Genera Factura
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Facturación — Generación de la Factura**
+  **Genera** la factura de un pedido: consume el folio real, crea `Factura`/`DetFactura`, afecta inventario y cuentas por cobrar (CxC), descompromete y marca el pedido facturado. Port del motor carácter `vtaa0499.p` (crédito) a REST, no interactivo, en **una sola transacción**. **No timbra** (el CFDI es un paso aparte, ver [TimbraFactura](pedfactura-TimbraFactura.md)).
+  Programa servidor: `pedfactura.p` · Procedimiento: `generaFactura`. Módulo `/Ventas/Pedidos/`.
+
+  > ⚠️ **Proceso crítico (dinero, folios fiscales, inventario, CxC).** Requiere compilar en PDSOE y **QA contra una factura de carácter** antes de producción (ver §11).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/generaFactura
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUser`** · STRING · ✅ — Usuario que factura. Vacío → *"Se requiere el usuario (IdUser)."*
+  **`IdPedido`** · STRING · ✅ — Folio del pedido (se normaliza)
+  **`Resto`** · STRING · ❌ — Resto; vacío = `0`
+  > **El origen ya NO se recibe:** se **deriva del usuario** (`Usuario.Id-Ubicacion` donde `Usuario.Id-User = IdUser`); determina la serie del folio y el almacén de la factura. Usuario inexistente / sin ubicación → error.
+  **`IvaGlobal`** · DECIMAL · ❌ — IVA global para comparar contra la zona (default `16`)
+
+  ---
+
+  ## 5. Body — `dsFactura` (el dataset COMPLETO que devolvió el GET)
+
+  El front regresa **el mismo `dsFactura`** que obtuvo de [datosGeneralesCredito](pedfactura-DatosGeneralesCredito.md) (o Contado), con las ediciones que hizo el usuario en **Embarque / Memo / Requisición**. `generaFactura` arma la factura **desde el pedido** y, de la fila de `ttFacturaGral`, toma **solo los campos editables** para sobreescribir. Los renglones (`ttFacturaDet`) se **ignoran** y se re-leen de `DetPedido` (integridad fiscal). El dataset es **opcional**: sin fila en `ttFacturaGral`, la factura se genera 100% desde el pedido (retrocompatible).
+
+  ```json
+  {
+    "dsFactura": {
+      "ttFacturaGral": [
+        {
+          "IdPedido": "2965291", "Resto": 0,
+          "Requisicion": "REQ-8891",
+          "RazonSocial1": "COMERCIAL X SA DE CV", "CalleNo1": "AV REFORMA 100", "Colonia1": "CENTRO",
+          "IdCiudad1": 2404, "Delegacion1": "", "CP1": "72000",
+          "IdRutaEmb": 5, "Tel1": "2221234567", "Fax1": "", "Email": "envios@x.com", "Attn1": "ALMACEN",
+          "Observaciones1": "ENTREGAR EN HORARIO AM", "Observaciones2": ""
+        }
+      ],
+      "ttFacturaDet": []
+    }
+  }
+  ```
+
+  Campos que `generaFactura` **usa** del body (el resto de `ttFacturaGral` es consulta y se ignora):
+
+  **Generales:** **`Requisicion`** · STRING → `Factura.Requisicion`
+  **Embarque:** **`RazonSocial1`** · **`CalleNo1`** · **`Colonia1`** · STRING · **`IdCiudad1`** · INTEGER (clave; deriva `Ciudad1`/`Estado1` del catálogo) · **`Delegacion1`** · **`CP1`** · STRING · **`IdRutaEmb`** · INTEGER (solo si `Id-Tran = 0`) · **`Tel1`** · **`Fax1`** · **`Email`** · **`Attn1`** · STRING
+  **Memo:** **`Observaciones1`** · **`Observaciones2`** · STRING → `Factura.Observaciones[1..2]`
+
+  > `ttFacturaDet` puede ir **vacío**: `generaFactura` **no** lo usa (re-lee `DetPedido`). Solo el encabezado editable (Embarque/Memo/Requisición) es sobreescribible; totales, renglones y datos fiscales salen de `Pedido`/`DetPedido`.
+
+  ---
+
+  ## 6. Headers
+
+  ```
+  Content-Type: application/json
+  ```
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST .../Pedido/generaFactura?IdUser=olds&IdPedido=2965291&Resto=0
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ### Éxito
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Factura FACCEDIS0012345 generada para el pedido 2965291-0. Pendiente de timbrado CFDI.",
+      "IdFactura": "0012345"
+    }
+  }
+  ```
+
+  ### Error
+
+  ```json
+  { "response": { "IdError": true, "Respuesta": "PEDIDO YA FACTURADO, FOLIO: F0012345", "IdFactura": "" } }
+  { "response": { "IdError": true, "Respuesta": "No se encontro el consecutivo de folio para la serie FACCEDIS (almacen ''). Verifique el catalogo de folios.", "IdFactura": "" } }
+  ```
+
+  ---
+
+  ## 9. Campos de respuesta
+
+  **`IdError`** · BOOLEAN — `true` si no se pudo generar (nada se guarda; la transacción se deshace)
+  **`Respuesta`** · STRING — mensaje al usuario
+  **`IdFactura`** · STRING — folio de la factura generada (vacío si hubo error)
+
+  ---
+
+  ## 10. Qué hace (una transacción; réplica de `PROCEDURE Actualiza` de `vtaa0499.p`)
+
+  1. **Bloqueos** (igual que `validaPedidoFacturable`): ya facturado, solicitud de cancelación, `*** GRAFICO`, RFC < 12.
+  2. **Folio real:** serie `FAC`/`FACCEDIS`(02B)/`FACFUG`(FUG)/`FACFRON`(frontera); consecutivo de `Folio` (o `VFolio` si origen ≠ 02B/FUG) con `EXCLUSIVE-LOCK` e incremento.
+  3. **`CREATE Factura`** — datos fiscales/envío del pedido (con fallback a `Cliente`), `VersionSAT = "4.0"`, `Id-Captura = IdUser`.
+     - **3b. Override editable (`ttFacturaGral` del body `dsFactura`):** si viene fila, se sobreescriben los campos de **Embarque** (`RazonSocial1`, `CalleNo1`, `Colonia1`, `Delegacion1`, `CP1`, `Tel1`, `Fax1`, `e-mail`, `Attn1`, `Id-RutaEmb` si `Id-Tran=0`), **Memo** (`Observaciones[1..2]`) y **Requisición**. La clave `IdCiudad1` deriva `Ciudad1`/`Estado1` del catálogo (igual que el carácter al capturar la ciudad de embarque).
+  4. **`DetFactura`** por cada `DetPedido` (Tipo<3): `Cant`, `Importe`, `PorcIVA` forzado por serie (11/16), `Iva`, y **costo** (`HCosto × ArtPres.Equiv`, más costo especial de contrato vía `CostoEspecial`).
+  5. **Inventario** (`{vtaa0004.i}`) para renglones no entregados; los empacados se liberan con los subprogramas.
+  6. **Totales** de la factura (`SubTotal`, `IVA`, `Tot`).
+  7. **Subprogramas del motor:** `vtaa0508.p` (descompromete) · `embd0020.p` (marca facturado: `Id-Estatus = 5`, `Id-Factura`) · `vtaa0524.p` (recalcula IVA) · `vtaa0494.p` (descompromete no surtido).
+  8. **CxC** (`{cxca0001.i}`): cargo a `MovCliente` con `Saldo = Factura.Tot`.
+  9. **COMMIT** + auditoría (`programas/auditoria.p`, módulo Pedidos).
+
+  **Decisiones aplicadas:** sin validación de límite de crédito (igual que el motor); una sola transacción, folio real directo (sin `TMPFAC`); no timbra CFDI (paso aparte).
+
+  ---
+
+  ## 11. Notas técnicas / QA (antes de producción)
+
+  1. **Compilar en PDSOE** y confirmar que los includes **`vtaa0004.i`** y **`cxca0001.i`** estén en el PROPATH del AppServer (si no, agregarlos o inlinear su lógica).
+  2. **Probar en DEV con un pedido de prueba** y comparar `Factura` / `DetFactura` / `MovCliente` (CxC) / `ArtUbic` (inventario) **contra el proceso carácter**, campo por campo.
+  3. Confirmar el 3er parámetro de la serie/tasa según el tipo (el motor de crédito pasa `3`).
+  4. **Registrar** el recurso en `resourceModel.xml` (path `/Pedido/generaFactura`, **POST**, operación `pedfactura..generaFactura`) y regenerar `pedfactura.pidl`.
+
+  ---
+
+  ## 12. Plan de Pruebas
+
+  | # | Caso | Esperado |
+  |---|------|----------|
+  | P1 | Sin `IdUser` | `"Se requiere el usuario (IdUser)."` |
+  | P2 | Pedido facturable | `Factura`/`DetFactura` creadas; `IdFactura` con folio; pedido a estatus 5 |
+  | P3 | Comparar contra carácter | `Factura.Tot`, `DetFactura`, `MovCliente`, `ArtUbic` iguales |
+  | P4 | Pedido ya facturado | `"PEDIDO YA FACTURADO..."`, nada se crea |
+  | P5 | Serie sin consecutivo de folio | Mensaje de folio, transacción deshecha |
+  | P6 | Reintento del mismo pedido | Bloqueado (ya tiene `Id-Factura`) |
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

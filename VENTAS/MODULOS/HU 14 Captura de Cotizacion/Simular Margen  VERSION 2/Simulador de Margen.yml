@@ -112,6 +112,10 @@ docs: |
   `TipoPrecio`, `LAB`, `Vigencia`, artículos activos, cantidades, etc.). Si algo
   no pasa, regresa el mismo mensaje de error que regresaría el alta.
 
+  > Incluye la regla del **cliente 3 (mostrador)**: si `IdCliente = 3` la
+  > `RazonSocial` es obligatoria en `ttEnc` (no nula ni vacía), de lo contrario
+  > regresa *"Se requiere la Razon Social para el cliente 3."*
+
   > ⚠️ El front **no** manda costos: igual que en el alta, solo puede enviar
   > `CostoEsp` cuando aplique. El costo normal lo resuelve el motor.
 

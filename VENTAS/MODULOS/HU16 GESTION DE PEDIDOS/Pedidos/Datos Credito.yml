@@ -1,0 +1,197 @@
+info:
+  name: Datos Credito
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/DatosGeneralesCredito?IdPedido=2968082&Resto=0&IdUser=olds
+  params:
+    - name: IdPedido
+      value: "2968082"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Facturación Crédito: GET Completo
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Facturación Crédito — Datos Completos de la Factura**
+  Es la consulta que abre el botón **Crédito** (pantalla *"FACTURACION CREDITO / Datos Generales"* de `vtaa0499.p`, con sus pestañas **Generales / Embarque / Memo / Detalle**). En **una sola llamada** devuelve todo lo necesario para armar la factura: encabezado (datos del pedido→factura + info de crédito del cliente + serie/folio tentativo + totales) y renglones. **Reemplaza la pareja anterior `datosGeneralesCredito` + `simulaFactura`.**
+  **Solo lectura:** no crea ni edita nada. El front muestra los datos, deja que el usuario **edite** los campos editables (Embarque / Memo / Requisición) y **regresa el mismo dataset** al POST [GeneraFactura](pedfactura-GeneraFactura.md).
+  Programa servidor: `pedfactura.p` · Procedimiento: `datosGeneralesCredito`. Módulo `/Ventas/Pedidos/`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/datosGeneralesCredito
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUser`** · STRING · ✅ — Usuario. Vacío → *"Se requiere el usuario (IdUser)."*
+  **`IdPedido`** · STRING · ✅ — Folio del pedido (se normaliza)
+  **`Resto`** · STRING · ❌ — Resto; vacío = `0`
+  > **El origen ya NO se recibe:** se **deriva del usuario** (`Usuario.Id-Ubicacion` donde `Usuario.Id-User = IdUser`). Determina la **serie del folio** (02B→`FACCEDIS`, FUG→`FACFUG`, otro→`FAC`). Usuario inexistente / sin ubicación → error.
+  **`IvaGlobal`** · DECIMAL · ❌ — IVA global de la empresa para comparar contra la zona del cliente (default `16`)
+
+  ---
+
+  ## 5. Body
+
+  No aplica (todo por query string).
+
+  ---
+
+  ## 6. Headers
+
+  ```
+  Content-Type: application/json
+  ```
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Pedido/datosGeneralesCredito?IdUser=olds&IdPedido=2965291&Resto=0
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response (`dsFactura` = `ttFacturaGral` + `ttFacturaDet`)
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Factura de credito del pedido 2965291-0 (serie FACCEDIS). El folio y el IVA definitivos se asignan al facturar.",
+      "dsFactura": {
+        "ttFacturaGral": [
+          {
+            "IdPedido": "2965291", "Resto": 0, "FecReg": "2026-08-05",
+            "IdVendedor": "018", "NombreVendedor": "PEREZ LOPEZ JUAN", "Ubicacion": "VENTAS ESPECIALES",
+            "IdCliente": 45210, "RazonSocial": "COMERCIAL X SA DE CV", "Propietario": "JUAN PEREZ",
+            "CalleNo": "AV REFORMA 100", "Colonia": "CENTRO", "Poblacion": "PUEBLA", "Estado": "PUEBLA",
+            "RFC": "CXX010101ABC", "Tel": "2221234567", "Fax": "",
+            "Cotizacion": "0044120", "TipoPrecio": "", "IdCond": 30, "Condicion": "30 DIAS",
+            "Bultos": 3, "Tarimas": 0, "IdEntrega": 12, "Entrega": "OCURRE", "ImpFlete": 0,
+            "Notas1": "", "Notas2": "", "EsCredito": true, "TipoFactura": "CREDITO",
+            "IdRFiscal": "601", "IdUsoCFDI": "G03", "IdTran": 184, "Plazo": 30, "FecVence": "2026-09-10",
+            "SerieFolio": "FACCEDIS", "FolioTentativo": "0012345 (tentativo)", "IvaZona": 16, "EsFrontera": false,
+            "SubTotal": 13129.05, "IVA": 2100.65, "Total": 15229.70,
+            "NotasCargo": 0, "DiasVencido": 0, "CreditoDisp": 84770.30, "SaldoVencido": 0.00,
+            "ChequesDev": 0, "LimiteCredito": 100000.00,
+
+            "Requisicion": "REQ-8891",
+            "RazonSocial1": "COMERCIAL X SA DE CV", "CalleNo1": "AV REFORMA 100", "Colonia1": "CENTRO",
+            "IdCiudad1": 2404, "Ciudad1": "PUEBLA", "Estado1": "PUEBLA", "Delegacion1": "", "CP1": "72000",
+            "IdRutaEmb": 5, "RutaEmb": "RUTA CENTRO", "Tel1": "2221234567", "Fax1": "",
+            "Email": "envios@x.com", "Attn1": "ALMACEN",
+            "Observaciones1": "", "Observaciones2": ""
+          }
+        ],
+        "ttFacturaDet": [
+          { "Reng": 10, "IdArticulo": "A00123", "Descr": "LAPIZ ADHESIVO 40 GR", "IdColor": 0, "IdPres": 2,
+            "Tipo": 1, "Cant": 24, "PrecUnit": 18.50, "Descto": 0, "Importe": 444.00, "PorcIVA": 16, "IVA": 71.04, "IdAlm": "02B" }
+        ]
+      }
+    }
+  }
+  ```
+
+  Bloqueos (`IdError=true`): pedido inexistente · ya facturado · solicitud de cancelación · `*** GRAFICO` · RFC < 12 · **pedido de contado** (`Id-Cond = 0`, cliente 3 con su mensaje).
+
+  ---
+
+  ## 9. Campos de respuesta
+
+  ### `ttFacturaGral` — encabezado (1 fila)
+
+  #### 🔒 CONSULTA (solo lectura — el front NO los edita)
+  **`IdPedido`** · STRING · **`Resto`** · INT · **`FecReg`** · DATE
+  **`IdVendedor`** · STRING · **`NombreVendedor`** · STRING · **`Ubicacion`** · STRING
+  **`IdCliente`** · INT · **`RazonSocial`** · STRING · **`Propietario`** · STRING
+  **`CalleNo`** · **`Colonia`** · **`Poblacion`** · **`Estado`** · STRING — domicilio **fiscal**
+  **`RFC`** · **`Tel`** · **`Fax`** · STRING · **`Cotizacion`** · STRING · **`TipoPrecio`** · STRING
+  **`IdCond`** · INT · **`Condicion`** · STRING · **`Bultos`** · **`Tarimas`** · INT
+  **`IdEntrega`** · INT · **`Entrega`** · STRING · **`ImpFlete`** · DEC · **`Notas1`** · **`Notas2`** · STRING (notas del pedido)
+  **`EsCredito`** · BOOL (`true`) · **`TipoFactura`** · STRING (`CREDITO`) · **`IdRFiscal`** · **`IdUsoCFDI`** · STRING · **`IdTran`** · INT
+  **`Plazo`** · INT · **`FecVence`** · DATE · **`SerieFolio`** · STRING · **`FolioTentativo`** · STRING (espiado, no consumido)
+  **`IvaZona`** · DEC · **`EsFrontera`** · BOOL · **`SubTotal`** · **`IVA`** · **`Total`** · DEC
+  **`NotasCargo`** · INT · **`DiasVencido`** · INT · **`CreditoDisp`** · DEC · **`SaldoVencido`** · DEC · **`ChequesDev`** · INT · **`LimiteCredito`** · DEC — info de crédito (`vtaa0137.i`)
+
+  #### ✏️ EDITABLE (el front los edita y los regresa a `generaFactura`)
+  **`Requisicion`** · STRING — pestaña Generales (`Pedido.ReqCte`)
+  **`RazonSocial1`** · **`CalleNo1`** · **`Colonia1`** · STRING — pestaña **Embarque** (domicilio de envío)
+  **`IdCiudad1`** · INT (clave de ciudad; al facturar deriva `Ciudad1`/`Estado1`) · **`Ciudad1`** · **`Estado1`** · STRING (nombres, informativos)
+  **`Delegacion1`** · **`CP1`** · STRING · **`IdRutaEmb`** · INT (solo aplica si `IdTran = 0`) · **`RutaEmb`** · STRING (descr, informativo)
+  **`Tel1`** · **`Fax1`** · **`Email`** · **`Attn1`** · STRING
+  **`Observaciones1`** · **`Observaciones2`** · STRING — pestaña **Memo**
+
+  ### `ttFacturaDet` — renglones (🔒 CONSULTA)
+  **`Reng`** · INT · **`IdArticulo`** · STRING · **`Descr`** · STRING · **`IdColor`** · **`IdPres`** · INT · **`Tipo`** · INT
+  **`Cant`** · DEC · **`PrecUnit`** · DEC · **`Descto`** · INT (%) · **`Importe`** · DEC · **`PorcIVA`** · DEC · **`IVA`** · DEC · **`IdAlm`** · STRING
+
+  > Los renglones **no se editan**; se calculan de `DetPedido` (Cant = CantEnt si > 0, si no CantPed; Importe = Cant × PrecUnit × (1−Descto/100)). Al facturar, `generaFactura` los **re-lee** de la BD (no confía en lo que mande el front).
+
+  ---
+
+  ## 10. Reglas y comportamiento
+
+  1. **Un solo GET completo.** Devuelve encabezado + renglones + totales + serie/folio tentativo. Ya **no** existe `simulaFactura`.
+  2. **Solo consulta.** No crea `Factura`, no consume folio, no toca inventario/CxC.
+  3. **Editable vs consulta:** ver §9. Al facturar, el front **regresa `dsFactura` completo** al POST; `generaFactura` toma de `ttFacturaGral` **solo** los campos editables y re-lee `DetPedido` para los renglones.
+  4. **Crédito vs Contado (motor `vtaa0499.p` L362-372):** si `Id-Cond = 0` (contado) → **bloquea**. El espejo en contado bloquea los de crédito y la frontera.
+  5. **Frontera:** si `Zona.Porc-IVA` ≠ `IvaGlobal` (y entrega ≠ 11/16) → `EsFrontera = true`, serie `FACFRON`; el IVA definitivo se recalcula al facturar.
+
+  ---
+
+  ## 11. Registro en el resourceModel
+
+  Recurso a dar de alta (aún **no registrado**): path `/Pedido/datosGeneralesCredito`, verbo **GET**, operación `pedfactura..datosGeneralesCredito`, params `IdPedido`, `Resto`, `IvaGlobal`, `IdUser` (**sin `Origen`** — se deriva del usuario); **respuesta = dataset `dsFactura`**. Regenerar `pedfactura.pidl` en PDSOE.
+
+  ---
+
+  ## 12. Plan de Pruebas
+
+  | # | Caso | Esperado |
+  |---|------|----------|
+  | P1 | Sin `IdUser` | `"Se requiere el usuario (IdUser)."` |
+  | P2 | Pedido de crédito válido | `ttFacturaGral` (1 fila) + `ttFacturaDet` (N) + totales; `EsCredito=true` |
+  | P3 | Comparar totales vs pedido carácter | `SubTotal`/`IVA`/`Total` coinciden |
+  | P4 | Info de crédito vs `vtaa0499` | `CreditoDisp`/`DiasVencido`/`SaldoVencido`/`NotasCargo`/`ChequesDev` coinciden |
+  | P5 | Pedido de contado (`Id-Cond=0`) | Bloqueo *"...CONDICION DE CONTADO..."* |
+  | P6 | Ya facturado / cancelación / GRAFICO / RFC<12 | Bloqueo con su mensaje |
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

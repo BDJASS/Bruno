@@ -1,14 +1,14 @@
 info:
-  name: Lista por Facturar
+  name: Lista Inicial
   type: http
   seq: 1
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/listaPedidosPorFacturar?Origen=02B
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/listaPedidosPorFacturar?IdUser=olds
   params:
-    - name: Origen
-      value: 02B
+    - name: IdUser
+      value: olds
       type: query
   auth: inherit
 
@@ -51,10 +51,9 @@ docs: |
 
   > ✅ = Requerido · ❌ = Opcional
 
-  **`Origen`** · STRING · ✅ — Almacén de origen. Determina el prefijo del folio de pedido:
-  - `02B` = CEDIS (pedidos "2") · `FUG` = "3" · `12` = "6" y > 1000000 · `11` = "1" · otros = "8" (adelantados)
+  **`IdUser`** · STRING · ✅ — Usuario. Vacío → *"Se requiere el usuario (IdUser)."*
 
-  > Vacío → *"Se requiere el almacen de origen (Origen)."*. Se puede derivar de `Usuario.Id-Ubicacion`.
+  > El **almacén de origen ya NO se recibe**: se **deriva del usuario** (`Usuario.Id-Ubicacion` donde `Usuario.Id-User = IdUser`). Si el usuario no existe o no tiene ubicación → *"El usuario X no existe o no tiene ubicacion/almacen asignado."*. El origen determina el prefijo del folio: `02B` = CEDIS (pedidos "2") · `FUG` = "3" · `12` = "6" y > 1000000 · `11` = "1" · otros = "8".
 
   ---
 
@@ -75,7 +74,7 @@ docs: |
   ## 7. Ejemplo de Request
 
   ```
-  GET .../Pedido/listaPedidosPorFacturar?Origen=02B
+  GET .../Pedido/listaPedidosPorFacturar?IdUser=olds
   ```
 
   ---

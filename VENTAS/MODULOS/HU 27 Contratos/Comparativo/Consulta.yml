@@ -5,16 +5,16 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ComparativoContratoCotizacion?IdUser=olds&IdContrato=2424&IdCot=2042370
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/ComparativoContratoCotizacion?IdUser=olds&IdContrato=2428&IdCot=2083480
   params:
     - name: IdUser
       value: olds
       type: query
     - name: IdContrato
-      value: "2424"
+      value: "2428"
       type: query
     - name: IdCot
-      value: "2042370"
+      value: "2083480"
       type: query
   auth: inherit
 

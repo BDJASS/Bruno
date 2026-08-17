@@ -1,0 +1,165 @@
+info:
+  name: Datos Contado
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/DatosGeneralesContado?IdPedido=2981608&Resto=0&IdUser=olds
+  params:
+    - name: IdPedido
+      value: "2981608"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Facturación Contado: GET Completo
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Facturación Contado — Datos Completos de la Factura**
+  Es la consulta que abre el botón **Contado** (pantalla `f-GralFa` de `vtaa0399.p`, pestañas **Generales / Embarque / Memo / Detalle**). En **una sola llamada** devuelve el **mismo dataset `dsFactura`** que crédito (encabezado + renglones + totales + serie/folio), **sin** el bloque de información de crédito, y aplica las **reglas de contado** (espejo de crédito). **Reemplaza la pareja anterior `datosGeneralesContado` + `simulaFactura`.**
+  **Solo lectura:** el front muestra los datos, deja editar Embarque / Memo / Requisición y **regresa el mismo dataset** al POST [GeneraFactura](pedfactura-GeneraFactura.md).
+  Programa servidor: `pedfactura.p` · Procedimiento: `datosGeneralesContado`. Módulo `/Ventas/Pedidos/`.
+
+  > **Nota:** el motor de facturación de contado es `vtaa0399.p` (formato remisión), **distinto** del de crédito; el POST de contado es un port aparte (pendiente).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/datosGeneralesContado
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUser`** · STRING · ✅ — Usuario. Vacío → *"Se requiere el usuario (IdUser)."*
+  **`IdPedido`** · STRING · ✅ — Folio del pedido (se normaliza)
+  **`Resto`** · STRING · ❌ — Resto; vacío = `0`
+  > **El origen ya NO se recibe:** se **deriva del usuario** (`Usuario.Id-Ubicacion` donde `Usuario.Id-User = IdUser`); determina la **serie del folio** de remisión. Usuario inexistente / sin ubicación → error.
+  **`IvaGlobal`** · DECIMAL · ❌ — IVA global de la empresa (default `16`)
+
+  ---
+
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
+
+  ```
+  Content-Type: application/json
+  ```
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Pedido/datosGeneralesContado?IdUser=olds&IdPedido=6012345&Resto=0
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response (`dsFactura` = `ttFacturaGral` + `ttFacturaDet`)
+
+  Misma estructura que [crédito](pedfactura-DatosGeneralesCredito.md), con `TipoFactura = "CONTADO"`, `EsCredito = false` y el bloque de crédito en `0`:
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Factura de contado del pedido 6012345-0 (serie FACCEDIS). El folio definitivo se asigna al facturar.",
+      "dsFactura": {
+        "ttFacturaGral": [
+          {
+            "IdPedido": "6012345", "Resto": 0, "IdCliente": 8891, "RazonSocial": "PUBLICO EN GENERAL",
+            "IdCond": 0, "Condicion": "CONTADO", "EsCredito": false, "TipoFactura": "CONTADO",
+            "SerieFolio": "FACCEDIS", "FolioTentativo": "0033120 (tentativo)", "IvaZona": 16, "EsFrontera": false,
+            "SubTotal": 860.00, "IVA": 137.60, "Total": 997.60,
+            "NotasCargo": 0, "DiasVencido": 0, "CreditoDisp": 0, "SaldoVencido": 0, "ChequesDev": 0, "LimiteCredito": 0,
+            "Requisicion": "", "RazonSocial1": "PUBLICO EN GENERAL", "CalleNo1": "MOSTRADOR", "Colonia1": "",
+            "IdCiudad1": 2404, "Ciudad1": "PUEBLA", "Estado1": "PUEBLA", "Delegacion1": "", "CP1": "72000",
+            "IdRutaEmb": 0, "RutaEmb": "", "Tel1": "", "Fax1": "", "Email": "", "Attn1": "",
+            "Observaciones1": "", "Observaciones2": ""
+          }
+        ],
+        "ttFacturaDet": [
+          { "Reng": 10, "IdArticulo": "B00777", "Descr": "CUADERNO PROFESIONAL", "Tipo": 1,
+            "Cant": 10, "PrecUnit": 86.00, "Descto": 0, "Importe": 860.00, "PorcIVA": 16, "IVA": 137.60, "IdAlm": "02B" }
+        ]
+      }
+    }
+  }
+  ```
+
+  Bloqueos (`IdError=true`): pedido inexistente · ya facturado · cancelación · `*** GRAFICO` · RFC < 12 · **pedido de crédito** (`Id-Cond > 0`) · **cliente de frontera** (renglón Tipo 1 con `0 < PorcIVA < 15`).
+
+  ---
+
+  ## 9. Campos de respuesta
+
+  Idéntico a [crédito §9](pedfactura-DatosGeneralesCredito.md) — **misma estructura `dsFactura`**. Diferencias en contado:
+  - `EsCredito = false`, `TipoFactura = "CONTADO"`, `Plazo = 0`, `FecVence = HOY`.
+  - El bloque de crédito (`NotasCargo`, `DiasVencido`, `CreditoDisp`, `SaldoVencido`, `ChequesDev`, `LimiteCredito`) viene en **`0`** (no aplica).
+
+  **🔒 CONSULTA** y **✏️ EDITABLE** son los mismos campos que en crédito (ver §9 de crédito). El **monto a pagar** de la pantalla de contado = `Total` del encabezado.
+
+  ---
+
+  ## 10. Reglas y comportamiento
+
+  1. **Un solo GET completo** (encabezado + renglones + totales); ya **no** existe `simulaFactura`.
+  2. **Bloquea pedidos de crédito** (`Id-Cond > 0`) — `vtaa0399.p` L389-396.
+  3. **Bloquea clientes de frontera** — `vtaa0399.p` L246-258: renglón `Tipo = 1` con `0 < PorcIVA < 15` → debe facturarse por **crédito** ("facturas grandes"). *Regla exclusiva de contado.*
+  4. **Editable vs consulta:** ver §9 de crédito. El front regresa `dsFactura` completo al POST de contado (motor `vtaa0399.p`, pendiente).
+
+  ---
+
+  ## 11. Registro en el resourceModel
+
+  Recurso a dar de alta (aún **no registrado**): path `/Pedido/datosGeneralesContado`, verbo **GET**, operación `pedfactura..datosGeneralesContado`, params `IdPedido`, `Resto`, `IvaGlobal`, `IdUser` (**sin `Origen`** — se deriva del usuario); **respuesta = dataset `dsFactura`**. Regenerar `pedfactura.pidl` en PDSOE.
+
+  ---
+
+  ## 12. Plan de Pruebas
+
+  | # | Caso | Esperado |
+  |---|------|----------|
+  | P1 | Sin `IdUser` | `"Se requiere el usuario (IdUser)."` |
+  | P2 | Contado válido (`Id-Cond=0`) | `dsFactura` con renglones + totales; `EsCredito=false` |
+  | P3 | Pedido de crédito (`Id-Cond>0`) | Bloqueo *"...CONDICIONES DE CREDITO..."* |
+  | P4 | Cliente de frontera | Bloqueo *"...cambie a facturas grandes (CREDITO)."* |
+  | P5 | Ya facturado / inexistente | Bloqueo con su mensaje |
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

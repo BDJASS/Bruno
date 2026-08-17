@@ -93,6 +93,7 @@ docs: |
   ### Encabezado
 
   🟢 **`IdCliente`** · INT — Cliente (de aquí el servidor deriva razón social, RFC, tel, dirección…)
+  🟢 **`RazonSocial`** · STRING — **obligatoria SOLO cuando `IdCliente = 3`** (cliente mostrador). Para ese cliente el servidor **no** deriva la razón social del catálogo, usa la que se envía (no nula ni vacía). Para cualquier otro cliente se **ignora** (se deriva del catálogo)
   🟢 **`Iniciales`** · STRING — Usuario (`Id-User`). **Llave**: de aquí el servidor deriva vendedor, ubicación de venta y almacén origen
   🟢 **`TipoPrecio`** · STRING — `M` o `MX` (el `TC` se convierte a `M` en el front)
   🟢 **`LAB`** · STRING — `M` o `E`
@@ -111,7 +112,7 @@ docs: |
 
   🔵 `IdVendedor` `IdUbiVta` `IdAlm` — **derivados del usuario** (`Iniciales`) si no se envían
   ⚙️ `Firma` — el servidor la fija = vendedor (no enviar)
-  🔵 `RazonSocial` `Propietario` `RFC` `Tel` `CalleNo` `Colonia` `IdCiudad` `Estado` `CP` `Pais` — **derivados del cliente** (no enviar)
+  🔵 `RazonSocial` `Propietario` `RFC` `Tel` `CalleNo` `Colonia` `IdCiudad` `Estado` `CP` `Pais` — **derivados del cliente** (no enviar). **Excepción:** para `IdCliente = 3` la `RazonSocial` se toma del JSON (ver arriba)
   ⚙️ `IdCot` (folio) · `FecReg` · `Hora` · `SubTotal` · `IVA` · `Tot` · `Autorizada` — **los pone el servidor**
 
   ### Partidas (`ttPart[]`) — **siempre artículos** (`Tipo = 1`, lo fija el servidor)
@@ -183,6 +184,41 @@ docs: |
   >
   > Si necesitas **forzar** un vendedor/almacén/ubicación distintos al del usuario, mándalos explícitamente y el servidor respeta ese valor.
 
+  ### Caso especial — Cliente 3 (mostrador)
+
+  Cuando `IdCliente = 3` **debes** enviar `RazonSocial` (no nula ni vacía). Para ese cliente la razón social del catálogo es genérica, por lo que el servidor la reemplaza por la que capture el usuario:
+
+  ```json
+  {
+    "dsCotAlta": {
+      "ttEnc": [
+        {
+          "IdCliente": 3,
+          "RazonSocial": "PUBLICO EN GENERAL S.A. DE C.V.",
+          "Iniciales": "GLT",
+          "Attn": "LUIS MARRUFO",
+          "TipoPrecio": "M",
+          "LAB": "M",
+          "Plazo": 0,
+          "DiasEnt": 0,
+          "Vigencia": 10,
+          "PrecioTemp": false,
+          "Nota1": "",
+          "Nota2": "",
+          "DescPP": 0,
+          "DescPP2": 0,
+          "PlazoPP": 0,
+          "Factor": 0,
+          "TipoFactor": ""
+        }
+      ],
+      "ttPart": [ /* … igual que el ejemplo anterior … */ ]
+    }
+  }
+  ```
+
+  > Para cualquier `IdCliente` distinto de 3, el campo `RazonSocial` que se envíe es **ignorado**: se sigue derivando del catálogo de clientes.
+
   ---
 
   ## 6. Headers
@@ -223,6 +259,7 @@ docs: |
   | Campo / Condición | Regla | Mensaje si falla |
   |---|---|---|
   | `IdCliente` | > 0 y debe existir | *"Se requiere IdCliente."* / *"No existe el cliente N."* |
+  | `RazonSocial` | obligatoria (no nula ni vacía) **solo si `IdCliente = 3`** | *"Se requiere la Razon Social para el cliente 3."* |
   | `Iniciales` | no vacío y debe existir en `Usuario` | *"Se requiere Iniciales (usuario)."* / *"Usuario no encontrado: X."* |
   | Vendedor derivado | debe resolverse del usuario (o override válido) | *"No se pudo determinar un vendedor valido para el usuario X."* |
   | `TipoPrecio` | ∈ {`M`, `MX`} | *"TipoPrecio invalido (M o MX): …"* |
@@ -264,7 +301,7 @@ docs: |
   ## 12. Observaciones Técnicas
 
   1. **Reuso del motor:** `cotaltacot.p` NO reimplementa el grabado; arma el dataset completo (`dsCot2`) y llama `cotizacion2.p` / `creaCotizaciones` (folio, costos, autorización, transacción).
-  2. **Derivación del cliente:** razón social, propietario, RFC, teléfono, dirección, ciudad, estado y país se leen de `Cliente` (y `Ciudad`/`Estado`/`Pais`) usando `IdCliente`. El front ya no los envía.
+  2. **Derivación del cliente:** razón social, propietario, RFC, teléfono, dirección, ciudad, estado y país se leen de `Cliente` (y `Ciudad`/`Estado`/`Pais`) usando `IdCliente`. El front ya no los envía. **Excepción — cliente 3 (mostrador):** la `RazonSocial` **no** se deriva; es obligatoria en `ttEnc` (no nula ni vacía) y el servidor la usa tal cual (`TRIM`). El resto de los datos (RFC, dirección, etc.) sí se siguen derivando del cliente 3.
   3. **Cálculo en servidor:** `Importe` = `PUnit × (1 − Descto/100) × Cant`; `Iva` = `Importe × PorcIVA/100`. `PorcIVA` se toma del artículo si no viene. Para `Tipo ≥ 3` (separador) el `Importe` es 0.
   4. **Vendedor/ubicación/almacén desde el usuario:** a partir de `Iniciales` (= `Usuario.Id-User`) se obtiene, igual que `usuario.p`: el **vendedor** (`Vendedor.iniciales = Id-User`, o default `"0104"` si el usuario es interno `<= "99999"`), la **ubicación de venta** (`Usuario.id-ubivta`) y el **almacén origen** (`Usuario.Id-Ubicacion`). El front puede enviar `IdVendedor`/`IdUbiVta`/`IdAlm` para forzar otros valores; si no, se derivan. Como respaldo, la ubicación cae a `Vendedor.Id-UbiVta` y el almacén a `AlmPrior` (tipo 1).
   5. **Folio:** el front envía `IdCot` vacío; el motor asigna el folio y se devuelve en `Folio`.
@@ -272,6 +309,8 @@ docs: |
   7. **`Firma` = vendedor:** el servidor asigna `Firma` con el vendedor derivado; no se envía.
   8. **`IdMonedaCE`** (moneda del costo especial): **no proviene de ningún GET de artículo**. Es `0`/`1` por defecto y solo se asigna cuando el usuario hace un *cambio de precio manual* con costo especial en moneda extranjera, eligiendo la moneda del catálogo `monedas`. El GET de partida (`cotpartida`) ya devuelve `IdMoneda` (moneda del precio); `IdMonedaCE` es distinto y manual.
   9. **Respuesta compacta:** el servicio regresa solo `IdError`, `Respuesta`, `Folio` y `Autorizada` (no eco del dataset completo).
+  10. **Auditoría (al crear con éxito):** se registra en `AuditLog` vía `programas/auditoria.p` con `Area="VENTAS"`, `Modulo="Cotizacion"`, `Programa="cotaltacot"`, `Operacion="ALTA"`, `Respuesta="Folio: <folio>"`, `Resource=<folio>`, `IdUser=Iniciales`.
+  11. **Correo de auditoría (al crear con éxito):** se arma un HTML con el resumen de la cotización (folio, cliente, vendedor, total, partidas) y se envía con el mecanismo estándar **`programas/correo01_rest.p`** (recibe la ruta del HTML en disco) a `desarrollo10@adosa.com.mx`. **Ya no usa `inva0007.i`.** Tanto la auditoría como el correo son **no críticos**: si fallan, la cotización ya quedó grabada y no se marca error (se loguea).
   8. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
 
   ---

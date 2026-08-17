@@ -19,8 +19,8 @@ http:
             }
           ],
           "ttPartPed": [
-            { "IdArticulo": "021118", "IdColor": 2, "IdPres": 0, "Descr": "LAPIZ ADHESIVO",
-              "Cant": 12, "PUnit": 18.50, "Descto": 0, "PorcIVA": 16 }
+            { "IdArticulo": "021118", "IdColor": 2, "IdPres": 2, "Descr": "LAPIZ ADHESIVO",
+              "Cant": 20, "PUnit": 18.50, "Descto": 0, "PorcIVA": 16 }
           ]
         }
       }
