@@ -130,7 +130,9 @@ docs: |
         "EnFirme": true,
         "BckOrd": 1,
         "Pagado": false,
-        "PagAnt": false
+        "PagAnt": false,
+        "PausaReja": false,
+        "IdLiga": ""
       }
     ]
   }
@@ -155,6 +157,8 @@ docs: |
   **`BckOrd`** · INT — Política de backorder (`Pedido.bckOrd`)
   **`Pagado`** · BOOLEAN — `true` = pedido pagado
   **`PagAnt`** · BOOLEAN — `true` = pago anticipado
+  **`PausaReja`** · BOOLEAN — `true` = el pedido tiene pausa en reja (`Pedido.PausaReja`)
+  **`IdLiga`** · STRING — Ligas del pedido (`Pedido.Id-Liga`); **vacío = no ligado**, con valor = ligado (prefijo `F` = liga de facturación, `E` = liga de embarque)
 
   ---
 
