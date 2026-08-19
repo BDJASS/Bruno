@@ -5,14 +5,16 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Gestion/Consulta?ctFecRegIni=07/08/2026&ctFecRegFin=07/08/2026&IdUser=olds&IdPedido=0322707
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Gestion/Consulta?IdUser=olds&IdPedido=0322707
   params:
     - name: ctFecRegIni
       value: 07/08/2026
       type: query
+      disabled: true
     - name: ctFecRegFin
       value: 07/08/2026
       type: query
+      disabled: true
     - name: IdEstatus
       value: "99"
       type: query
@@ -117,10 +119,18 @@ docs: |
         "FecReg": "2026-08-07",
         "IdCliente": 55921,
         "RazonSocial": "DISTRIBUIDORA DEL VALLE SA DE CV",
+        "IdVendedor": "0013",
+        "VendNombre": "ELADIO ARIAS SANCHEZ",
         "SubTotal": 10810.78,
         "PartDetPed": 5,
         "Pago": "CONTRA ENTREGA",
-        "Estatus": "P/Facturar"
+        "Estatus": "P/Facturar",
+        "IdEstatus": 4,
+        "IdCond": 0,
+        "EnFirme": true,
+        "BckOrd": 1,
+        "Pagado": false,
+        "PagAnt": false
       }
     ]
   }
@@ -133,10 +143,18 @@ docs: |
   **`FecReg`** · DATE — Fecha de registro
   **`IdCliente`** · INT — Clave del cliente
   **`RazonSocial`** · STRING — Razón social del pedido
+  **`IdVendedor`** · STRING — Clave del vendedor
+  **`VendNombre`** · STRING — Nombre del empleado vendedor; vacío si no se localizó
   **`SubTotal`** · DECIMAL — Subtotal del pedido
   **`PartDetPed`** · INT — Número de partidas (renglones `Tipo` 1-2)
   **`Pago`** · STRING — Estado de pago: si es crédito → `CREDITO`; si es contado → `PAGADO`, `PDTE. PAGO`, `CONTRA ENTREGA` o `PDTE. CHEQUE` según corresponda
   **`Estatus`** · STRING — Estatus legible del pedido
+  **`IdEstatus`** · INT — Estatus numérico del pedido (`Pedido.Id-Estatus`)
+  **`IdCond`** · INT — Condición de venta (`Pedido.Id-Cond`); `0` = contado
+  **`EnFirme`** · BOOLEAN — `true` = pedido autorizado / en firme
+  **`BckOrd`** · INT — Política de backorder (`Pedido.bckOrd`)
+  **`Pagado`** · BOOLEAN — `true` = pedido pagado
+  **`PagAnt`** · BOOLEAN — `true` = pago anticipado
 
   ---
 

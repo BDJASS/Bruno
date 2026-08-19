@@ -5,10 +5,10 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/FacturaContado/Consulta?IdRemision=63241AK&IdUser=olds&Confirmar=true
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/FacturaContado/Consulta?IdRemision=63240AK&IdUser=olds&Confirmar=true
   params:
     - name: IdRemision
-      value: 63241AK
+      value: 63240AK
       type: query
     - name: IdUser
       value: olds
