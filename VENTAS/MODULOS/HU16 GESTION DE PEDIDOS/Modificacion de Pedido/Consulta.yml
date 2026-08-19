@@ -5,13 +5,13 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Consulta?IdUser=olds&IdPedido=4122888&Resto=0
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Consulta?IdUser=olds&IdPedido=4122800&Resto=0
   params:
     - name: IdUser
       value: olds
       type: query
     - name: IdPedido
-      value: "4122888"
+      value: "4122800"
       type: query
     - name: Resto
       value: "0"

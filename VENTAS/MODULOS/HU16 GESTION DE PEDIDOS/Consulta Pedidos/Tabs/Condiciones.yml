@@ -1,0 +1,195 @@
+info:
+  name: Condiciones
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedido/Condiciones?IdUser=olds&IdPedido=0322707&Resto=0
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdPedido
+      value: "0322707"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Condiciones de Pedido
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Condiciones de Pedido (Condiciones)**
+  A partir de un pedido (`IdPedido` + `Resto`) retorna, en un solo dataset, dos tablas: las condiciones comerciales/fiscales del pedido y las condiciones de entrega.
+  Programa servidor: `pedresumen.p` · Procedimiento: `getCondiciones`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedido/Condiciones
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido
+  **`Resto`** · STRING · ❌ — Resto del pedido · Vacío = primero encontrado
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Pedido/Condiciones?IdUser=olds&IdPedido=0322707&Resto=0
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Condiciones del pedido 0322707 cargadas.",
+    "dsPedCondiciones": {
+      "ttCondiciones": [
+        {
+          "IdFactura": "",
+          "ReqCte": "OC-8842",
+          "IdCot": "2084315",
+          "PagAnt": false,
+          "IdCond": 2,
+          "Condicion": "CREDITO 30 DIAS",
+          "IdRemision": "",
+          "FEFormaPago": "03",
+          "FormaPago": "TRANSFERENCIA",
+          "FEDigitosCuenta": "1234",
+          "Adelantado": false,
+          "SurtParcial": true,
+          "TC": false,
+          "Observaciones": "ENTREGAR EN HORARIO DE OFICINA"
+        }
+      ],
+      "ttCondEntrega": [
+        {
+          "Entrega": "OCURRE",
+          "Enviar": false,
+          "BckOrd": 1,
+          "Seguro": false,
+          "Transporte": "TRANSPORTES DEL NORTE"
+        }
+      ]
+    }
+  }
+  ```
+
+  ### Campos de `ttCondiciones` (1 registro — condiciones del pedido)
+
+  **`IdFactura`** · STRING — Folio de factura ligada (vacío si aún no factura)
+  **`ReqCte`** · STRING — Requisición / orden de compra del cliente
+  **`IdCot`** · STRING — Cotización de origen
+  **`PagAnt`** · BOOLEAN — `true` = pago anticipado
+  **`IdCond`** · INT — Clave de la condición de venta
+  **`Condicion`** · STRING — Descripción de la condición (`CondVta.Descr`)
+  **`IdRemision`** · STRING — Folio de remisión (vacío si no aplica)
+  **`FEFormaPago`** · STRING — Clave(s) SAT de la forma de pago (puede venir separada por comas)
+  **`FormaPago`** · STRING — Descripción de la forma de pago (columna nueva; ver sección 13)
+  **`FEDigitosCuenta`** · STRING — Últimos dígitos de la cuenta
+  **`Adelantado`** · BOOLEAN — `true` = pedido adelantado
+  **`SurtParcial`** · BOOLEAN — `true` = permite surtido parcial
+  **`TC`** · BOOLEAN — `true` = maneja tarjeta de crédito
+  **`Observaciones`** · STRING — Observaciones del pedido (concatena las 2 líneas)
+
+  ### Campos de `ttCondEntrega` (1 registro — condiciones de entrega)
+
+  **`Entrega`** · STRING — Descripción del tipo de entrega (`Entrega.Descr`)
+  **`Enviar`** · BOOLEAN — `true` = se envía (CEDIS)
+  **`BckOrd`** · INT — Política de backorder
+  **`Seguro`** · BOOLEAN — `true` = con seguro
+  **`Transporte`** · STRING — Nombre del transporte (`Transporte.Nombre`)
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdPedido` vacío | `IdError: true` — `"Se requiere el pedido."` |
+  | `Resto` no numérico | `IdError: true` — `"Numero de resto invalido."` |
+  | Pedido inexistente | `IdError: true` — `"No existe pedido con ese folio."` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **`FormaPago` (columna nueva):** descripción legible de `FEFormaPago` según el catálogo SAT (misma equivalencia de `vtaa0111.i` / `facverpago.p`): `01`=EFECTIVO, `02`=CHEQUE, `03`=TRANSFERENCIA, `04`=TARJETA DE CREDITO, `28`=TARJETA DE DEBITO, `99`=OTROS. Si `FEFormaPago` trae varias claves separadas por comas, la descripción se arma igual (separada por comas).
+  2. **`Observaciones`:** concatena `Pedido.Observaciones[1]` y `[2]` en un solo texto.
+  3. **Dataset de 2 tablas independientes:** `ttCondiciones` y `ttCondEntrega`.
+  4. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

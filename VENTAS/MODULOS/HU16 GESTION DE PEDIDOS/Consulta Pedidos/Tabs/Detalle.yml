@@ -1,0 +1,179 @@
+info:
+  name: Detalle
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedido/Detalle?IdUser=olds&IdPedido=0322707&Resto=0
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdPedido
+      value: "0322707"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Detalle de Pedido (Artículos)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Detalle de Pedido (Detalle)**
+  A partir de un pedido (`IdPedido` + `Resto`) retorna los renglones de artículos del pedido, en una tabla compacta con solo las columnas de artículo.
+  Programa servidor: `detpedido.p` · Procedimiento: `leeDetPedidoResumen`.
+
+  > Variante compacta de `/Ventas/Pedidos/Gestion/Detalle` (`leeDetPedido`): solo artículos (`Tipo` 1-2) y solo las columnas necesarias, más `CantPte` (pendiente por entregar).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedido/Detalle
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido
+  **`Resto`** · STRING · ❌ — Resto del pedido · Vacío = todos los restos del folio
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Pedido/Detalle?IdUser=olds&IdPedido=0322707&Resto=0
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  El servicio retorna la tabla `ttDetPedidoResumen` (1 registro por artículo).
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Consulta ejecutada correctamente.",
+    "ttDetPedidoResumen": [
+      {
+        "IdArticulo": "ART001",
+        "Descr": "PAPEL BOND CARTA 75GR",
+        "sColor": "BLANCO",
+        "Pres": "CAJA",
+        "CantPed": 10.00,
+        "CantEnt": 6.00,
+        "CantFac": 6.00,
+        "CantPte": 4.00,
+        "PUnit": 1045.875,
+        "Importe": 9935.81,
+        "Descto": 5,
+        "IndicaPre": "L",
+        "Simbolo": ""
+      }
+    ]
+  }
+  ```
+
+  ### Campos de `ttDetPedidoResumen` (1 registro por artículo)
+
+  **`IdArticulo`** · STRING — Clave del artículo
+  **`Descr`** · STRING — Descripción del artículo
+  **`sColor`** · STRING — Descripción del color (`Kolor`); vacío si no tiene color
+  **`Pres`** · STRING — Descripción de la presentación (`ArtPres`); vacío si no se localizó
+  **`CantPed`** · DECIMAL — Cantidad pedida
+  **`CantEnt`** · DECIMAL — Cantidad entregada
+  **`CantFac`** · DECIMAL — Cantidad facturada
+  **`CantPte`** · DECIMAL — Cantidad pendiente por entregar (`CantPed − CantEnt`, nunca negativa)
+  **`PUnit`** · DECIMAL — Precio unitario
+  **`Importe`** · DECIMAL — Importe del renglón
+  **`Descto`** · INT — Porcentaje de descuento
+  **`IndicaPre`** · STRING — Indicador de precio
+  **`Simbolo`** · STRING — Símbolo de moneda (solo si la moneda no es la nacional)
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdPedido` no numérico o `0` | `IdError: true` — `"Numero de pedido invalido."` |
+  | `Resto` no numérico | `IdError: true` — `"Numero de resto invalido."` |
+  | Pedido sin artículos | `ttDetPedidoResumen` vacío (sin error) |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Solo artículos:** se incluyen únicamente los renglones `Tipo` 1 y 2; se omiten servicios y renglones cancelados.
+  2. **`CantPte`:** cantidad pendiente por entregar, calculada como `MAXIMUM(0, CantPed − CantEnt)`.
+  3. **`sColor`/`Pres`:** se resuelven de `Kolor` y `ArtPres` respectivamente.
+  4. **Complementa** el encabezado de `/Ventas/Pedido/Resumen`.
+  5. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

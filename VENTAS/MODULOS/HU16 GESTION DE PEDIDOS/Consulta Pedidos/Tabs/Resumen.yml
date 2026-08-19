@@ -1,0 +1,218 @@
+info:
+  name: Resumen
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedido/Resumen?IdUser=olds&IdPedido=0322707&Resto=0
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdPedido
+      value: "0322707"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Resumen de Pedido
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Resumen de Pedido (Resumen)**
+  A partir de un pedido (`IdPedido` + `Resto`) retorna, en un solo dataset, tres tablas **independientes** con el resumen del pedido: identidad fiscal del cliente, datos generales del pedido y dirección de embarque.
+  Programa servidor: `pedresumen.p` · Procedimiento: `getResumen` | Las tres tablas son independientes (sin data-relation): si alguna queda vacía, el dataset se arma igual.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedido/Resumen
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido
+  **`Resto`** · STRING · ❌ — Resto del pedido · Vacío = primero encontrado
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Pedido/Resumen?IdUser=olds&IdPedido=0322707&Resto=0
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Resumen del pedido 0322707 cargado.",
+    "dsPedResumen": {
+      "ttCliente": [
+        {
+          "IdCliente": 55921,
+          "RazonSocial": "DISTRIBUIDORA DEL VALLE SA DE CV",
+          "RFC": "DVA160218AB3",
+          "Attn": "JUAN PEREZ",
+          "Tel1": "8181234567",
+          "IdVendedor": "JLM",
+          "VendNombre": "JUAN LOPEZ MARTINEZ",
+          "IdUsoCFDI": "G03",
+          "DescrCFDI": "Gastos en general",
+          "IdRFiscal": "601",
+          "DescrRFiscal": "General de Ley Personas Morales"
+        }
+      ],
+      "ttPedido": [
+        {
+          "IdPedido": "0322707",
+          "IdAlm": "02B",
+          "FecReg": "2026-08-07",
+          "DescPP1": 5.00,
+          "DescPP2": 0.00
+        }
+      ],
+      "ttEmbarque": [
+        {
+          "RutaEmb": "RUTA LOCAL 1",
+          "CalleNo1": "AV BENITO JUAREZ 12001 INT. 12001",
+          "Colonia1": "SANTA CRUZ",
+          "CP1": "67196",
+          "Ciudad1": "GUADALUPE",
+          "Estado1": "NUEVO LEON",
+          "Pais1": "MEXICO",
+          "Referencia": "FRENTE A LA PLAZA",
+          "Attn": "ALMACEN",
+          "Tel1": "8187654321"
+        }
+      ]
+    }
+  }
+  ```
+
+  ### Campos de `ttCliente` (1 registro — identidad fiscal)
+
+  **`IdCliente`** · INT — Clave del cliente
+  **`RazonSocial`** · STRING — Razón social del pedido
+  **`RFC`** · STRING — RFC del pedido
+  **`Attn`** · STRING — Contacto del cliente (`Cliente.Propietario`)
+  **`Tel1`** · STRING — Teléfono del cliente (`Cliente.Tel1`)
+  **`IdVendedor`** · STRING — Clave del vendedor
+  **`VendNombre`** · STRING — Nombre del empleado vendedor; vacío si no se localizó
+  **`IdUsoCFDI`** · STRING — Clave del uso de CFDI
+  **`DescrCFDI`** · STRING — Descripción del uso de CFDI (catálogo `UsoCFDI`); vacío si no se localizó
+  **`IdRFiscal`** · STRING — Clave del régimen fiscal
+  **`DescrRFiscal`** · STRING — Descripción del régimen fiscal (catálogo `RFiscal`); vacío si no se localizó
+
+  ### Campos de `ttPedido` (1 registro — datos generales)
+
+  **`IdPedido`** · STRING — Folio del pedido
+  **`IdAlm`** · STRING — Almacén de origen
+  **`FecReg`** · DATE — Fecha de registro
+  **`DescPP1`** · DECIMAL — Descuento por pronto pago 1 (%)
+  **`DescPP2`** · DECIMAL — Descuento por pronto pago 2 (%)
+
+  ### Campos de `ttEmbarque` (1 registro — dirección de entrega)
+
+  **`RutaEmb`** · STRING — Descripción de la ruta de embarque (catálogo `RutaEmb`)
+  **`CalleNo1`** · STRING — Calle y número de embarque
+  **`Colonia1`** · STRING — Colonia de embarque
+  **`CP1`** · STRING — Código postal de embarque
+  **`Ciudad1`** · STRING — Ciudad de embarque
+  **`Estado1`** · STRING — Estado de embarque
+  **`Pais1`** · STRING — País de embarque
+  **`Referencia`** · STRING — Referencia de la dirección
+  **`Attn`** · STRING — Atención (contacto de embarque del pedido)
+  **`Tel1`** · STRING — Teléfono de embarque del pedido
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdPedido` vacío | `IdError: true` — `"Se requiere el pedido."` |
+  | `Resto` no numérico | `IdError: true` — `"Numero de resto invalido."` |
+  | Pedido inexistente | `IdError: true` — `"No existe pedido con ese folio."` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Dataset de 3 tablas independientes:** `ttCliente`, `ttPedido`, `ttEmbarque` no tienen data-relation; el dataset se arma aunque alguna tabla quede vacía.
+  2. **`Attn`/`Tel1` (cliente vs embarque):** en `ttCliente` provienen del **maestro** `Cliente` (`Propietario` / `Tel1`); en `ttEmbarque` provienen del **snapshot del pedido** (`Pedido.Attn` / `Pedido.Tel1`) para no duplicar el mismo dato.
+  3. **`DescrCFDI`:** columna nueva, se resuelve desde el catálogo `UsoCFDI.Descr` según `Pedido.Id-UsoCFDI`.
+  4. **`VendNombre`:** se obtiene vía `Vendedor` → `Empleado.Nombre`.
+  5. **Complementa** a `/Ventas/Pedidos/Gestion/Consulta` (listado) y a `/Ventas/Pedido/Detalle` (renglones).
+  6. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

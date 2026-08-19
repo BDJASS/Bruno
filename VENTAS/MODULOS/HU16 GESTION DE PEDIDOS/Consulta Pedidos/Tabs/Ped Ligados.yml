@@ -1,0 +1,190 @@
+info:
+  name: Ped Ligados
+  type: http
+  seq: 7
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedido/PedidosLigados?IdUser=olds&IdPedido=2983121&Resto=0
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdPedido
+      value: "2983121"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Ligas de Pago de un Pedido
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Ligas de Pago de un Pedido (PedidosLigados)**
+  A partir de un pedido (`IdPedido` + `Resto`, ambos obligatorios) retorna las ligas de pago (`LigaPago`) asociadas al folio del pedido o a su factura, con su estatus de pago y la autorización (`MITResp`).
+  Programa servidor: `pedidoligapago.p` · Procedimiento: `GetLigasPago` | Consulta independiente (busca directo en `Pedido`, `Cliente`, `LigaPago`, `MITResp`).
+
+  > Adaptación de `pedidoligapago.p` (sis6, 2025) a la convención `RestADOSAVentas`: `IdUser` obligatorio, salida `IdError`/`Respuesta`, validación de existencia del pedido y datos constantes calculados una sola vez fuera del ciclo.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedido/PedidosLigados
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido
+  **`Resto`** · STRING · ✅ — Resto del pedido (puede ser `0`; obligatorio que venga)
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Pedido/PedidosLigados?IdUser=olds&IdPedido=0322707&Resto=0
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Ligas de pago del pedido 0322707 cargadas.",
+    "ttLigasPago": [
+      {
+        "Refer": "0322707",
+        "Cliente": "DISTRIBUIDORA DEL VALLE SA DE CV",
+        "FecReg": "2026-08-07",
+        "Monto": 12540.50,
+        "Liga": "https://pagos.adosa.com.mx/abc123",
+        "FecVenc": "2026-08-10",
+        "Pagado": "Pendiente de Pago",
+        "Auth": "",
+        "IdUser": "JLM",
+        "IdRemision": ""
+      }
+    ]
+  }
+  ```
+
+  ### Campos de `ttLigasPago` (1 registro por liga de pago)
+
+  **`Refer`** · STRING — Referencia de la liga (`LigaPago.Refer`): folio del pedido o de la factura
+  **`Cliente`** · STRING — Razón social del cliente; `"Desconocido"` si no se localizó
+  **`FecReg`** · DATE — Fecha de registro de la liga
+  **`Monto`** · DECIMAL — Total del pedido (`Pedido.Tot`)
+  **`Liga`** · STRING — URL de la liga de pago
+  **`FecVenc`** · DATE — Fecha de vencimiento (`FecReg` + 3 días)
+  **`Pagado`** · STRING — Estatus de pago: `"Pagado"`, `"Caducado"` (venció sin pagar) o `"Pendiente de Pago"`
+  **`Auth`** · STRING — Autorización aprobada (`MITResp.RAuth`); vacío si no hay respuesta aprobada
+  **`IdUser`** · STRING — Usuario que capturó el pedido (`Pedido.Id-Captura`)
+  **`IdRemision`** · STRING — Folio de la factura del pedido (`Pedido.Id-Factura`)
+
+  ### Response sin resultados
+
+  Si el pedido existe pero no tiene ligas de pago, `ttLigasPago` regresa vacío (sin error):
+
+  ```json
+  { "IdError": false, "Respuesta": "Ligas de pago del pedido 0322707 cargadas.", "ttLigasPago": [] }
+  ```
+
+  ### Response de error controlado
+
+  ```json
+  { "IdError": true, "Respuesta": "No existe pedido con ese folio.", "ttLigasPago": [] }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdPedido` vacío | `IdError: true` — `"Se requiere el pedido."` |
+  | `IdPedido` no numérico o `<= 0` | `IdError: true` — `"Numero de pedido invalido."` |
+  | `Resto` vacío | `IdError: true` — `"Se requiere el resto."` |
+  | `Resto` no numérico | `IdError: true` — `"Numero de resto invalido."` |
+  | Pedido inexistente | `IdError: true` — `"No existe pedido con ese folio."` |
+  | Pedido sin ligas de pago | `IdError: false` · `ttLigasPago` vacío |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Filtro de ligas:** `FOR EACH LigaPago WHERE (Refer = folioPedido OR Refer = folioFactura) AND TipoDocto = 1`. Cuando el pedido **no** tiene factura, la segunda referencia se apunta al mismo folio del pedido para **evitar** un match contra `Refer = ""`.
+  2. **Datos constantes fuera del ciclo:** cliente, monto (`Pedido.Tot`), capturista (`Pedido.Id-Captura`) y factura (`Pedido.Id-Factura`) se calculan una sola vez antes del `FOR EACH` (el `FIND Cliente` y los campos del pedido no dependen de la liga).
+  3. **`Pagado`:** `"Pagado"` si `LigaPago.Pagado`; si no, `"Caducado"` cuando `FecVenc < TODAY`, o `"Pendiente de Pago"` en otro caso.
+  4. **`Auth`:** se toma de `MITResp` con `Reference = LigaPago.Refer` y `Response = "approved"`; vacío si no existe.
+  5. **Convención de salida:** `IdError` + `Respuesta` + `ttLigasPago`, mensajes amigables sin verbos HTTP (estándar `RestADOSAVentas`).
+  6. **Auditoría:** se registra la consulta con `programas/auditoria.p` (no crítica).
+  7. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

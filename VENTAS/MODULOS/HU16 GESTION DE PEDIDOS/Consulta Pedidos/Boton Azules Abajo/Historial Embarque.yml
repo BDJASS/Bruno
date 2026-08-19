@@ -1,0 +1,179 @@
+info:
+  name: Historial Embarque
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedido/HistorialEmbarque?IdUser=olds&IdPedido=2974643&Resto=0
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdPedido
+      value: "2974643"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Historial de Embarques de un Pedido
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Historial de Embarques de un Pedido (HistorialEmbarque)**
+  A partir de un pedido (`IdPedido` + `Resto`) retorna el historial de embarques (`DetEmbarque` / `Embarque`) de su factura, con estatus, motivo y chofer. La factura se deriva del pedido.
+  Programa servidor: `historialembarque_rest.p` · Procedimiento: `leeHistorialembarques` | Consulta independiente (busca directo en `Pedido`, `DetEmbarque`, `Embarque`, `Camion`, `Chofer`).
+
+  > Adaptación de `historialembarque.p` a la convención `RestADOSAVentas`: `IdUser` obligatorio, salida `IdError`/`Respuesta`; el front solo envía `IdPedido` + `Resto` (la factura ya no se pide, se toma de `Pedido.Id-Factura`).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedido/HistorialEmbarque
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido
+  **`Resto`** · STRING · ✅ — Resto del pedido (puede ser `0`; obligatorio que venga)
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Pedido/HistorialEmbarque?IdUser=olds&IdPedido=0322707&Resto=0
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Historial de embarques del pedido 0322707 cargado.",
+    "ttHistEmbarque": [
+      {
+        "IdFactura": "A0012345",
+        "IdEmbarque": "EMB00789",
+        "FecReg": "2026-08-08",
+        "HorReg": "14:35",
+        "Estatus": "FACTURA ENTREGADA",
+        "Motivo": "",
+        "Chofer": "PEDRO RAMIREZ SANCHEZ"
+      }
+    ]
+  }
+  ```
+
+  ### Campos de `ttHistEmbarque` (1 registro por movimiento de embarque)
+
+  **`IdFactura`** · STRING — Folio de la factura (o del pedido en embarques `TipoVenta = 4`)
+  **`IdEmbarque`** · STRING — Folio del embarque (`DetEmbarque.Id-Embarque`)
+  **`FecReg`** · DATE — Fecha del embarque (`Embarque.FecReg`)
+  **`HorReg`** · STRING — Hora del embarque (`HH:MM`)
+  **`Estatus`** · STRING — Descripción del estatus del movimiento (ver sección 13)
+  **`Motivo`** · STRING — Descripción del motivo (ver sección 13); vacío si no aplica
+  **`Chofer`** · STRING — Nombre del chofer (`Chofer.Nombre`)
+
+  ### Response de error controlado
+
+  ```json
+  { "IdError": true, "Respuesta": "No existe pedido con ese folio.", "ttHistEmbarque": [] }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdPedido` vacío | `IdError: true` — `"Se requiere el pedido."` |
+  | `IdPedido` no numérico o `<= 0` | `IdError: true` — `"Numero de pedido invalido."` |
+  | `Resto` vacío | `IdError: true` — `"Se requiere el resto."` |
+  | `Resto` no numérico | `IdError: true` — `"Numero de resto invalido."` |
+  | Pedido inexistente | `IdError: true` — `"No existe pedido con ese folio."` |
+  | Pedido sin embarques | `IdError: false` · `ttHistEmbarque` vacío |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Factura derivada del pedido:** se localiza el pedido por `Id-Pedido` + `Resto` y se usa `Pedido.Id-Factura` para el historial (el original recibía la factura como parámetro).
+  2. **Dos orígenes de embarque:**
+     - Por **factura**: `DetEmbarque.Id-Factura = Pedido.Id-Factura`, con `TipoVenta < 3` si el pedido es de **contado** (`Pedido.Plazo = 0`) o `TipoVenta = 3` si es de **crédito**. Solo se ejecuta si el pedido ya tiene factura (evita el barrido con `Id-Factura = ""`).
+     - Por **pedido**: `DetEmbarque.Id-Factura = IdPedido` con `TipoVenta = 4` (embarques directos del pedido).
+  3. **Filtro de fecha:** solo embarques con `Embarque.FecReg >= Pedido.FecReg`.
+  4. **Orden:** por fecha y hora de embarque, descendente.
+  5. **Catálogos de Estatus y Motivo:** se arman en memoria (mismos valores del proceso caracter) y se resuelven por `FIRST` dentro de la consulta.
+  6. **Convención de salida:** `IdError` + `Respuesta` + `ttHistEmbarque`, mensajes amigables sin verbos HTTP.
+  7. **Auditoría:** se registra con `programas/auditoria.p` (no crítica).
+  8. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

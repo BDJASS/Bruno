@@ -1,0 +1,163 @@
+info:
+  name: Autorizacion
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedido/Autorizacion?IdUser=olds&IdPedido=0322707&Resto=0
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdPedido
+      value: "0322707"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Autorización de Pedido
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Autorización de Pedido (Autorizacion)**
+  A partir de un pedido (`IdPedido` + `Resto`) retorna los datos de autorización y pago del pedido.
+  Programa servidor: `pedresumen.p` · Procedimiento: `getAutorizacion`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedido/Autorizacion
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido
+  **`Resto`** · STRING · ❌ — Resto del pedido · Vacío = primero encontrado
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Pedido/Autorizacion?IdUser=olds&IdPedido=0322707&Resto=0
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  El servicio retorna la tabla `ttAutorizacion` (1 registro).
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Autorizacion del pedido 0322707 cargada.",
+    "ttAutorizacion": [
+      {
+        "AutPor": "JLM",
+        "FFinAut": "2026-08-07",
+        "UsrPag": "CAJ01",
+        "PagAnt": false,
+        "Pagado": true,
+        "FecPag": "2026-08-08",
+        "PagInfo": "TRANSFERENCIA REF 8842"
+      }
+    ]
+  }
+  ```
+
+  ### Campos de `ttAutorizacion` (1 registro)
+
+  **`AutPor`** · STRING — Usuario que autorizó el pedido
+  **`FFinAut`** · DATE — Fecha fin de autorización
+  **`UsrPag`** · STRING — Usuario que registró el pago
+  **`PagAnt`** · BOOLEAN — `true` = pago anticipado
+  **`Pagado`** · BOOLEAN — `true` = pedido pagado
+  **`FecPag`** · DATE — Fecha de pago
+  **`PagInfo`** · STRING — Información adicional del pago
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdPedido` vacío | `IdError: true` — `"Se requiere el pedido."` |
+  | `Resto` no numérico | `IdError: true` — `"Numero de resto invalido."` |
+  | Pedido inexistente | `IdError: true` — `"No existe pedido con ese folio."` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Salida de una sola tabla:** `ttAutorizacion` con un registro por pedido.
+  2. **Datos crudos del pedido:** `AutPor` y `UsrPag` son las claves de usuario tal como las guarda el pedido (no el nombre del empleado).
+  3. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

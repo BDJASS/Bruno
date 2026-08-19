@@ -1,0 +1,189 @@
+info:
+  name: Requisiciones
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedido/Requisicion?IdUser=olds&IdPedido=2983121&Resto=0
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdPedido
+      value: "2983121"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Requisiciones de un Pedido
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Requisiciones de un Pedido (Requisicion)**
+  A partir de un pedido (`IdPedido` + `Resto`, ambos obligatorios) retorna las requisiciones de almacén (`ReqAlm`) ligadas a ese pedido, con el estatus derivado de la salida de traspaso.
+  Programa servidor: `requisicion_rest.p` · Procedimiento: `GetRequisiciones` | Consulta independiente (busca directo en `Pedido`, `ReqAlm`, `EstPedido`, `sTrasp`, `Almacen`).
+
+  > Versión optimizada de `requisicion.p` (sis6, 2021): sin consulta dinámica ni `MESSAGE` de depuración, consulta estática por pedido + resto, temp-table limpio (se quitaron `CodError`/`Mensaje`, se pobló `IdCliente`) y cálculo de "CANCELADA" corregido. Adaptada a la convención `RestADOSAVentas`: `IdUser` obligatorio y salida `IdError`/`Respuesta`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedido/Requisicion
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido
+  **`Resto`** · STRING · ✅ — Resto del pedido (puede ser `0`; obligatorio que venga)
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Pedido/Requisicion?IdUser=olds&IdPedido=0322707&Resto=0
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Requisiciones del pedido 0322707 cargadas.",
+    "ttRequisicion": [
+      {
+        "IdReq": "0459812",
+        "FecReg": "2026-08-07",
+        "IdDest": "03A",
+        "Destino": "CEDIS GUADALUPE",
+        "IdSol": 267,
+        "Estatus": "MERCANCIA RECIBIDA",
+        "Origen": "AUT"
+      }
+    ]
+  }
+  ```
+
+  ### Campos de `ttRequisicion` (1 registro por requisición)
+
+  **`IdReq`** · STRING — Folio de la requisición (`ReqAlm.Id-Req`)
+  **`FecReg`** · DATE — Fecha de registro de la requisición
+  **`IdDest`** · STRING — Clave del almacén destino (`ReqAlm.Id-Dest`)
+  **`Destino`** · STRING — Referencia/nombre del almacén destino (`Almacen.Refer`); vacío si no se localizó
+  **`IdSol`** · INT — Clave del solicitante/vendedor (`ReqAlm.Id-Sol`)
+  **`Estatus`** · STRING — Estatus legible (ver sección 13)
+  **`Origen`** · STRING — `"AUT"` si la requisición es automática (`ReqAlm.Coment` inicia con `REQ AUTOMATICA`); vacío en otro caso
+
+  ### Response sin resultados
+
+  Si el pedido existe pero no tiene requisiciones, `ttRequisicion` regresa vacío (sin error):
+
+  ```json
+  { "IdError": false, "Respuesta": "Requisiciones del pedido 0322707 cargadas.", "ttRequisicion": [] }
+  ```
+
+  ### Response de error controlado
+
+  ```json
+  { "IdError": true, "Respuesta": "Se requiere el resto.", "ttRequisicion": [] }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdPedido` vacío | `IdError: true` — `"Se requiere el pedido."` |
+  | `IdPedido` no numérico o `<= 0` | `IdError: true` — `"Numero de pedido invalido."` |
+  | `Resto` vacío | `IdError: true` — `"Se requiere el resto."` |
+  | `Resto` no numérico | `IdError: true` — `"Numero de resto invalido."` |
+  | Pedido inexistente | `IdError: true` — `"No existe pedido con ese folio."` |
+  | Pedido sin requisiciones | `IdError: false` · `ttRequisicion` vacío |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Consulta estática:** `FOR EACH Pedido ... , EACH ReqAlm ...` fijo por `IdPedido` + `Resto`, ordenado `BY ReqAlm.FecReg DESCENDING BY ReqAlm.Id-Req`.
+  2. **Derivación del `Estatus`** (a partir de `EstPedido` por `Id-Pedido = ReqAlm.Id-Req` y `Id-Seq = ReqAlm.Resto`):
+     - `EstPedido.Estatus < 5` → `"EN PROCESO"`
+     - `= 5` → `"SALIDA X TRASPASO"`
+     - `= 7` → `"MERCANCIA RECIBIDA"`
+     - Si no hay `EstPedido` y `ReqAlm.Cancelado` → `"CANCELADA"`
+  3. **CANCELADA por salida de traspaso:** cuando `EstPedido.Estatus = 7` y hay factura, se revisa el detalle (`sTrasp` / `DetSTrasp`). Si **todos** los renglones están cancelados (`CantReq - CancUMI = 0`) el estatus pasa a `"CANCELADA"`. Se usan contadores locales `iTotReng`/`iCancReng` por requisición (solo aplica si `iTotReng > 0`), corrigiendo el `ACCUM COUNT` global del programa original.
+  4. **`Origen`:** `"AUT"` cuando `SUBSTRING(ReqAlm.Coment,1,14) = "REQ AUTOMATICA"`.
+  5. **Existencia del pedido:** se valida con `CAN-FIND` antes de recorrer; si no existe se responde con error controlado.
+  6. **Convención de salida:** `IdError` (LOGICAL) + `Respuesta` (CHARACTER) + `ttRequisicion`, mensajes amigables sin verbos HTTP (estándar `RestADOSAVentas`).
+  7. **Auditoría:** se registra la consulta con `programas/auditoria.p` (no crítica).
+  8. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

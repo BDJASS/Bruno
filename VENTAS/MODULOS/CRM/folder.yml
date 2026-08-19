@@ -1,0 +1,7 @@
+info:
+  name: CRM
+  type: folder
+  seq: 16
+
+request:
+  auth: inherit

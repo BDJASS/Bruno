@@ -1,0 +1,202 @@
+info:
+  name: Shipping List
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedido/ShippingList?IdUser=olds&IdPedido=2974643&Resto=0
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdPedido
+      value: "2974643"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Shipping List de un Pedido
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Shipping List de un Pedido (ShippingList)**
+  A partir de un pedido (`IdPedido` + `Resto`) retorna el contenido de los bultos/cajas del pedido (artículo, color, presentación, cantidad y scanner). Opcionalmente filtra por un bulto.
+  Programa servidor: `shippinglist_rest.p` · Procedimiento: `leeShippinglist` | Consulta independiente (busca directo en `Pedido`, `Cajas`, `Articulo`, `ArtPres`, `Kolor`, `Vendedor`, `Empleado`).
+
+  > Adaptación de `shippinglist.p` a la convención `RestADOSAVentas`: `IdUser` obligatorio, salida `IdError`/`Respuesta`, sin `MESSAGE` de depuración, `FIND FIRST Pedido` (clave única) y vendedor resuelto una sola vez.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedido/ShippingList
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido
+  **`Resto`** · STRING · ✅ — Resto del pedido (puede ser `0`; obligatorio que venga)
+  **`IdBulto`** · STRING · ❌ — Bulto/caja a filtrar · Vacío o `0` = todos los bultos
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Pedido/ShippingList?IdUser=olds&IdPedido=0322707&Resto=0
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Shipping list del pedido 0322707 cargado.",
+    "ttShippingList": [
+      {
+        "IdPedido": "0322707",
+        "Resto": 0,
+        "FecPed": "2026-08-07",
+        "EstatusPed": "",
+        "IdVendedor": "JLM",
+        "VendNombre": "JUAN LOPEZ MARTINEZ",
+        "IdCliente": 55921,
+        "RazonSocial": "DISTRIBUIDORA DEL VALLE SA DE CV",
+        "NoBulto": 1,
+        "ArtDescr": "PAPEL BOND CARTA 75GR",
+        "ArtCodigo": "ART001",
+        "ArtColor": "BLANCO",
+        "ArtCantCajas": 3,
+        "ArtPresDescr": "CAJA",
+        "Scanner": "S",
+        "DescBulto": ""
+      }
+    ],
+    "CuantosBultos": "4"
+  }
+  ```
+
+  ### Campos de `ttShippingList` (1 registro por artículo dentro de un bulto)
+
+  **`IdPedido`** · STRING — Folio del pedido
+  **`Resto`** · INT — Resto del pedido
+  **`FecPed`** · DATE — Fecha del pedido (`Pedido.FecReg`)
+  **`EstatusPed`** · STRING — Estatus del pedido (reservado; actualmente vacío)
+  **`IdVendedor`** · STRING — Clave del vendedor
+  **`VendNombre`** · STRING — Nombre del empleado vendedor
+  **`IdCliente`** · INT — Clave del cliente
+  **`RazonSocial`** · STRING — Razón social del pedido
+  **`NoBulto`** · INT — Número de bulto/caja (`Cajas.Id-Caja`)
+  **`ArtDescr`** · STRING — Descripción del artículo
+  **`ArtCodigo`** · STRING — Clave del artículo
+  **`ArtColor`** · STRING — Descripción del color (`Kolor`)
+  **`ArtCantCajas`** · INT — Cantidad en la caja (`Cajas.Cant`)
+  **`ArtPresDescr`** · STRING — Descripción de la presentación (`ArtPres`)
+  **`Scanner`** · STRING — `"S"` si la caja fue escaneada; vacío en otro caso
+  **`DescBulto`** · STRING — Descripción del bulto (reservado)
+
+  ### Parámetro de salida adicional
+
+  **`CuantosBultos`** · STRING — Número del último bulto del pedido (total de bultos); `"0"` si no hay cajas.
+
+  ### Response de error controlado
+
+  ```json
+  { "IdError": true, "Respuesta": "Se requiere el resto.", "ttShippingList": [], "CuantosBultos": "0" }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdPedido` vacío | `IdError: true` — `"Se requiere el pedido."` |
+  | `IdPedido` no numérico o `<= 0` | `IdError: true` — `"Numero de pedido invalido."` |
+  | `Resto` vacío | `IdError: true` — `"Se requiere el resto."` |
+  | `Resto` no numérico | `IdError: true` — `"Numero de resto invalido."` |
+  | `IdBulto` no numérico | `IdError: true` — `"Numero de bulto invalido."` |
+  | Pedido inexistente | `IdError: true` — `"No existe pedido con ese folio."` |
+  | Pedido/bulto sin cajas | `IdError: false` · `ttShippingList` vacío |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Filtro de bulto opcional inline:** un solo `FOR EACH Cajas ... AND (iNumBulto = 0 OR Cajas.Id-Caja = iNumBulto)`, en vez de dos ciclos separados. `IdBulto` vacío o `0` trae todos los bultos.
+  2. **Vendedor una sola vez:** `Vendedor`/`Empleado` se resuelven antes del ciclo (no dependen de la caja).
+  3. **`FIND FIRST Pedido`** por clave única (`Id-Pedido` + `Resto`) en lugar del `FOR EACH Pedido` del original.
+  4. **Orden:** por bulto, descripción de artículo, color y equivalencia de presentación.
+  5. **`CuantosBultos`:** se obtiene del último `Cajas.Id-Caja` del pedido.
+  6. **Convención de salida:** `IdError` + `Respuesta` + `ttShippingList` + `CuantosBultos`, mensajes amigables sin verbos HTTP.
+  7. **Auditoría:** se registra con `programas/auditoria.p` (no crítica).
+  8. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

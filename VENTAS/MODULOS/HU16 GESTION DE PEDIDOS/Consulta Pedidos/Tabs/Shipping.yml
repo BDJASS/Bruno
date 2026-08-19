@@ -1,0 +1,210 @@
+info:
+  name: Shipping
+  type: http
+  seq: 5
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedido/Shipping?IdUser=olds&IdPedido=0322707&Resto=0
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdPedido
+      value: "0322707"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Shipping de Pedido
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Shipping de Pedido (Shipping)**
+  A partir de un pedido (`IdPedido` + `Resto`) retorna, en un solo dataset, tres tablas: datos generales del pedido, dirección de facturación (fiscal) y dirección de embarque.
+  Programa servidor: `pedresumen.p` · Procedimiento: `getShipping`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedido/Shipping
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido
+  **`Resto`** · STRING · ❌ — Resto del pedido · Vacío = primero encontrado
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Pedido/Shipping?IdUser=olds&IdPedido=0322707&Resto=0
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Datos de envio del pedido 0322707 cargados.",
+    "dsPedShipping": {
+      "ttDatosPedido": [
+        {
+          "IdPedido": "0322707",
+          "Estatus": "EMBARCADO",
+          "FecReg": "2026-08-07",
+          "IdCliente": 55921,
+          "RazonSocial": "DISTRIBUIDORA DEL VALLE SA DE CV",
+          "IdVendedor": "JLM",
+          "VendNombre": "JUAN LOPEZ MARTINEZ",
+          "FleteYes": true
+        }
+      ],
+      "ttDirFacturacion": [
+        {
+          "Folio": "",
+          "CalleNo": "AV. CONSTITUCION 123",
+          "Colonia": "CENTRO",
+          "Ciudad": "MONTERREY",
+          "Estado": "NUEVO LEON",
+          "delegacion1": "",
+          "BuzonFiscal": "facturas@dvalle.com"
+        }
+      ],
+      "ttDirEmbarque": [
+        {
+          "CalleNo1": "AV BENITO JUAREZ 12001 INT. 12001",
+          "Colonia1": "SANTA CRUZ",
+          "Ciudad1": "GUADALUPE",
+          "Estado1": "NUEVO LEON",
+          "CP1": "67196",
+          "Pais1": "MEXICO",
+          "Attn": "ALMACEN"
+        }
+      ]
+    }
+  }
+  ```
+
+  ### Campos de `ttDatosPedido` (1 registro — datos generales)
+
+  **`IdPedido`** · STRING — Folio del pedido
+  **`Estatus`** · STRING — Descripción del estatus (`EstVta.Descr`)
+  **`FecReg`** · DATE — Fecha de registro
+  **`IdCliente`** · INT — Clave del cliente
+  **`RazonSocial`** · STRING — Razón social del pedido
+  **`IdVendedor`** · STRING — Clave del vendedor
+  **`VendNombre`** · STRING — Nombre del empleado vendedor; vacío si no se localizó
+  **`FleteYes`** · BOOLEAN — `true` = el pedido lleva flete (`EstPedido.FleteYes`)
+
+  ### Campos de `ttDirFacturacion` (1 registro — dirección fiscal)
+
+  **`Folio`** · STRING — *Pendiente: origen por definir* (por ahora vacío)
+  **`CalleNo`** · STRING — Calle y número fiscal
+  **`Colonia`** · STRING — Colonia fiscal
+  **`Ciudad`** · STRING — Ciudad fiscal (`Ciudad.Nombre` vía `Pedido.Id-Ciudad`)
+  **`Estado`** · STRING — Estado fiscal (`Estado.Nombre`)
+  **`delegacion1`** · STRING — Delegación
+  **`BuzonFiscal`** · STRING — Buzón fiscal (correo para facturas)
+
+  ### Campos de `ttDirEmbarque` (1 registro — dirección de embarque)
+
+  **`CalleNo1`** · STRING — Calle y número de embarque
+  **`Colonia1`** · STRING — Colonia de embarque
+  **`Ciudad1`** · STRING — Ciudad de embarque
+  **`Estado1`** · STRING — Estado de embarque
+  **`CP1`** · STRING — Código postal de embarque
+  **`Pais1`** · STRING — País de embarque
+  **`Attn`** · STRING — Atención (contacto de embarque)
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdPedido` vacío | `IdError: true` — `"Se requiere el pedido."` |
+  | `Resto` no numérico | `IdError: true` — `"Numero de resto invalido."` |
+  | Pedido inexistente | `IdError: true` — `"No existe pedido con ese folio."` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Dataset de 3 tablas independientes:** `ttDatosPedido`, `ttDirFacturacion`, `ttDirEmbarque`.
+  2. **`Folio` (pendiente):** la columna existe en `ttDirFacturacion` pero su origen aún no está definido; se retorna vacío hasta acordar de dónde se toma.
+  3. **`Ciudad`/`Estado` fiscales:** se resuelven por lookup `Pedido.Id-Ciudad` → `Ciudad.Nombre` → `Estado.Nombre`.
+  4. **`Estatus`:** descripción base del catálogo `EstVta`. Si se requiere la clasificación calculada (Mcia-Pdte, P/Facturar, Emb-Foraneo, etc.) que usa `pedido2.p`, debe solicitarse el cambio.
+  5. **`FleteYes`:** se obtiene del `EstPedido` ligado por `Id-Factura`.
+  6. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

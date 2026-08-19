@@ -1,7 +1,7 @@
 info:
-  name: Alta Pedido
+  name: Alta Pedido copy
   type: http
-  seq: 3
+  seq: 4
 
 http:
   method: POST
@@ -13,9 +13,44 @@ http:
         "dsPedAlta": {
           "ttEncPed": [
             {
-              "IdCliente": 575, "Iniciales": "OLDS", "TipoPrecio": "M",
-              "IdMoneda": 1, "IdCond": 0, "Enviar": false, "BckOrd": 1,
-              "IdRemision": "N", "ReqCte": "OC-8891", "Attn": "COMPRAS"
+              "IdVendedor":"4791",
+               "Vigentes":true,
+              "IdCliente": 575, 
+              "CP1":25760,
+              "Attn":"ARTURO VALDEZ PEREZZ",
+              "IdCond": 2, 
+              "ReqCte": "",
+              "PagAnt":false,
+              "Enviar":true,
+              "Seguro":true,
+              "Sust":false,
+              "BckOrd":1,
+              "TipoPrecio": "M",
+               "IdMoneda": 1,
+               "IdEntrega":18,
+               "IdTran":1,
+               "Plazo":45,
+               "FEFormaPago":"99",
+               "FEDigitosCuenta":"",
+               "IdUsoCFDI":"G01",
+               "IdRFiscal":"612",
+               "Email":"desarrollo10@adosa.com.mx",
+               
+              // Cuando se quiere modificar datos del Cliente
+              // tab Pedido/Embarque, si no se captura
+              // Se toma lo que ya tiene el cliente en la BD solo con Id
+              
+            //  "RazonSocial":" ",
+            //  "CalleNo1":"",
+            //  "Colonia1":"",
+            //  "IdCiudad1":"",
+            //  "Delegacion1":"",
+            //  "Ciudad1":"",
+            //  "Estado1":"",
+              
+              "Iniciales": "OLDS", 
+         
+              "IdRemision": "N"
             }
           ],
           "ttPartPed": [

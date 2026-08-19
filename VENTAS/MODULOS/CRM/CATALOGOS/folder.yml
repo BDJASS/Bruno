@@ -1,0 +1,7 @@
+info:
+  name: CATALOGOS
+  type: folder
+  seq: 1
+
+request:
+  auth: inherit
