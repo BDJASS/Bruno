@@ -5,13 +5,13 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Detalle?IdUser=jjlg&Folio=LD-2026-0007
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Detalle?IdUser=jjlg&Folio=LD-2026-0001
   params:
     - name: IdUser
       value: jjlg
       type: query
     - name: Folio
-      value: LD-2026-0007
+      value: LD-2026-0001
       type: query
   auth: inherit
 
@@ -30,8 +30,10 @@ docs: |
   ## 1. Título del Servicio
 
   **Detalle del Lead (HU-07)**
-  Devuelve el encabezado del lead más su **timeline** de actividades (llamadas/correos) ordenado del más reciente al más antiguo. Alimenta el modal Ver/Editar Lead.
+  Devuelve el encabezado del lead. Alimenta el modal Ver/Editar Lead.
   Programa servidor: `lead.p` · Procedimiento: `leeLead`.
+
+  > **Nota:** el **timeline de actividades** (`LeadActividad`) se **omite por ahora** — la tabla no se dio de alta; se definirá cómo se alimentará (probablemente desde InConcert). Su `.txt` queda en `Docs/tablas-HU12/`.
 
   ---
 
@@ -97,10 +99,6 @@ docs: |
           "IdVendedor": "5197", "Vendedor": "JULIA LUCIO GARCIA",
           "FecAlta": "2026-08-20", "FecUltAct": "2026-08-21", "DiasSinSeg": 2,
           "Semaforo": "En Gestion", "Estatus": 2, "EstatusDescr": "En Proceso", "IdCliente": 0 }
-      ],
-      "ttTimeline": [
-        { "Id": 5, "Tipo": "CORREO", "FecHora": "2026-08-21T10:15:00", "Fecha": "2026-08-21", "Detalle": "Envio de cotizacion inicial", "Origen": "MANUAL" },
-        { "Id": 4, "Tipo": "LLAMADA", "FecHora": "2026-08-20T16:40:00", "Fecha": "2026-08-20", "Detalle": "Primer contacto", "Origen": "MANUAL" }
       ]
     }
   }
@@ -111,12 +109,8 @@ docs: |
   ## 9. Campos de la Respuesta
 
   **`ttLeadDet`** — mismos campos del grid (ver Consulta).
-  - **`ttTimeline`** — actividades: **`Id`** · INTEGER
-  - **`Tipo`** · CHARACTER (`LLAMADA`/`CORREO`)
-  - **`FecHora`** · DATETIME
-  - **`Fecha`** · DATE
-  - **`Detalle`** · CHARACTER
-  - **`Origen`** · CHARACTER (`INCONCERT`/`MANUAL`).
+
+  > El `dsLeadDet` por ahora solo trae `ttLeadDet` (encabezado). El timeline de actividades queda pendiente (ver nota en §1).
 
   ---
 
@@ -124,7 +118,6 @@ docs: |
 
   - `IdUser` y `Folio` obligatorios.
   - Si el folio no existe → `IdError=true` con mensaje amigable.
-  - El timeline se ordena por `FecHora` descendente.
 
   ---
   **Desarrollado por:** SIS10 - JASS

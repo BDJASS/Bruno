@@ -1,0 +1,112 @@
+info:
+  name: Motivo de Cierre
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/MotivoCierre?IdUser=jjlg
+  params:
+    - name: IdUser
+      value: jjlg
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Catálogo Motivo de Cierre del Lead
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Catálogo Motivo de Cierre del Lead (HU-07)**
+  Devuelve el catálogo **Motivo de Cierre** (solo activos) para el modal **Cerrar Lead** (`/Lead/Cierra`, parámetro `IdMotivoCierre`).
+  Programa servidor: `lead.p` · Procedimiento: `leeMotivoCierre`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/MotivoCierre
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  - **`IdUser`** · STRING · ✅ — Usuario que ejecuta. Vacío/nulo → `IdError=true` con "Se requiere el usuario (IdUser).".
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/MotivoCierre?IdUser=jjlg
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Motivos de cierre encontrados: 6.",
+    "ttCatCierre": [
+      { "Id": 1, "Nombre": "Precio" },
+      { "Id": 6, "Nombre": "Otro" }
+    ]
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta (ttCatCierre)
+
+  - **`Id`** · INTEGER — Clave del motivo (`MotivoCierreLead.Id-MotCierreLead`). Es el valor que viaja como `IdMotivoCierre` en `/Lead/Cierra`.
+  - **`Nombre`** · CHARACTER — Texto del motivo para el combo.
+
+  Campos de salida generales — **`IdError`** · BOOLEAN · **`Respuesta`** · CHARACTER.
+
+  ---
+
+  ## 10. Notas
+
+  - Solo devuelve registros con `MotivoCierreLead.Activo = TRUE`, ordenados por Id.
+  - Se puebla vía `inccargacatalogos2.p`. Valores base: Precio · Competencia · Tiempos de Entrega · No Interesado · Ya tiene un proveedor · Otro.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

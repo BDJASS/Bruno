@@ -5,13 +5,13 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Detalle?IdUser=jjlg&Folio=INC-2026-0034
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Detalle?IdUser=jjlg&Folio=INC-2026-0036
   params:
     - name: IdUser
       value: jjlg
       type: query
     - name: Folio
-      value: INC-2026-0034
+      value: INC-2026-0036
       type: query
   auth: inherit
 
