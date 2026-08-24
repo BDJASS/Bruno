@@ -1,0 +1,132 @@
+info:
+  name: Alta
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Problema/Alta
+  body:
+    type: json
+    data: |
+      {
+        "dsProbAlta": {
+          "ttEncProb": [ { "Nombre": "Material Ejemplo Danado", "IdUser": "olds" } ],
+          "ttSolSel":  [ { "IdSolucion": 17 }, { "IdSolucion": 20 } ],
+          "ttCauSel":  [ { "IdCausaRaiz": 16 }, { "IdCausaRaiz": 18 } ]
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Alta de Categoría de Problema
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Alta de Categoría de Problema + vínculos (HU-01, 1.0)**
+  Crea una categoría de problema junto con sus vínculos iniciales. Regla clave HU-01: **debe traer al menos 1 solución y al menos 1 causa raíz**.
+  Programa: `catproblema.p` · Procedimiento: `creaProblema`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Problema/Alta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada
+
+  Van en el **Body** como dataset `dsProbAlta`. Ver secciones 5 y 9.
+
+  ---
+
+  ## 5. Body (dataset `dsProbAlta`)
+
+  ```json
+  {
+    "dsProbAlta": {
+      "ttEncProb": [ { "Nombre": "Material Danado", "IdUser": "olds" } ],
+      "ttSolSel":  [ { "IdSolucion": 17 }, { "IdSolucion": 20 } ],
+      "ttCauSel":  [ { "IdCausaRaiz": 16 }, { "IdCausaRaiz": 18 } ]
+    }
+  }
+  ```
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json`                     |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST /Catalogo/Problema/Alta
+  ```
+  Body: ver sección 5.
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Registro guardado correctamente.",
+    "NuevoId": 24
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **Body (`dsProbAlta`)**
+  **`ttEncProb`** (1 fila) — **`Nombre`** · CHARACTER · ✅ (categoría, sin duplicar) · **`IdUser`** · CHARACTER · ✅.
+  **`ttSolSel`** (≥1) — **`IdSolucion`** · INTEGER · ✅ (debe existir en Solución).
+  **`ttCauSel`** (≥1) — **`IdCausaRaiz`** · INTEGER · ✅ (debe existir en CausaRaiz).
+
+  **Salida**
+  **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error; `false` si la operación fue correcta.
+  **`Respuesta`** · CHARACTER — Mensaje amigable de resultado (no expone verbos HTTP ni errores técnicos).
+  **`NuevoId`** · INTEGER — Id de la categoría creada.
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - **`IdUser` es obligatorio** en todos los endpoints; si viene vacío o nulo → `IdError = true` con `"Se requiere el usuario (IdUser)."`. (dentro de `ttEncProb`).
+  - `Nombre` obligatorio (`"La categoria no puede estar vacia."`), sin duplicar.
+  - **Debe traer ≥1 solución** (`"La categoria debe tener por lo menos 1 solucion asociada."`) **y ≥1 causa raíz**.
+  - Cada `IdSolucion` / `IdCausaRaiz` debe existir en su catálogo maestro; si no → error.
+  - Se crean la categoría y las filas puente `ProblemaSolucion` / `ProblemaCausa`.
+  - Toda Alta / Actualización / Baja registra auditoría (`programas/auditoria.p`, app `oeVentas`).
+  - Ante cualquier fallo la respuesta es amigable y `IdError = true`; nunca se realiza la operación a medias (transacción con `UNDO`).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

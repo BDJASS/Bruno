@@ -1,0 +1,115 @@
+info:
+  name: Elimina
+  type: http
+  seq: 4
+
+http:
+  method: DELETE
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Actividad/Elimina?Id=7&IdUser=olds
+  params:
+    - name: Id
+      value: "7"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Baja de Actividad
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Eliminación (física) del Catálogo de Actividades (HU-01, 5.0)**
+  Elimina **físicamente** la actividad **y quita sus vinculaciones** (`SolucionActividad`), **solo si NO llega a ninguna incidencia**. Estar ligada a soluciones/problemas no bloquea; solo bloquea si esa cadena (o el checklist `SegIncidencia`) alcanza una incidencia real.
+  Programa: `catactividad.p` · Procedimiento: `eliminaActividad`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  DELETE
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Actividad/Elimina
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`Id`** · INTEGER · ✅ — Id de la actividad.
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la baja.
+
+  ---
+
+  ## 5. Body
+
+  No aplica — los parámetros viajan en el **Query String** (ver secciones 4 y 7).
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json`                     |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  DELETE http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Actividad/Elimina?Id=7&IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Registro eliminado: 7 - Verificacion final (incluyendo sus vinculaciones)."
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error; `false` si la operación fue correcta.
+  **`Respuesta`** · CHARACTER — Mensaje amigable de resultado (no expone verbos HTTP ni errores técnicos).
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - **`IdUser` es obligatorio** en todos los endpoints; si viene vacío o nulo → `IdError = true` con `"Se requiere el usuario (IdUser)."`.
+  - `Id` debe existir.
+  - **Bloqueo (avisa y NO elimina):** solo si la actividad **llega a una incidencia** — directo por el checklist (`SegIncidencia`) o por cadena `SolucionActividad → ProblemaSolucion → Problema → DetIncidencia` → `"No se puede eliminar: la actividad esta ligada a una o mas incidencias."`. Estar solo en soluciones/problemas SIN incidencia **no** bloquea.
+  - Si no llega a incidencia: **eliminación FÍSICA** (`DELETE`) de la actividad **+ borrado de sus vínculos** `SolucionActividad`.
+  - Mensaje de éxito: `"Registro eliminado: <Id> - <Nombre> (incluyendo sus vinculaciones)."`.
+  - Toda Alta / Actualización / Baja registra auditoría (`programas/auditoria.p`, app `oeVentas`).
+  - Ante cualquier fallo la respuesta es amigable y `IdError = true`; nunca se realiza la operación a medias (transacción con `UNDO`).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

@@ -1,0 +1,7 @@
+info:
+  name: Catalogo Motivo de Desactivación de NR (No Molestar)
+  type: folder
+  seq: 3
+
+request:
+  auth: inherit

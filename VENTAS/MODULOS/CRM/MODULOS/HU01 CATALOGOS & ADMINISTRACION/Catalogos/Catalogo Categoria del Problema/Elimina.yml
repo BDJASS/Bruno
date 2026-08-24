@@ -1,0 +1,116 @@
+info:
+  name: Elimina
+  type: http
+  seq: 4
+
+http:
+  method: DELETE
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Problema/Elimina?Id=24&IdUser=jjlg
+  params:
+    - name: Id
+      value: "24"
+      type: query
+    - name: IdUser
+      value: jjlg
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Eliminación de Categoría de Problema
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Eliminación (física) de Categoría de Problema (HU-01, 1.0)**
+  Elimina **físicamente** la categoría **solo si NO está usada en ninguna incidencia**. Al eliminarla, también se borran sus vinculaciones (`ProblemaSolucion` / `ProblemaCausa`); los maestros Solución/Causa permanecen. Si la categoría **ya está usada en una incidencia**, se avisa y **no se elimina** (ni física ni lógicamente).
+  Programa: `catproblema.p` · Procedimiento: `eliminaProblema`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  DELETE
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Problema/Elimina
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`Id`** · INTEGER · ✅ — Id de la categoría.
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la eliminación.
+
+  ---
+
+  ## 5. Body
+
+  No aplica — los parámetros viajan en el **Query String** (ver secciones 4 y 7).
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json`                     |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  DELETE http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Problema/Elimina?Id=24&IdUser=jjlg
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Problema eliminado: 24 - Material Danado (incluyendo sus vinculaciones)."
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error; `false` si la operación fue correcta.
+  **`Respuesta`** · CHARACTER — Mensaje amigable de resultado (no expone verbos HTTP ni errores técnicos).
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - **`IdUser` es obligatorio** en todos los endpoints; si viene vacío o nulo → `IdError = true` con `"Se requiere el usuario (IdUser)."`.
+  - `Id` debe existir.
+  - **Bloqueo (avisa y NO elimina):** si la categoría está usada en incidencias (`DetIncidencia`) → `"No se puede eliminar: el problema esta siendo utilizado en una o mas incidencias."`. No se hace ni eliminación física ni baja lógica.
+  - Si **no** está en incidencias: **eliminación FÍSICA** (`DELETE`) de la categoría **+ borrado de sus vinculaciones** `ProblemaSolucion` y `ProblemaCausa` (los maestros Solución/Causa permanecen).
+  - El borrado de vínculos usa buffers con `NO-WAIT` para no bloquear las tablas.
+  - Mensaje de éxito: `"Problema eliminado: <Id> - <Nombre> (incluyendo sus vinculaciones)."`.
+  - Toda Alta / Actualización / Baja registra auditoría (`programas/auditoria.p`, app `oeVentas`).
+  - Ante cualquier fallo la respuesta es amigable y `IdError = true`; nunca se realiza la operación a medias (transacción con `UNDO`).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

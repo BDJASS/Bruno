@@ -1,0 +1,144 @@
+info:
+  name: Alta
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Solucion/Alta
+  body:
+    type: json
+    data: |
+      {
+        "dsSolAlta": {
+          "ttEncSol": [
+            { "Nombre": "Reposicion de Material CON Recoleccion", "IdUser": "olds", "Flete": true, "Merma": true }
+          ],
+          "ttCampoSel": [
+            { "IdCampo": 1 },
+            { "IdCampo": 2 }
+          ],
+          "ttActSel": [
+            { "IdActividad": 1 },
+            { "IdActividad": 6 }
+          ]
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Alta de Solución
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Alta del Catálogo Maestro de Soluciones (HU-01, 2.0)**
+  Crea una solución maestra **junto con sus campos y actividades** en un solo POST (igual que el alta de Categoría de Problema). Recibe un **dataset** con el encabezado (Nombre, IdUser, Flete, Merma) y las listas de campos y actividades. Reglas: `Flete` y `Merma` son **lógicos obligatorios** (`true`/`false`), y debe traer **al menos 1 campo** y **al menos 1 actividad**.
+  Programa: `catsolucion.p` · Procedimiento: `creaSolucion`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Solucion/Alta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada
+
+  Van en el **Body** como dataset `dsSolAlta`. Ver secciones 5 y 8.
+
+  ---
+
+  ## 5. Body (dataset `dsSolAlta`)
+
+  ```json
+  {
+    "dsSolAlta": {
+      "ttEncSol": [
+        { "Nombre": "Reposicion de Material CON Recoleccion", "IdUser": "olds", "Flete": true, "Merma": true }
+      ],
+      "ttCampoSel": [
+        { "IdCampo": 1 },
+        { "IdCampo": 2 }
+      ],
+      "ttActSel": [
+        { "IdActividad": 1 },
+        { "IdActividad": 6 }
+      ]
+    }
+  }
+  ```
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                |
+  |----------------|----------------------|
+  | `Accept`       | `application/json`   |
+  | `Content-Type` | `application/json`   |
+
+  ---
+
+  ## 7. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Solucion creada: 40 - Reposicion de Material CON Recoleccion.",
+    "NuevoId": 40
+  }
+  ```
+
+  ---
+
+  ## 8. Campos del Body
+
+  **Encabezado (`ttEncSol`)** · 1 fila
+  **`Nombre`** · STRING · ✅ — Nombre de la solución. Sin duplicar.
+  **`IdUser`** · STRING · ✅ — Usuario que da de alta.
+  **`Flete`** · BOOLEAN · ✅ — `true`/`false`. **No nulo** (obligatorio).
+  **`Merma`** · BOOLEAN · ✅ — `true`/`false`. **No nulo** (obligatorio).
+
+  **Campos habilitados (`ttCampoSel`)** · ≥ 1
+  **`IdCampo`** · INTEGER · ✅ — Debe existir en el catálogo `Campo`.
+
+  **Actividades (`ttActSel`)** · ≥ 1
+  **`IdActividad`** · INTEGER · ✅ — Debe existir en el catálogo `Actividad`.
+
+  **Salida**
+  **`IdError`** · BOOLEAN · **`Respuesta`** · CHARACTER · **`NuevoId`** · INTEGER — Id de la solución creada.
+
+  ---
+
+  ## 9. Reglas y Validaciones
+
+  - **`IdUser` obligatorio** (`"Se requiere el usuario (IdUser)."`).
+  - `Nombre` obligatorio y sin duplicar (`"Existe un registro con la misma descripcion."`).
+  - **`Flete` y `Merma` obligatorios y no nulos** → si faltan: `"El campo Flete es obligatorio (true/false)."` / `"El campo Merma es obligatorio (true/false)."`.
+  - **Debe traer ≥1 campo** (`"La solucion debe tener por lo menos 1 campo."`) **y ≥1 actividad** (`"La solucion debe tener por lo menos 1 actividad."`).
+  - Cada `IdCampo` / `IdActividad` debe existir en su catálogo; si no → error.
+  - Se crea la `Solucion` (Activo = true) + los vínculos `SolucionCampo` y `SolucionActividad`.
+  - Registra auditoría (`programas/auditoria.p`, app `oeVentas`).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

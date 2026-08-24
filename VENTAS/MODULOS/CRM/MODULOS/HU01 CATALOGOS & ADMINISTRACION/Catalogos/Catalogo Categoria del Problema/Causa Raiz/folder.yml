@@ -1,0 +1,7 @@
+info:
+  name: Causa Raiz
+  type: folder
+  seq: 7
+
+request:
+  auth: inherit

@@ -1,0 +1,115 @@
+info:
+  name: Elimina
+  type: http
+  seq: 4
+
+http:
+  method: DELETE
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Campo/Elimina?Id=5&IdUser=olds
+  params:
+    - name: Id
+      value: "5"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Baja de Campo del Ticket
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Eliminación (física) del Catálogo de Campos del ticket (HU-01, 4.0)**
+  Elimina **físicamente** el campo **y quita sus vinculaciones** (`SolucionCampo`), **solo si NO llega a ninguna incidencia**. Estar habilitado en soluciones no bloquea; solo bloquea si la cadena (o respuestas `DetIncidenciaCampo`) alcanza una incidencia real.
+  Programa: `catcampo.p` · Procedimiento: `eliminaCampo`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  DELETE
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Campo/Elimina
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`Id`** · INTEGER · ✅ — Id del campo.
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la baja.
+
+  ---
+
+  ## 5. Body
+
+  No aplica — los parámetros viajan en el **Query String** (ver secciones 4 y 7).
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json`                     |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  DELETE http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Campo/Elimina?Id=5&IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Registro eliminado: 14 - Material Recibido (incluyendo sus vinculaciones)."
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error; `false` si la operación fue correcta.
+  **`Respuesta`** · CHARACTER — Mensaje amigable de resultado (no expone verbos HTTP ni errores técnicos).
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - **`IdUser` es obligatorio** en todos los endpoints; si viene vacío o nulo → `IdError = true` con `"Se requiere el usuario (IdUser)."`.
+  - `Id` debe existir.
+  - **Bloqueo (avisa y NO elimina):** solo si el campo **llega a una incidencia** — directo por respuestas capturadas (`DetIncidenciaCampo`) o por cadena `SolucionCampo → ProblemaSolucion → Problema → DetIncidencia` → `"No se puede eliminar: el campo esta ligado a una o mas incidencias."`. Estar solo habilitado en soluciones SIN incidencia **no** bloquea.
+  - Si no llega a incidencia: **eliminación FÍSICA** (`DELETE`) del campo **+ borrado de sus vínculos** `SolucionCampo`.
+  - Mensaje de éxito: `"Registro eliminado: <Id> - <Nombre> (incluyendo sus vinculaciones)."`.
+  - Toda Alta / Actualización / Baja registra auditoría (`programas/auditoria.p`, app `oeVentas`).
+  - Ante cualquier fallo la respuesta es amigable y `IdError = true`; nunca se realiza la operación a medias (transacción con `UNDO`).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

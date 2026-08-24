@@ -1,0 +1,118 @@
+info:
+  name: Configurar
+  type: http
+  seq: 5
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Solucion/Config?IdSolucion=2&IdUser=olds
+  params:
+    - name: IdSolucion
+      value: "2"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Configuración de una Solución
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Configuración de la Solución (campos + actividades) (HU-01, 2.0)**
+  Devuelve, para una solución, los campos de formulario habilitados y las actividades asociadas (solo `Id` + `Nombre`). Los vínculos se definen en el alta de la solución (`/Catalogo/Solucion/Alta`).
+  Programa: `catsolucion.p` · Procedimiento: `leeConfig`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Solucion/Config
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdSolucion`** · INTEGER · ✅ — Id de la solución.
+  **`IdUser`** · STRING · ✅ — Usuario que consulta.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Catalogo/Solucion/Config?IdSolucion=20&IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Consulta ejecutada correctamente.",
+    "dsSolConfig": {
+      "ttSolCampo": [ { "IdCampo": 1, "Nombre": "Cuantos Bultos" }, { "IdCampo": 2, "Nombre": "Que Bulto" } ],
+      "ttSolAct":   [ { "IdActividad": 1, "Nombre": "Surtido" }, { "IdActividad": 6, "Nombre": "Devoluciones" } ]
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **`ttSolCampo`** (campos habilitados) — **`IdCampo`** · INTEGER · **`Nombre`** · CHARACTER.
+  **`ttSolAct`** (actividades) — **`IdActividad`** · INTEGER · **`Nombre`** · CHARACTER.
+
+  **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error; `false` si la operación fue correcta.
+  **`Respuesta`** · CHARACTER — Mensaje amigable de resultado (no expone verbos HTTP ni errores técnicos).
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - **`IdUser` es obligatorio** en todos los endpoints; si viene vacío o nulo → `IdError = true` con `"Se requiere el usuario (IdUser)."`.
+  - `IdSolucion` obligatorio (`"Se requiere la solucion."`).
+  - Ante cualquier fallo la respuesta es amigable y `IdError = true`; nunca se realiza la operación a medias (transacción con `UNDO`).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

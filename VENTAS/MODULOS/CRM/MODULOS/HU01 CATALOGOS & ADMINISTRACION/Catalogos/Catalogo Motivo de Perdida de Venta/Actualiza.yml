@@ -1,0 +1,164 @@
+info:
+  name: Actualiza
+  type: http
+  seq: 3
+
+http:
+  method: PUT
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Simple/Actualiza?IdUser=jjlg&Catalogo=MotivoPerdidaVta&Nombre=Ejemplo Nuevo 2&Id=3&Activo=false
+  params:
+    - name: IdUser
+      value: jjlg
+      type: query
+    - name: Catalogo
+      value: MotivoPerdidaVta
+      type: query
+    - name: Nombre
+      value: Ejemplo Nuevo 2
+      type: query
+    - name: Id
+      value: "3"
+      type: query
+    - name: Activo
+      value: "false"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  # Servicio REST — Consulta de Incidencias (Ventas)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Consulta de Incidencias — Ventas (HU-12-1)**
+  Grid "Mis Tickets" / "Todos los Tickets" del módulo de Incidencias desde el lado de **Ventas**. URL propia, separada de la consulta de CEDIS, aunque ambas lean la misma tabla `Incidencia`. Devuelve el encabezado de cada incidencia más la lista de problemas derivada de `DetIncidencia`. Excluye las incidencias dadas de baja (`Activo = FALSE`).
+  Programa servidor: `incventaslista.p` · Procedimiento: `leeIncidenciasVentas`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Ventas/Consulta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta
+  **`Vista`** · STRING · ❌ — `M` = Mis Tickets (filtra por el vendedor) · `T` = Todos. Default `M`
+  **`IdVendedor`** · STRING · ✅ si `Vista=M` — Vendedor activo; filtra sus tickets
+  **`Busqueda`** · STRING · ❌ — Texto parcial sobre folio, pedido, factura o vendedor (insensible a mayúsculas)
+  **`Estatus`** · STRING · ❌ — `""` = todos · `1` = Abierta · `2` = En Proceso · `3` = Resuelta
+  **`FechaIni`** · STRING · ❌ — Inicio de periodo (DD/MM/AAAA); vacío = inicio del mes
+  **`FechaFin`** · STRING · ❌ — Fin de periodo (DD/MM/AAAA); vacío = hoy
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Incidencia/Ventas/Consulta?IdUser=jjlg&Vista=M&IdVendedor=5197&Estatus=&FechaIni=&FechaFin=
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Incidencias encontradas: 12.",
+    "dsIncVentas": {
+      "ttIncVenta": [
+        {
+          "IdIncidencia": 34,
+          "Folio": "INC-2026-0034",
+          "FecReg": "2026-08-12",
+          "HoraReg": "10:22:41",
+          "IdPedido": "PED-458821",
+          "IdFactura": "FAC-112044",
+          "IdCliente": 55921,
+          "Cliente": "PAPELERA DEL NORTE SA",
+          "IdVendedor": "5197",
+          "Vendedor": "JULIA LUCIO GARCIA",
+          "ProblemaLista": "Material Dañado | Bulto Faltante",
+          "NumProblemas": 2,
+          "Estatus": 2,
+          "EstatusDescr": "En Proceso",
+          "SLAClase": "WARN",
+          "FecHoraReg": "2026-08-12T10:22:41",
+          "FecHoraProceso": "2026-08-13T09:00:00",
+          "FecHoraResol": null,
+          "FecHoraLimiteSLA": null,
+          "CostoTotal": 1450.00,
+          "EnviaCorreoCte": false
+        }
+      ]
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta (ttIncVenta)
+
+  **`IdIncidencia`** · INTEGER — Id interno de la incidencia (llave para el detalle)
+  **`Folio`** · CHARACTER — Folio de negocio `INC-AAAA-NNNN`
+  **`FecReg`** · DATE — Fecha de alta · **`HoraReg`** · CHARACTER — Hora de alta
+  **`IdPedido`** · CHARACTER — Pedido asociado · **`IdFactura`** · CHARACTER — Factura ligada
+  **`IdCliente`** · INTEGER — Cliente · **`Cliente`** · CHARACTER — Razón social (snapshot)
+  **`IdVendedor`** · CHARACTER — Vendedor · **`Vendedor`** · CHARACTER — Nombre del vendedor (snapshot)
+  **`ProblemaLista`** · CHARACTER — Problema(s) del ticket separados por ` | ` (derivado de `DetIncidencia`)
+  **`NumProblemas`** · INTEGER — Cuántos problemas distintos tiene (1 = texto; 2+ = badges en el front)
+  **`Estatus`** · INTEGER — `1` Abierta · `2` En Proceso · `3` Resuelta · **`EstatusDescr`** · CHARACTER — Texto del estatus
+  **`SLAClase`** · CHARACTER — Semáforo materializado `OK` / `WARN` / `CRIT`
+  **`FecHoraReg`** · DATETIME — Timestamp de alta (base del SLA)
+  **`FecHoraProceso`** · DATETIME — Paso a En Proceso · **`FecHoraResol`** · DATETIME — Paso a Resuelta
+  **`FecHoraLimiteSLA`** · DATETIME — Fecha/hora límite del SLA (horas hábiles)
+  **`CostoTotal`** · DECIMAL — Costo total (merma + flete)
+  **`EnviaCorreoCte`** · BOOLEAN — `true` = origina notificación al cliente
+
+  ---
+
+  ## 10. Notas
+
+  - Es la **consulta de Ventas**; el equivalente de CEDIS es `inccedislista.p` (`/Incidencia/Cedis/Consulta`) — misma tabla, URL distinta.
+  - El folio (`Folio`) es el enlace para abrir el detalle vía `/Incidencia/Detalle`.
+  - Mensajes de `Respuesta` amigables; `IdError = true` sólo ante error o validación fallida.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

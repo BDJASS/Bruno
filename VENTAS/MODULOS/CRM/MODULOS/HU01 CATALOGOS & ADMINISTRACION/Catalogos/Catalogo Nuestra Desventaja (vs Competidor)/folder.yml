@@ -1,0 +1,7 @@
+info:
+  name: Catalogo Nuestra Desventaja (vs Competidor)
+  type: folder
+  seq: 6
+
+request:
+  auth: inherit

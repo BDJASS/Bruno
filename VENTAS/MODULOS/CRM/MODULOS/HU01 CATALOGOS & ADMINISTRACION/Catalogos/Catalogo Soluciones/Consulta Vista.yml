@@ -1,0 +1,122 @@
+info:
+  name: Consulta Vista
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Solucion/Consulta?Busqueda=&IdUser=olds
+  params:
+    - name: Busqueda
+      value: ""
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Consulta de Soluciones
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Consulta del Catálogo Maestro de Soluciones (HU-01, 2.0)**
+  Lista las soluciones maestras con sus atributos Flete/Merma/Acción y el conteo de uso (categorías que las usan).
+  Programa: `catsolucion.p` · Procedimiento: `leeSolucion`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Solucion/Consulta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`Busqueda`** · STRING · ❌ — Texto parcial sobre el Nombre. Vacío = todas.
+  **`IdUser`** · STRING · ✅ — Usuario que consulta.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Catalogo/Solucion/Consulta?Busqueda=&IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Consulta ejecutada correctamente.",
+    "ttSolucion": [
+      { "Id": 20, "Nombre": "Reposicion de Material CON Recoleccion", "Flete": true, "Merma": true, "Activo": true, "Uso": 1 }
+    ]
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **`ttSolucion`** — arreglo de soluciones:
+  **`Id`** · INTEGER — Clave (SOL-999).
+  **`Nombre`** · CHARACTER — Nombre de la solución.
+  **`Flete`** · BOOLEAN — Genera flete (atributo del maestro).
+  **`Merma`** · BOOLEAN — Genera merma (atributo del maestro).
+  **`Activo`** · BOOLEAN — Estado.
+  **`Uso`** · INTEGER — Nº de categorías que la usan (`ProblemaSolucion`).
+
+  **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error; `false` si la operación fue correcta.
+  **`Respuesta`** · CHARACTER — Mensaje amigable de resultado (no expone verbos HTTP ni errores técnicos).
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - **`IdUser` es obligatorio** en todos los endpoints; si viene vacío o nulo → `IdError = true` con `"Se requiere el usuario (IdUser)."`.
+  - Ordenada por Nombre.
+  - Ante cualquier fallo la respuesta es amigable y `IdError = true`; nunca se realiza la operación a medias (transacción con `UNDO`).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

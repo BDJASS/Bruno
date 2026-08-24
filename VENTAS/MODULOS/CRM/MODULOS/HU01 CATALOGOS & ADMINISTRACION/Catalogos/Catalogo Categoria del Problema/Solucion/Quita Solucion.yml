@@ -1,0 +1,116 @@
+info:
+  name: Quita Solucion
+  type: http
+  seq: 2
+
+http:
+  method: DELETE
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Problema/QuitaSolucion?IdProblema=11&IdSolucion=2&IdUser=olds
+  params:
+    - name: IdProblema
+      value: "11"
+      type: query
+    - name: IdSolucion
+      value: "2"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Quitar Solución de Categoría
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Quitar Solución de una Categoría (HU-01, 1.0)**
+  Elimina el vínculo entre una categoría de problema y una solución. Trabaja solo sobre la fila puente; nunca crea ni borra el registro maestro.
+  Programa: `catproblema.p` · Procedimiento: `quitaSolucion`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  DELETE
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Problema/QuitaSolucion
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdProblema`** · INTEGER · ✅ — Id de la categoría de problema.
+  **`IdSolucion`** · INTEGER · ✅ — Id de la solución vinculada.
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta.
+
+  ---
+
+  ## 5. Body
+
+  No aplica — los parámetros viajan en el **Query String** (ver secciones 4 y 7).
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json`                     |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  DELETE http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Problema/QuitaSolucion?IdProblema=11&IdSolucion=2&IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Solucion quitada de la categoria."
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error; `false` si la operación fue correcta.
+  **`Respuesta`** · CHARACTER — Mensaje amigable de resultado (no expone verbos HTTP ni errores técnicos).
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - **`IdUser` es obligatorio** en todos los endpoints; si viene vacío o nulo → `IdError = true` con `"Se requiere el usuario (IdUser)."`.
+  - `IdProblema` y `IdSolucion` obligatorios (>0).
+  - El vínculo debe existir; si no → `"El vinculo no existe."`. Se toma `EXCLUSIVE-LOCK NO-WAIT`.
+  - Ante cualquier fallo la respuesta es amigable y `IdError = true`; nunca se realiza la operación a medias (transacción con `UNDO`).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

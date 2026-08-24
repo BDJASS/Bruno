@@ -1,0 +1,117 @@
+info:
+  name: Asocia Solucion
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Problema/AsociaSolucion?IdProblema=11&IdSolucion=2&IdUser=olds
+  params:
+    - name: IdProblema
+      value: "11"
+      type: query
+    - name: IdSolucion
+      value: "2"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Asociar Solución a Categoría
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Asociar Solución a una Categoría (HU-01, 1.0)**
+  Crea el vínculo entre una categoría de problema y una solución existente. Trabaja solo sobre la fila puente; nunca crea ni borra el registro maestro.
+  Programa: `catproblema.p` · Procedimiento: `asociaSolucion`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Problema/AsociaSolucion
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdProblema`** · INTEGER · ✅ — Id de la categoría de problema.
+  **`IdSolucion`** · INTEGER · ✅ — Id de la solución (del catálogo maestro).
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta.
+
+  ---
+
+  ## 5. Body
+
+  No aplica — los parámetros viajan en el **Query String** (ver secciones 4 y 7).
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json`                     |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Problema/AsociaSolucion?IdProblema=11&IdSolucion=2&IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Solucion asociada correctamente."
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error; `false` si la operación fue correcta.
+  **`Respuesta`** · CHARACTER — Mensaje amigable de resultado (no expone verbos HTTP ni errores técnicos).
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - **`IdUser` es obligatorio** en todos los endpoints; si viene vacío o nulo → `IdError = true` con `"Se requiere el usuario (IdUser)."`.
+  - `IdProblema` y `IdSolucion` obligatorios (>0).
+  - La categoría y el maestro deben existir.
+  - Si el vínculo ya existe → `"... ya esta asociada a la categoria."` (no se duplica).
+  - Ante cualquier fallo la respuesta es amigable y `IdError = true`; nunca se realiza la operación a medias (transacción con `UNDO`).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

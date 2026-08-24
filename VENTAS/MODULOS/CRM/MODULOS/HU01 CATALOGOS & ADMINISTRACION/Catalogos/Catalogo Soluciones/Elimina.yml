@@ -1,0 +1,115 @@
+info:
+  name: Elimina
+  type: http
+  seq: 4
+
+http:
+  method: DELETE
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Solucion/Elimina?Id=20&IdUser=olds
+  params:
+    - name: Id
+      value: "20"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Baja de Solución
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Baja (lógica) del Catálogo de Soluciones (HU-01, 2.0)**
+  Baja lógica de una solución. No se permite si está vinculada a categorías o usada en incidencias.
+  Programa: `catsolucion.p` · Procedimiento: `eliminaSolucion`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  DELETE
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Solucion/Elimina
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`Id`** · INTEGER · ✅ — Id de la solución.
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la baja.
+
+  ---
+
+  ## 5. Body
+
+  No aplica — los parámetros viajan en el **Query String** (ver secciones 4 y 7).
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json`                     |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  DELETE http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Solucion/Elimina?Id=20&IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Registro eliminado (baja logica)."
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error; `false` si la operación fue correcta.
+  **`Respuesta`** · CHARACTER — Mensaje amigable de resultado (no expone verbos HTTP ni errores técnicos).
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - **`IdUser` es obligatorio** en todos los endpoints; si viene vacío o nulo → `IdError = true` con `"Se requiere el usuario (IdUser)."`.
+  - `Id` debe existir.
+  - **Bloqueo por uso:** si `Uso > 0` (vinculada a categorías `ProblemaSolucion`) → `"Esta solucion esta vinculada a N categoria(s). No se puede eliminar mientras este en uso."`.
+  - También bloquea si está usada en incidencias (`DetIncidencia`).
+  - Baja lógica (`Activo = false`).
+  - Toda Alta / Actualización / Baja registra auditoría (`programas/auditoria.p`, app `oeVentas`).
+  - Ante cualquier fallo la respuesta es amigable y `IdError = true`; nunca se realiza la operación a medias (transacción con `UNDO`).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

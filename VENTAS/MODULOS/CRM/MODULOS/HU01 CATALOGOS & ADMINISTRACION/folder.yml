@@ -1,0 +1,7 @@
+info:
+  name: HU01 CATALOGOS & ADMINISTRACION
+  type: folder
+  seq: 1
+
+request:
+  auth: inherit
