@@ -1,0 +1,125 @@
+info:
+  name: Actualiza Lead
+  type: http
+  seq: 5
+
+http:
+  method: PUT
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Actualiza?Folio=LD-2026-0007&NombreContacto=Juan Perez Ramirez&RazonSocial=COMERCIAL DEL NORTE SA&IdVendedor=4791&IdUser=jjlg
+  params:
+    - name: Folio
+      value: LD-2026-0007
+      type: query
+    - name: NombreContacto
+      value: Juan Perez Ramirez
+      type: query
+    - name: RazonSocial
+      value: COMERCIAL DEL NORTE SA
+      type: query
+    - name: IdVendedor
+      value: "4791"
+      type: query
+    - name: IdUser
+      value: jjlg
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Edición de Lead
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Edición de Lead (HU-07)**
+  Edita los datos del lead (modo edición del modal) y permite **reasignar el vendedor**. Solo aplica a leads en gestión (Estatus 1–2); un lead convertido/cerrado/cancelado no es editable.
+  Programa servidor: `lead.p` · Procedimiento: `actualizaLead`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  PUT
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Actualiza
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **``Folio``** · STRING · ✅ — Folio del lead.
+  **``NombreContacto``** · STRING · ✅ — Nombre del contacto.
+  **``RazonSocial``** · STRING · ✅ — Razón social.
+  **``Correo``** · STRING · ❌ — Si no se envía se conserva el actual.
+  **``Telefono``** · STRING · ❌ — Si no se envía se conserva.
+  **``IdOrigen``** · INTEGER · ❌ — Si no se envía (o 0) se conserva.
+  **``IdVendedor``** · STRING · ❌ — Reasignación de vendedor. Si no se envía se conserva.
+  **``IdUser``** · STRING · ✅ — Usuario que ejecuta. Vacío/nulo → `IdError=true` con "Se requiere el usuario (IdUser).".
+
+  ---
+
+  ## 5. Body
+
+  No aplica — los parámetros viajan en el **Query String** (ver secciones 4 y 7).
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json`                     |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  PUT http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Actualiza?Folio=LD-2026-0007&NombreContacto=Juan Perez Ramirez&RazonSocial=COMERCIAL DEL NORTE SA&IdVendedor=4791&IdUser=jjlg
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  { "IdError": false, "Respuesta": "Lead actualizado: LD-2026-0007." }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  - **`IdError`** · BOOLEAN
+  - **`Respuesta`** · CHARACTER.
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - `IdUser`, `Folio`, `NombreContacto`, `RazonSocial` obligatorios.
+  - Los opcionales no enviados (`?`) conservan su valor actual (evita nulos).
+  - Bloquea si `Estatus >= 3` (convertido/cerrado/cancelado).
+  - Reasignar vendedor actualiza también el nombre mostrado en el grid.
+  - `EXCLUSIVE-LOCK NO-WAIT`: si está en uso, mensaje amigable sin colgar.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

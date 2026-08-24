@@ -1,7 +1,0 @@
-info:
-  name: Catalogo Motivo de Reasignacion de Cuenta TM
-  type: folder
-  seq: 5
-
-request:
-  auth: inherit

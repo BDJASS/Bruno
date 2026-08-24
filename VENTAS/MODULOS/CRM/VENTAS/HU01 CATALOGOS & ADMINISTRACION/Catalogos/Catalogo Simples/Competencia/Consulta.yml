@@ -1,0 +1,122 @@
+info:
+  name: Consulta
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Simple/Consulta?IdUser=jjlg&Catalogo=Competencia
+  params:
+    - name: IdUser
+      value: jjlg
+      type: query
+    - name: Catalogo
+      value: Competencia
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Consulta de Catálogo Simple
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Consulta de Catálogo Simple (HU-01)**
+  Devuelve el listado de un catálogo simple (solo Id + Nombre + Activo). Un mismo endpoint sirve a varios catálogos mediante el parámetro `Catalogo`. Catálogos válidos: `Competencia` · `FrecuenciaProy` · `MotivoDesactNR` · `MotivoPerdidaVta` · `MotivoReasignTM` · `Desventaja` · `OrigenLead`.
+  Programa: `catsimple.p` · Procedimiento: `leeCatalogo`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Simple/Consulta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  - **`Catalogo`** · STRING · ✅ — Cuál catálogo consultar. Debe ser uno de la lista válida.
+  - **`Busqueda`** · STRING · ❌ — Texto parcial sobre el Nombre (insensible a mayúsculas). Vacío = todos.
+  - **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Simple/Consulta?IdUser=jjlg&Catalogo=Competencia
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Consulta ejecutada correctamente.",
+    "ttCat": [
+      { "Id": 12, "Nombre": "Office Depot", "Activo": true },
+      { "Id": 9,  "Nombre": "Lumen", "Activo": true }
+    ]
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **`ttCat`** — arreglo de registros del catálogo:
+  - **`Id`** · INTEGER — Clave única del registro.
+  - **`Nombre`** · CHARACTER — Descripción del registro.
+  - **`Activo`** · BOOLEAN — `true` = vigente · `false` = dado de baja (baja lógica).
+
+  - **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error; `false` si la operación fue correcta.
+  - **`Respuesta`** · CHARACTER — Mensaje amigable de resultado (no expone verbos HTTP ni errores técnicos).
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - **`IdUser` es obligatorio** en todos los endpoints; si viene vacío o nulo → `IdError = true` con `"Se requiere el usuario (IdUser)."`.
+  - Si `Catalogo` no pertenece a la lista válida → `"Catalogo no valido: <valor>."`.
+  - La lista viene ordenada por Nombre. Incluye activos e inactivos (el front filtra si lo requiere).
+  - Ante cualquier fallo la respuesta es amigable y `IdError = true`; nunca se realiza la operación a medias (transacción con `UNDO`).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

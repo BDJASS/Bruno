@@ -1,0 +1,121 @@
+info:
+  name: Consulta Vista
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Problema/Consulta?Busqueda=&IdUser=olds
+  params:
+    - name: Busqueda
+      value: ""
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Consulta de Categorías de Problema
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Consulta del Catálogo de Categoría de Problema (HU-01, 1.0)**
+  Lista las categorías de problema con el conteo de soluciones y causas vinculadas.
+  Programa: `catproblema.p` · Procedimiento: `leeProblema`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Problema/Consulta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  - **`Busqueda`** · STRING · ❌ — Texto parcial sobre el Nombre. Vacío = todas.
+  - **`IdUser`** · STRING · ✅ — Usuario que consulta.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Catalogo/Problema/Consulta?Busqueda=&IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Consulta ejecutada correctamente.",
+    "ttProblema": [
+      { "Id": 11, "Nombre": "Material Danado", "Activo": true, "NumSoluciones": 5, "NumCausas": 2 }
+    ]
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **`ttProblema`** — arreglo de categorías:
+  - **`Id`** · INTEGER — Clave (PRB-999).
+  - **`Nombre`** · CHARACTER — Nombre de la categoría.
+  - **`Activo`** · BOOLEAN — Estado.
+  - **`NumSoluciones`** · INTEGER — Soluciones vinculadas (`ProblemaSolucion`).
+  - **`NumCausas`** · INTEGER — Causas raíz vinculadas (`ProblemaCausa`).
+
+  - **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error; `false` si la operación fue correcta.
+  - **`Respuesta`** · CHARACTER — Mensaje amigable de resultado (no expone verbos HTTP ni errores técnicos).
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - **`IdUser` es obligatorio** en todos los endpoints; si viene vacío o nulo → `IdError = true` con `"Se requiere el usuario (IdUser)."`.
+  - Ordenada por Nombre.
+  - Ante cualquier fallo la respuesta es amigable y `IdError = true`; nunca se realiza la operación a medias (transacción con `UNDO`).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

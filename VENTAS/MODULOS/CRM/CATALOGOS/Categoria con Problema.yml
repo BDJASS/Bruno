@@ -1,0 +1,163 @@
+info:
+  name: Categoria con Problema
+  type: http
+  seq: 8
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Problema/ConSoluciones?IdUser=jjlg&Busqueda=
+  params:
+    - name: IdUser
+      value: jjlg
+      type: query
+    - name: Busqueda
+      value: ""
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Consulta de Problemas con Soluciones, Actividades y Causas
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Consulta de Problemas con Soluciones (+Actividades) y Causas (HU-01 / HU-12)**
+  Devuelve un **dataset anidado de 3 niveles**: el catálogo de **problemas activos**; dentro de cada problema sus **soluciones activas** (Id, Nombre, Flete, Merma); dentro de cada solución sus **actividades / checklist**; y a nivel problema también sus **causas raíz** ligadas. Es el **flujo completo** para el alta de la incidencia en Ventas: al seleccionar el problema ya trae todo lo que la partida necesita.
+  Programa servidor: `catproblema.p` · Procedimiento: `leeProblemaConSol`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Problema/ConSoluciones
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  - **`IdUser`** · STRING · ✅ — Usuario que ejecuta. Vacío/nulo → `IdError=true` con "Se requiere el usuario (IdUser).".
+  - **`Busqueda`** · STRING · ❌ — Texto parcial sobre el nombre del problema (insensible a may/min). Vacío = todos.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Problema/ConSoluciones?IdUser=jjlg&Busqueda=
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  Dataset anidado: `ttProbCat` → `ttProbSolLink` (y dentro `ttProbSolAct`) + `ttProbCauLink`.
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Consulta ejecutada correctamente.",
+    "dsProbSol": {
+      "ttProbCat": [
+        {
+          "Id": 11, "Nombre": "Material Dañado", "Activo": true,
+          "ttProbSolLink": [
+            {
+              "IdProblema": 11, "IdSolucion": 12, "Nombre": "Visita y Generar Nota de Credito por Daño", "Flete": false, "Merma": true,
+              "ttProbSolAct": [
+                { "IdSolucion": 12, "IdActividad": 4, "Nombre": "Cortes", "Orden": 1 },
+                { "IdSolucion": 12, "IdActividad": 6, "Nombre": "Devoluciones", "Orden": 2 }
+              ]
+            },
+            {
+              "IdProblema": 11, "IdSolucion": 18, "Nombre": "Devolucion de Material Dañado", "Flete": true, "Merma": true,
+              "ttProbSolAct": [
+                { "IdSolucion": 18, "IdActividad": 1, "Nombre": "Surtido", "Orden": 1 }
+              ]
+            }
+          ],
+          "ttProbCauLink": [
+            { "IdProblema": 11, "IdCausaRaiz": 16, "Nombre": "Daño por fabrica", "EstatusDescr": "Activo" },
+            { "IdProblema": 11, "IdCausaRaiz": 17, "Nombre": "Mala maniobra en carga o descarga", "EstatusDescr": "Activo" }
+          ]
+        }
+      ]
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **`ttProbCat`** — problema (padre):
+  - **`Id`** · INTEGER — Id del problema (llave de anidamiento).
+  - **`Nombre`** · CHARACTER — Nombre del problema.
+  - **`Activo`** · BOOLEAN — Siempre `true` (solo se listan activos).
+
+  **`ttProbSolLink`** — soluciones ligadas (hijo de problema):
+  - **`IdProblema`** · INTEGER — Problema al que pertenece.
+  - **`IdSolucion`** · INTEGER — Id de la solución (valor a guardar en la partida).
+  - **`Nombre`** · CHARACTER — Nombre de la solución.
+  - **`Flete`** · BOOLEAN — `true` = la solución implica flete.
+  - **`Merma`** · BOOLEAN — `true` = la solución implica merma.
+
+  **`ttProbSolAct`** — actividades / checklist de la solución (nieto, dentro de cada solución):
+  - **`IdSolucion`** · INTEGER — Solución a la que pertenece.
+  - **`IdActividad`** · INTEGER — Id de la actividad (catálogo `Actividad`).
+  - **`Nombre`** · CHARACTER — Nombre de la actividad.
+  - **`Orden`** · INTEGER — Orden de ejecución.
+
+  **`ttProbCauLink`** — causas raíz ligadas (hijo de problema):
+  - **`IdProblema`** · INTEGER — Problema al que pertenece.
+  - **`IdCausaRaiz`** · INTEGER — Id de la causa raíz.
+  - **`Nombre`** · CHARACTER — Nombre de la causa raíz.
+  - **`EstatusDescr`** · CHARACTER — `Activo` / `Inactivo`.
+
+  ---
+
+  ## 10. Notas
+
+  - **Dataset anidado de 3 niveles** (`DATA-RELATION ... NESTED`): problema → solución → actividades; y problema → causas.
+  - Solo problemas **activos** y solo sus soluciones **activas**; las actividades salen de `SolucionActividad` → `Actividad` ordenadas por `Orden`; las causas de `ProblemaCausa` → `CausaRaiz`.
+  - Las actividades de una solución se materializan **una sola vez** aunque la misma solución esté ligada a varios problemas.
+  - Un padre sin hijos trae su arreglo vacío.
+  - Servicio complementario: `/Catalogo/Solucion/PorProblema?IdProblema=` (soluciones de un solo problema, con campos **y** actividades — para el modal de CEDIS).
+  - `Flete`/`Merma` son atributos del maestro `Solucion` y disparan el flujo en la incidencia.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

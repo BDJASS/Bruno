@@ -1,0 +1,164 @@
+info:
+  name: Consulta Incidencias Cedis
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Cedis/Consulta?IdUser=jvhernandez&Estatus=1&FechaIni=&FechaFin=
+  params:
+    - name: IdUser
+      value: jvhernandez
+      type: query
+    - name: Estatus
+      value: "1"
+      type: query
+    - name: FechaIni
+      value: ""
+      type: query
+    - name: FechaFin
+      value: ""
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Consulta de Incidencias (CEDIS)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Consulta de Incidencias — CEDIS (HU-12-2)**
+  Grid de "Gestión de Incidencias" desde el lado de **CEDIS**. URL propia, separada de la consulta de Ventas, aunque ambas lean la misma tabla `Incidencia`. CEDIS ve todas las incidencias (no aplica "Mis Tickets") y expone el responsable actual, los tiempos monitoreados y el costo. **No** lista las incidencias marcadas `SoloInterno = TRUE` (cortes-cliente / error de proceso del cliente, de uso interno de Ventas).
+  Programa servidor: `inccedislista.p` · Procedimiento: `leeIncidenciasCedis`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Cedis/Consulta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  - **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta
+  - **`Busqueda`** · STRING · ❌ — Texto parcial sobre folio, pedido, factura o vendedor (insensible a mayúsculas)
+  - **`Estatus`** · STRING · ❌ — `""` = todos · `1` = Abierta · `2` = En Proceso · `3` = Resuelta
+  - **`FechaIni`** · STRING · ❌ — Inicio de periodo (DD/MM/AAAA); vacío = inicio del mes
+  - **`FechaFin`** · STRING · ❌ — Fin de periodo (DD/MM/AAAA); vacío = hoy
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Incidencia/Cedis/Consulta?IdUser=jvhernandez&Estatus=1&FechaIni=&FechaFin=
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Incidencias encontradas: 8.",
+    "dsIncCedis": {
+      "ttIncCedis": [
+        {
+          "IdIncidencia": 34,
+          "Folio": "INC-2026-0034",
+          "FecReg": "2026-08-12",
+          "IdPedido": "PED-458821",
+          "IdFactura": "FAC-112044",
+          "IdCliente": 55921,
+          "Cliente": "PAPELERA DEL NORTE SA",
+          "IdVendedor": "5197",
+          "Vendedor": "JULIA LUCIO GARCIA",
+          "ProblemaLista": "Material Dañado",
+          "NumProblemas": 1,
+          "Estatus": 1,
+          "EstatusDescr": "Abierta",
+          "IdResponsable": "",
+          "Responsable": "",
+          "SLAClase": "OK",
+          "FecHoraReg": "2026-08-12T10:22:41",
+          "FecHoraProceso": null,
+          "FecHoraResol": null,
+          "CostoTotal": 0.00
+        }
+      ]
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta (ttIncCedis)
+
+  - **`IdIncidencia`** · INTEGER — Id interno (llave para el detalle)
+  - **`Folio`** · CHARACTER — `INC-AAAA-NNNN`
+  - **`FecReg`** · DATE — Fecha de alta
+  - **`IdPedido`** · CHARACTER — Pedido
+  - **`IdFactura`** · CHARACTER — Factura
+  - **`IdCliente`** · INTEGER — Cliente
+  - **`Cliente`** · CHARACTER — Razón social (snapshot)
+  - **`IdVendedor`** · CHARACTER — Vendedor
+  - **`Vendedor`** · CHARACTER — Nombre del vendedor
+  - **`ProblemaLista`** · CHARACTER — Problema(s) separados por ` | `
+  - **`NumProblemas`** · INTEGER — Nº de problemas distintos
+  - **`Estatus`** · INTEGER — `1`/`2`/`3`
+  - **`EstatusDescr`** · CHARACTER — Texto del estatus
+  - **`IdResponsable`** · CHARACTER — Responsable actual (CEDIS)
+  - **`Responsable`** · CHARACTER — Nombre del responsable
+  - **`SLAClase`** · CHARACTER — Semáforo `OK` / `WARN` / `CRIT`
+  - **`FecHoraReg`** · DATETIME — Alta
+  - **`FecHoraProceso`** · DATETIME — En Proceso
+  - **`FecHoraResol`** · DATETIME — Resuelta
+  - **`CostoTotal`** · DECIMAL — Costo total del ticket
+
+  ---
+
+  ## 10. Notas
+
+  - Filtra `SoloInterno = FALSE`: las incidencias internas de Ventas (cortes-cliente / error de proceso del cliente) **no** se muestran a CEDIS.
+  - Es la **consulta de CEDIS**; el equivalente de Ventas es `incventaslista.p` (`/Incidencia/Ventas/Consulta`).
+  - El folio es el enlace para abrir el detalle (`/Incidencia/Detalle`) y para atender (`/Incidencia/Cedis/Atiende`).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

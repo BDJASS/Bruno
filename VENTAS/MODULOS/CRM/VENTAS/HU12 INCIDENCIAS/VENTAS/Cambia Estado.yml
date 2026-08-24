@@ -1,0 +1,92 @@
+info:
+  name: Cambia Estado
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Estado?Folio=INC-2026-0034&IdUser=jvhernandez&NuevoEstatus=2
+  params:
+    - name: Folio
+      value: INC-2026-0034
+      type: query
+    - name: IdUser
+      value: jvhernandez
+      type: query
+    - name: NuevoEstatus
+      value: "2"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Cambio de Estado (Kanban)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Cambio de Estado / Kanban (HU-12-2)**
+  Versión **ligera** para mover una incidencia entre columnas del tablero Kanban sin capturar toda la atención. Solo cambia el `Estatus`, respetando el flujo **unidireccional** (`1 → 2 → 3`) y sellando tiempos. Para guardar causas / checklist / documentos usar `/Incidencia/Cedis/Atiende`.
+  Programa: `inccambiaestado.p` · Procedimiento: `cambiaEstado`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Estado
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  - **`Folio`** · STRING · ✅ — Incidencia a mover
+  - **`IdUser`** · STRING · ✅ — Usuario que ejecuta
+  - **`NuevoEstatus`** · INTEGER · ✅ — `1` Abierta · `2` En Proceso · `3` Resuelta; **no nulo**, solo avanza
+
+  ---
+
+  ## 5. Ejemplo de Request
+
+  ```
+  POST http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Estado?Folio=INC-2026-0034&IdUser=jvhernandez&NuevoEstatus=2
+  ```
+
+  ---
+
+  ## 6. Ejemplo de Response
+
+  ```json
+  { "IdError": false, "Respuesta": "Estatus de la incidencia INC-2026-0034 actualizado a 2." }
+  ```
+
+  ---
+
+  ## 7. Reglas y salida
+
+  - Folio válido y activa.
+  - Flujo unidireccional: si `NuevoEstatus < EstatusActual` → error `"No se permite regresar el estado de la incidencia."`.
+  - Sella `FecHoraProceso` al pasar a `2`; `FecHoraResol` al pasar a `3`.
+  - Se toma `EXCLUSIVE-LOCK NO-WAIT`.
+  - **Salida** — **`IdError`** · BOOLEAN · **`Respuesta`** · CHARACTER.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

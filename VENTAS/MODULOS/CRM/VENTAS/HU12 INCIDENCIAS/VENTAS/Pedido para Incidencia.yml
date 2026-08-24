@@ -1,0 +1,111 @@
+info:
+  name: Pedido para Incidencia
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Pedido?IdUser=olds&IdPedido=0322707&Resto=0
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdPedido
+      value: "322707"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Pedido para Alta de Incidencia
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedido para Alta de Incidencia (HU-12-1)**
+  Recibe **Pedido + Resto** y devuelve, en un **dataset**, el encabezado que la pantalla de alta debe mostrar (pedido, resto, factura, cliente, nombre, RFC, dirección, sucursal, vendedor) **más las partidas** (artículos) del pedido. El front usa esto para pintar la pantalla de alta; luego, en `/Incidencia/Alta`, ya no reenvía el encabezado (el servidor lo relee), solo regresa las partidas que el usuario deje.
+  Programa: `incpedido.p` · Procedimiento: `leePedidoIncidencia`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Pedido
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  - **`IdUser`** · STRING · ✅ — Usuario que consulta
+  - **`IdPedido`** · STRING · ✅ — Pedido (7 dígitos)
+  - **`Resto`** · STRING · ❌ — Resto del pedido (default `0`)
+
+  ---
+
+  ## 5. Ejemplo de Request
+
+  ```
+  GET .../Incidencia/Pedido?IdUser=olds&IdPedido=0322707&Resto=0
+  ```
+
+  ---
+
+  ## 6. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Pedido 0322707 cargado.",
+    "dsIncPedido": {
+      "ttPedEnc": [
+        { "IdPedido": "0322707", "Resto": 0, "FecReg": "2026-05-14", "IdFactura": "",
+          "IdCliente": 55921, "Cliente": "PAPELERA DEL NORTE SA", "RFC": "PNO950101AB1",
+          "Direccion": "Av. Ejemplo 123 Col. Centro C.P. 64000", "Sucursal": "",
+          "IdVendedor": "4791", "Vendedor": "OSCAR L. DIAZ" }
+      ],
+      "ttPedArt": [
+        { "Renglon": 1, "IdArticulo": "044868", "Articulo": "PAPEL BOND CARTA",
+          "Cantidad": 12, "IdPres": 0, "Presentacion": "PIEZA", "PUnit": 120.83, "Importe": 1450.00 }
+      ]
+    }
+  }
+  ```
+
+  ---
+
+  ## 7. Campos de la Respuesta
+
+  **`ttPedEnc` (encabezado, 1 fila)** — `IdPedido`, `Resto`, `FecReg`, `IdFactura`, `IdCliente`, `Cliente` (razón social), `RFC`, `Direccion` (compuesta del cliente), `Sucursal`, `IdVendedor`, `Vendedor` (nombre vía `Empleado`).
+  **`ttPedArt` (partidas)** · N — `Renglon`, `IdArticulo`, `Articulo` (descr.), `Cantidad` (CantPed), `IdPres`/`Presentacion` (vía `ArtPres`), `PUnit`, `Importe`. Solo artículos (`DetPedido.Tipo` 1-2).
+
+  ---
+
+  ## 8. Notas
+
+  - Si el pedido no existe → `IdError = true` con el mensaje correspondiente.
+  - El front toma estos datos para el alta; el detalle real de la incidencia se crea en `/Incidencia/Alta` con las partidas que sobrevivan.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

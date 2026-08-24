@@ -1,0 +1,135 @@
+info:
+  name: Detalle Incidencia
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Detalle?IdUser=jjlg&Folio=INC-2026-0034
+  params:
+    - name: IdUser
+      value: jjlg
+      type: query
+    - name: Folio
+      value: INC-2026-0034
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Detalle de Incidencia
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Detalle de Incidencia (HU-12)**
+  Servicio **compartido** por Ventas y CEDIS para abrir el modal "Ver / Atender". A partir del folio devuelve, en un solo dataset: encabezado, artículos (problema/solución por renglón), causas raíz, checklist de actividades y los documentos adjuntos **en metadatos (sin el BLOB)**. El binario de cada documento se baja aparte con `/Incidencia/Documento`, para que esta consulta sea ligera.
+  Programa servidor: `incdetalle.p` · Procedimiento: `leeIncidencia`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Detalle
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  - **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta
+  - **`Folio`** · STRING · ✅ — Folio de la incidencia `INC-AAAA-NNNN`
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Incidencia/Detalle?IdUser=jjlg&Folio=INC-2026-0034
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Incidencia INC-2026-0034 cargada.",
+    "dsIncDetalle": {
+      "ttIncEnc": [
+        { "IdIncidencia": 34, "Folio": "INC-2026-0034", "Origen": "V",
+          "FecReg": "2026-08-12", "IdPedido": "PED-458821", "IdCliente": 55921,
+          "Cliente": "PAPELERA DEL NORTE SA", "Estatus": 2, "EstatusDescr": "En Proceso",
+          "IdResponsable": "", "Responsable": "", "NotasAtencion": "",
+          "CostoMerma": 1450.00, "CostoFlete": 0.00, "CostoCostos": 0.00, "CostoTotal": 1450.00,
+          "NumGuia": "", "SLAClase": "WARN", "EnviaCorreoCte": false } ],
+      "ttIncDet": [
+        { "IdIncidencia": 34, "Renglon": 1, "IdArticulo": "044868", "Articulo": "PAPEL BOND CARTA",
+          "Cantidad": 12, "Presentacion": "PIEZA", "IdProblema": 11, "DescProblema": "Material Dañado",
+          "IdSolucion": 20, "DescSolucion": "Reposición de Material CON Recolección",
+          "Flete": true, "Merma": true, "CostoMerma": 1450.00 } ],
+      "ttIncCausa": [
+        { "IdIncidencia": 34, "Renglon": 1, "IdCausaRaiz": 16, "CausaRaiz": "Daño por fábrica", "EsPreseleccion": true } ],
+      "ttIncSeg": [
+        { "IdIncidencia": 34, "Renglon": 1, "IdSolucion": 20, "IdActividad": 1,
+          "Actividad": "Surtido", "Area": "CEDIS", "EstadoAct": "P", "Comentario": "" } ],
+      "ttIncDoc": [
+        { "IdIncidencia": 34, "IdDoc": 101, "Etapa": "A", "Nombre": "evidencia1.pdf",
+          "Extension": "pdf", "TipoMime": "application/pdf", "Tamano": 84213, "FecReg": "2026-08-12" } ]
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **ttIncEnc (encabezado)** — datos generales: `Folio`, `Origen` (V/C), `Id-Cliente`/`Cliente`/`RFC`/`Direccion`/`Sucursal`, `Id-Vendedor`/`Vendedor`, `ModoCaptura` (A/P), `Estatus`+`EstatusDescr`, `Id-Responsable`/`Responsable`, `Observaciones`, `NotasAtencion`, `NumGuia`, costos (`CostoMerma`/`CostoFlete`/`CostoCostos`/`CostoTotal`), `SLAClase`, `FecHoraReg`/`FecHoraProceso`/`FecHoraResol`/`FecHoraLimiteSLA`, `EnviaCorreoCte`.
+  **ttIncDet (artículos)** · N por incidencia — `Renglon`, `IdArticulo`/`Articulo`, `Cantidad`, `Presentacion`, `IdProblema`/`DescProblema`, `IdSolucion`/`DescSolucion`, `Flete`, `Merma`, `CostoMerma`, `Comentario`.
+  **ttIncCausa (causas raíz)** · N por renglón — `Renglon`, `IdCausaRaiz`/`CausaRaiz`, `EsPreseleccion`.
+  **ttIncSeg (checklist de atención)** · 1 fila por actividad — `Renglon`, `IdSolucion`, `IdActividad`/`Actividad`, `Area`, `EstadoAct` (`P`=Pendiente · `C`=Completado · `N`=No aplica), `Comentario`.
+  **ttIncDoc (documentos — METADATOS)** · N por incidencia — `IdDoc`, `Etapa` (`A`=alta · `R`=resolución), `Nombre`, `Extension`, `TipoMime`, `Tamano` (bytes), `FecReg`. **NO incluye el binario.**
+
+  ---
+
+  ## 10. Notas
+
+  - El dataset viene anidado (`DATA-RELATION`): artículos, checklist y documentos cuelgan del encabezado por `Id-Incidencia`.
+  - `ttIncDoc` trae sólo metadatos; para descargar un documento use `/Incidencia/Documento` con `IdDoc`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

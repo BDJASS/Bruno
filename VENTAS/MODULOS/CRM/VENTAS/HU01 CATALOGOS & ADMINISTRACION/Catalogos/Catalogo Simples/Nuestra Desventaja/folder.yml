@@ -1,0 +1,7 @@
+info:
+  name: Nuestra Desventaja
+  type: folder
+  seq: 6
+
+request:
+  auth: inherit

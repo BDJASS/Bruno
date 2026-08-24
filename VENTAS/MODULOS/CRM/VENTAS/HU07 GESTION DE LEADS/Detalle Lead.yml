@@ -1,0 +1,130 @@
+info:
+  name: Detalle Lead
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Detalle?IdUser=jjlg&Folio=LD-2026-0007
+  params:
+    - name: IdUser
+      value: jjlg
+      type: query
+    - name: Folio
+      value: LD-2026-0007
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Detalle del Lead
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Detalle del Lead (HU-07)**
+  Devuelve el encabezado del lead más su **timeline** de actividades (llamadas/correos) ordenado del más reciente al más antiguo. Alimenta el modal Ver/Editar Lead.
+  Programa servidor: `lead.p` · Procedimiento: `leeLead`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Detalle
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **``IdUser``** · STRING · ✅ — Usuario que ejecuta.
+  **``Folio``** · STRING · ✅ — Folio del lead a consultar (`LD-AAAA-####`).
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json`                     |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Detalle?IdUser=jjlg&Folio=LD-2026-0007
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Detalle del lead LD-2026-0007.",
+    "dsLeadDet": {
+      "ttLeadDet": [
+        { "Id": 12, "Folio": "LD-2026-0007", "Prospecto": "Juan Perez",
+          "RazonSocial": "COMERCIAL DEL NORTE SA", "Correo": "jperez@cnorte.com",
+          "Telefono": "8112345678", "IdOrigen": 1, "Origen": "Referido",
+          "IdVendedor": "5197", "Vendedor": "JULIA LUCIO GARCIA",
+          "FecAlta": "2026-08-20", "FecUltAct": "2026-08-21", "DiasSinSeg": 2,
+          "Semaforo": "En Gestion", "Estatus": 2, "EstatusDescr": "En Proceso", "IdCliente": 0 }
+      ],
+      "ttTimeline": [
+        { "Id": 5, "Tipo": "CORREO", "FecHora": "2026-08-21T10:15:00", "Fecha": "2026-08-21", "Detalle": "Envio de cotizacion inicial", "Origen": "MANUAL" },
+        { "Id": 4, "Tipo": "LLAMADA", "FecHora": "2026-08-20T16:40:00", "Fecha": "2026-08-20", "Detalle": "Primer contacto", "Origen": "MANUAL" }
+      ]
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **`ttLeadDet`** — mismos campos del grid (ver Consulta).
+  - **`ttTimeline`** — actividades: **`Id`** · INTEGER
+  - **`Tipo`** · CHARACTER (`LLAMADA`/`CORREO`)
+  - **`FecHora`** · DATETIME
+  - **`Fecha`** · DATE
+  - **`Detalle`** · CHARACTER
+  - **`Origen`** · CHARACTER (`INCONCERT`/`MANUAL`).
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - `IdUser` y `Folio` obligatorios.
+  - Si el folio no existe → `IdError=true` con mensaje amigable.
+  - El timeline se ordena por `FecHora` descendente.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

@@ -1,0 +1,224 @@
+info:
+  name: Alta Incidencia
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Alta
+  body:
+    type: json
+    data: |
+      {
+        "dsIncAlta": {
+          "ttEncInc": [
+            {
+              "IdUser": "jjlg",
+              "IdPedido": "0322707",
+              "Resto": 0,
+              "Origen": "V",
+              "ModoCaptura": "A",
+              "Observaciones": "Material llegó dañado.",
+              "EnviaCorreoCte": false,
+              "SoloInterno": false
+            }
+          ],
+          "ttArtInc": [
+            {
+              "IdArticulo": "044868",
+              "Articulo": "PAPEL BOND CARTA",
+              "Cantidad": 12,
+              "IdPres": 0,
+              "Presentacion": "PIEZA",
+              "IdProblema": 11,
+              "IdSolucion": 20,
+              "CostoMerma": 1450.00,
+              "Comentario": ""
+            }
+          ],
+          "ttDocInc": [
+            {
+              "Nombre": "evidencia1.pdf",
+              "Extension": "pdf",
+              "TipoMime": "application/pdf",
+              "Contenido": "JVBERi0xLjQKJc..."
+            }
+          ]
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Alta de Incidencia (Ventas)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Alta de Incidencia (HU-12-1)**
+  Registra una incidencia desde **Ventas**. Como el front **ya seleccionó el pedido**, el servicio **NO** recibe los datos del cliente/vendedor/factura: los **relee del `Pedido`** (por `IdPedido` + `Resto`) y de sus catálogos. Del front solo se toman: el pedido, las banderas de captura, las **partidas** que el usuario dejó (puede quitar renglones) y, opcionalmente, **documentos** de cualquier tipo.
+  Genera folio `INC-AAAA-NNNN`, deja `Estatus = 1` (Abierta) y calcula `CostoTotal = CostoMerma + CostoFlete`.
+  Programa: `incalta.p` · Procedimiento: `creaIncidencia`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Alta
+  ```
+
+  ---
+
+  ## 4. Reglas de negocio (importante)
+
+  - **El encabezado se relee del pedido.** El front NO manda cliente, RFC, dirección, razón social, vendedor ni factura: el servidor los toma del `Pedido` encontrado. Si el pedido no existe → error.
+  - **Obligatorios mínimos del encabezado:** `IdUser`, `IdPedido`. `Resto` por defecto `0`.
+  - **Banderas lógicas obligatorias (no nulas):** `EnviaCorreoCte` y `SoloInterno` deben venir como `true`/`false`. Si llegan nulas → error (el front debe mandar el valor que aplique).
+  - **Al menos una partida.**
+  - **Por cada partida:** `IdProblema` **e** `IdSolucion` son **obligatorios** y se validan contra catálogo:
+    - `IdProblema` debe existir y estar activo (`Problema`).
+    - `IdSolucion` debe existir y estar activa (`Solucion`).
+    - El par problema-solución debe estar relacionado (`ProblemaSolucion`); si no, error.
+  - **Flete y Merma NO se envían:** vienen **amarrados a la Solución**; el servidor los copia de `Solucion.Flete` / `Solucion.Merma`. `DescProblema` / `DescSolucion` también los pone el servidor (snapshot del catálogo).
+  - **CostoMerma** por partida solo se usa si la solución **genera merma**; es el valor de la mercancía. Si la solución no tiene merma, se ignora.
+  - **ModoCaptura:**
+    - `A` = **por Artículo** (default): el usuario está en la sección de artículos y elige renglones puntuales del pedido.
+    - `P` = **por Pedido**: la incidencia es del pedido completo.
+    - En **ambos** casos el front **debe enviar las partidas** (en `P` es, cuando menos, para mostrarlas); de esas partidas se crea el detalle.
+  - **Documentos:** opcionales en el alta (cualquier tipo). También se pueden seguir subiendo después con `/Incidencia/Documento/Alta` (`incdocalta.p`).
+
+  ---
+
+  ## 5. Body (dataset `dsIncAlta`)
+
+  Tres temp-tables: `ttEncInc` (1 fila), `ttArtInc` (1..N), `ttDocInc` (0..N).
+
+  ```json
+  {
+    "dsIncAlta": {
+      "ttEncInc": [
+        {
+          "IdUser": "jjlg",
+          "IdPedido": "0322707",
+          "Resto": 0,
+          "Origen": "V",
+          "ModoCaptura": "A",
+          "Observaciones": "Material llegó dañado.",
+          "EnviaCorreoCte": false,
+          "SoloInterno": false
+        }
+      ],
+      "ttArtInc": [
+        {
+          "IdArticulo": "044868",
+          "Articulo": "PAPEL BOND CARTA",
+          "Cantidad": 12,
+          "IdPres": 0,
+          "Presentacion": "PIEZA",
+          "IdProblema": 11,
+          "IdSolucion": 20,
+          "CostoMerma": 1450.00,
+          "Comentario": ""
+        }
+      ],
+      "ttDocInc": [
+        {
+          "Nombre": "evidencia1.pdf",
+          "Extension": "pdf",
+          "TipoMime": "application/pdf",
+          "Contenido": "JVBERi0xLjQKJc..."
+        }
+      ]
+    }
+  }
+  ```
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                |
+  |----------------|----------------------|
+  | `Accept`       | `application/json`   |
+  | `Content-Type` | `application/json`   |
+
+  ---
+
+  ## 7. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Incidencia INC-2026-0035 registrada con 1 articulo(s) y 1 documento(s).",
+    "Folio": "INC-2026-0035"
+  }
+  ```
+
+  ---
+
+  ## 8. Campos del Body
+
+  **Encabezado (`ttEncInc`)**
+  - **`IdUser`** · STRING · ✅ — Usuario que da de alta
+  - **`IdPedido`** · STRING · ✅ — Pedido (7 dígitos). De aquí se releen cliente/vendedor/factura
+  - **`Resto`** · INTEGER · ❌ — Resto del pedido (default `0`)
+  - **`Origen`** · STRING · ❌ — `V` = Ventas (default)
+  - **`ModoCaptura`** · STRING · ❌ — `A` por artículo (default) · `P` por pedido
+  - **`Observaciones`** · STRING · ❌ — Nota libre
+  - **`EnviaCorreoCte`** · BOOLEAN · ✅ — `true`/`false`; **no nulo**
+  - **`SoloInterno`** · BOOLEAN · ✅ — `true`/`false`; **no nulo** (incidencia interna de Ventas, no visible a CEDIS)
+
+  **Partidas (`ttArtInc`)** · ≥ 1
+  - **`IdArticulo`** · STRING · ✅ — Código del artículo (del pedido)
+  - **`Articulo`** · STRING · ❌ — Descripción (snapshot)
+  - **`Cantidad`** · DECIMAL · ❌ — Cantidad afectada
+  - **`IdPres`** · INTEGER · ❌ — Presentación
+  - **`Presentacion`** · STRING · ❌ — Texto
+  - **`IdProblema`** · INTEGER · ✅ — Debe existir/activo en `Problema`
+  - **`IdSolucion`** · INTEGER · ✅ — Debe existir/activa en `Solucion` y ligada al problema (`ProblemaSolucion`)
+  - **`CostoMerma`** · DECIMAL · ❌ — Valor de la mercancía; solo se usa si la solución genera merma
+  - **`Comentario`** · STRING · ❌ — Nota de la partida
+  > `Flete` y `Merma` **no se envían**: el servidor los toma de la Solución.
+
+  **Documentos (`ttDocInc`)** · 0..N (opcional)
+  - **`Nombre`** · STRING · ❌ — Nombre del archivo (si vacío se genera uno)
+  - **`Extension`** · STRING · ❌ — `pdf`, `jpg`, `png`, `xlsx`, …
+  - **`TipoMime`** · STRING · ❌ — MIME (default `application/octet-stream`)
+  - **`Contenido`** · STRING(Base64) · ❌ — Binario del archivo. Se guarda con `Etapa = "A"`
+
+  ---
+
+  ## 9. Campos de Salida
+
+  - **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error
+  - **`Respuesta`** · CHARACTER — Mensaje de resultado / error
+  - **`Folio`** · CHARACTER — Folio generado `INC-AAAA-NNNN` (vacío si no se creó)
+
+  ---
+
+  ## 10. Mensajes de validación (ejemplos)
+
+  - `"El campo EnviaCorreoCte es obligatorio (true/false)."`
+  - `"El campo SoloInterno es obligatorio (true/false)."`
+  - `"No existe el pedido 0322707 (resto 0)."`
+  - `"Cada partida requiere un problema (Id-Problema). Articulo: 044868"`
+  - `"La solucion 20 no corresponde al problema 11."`
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

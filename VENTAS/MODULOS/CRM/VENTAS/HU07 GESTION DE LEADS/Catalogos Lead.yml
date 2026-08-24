@@ -1,0 +1,113 @@
+info:
+  name: Catalogos Lead
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Catalogos?IdUser=jjlg
+  params:
+    - name: IdUser
+      value: jjlg
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Catálogos del Lead (Combos)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Catálogos del Lead (Combos) (HU-07)**
+  Devuelve en una sola llamada los catálogos activos que usan los modales de Lead: Origen del Lead, Motivo de Cierre y Motivo de Cancelación. (El catálogo de Vendedores se obtiene del servicio `/Vendedor` existente.)
+  Programa servidor: `lead.p` · Procedimiento: `leeCatalogos`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Catalogos
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **``IdUser``** · STRING · ✅ — Usuario que ejecuta.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json`                     |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Catalogos?IdUser=jjlg
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Catalogos de lead cargados.",
+    "dsLeadCat": {
+      "ttCatOrigen": [ { "Id": 1, "Nombre": "Referido" }, { "Id": 8, "Nombre": "Transferido TeleMarketing" } ],
+      "ttCatCierre": [ { "Id": 1, "Nombre": "Precio" }, { "Id": 6, "Nombre": "Otro" } ],
+      "ttCatCancel": [ { "Id": 1, "Nombre": "Lead duplicado" }, { "Id": 6, "Nombre": "Otro" } ]
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **`ttCatOrigen`** — Origen del Lead (`OrigenLead`).
+  **`ttCatCierre`** — Motivo de Cierre (`MotivoCierreLead`).
+  **`ttCatCancel`** — Motivo de Cancelación (`MotivoCancelacionLead`).
+  Cada uno con **`Id`** · INTEGER · **`Nombre`** · CHARACTER.
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - Solo devuelve registros con `Activo=true`, ordenados por Id.
+  - `IdUser` obligatorio.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

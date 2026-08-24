@@ -1,0 +1,115 @@
+info:
+  name: Alta
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Actividad/Alta?Nombre=Verificacion final&IdUser=olds
+  params:
+    - name: Nombre
+      value: Verificacion final
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Alta de Actividad
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Alta del Catálogo de Actividades (HU-01, 5.0)**
+  Registra una nueva actividad de atención. Nace Activa.
+  Programa: `catactividad.p` · Procedimiento: `creaActividad`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Actividad/Alta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  - **`Nombre`** · STRING · ✅ — Nombre de la actividad. Obligatorio, sin duplicar.
+  - **`IdUser`** · STRING · ✅ — Usuario que da de alta.
+
+  ---
+
+  ## 5. Body
+
+  No aplica — los parámetros viajan en el **Query String** (ver secciones 4 y 7).
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json`                     |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Actividad/Alta?Nombre=Verificacion final&IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Registro creado: 7 - Verificacion final.",
+    "NuevoId": 7
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  - **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error; `false` si la operación fue correcta.
+  - **`Respuesta`** · CHARACTER — Mensaje amigable de resultado (no expone verbos HTTP ni errores técnicos).
+  - **`NuevoId`** · INTEGER — Id generado.
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - **`IdUser` es obligatorio** en todos los endpoints; si viene vacío o nulo → `IdError = true` con `"Se requiere el usuario (IdUser)."`.
+  - `Nombre` obligatorio (`"La actividad no puede estar vacia."`).
+  - Sin duplicar nombre. Id autonumérico. `Activo = true`.
+  - Toda Alta / Actualización / Baja registra auditoría (`programas/auditoria.p`, app `oeVentas`).
+  - Ante cualquier fallo la respuesta es amigable y `IdError = true`; nunca se realiza la operación a medias (transacción con `UNDO`).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

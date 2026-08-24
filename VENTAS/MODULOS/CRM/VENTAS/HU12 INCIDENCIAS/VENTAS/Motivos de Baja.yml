@@ -1,0 +1,115 @@
+info:
+  name: Motivos de Baja
+  type: http
+  seq: 9
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/MotivoBaja?IdUser=jjlg
+  params:
+    - name: IdUser
+      value: jjlg
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Consulta de Motivos de Baja (Incidencias)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Consulta de Motivos de Baja de Incidencia (HU-12)**
+  Devuelve el catálogo **cerrado** `MotivoBaja` (solo los **activos**) para poblar el combo del botón **Eliminar** en el detalle de la incidencia. El `Id` seleccionado se envía como `IdMotivoBaja` a `/Incidencia/Elimina`. Es de **solo lectura**: no se administra desde esta pantalla.
+  Programa servidor: `incmotivobaja.p` · Procedimiento: `leeMotivoBaja`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/MotivoBaja
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  - **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta. Si viene vacío o nulo → `IdError = true` con `"Se requiere el usuario (IdUser)."`.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/MotivoBaja?IdUser=jjlg
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Motivos de baja encontrados: 4.",
+    "ttMotivoBaja": [
+      { "Id": 1, "Nombre": "Ticket duplicado" },
+      { "Id": 2, "Nombre": "Error de captura" },
+      { "Id": 3, "Nombre": "Ticket de prueba" },
+      { "Id": 4, "Nombre": "Cancelado por cliente" }
+    ]
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta (ttMotivoBaja)
+
+  - **`Id`** · INTEGER — Clave del motivo (`MotivoBaja.Id-MotivoBaja`). Es el valor que viaja como `IdMotivoBaja` en `/Incidencia/Elimina`.
+  - **`Nombre`** · CHARACTER — Texto del motivo que se muestra en el combo.
+
+  Campos de salida generales — **`IdError`** · BOOLEAN · **`Respuesta`** · CHARACTER.
+
+  ---
+
+  ## 10. Notas
+
+  - Catálogo **cerrado**: se puebla vía `inccargacatalogos.p` (UPSERT). Valores base: `1` Ticket duplicado · `2` Error de captura · `3` Ticket de prueba · `4` Cancelado por cliente.
+  - Solo se listan los registros con `MotivoBaja.Activo = TRUE`, ordenados por `Id-MotivoBaja`.
+  - Alimenta directamente a `/Incidencia/Elimina` (parámetro obligatorio `IdMotivoBaja`).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

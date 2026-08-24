@@ -1,0 +1,151 @@
+info:
+  name: Por Problema
+  type: http
+  seq: 9
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Solucion/PorProblema?IdProblema=11&IdUser=jjlg
+  params:
+    - name: IdProblema
+      value: "11"
+      type: query
+    - name: IdUser
+      value: jjlg
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Soluciones por Problema (con Campos y Actividades)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Soluciones de un Problema + sus Campos y Actividades (HU-01 / HU-12)**
+  Recibe un `IdProblema` y devuelve un **dataset anidado**: las **soluciones activas** ligadas a ese problema (Id, Nombre, Flete, Merma) y, dentro de cada solución, sus **campos de formulario** y sus **actividades / checklist**. Alimenta el **modal de soluciones** en la vista de la incidencia: cuando Ventas elige el problema o cuando **CEDIS abre el modal**, la solución ya trae qué campos capturar y qué actividades ejecutar.
+  Programa servidor: `catsolucion.p` · Procedimiento: `leeSolucionesPorProblema`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Solucion/PorProblema
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  - **`IdProblema`** · INTEGER · ✅ — Problema del cual se listan sus soluciones. Debe existir; si no → `IdError=true` con "No se encontro el problema.".
+  - **`IdUser`** · STRING · ✅ — Usuario que ejecuta. Vacío/nulo → `IdError=true` con "Se requiere el usuario (IdUser).".
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Solucion/PorProblema?IdProblema=11&IdUser=jjlg
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  Dataset anidado: cada `ttSolProb` abre sus `ttSolProbCampo` (campos) y `ttSolProbAct` (actividades).
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Soluciones del problema encontradas: 2.",
+    "dsSolProb": {
+      "ttSolProb": [
+        {
+          "IdSolucion": 12, "Nombre": "Visita y Generar Nota de Credito por Daño", "Flete": false, "Merma": true,
+          "ttSolProbCampo": [
+            { "IdSolucion": 12, "IdCampo": 4, "Nombre": "Margen de la transaccion neto [despues de PP]", "Orden": 1 }
+          ],
+          "ttSolProbAct": [
+            { "IdSolucion": 12, "IdActividad": 4, "Nombre": "Cortes", "Orden": 1 },
+            { "IdSolucion": 12, "IdActividad": 6, "Nombre": "Devoluciones", "Orden": 2 }
+          ]
+        },
+        {
+          "IdSolucion": 18, "Nombre": "Devolucion de Material Dañado", "Flete": true, "Merma": true,
+          "ttSolProbCampo": [],
+          "ttSolProbAct": []
+        }
+      ]
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **`ttSolProb`** — solución (padre):
+  - **`IdSolucion`** · INTEGER — Id de la solución (valor a guardar en la partida de la incidencia).
+  - **`Nombre`** · CHARACTER — Nombre de la solución.
+  - **`Flete`** · BOOLEAN — `true` = la solución implica flete (el front habilita el flujo de flete).
+  - **`Merma`** · BOOLEAN — `true` = la solución implica merma.
+
+  **`ttSolProbCampo`** — campos del formulario (hijo anidado):
+  - **`IdSolucion`** · INTEGER — Solución a la que pertenece.
+  - **`IdCampo`** · INTEGER — Id del campo (catálogo `Campo`).
+  - **`Nombre`** · CHARACTER — Nombre del campo a capturar.
+  - **`Orden`** · INTEGER — Orden de despliegue.
+
+  **`ttSolProbAct`** — actividades / checklist (hijo anidado):
+  - **`IdSolucion`** · INTEGER — Solución a la que pertenece.
+  - **`IdActividad`** · INTEGER — Id de la actividad (catálogo `Actividad`).
+  - **`Nombre`** · CHARACTER — Nombre de la actividad.
+  - **`Orden`** · INTEGER — Orden de ejecución.
+
+  Campos de salida generales — **`IdError`** · BOOLEAN · **`Respuesta`** · CHARACTER.
+
+  ---
+
+  ## 10. Notas
+
+  - **Dataset anidado** (`DATA-RELATION ... NESTED`): campos y actividades vienen **dentro** de cada solución.
+  - Solo soluciones **activas** ligadas al problema (puente `ProblemaSolucion`).
+  - Campos vienen del puente `SolucionCampo` → `Campo`; actividades de `SolucionActividad` → `Actividad`; ambos ordenados por `Orden`.
+  - Una solución sin campos/actividades trae esos arreglos vacíos.
+  - Complementa a `/Catalogo/Problema/ConSoluciones` (que trae todos los problemas con sus soluciones y causas para la pantalla de Ventas).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

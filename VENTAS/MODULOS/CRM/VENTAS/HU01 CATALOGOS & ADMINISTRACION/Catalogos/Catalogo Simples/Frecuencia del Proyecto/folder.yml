@@ -1,0 +1,7 @@
+info:
+  name: Frecuencia del Proyecto
+  type: folder
+  seq: 2
+
+request:
+  auth: inherit

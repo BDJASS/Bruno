@@ -1,0 +1,119 @@
+info:
+  name: Alta
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/CausaRaiz/Alta?Nombre=Error de captura&Estatus=true&IdUser=olds
+  params:
+    - name: Nombre
+      value: Error de captura
+      type: query
+    - name: Estatus
+      value: "true"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Alta de Causa Raíz
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Alta del Catálogo de Causas Raíz (HU-01, 3.0)**
+  Registra una nueva causa raíz. `Estatus` se maneja como **lógico obligatorio** (`true`/`false`) y se guarda como entero en la BD (`true→1`, `false→0`).
+  Programa: `catcausaraiz.p` · Procedimiento: `creaCausaRaiz`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/CausaRaiz/Alta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  - **`Nombre`** · STRING · ✅ — Descripción de la causa raíz. Obligatoria, sin duplicar.
+  - **`Estatus`** · BOOLEAN · ✅ — `true` = Activo · `false` = Inactivo. **Obligatorio, no nulo** (se valida como lógico; se guarda como entero 1/0).
+  - **`IdUser`** · STRING · ✅ — Usuario que da de alta.
+
+  ---
+
+  ## 5. Body
+
+  No aplica — los parámetros viajan en el **Query String** (ver secciones 4 y 7).
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json`                     |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/CausaRaiz/Alta?Nombre=Error de captura&Estatus=true&IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Registro creado: 30 - Error de etiquetado en origen.",
+    "NuevoId": 30
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  - **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error; `false` si la operación fue correcta.
+  - **`Respuesta`** · CHARACTER — Mensaje amigable de resultado (no expone verbos HTTP ni errores técnicos).
+  - **`NuevoId`** · INTEGER — Id generado.
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - **`IdUser` es obligatorio** en todos los endpoints; si viene vacío o nulo → `IdError = true` con `"Se requiere el usuario (IdUser)."`.
+  - `Nombre` obligatorio (`"La causa raiz no puede estar vacia."`), sin duplicar.
+  - `Estatus` es **obligatorio y no nulo** → si falta: `"El campo Estatus es obligatorio (true/false)."`. Se guarda como entero (`true→1`, `false→0`).
+  - Toda Alta / Actualización / Baja registra auditoría (`programas/auditoria.p`, app `oeVentas`).
+  - Ante cualquier fallo la respuesta es amigable y `IdError = true`; nunca se realiza la operación a medias (transacción con `UNDO`).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

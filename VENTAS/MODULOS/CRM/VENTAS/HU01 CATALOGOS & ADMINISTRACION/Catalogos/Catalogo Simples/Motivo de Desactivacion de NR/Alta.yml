@@ -1,0 +1,120 @@
+info:
+  name: Alta
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Simple/Alta?IdUser=jjlg&Catalogo=MotivoDesactNR&Nombre=Ejemplo Nuevo 2
+  params:
+    - name: IdUser
+      value: jjlg
+      type: query
+    - name: Catalogo
+      value: MotivoDesactNR
+      type: query
+    - name: Nombre
+      value: Ejemplo Nuevo 2
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Alta de Catálogo Simple
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Alta de Catálogo Simple (HU-01)**
+  Da de alta un registro en un catálogo simple. El registro nace Activo. Catálogos válidos: `Competencia` · `FrecuenciaProy` · `MotivoDesactNR` · `MotivoPerdidaVta` · `MotivoReasignTM` · `Desventaja` · `OrigenLead`.
+  Programa: `catsimple.p` · Procedimiento: `creaCatalogo`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Simple/Alta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  - **`Catalogo`** · STRING · ✅ — Cuál catálogo. Debe ser uno de la lista válida.
+  - **`Nombre`** · STRING · ✅ — Descripción a registrar. No puede ir vacía y no debe duplicarse.
+  - **`IdUser`** · STRING · ✅ — Usuario que da de alta.
+
+  ---
+
+  ## 5. Body
+
+  No aplica — los parámetros viajan en el **Query String** (ver secciones 4 y 7).
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json`                     |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Simple/Alta?IdUser=jjlg&Catalogo=Competencia&Nombre=Ejemplo Nuevo 2
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Registro creado: 22 - Papelera Central.",
+    "NuevoId": 22
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  - **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error; `false` si la operación fue correcta.
+  - **`Respuesta`** · CHARACTER — Mensaje amigable de resultado (no expone verbos HTTP ni errores técnicos).
+  - **`NuevoId`** · INTEGER — Id generado para el nuevo registro (0 si no se creó).
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - **`IdUser` es obligatorio** en todos los endpoints; si viene vacío o nulo → `IdError = true` con `"Se requiere el usuario (IdUser)."`.
+  - `Catalogo` debe ser válido; `Nombre` obligatorio (`"El nombre no puede estar vacio."`).
+  - No se permiten nombres duplicados → `"Existe un registro con la misma descripcion."`.
+  - El Id es autonumérico (último + 1). `Activo` se fija en `true`.
+  - Toda Alta / Actualización / Baja registra auditoría (`programas/auditoria.p`, app `oeVentas`).
+  - Ante cualquier fallo la respuesta es amigable y `IdError = true`; nunca se realiza la operación a medias (transacción con `UNDO`).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

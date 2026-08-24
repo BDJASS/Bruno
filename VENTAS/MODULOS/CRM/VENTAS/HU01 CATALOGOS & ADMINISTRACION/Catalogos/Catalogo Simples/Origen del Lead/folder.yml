@@ -1,0 +1,7 @@
+info:
+  name: Origen del Lead
+  type: folder
+  seq: 7
+
+request:
+  auth: inherit

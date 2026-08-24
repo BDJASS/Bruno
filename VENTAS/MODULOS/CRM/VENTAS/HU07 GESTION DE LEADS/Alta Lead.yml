@@ -1,0 +1,137 @@
+info:
+  name: Alta Lead
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Alta?NombreContacto=Juan Perez&RazonSocial=COMERCIAL DEL NORTE SA&Correo=jperez@cnorte.com&Telefono=8112345678&IdOrigen=1&IdVendedor=5197&IdUser=jjlg
+  params:
+    - name: NombreContacto
+      value: Juan Perez
+      type: query
+    - name: RazonSocial
+      value: COMERCIAL DEL NORTE SA
+      type: query
+    - name: Correo
+      value: jperez@cnorte.com
+      type: query
+    - name: Telefono
+      value: "8112345678"
+      type: query
+    - name: IdOrigen
+      value: "1"
+      type: query
+    - name: IdVendedor
+      value: "5197"
+      type: query
+    - name: IdUser
+      value: jjlg
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Alta de Lead
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Alta de Lead (HU-07)**
+  Registra un nuevo lead. Genera el folio `LD-AAAA-####`, deja `Estatus=1` (Nuevo) y `FecUltAct=hoy`. **Valida que el correo NO exista ya en la tabla `Cliente`**; si existe, informa el Id, la razón social y la fecha de alta del cliente y no crea el lead.
+  Programa servidor: `lead.p` · Procedimiento: `creaLead`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Alta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **``IdUser``** · STRING · ✅ — Usuario que ejecuta. Vacío/nulo → `IdError=true` con "Se requiere el usuario (IdUser).".
+  **``NombreContacto``** · STRING · ✅ — Nombre del contacto/prospecto.
+  **``RazonSocial``** · STRING · ✅ — Razón social.
+  **``Correo``** · STRING · ✅ — Correo del prospecto. Formato válido y no duplicado en `Cliente`.
+  **``Telefono``** · STRING · ❌ — Teléfono o WhatsApp (10 dígitos).
+  **``IdOrigen``** · INTEGER · ✅ — FK a `OrigenLead`. Incluye `Transferido TeleMarketing`.
+  **``IdVendedor``** · STRING · ❌ — Vendedor asignado. Vacío = `Sin asignar`.
+
+  ---
+
+  ## 5. Body
+
+  No aplica — los parámetros viajan en el **Query String** (ver secciones 4 y 7).
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json`                     |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Alta?NombreContacto=Juan Perez&RazonSocial=COMERCIAL DEL NORTE SA&Correo=jperez@cnorte.com&Telefono=8112345678&IdOrigen=1&IdVendedor=5197&IdUser=jjlg
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Lead creado: LD-2026-0007 - Juan Perez.",
+    "Folio": "LD-2026-0007",
+    "NuevoId": 12
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  - **`IdError`** · BOOLEAN
+  - **`Respuesta`** · CHARACTER — mensaje amigable.
+  - **`Folio`** · CHARACTER — folio generado.
+  - **`NuevoId`** · INTEGER — Id interno del lead.
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - `IdUser`, `NombreContacto`, `RazonSocial`, `Correo`, `IdOrigen` obligatorios.
+  - Correo con formato válido (contiene `@` y `.`).
+  - Si el correo ya existe en `Cliente` → `IdError=true`: "El correo ya existe en Clientes: cliente <Id> - <RazonSocial> (alta dd/mm/aaaa).".
+  - Estatus inicial = `1` (Nuevo) automático; `FecAlta` = servidor.
+  - Transacción con `UNDO`: no crea a medias.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

@@ -1,0 +1,118 @@
+info:
+  name: Registra Actividad
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Actividad?Folio=LD-2026-0007&Tipo=LLAMADA&Detalle=Primer contacto, interesado&IdUser=jjlg
+  params:
+    - name: Folio
+      value: LD-2026-0007
+      type: query
+    - name: Tipo
+      value: LLAMADA
+      type: query
+    - name: Detalle
+      value: Primer contacto, interesado
+      type: query
+    - name: IdUser
+      value: jjlg
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Registrar Actividad (Llamada/Correo)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Registrar Actividad (Llamada/Correo) (HU-07)**
+  Registra una entrada en el **timeline** del lead (llamada o correo), actualiza `FecUltAct` y **avanza automáticamente el estatus de Nuevo (1) a En Proceso (2)** en el primer contacto.
+  Programa servidor: `lead.p` · Procedimiento: `registraActividad`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Actividad
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **``Folio``** · STRING · ✅ — Folio del lead.
+  **``Tipo``** · STRING · ✅ — `LLAMADA` o `CORREO` (no distingue may/min).
+  **``Detalle``** · STRING · ❌ — Nota de la llamada/correo.
+  **``IdUser``** · STRING · ✅ — Usuario que ejecuta. Vacío/nulo → `IdError=true` con "Se requiere el usuario (IdUser).".
+
+  ---
+
+  ## 5. Body
+
+  No aplica — los parámetros viajan en el **Query String** (ver secciones 4 y 7).
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json`                     |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Actividad?Folio=LD-2026-0007&Tipo=LLAMADA&Detalle=Primer contacto, interesado&IdUser=jjlg
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  { "IdError": false, "Respuesta": "Actividad registrada en el lead LD-2026-0007." }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  - **`IdError`** · BOOLEAN
+  - **`Respuesta`** · CHARACTER.
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - `IdUser`, `Folio`, `Tipo` obligatorios; `Tipo` ∈ {LLAMADA, CORREO}.
+  - Si `Estatus = 1` (Nuevo) → pasa a `2` (En Proceso) al registrar el primer contacto.
+  - Bloquea si el lead ya no está en gestión (`Estatus >= 3`).
+  - `Origen` de la actividad se marca `MANUAL` (las de InConcert se marcarían `INCONCERT`).
+  - Actualiza `FecUltAct = hoy` (recalcula semáforo/días).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

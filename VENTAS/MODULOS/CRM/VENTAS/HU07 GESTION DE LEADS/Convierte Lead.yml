@@ -1,0 +1,150 @@
+info:
+  name: Convierte Lead
+  type: http
+  seq: 9
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Convierte?Folio=LD-2026-0007&RFC=CON010101AB1&Calle=Av Constitucion&NumExt=1200&CP=64000&Colonia=Centro&Pais=Mexico&Estado=Nuevo Leon&Ciudad=Monterrey&IdUser=jjlg
+  params:
+    - name: Folio
+      value: LD-2026-0007
+      type: query
+    - name: RFC
+      value: CON010101AB1
+      type: query
+    - name: Calle
+      value: Av Constitucion
+      type: query
+    - name: NumExt
+      value: "1200"
+      type: query
+    - name: CP
+      value: "64000"
+      type: query
+    - name: Colonia
+      value: Centro
+      type: query
+    - name: Pais
+      value: Mexico
+      type: query
+    - name: Estado
+      value: Nuevo Leon
+      type: query
+    - name: Ciudad
+      value: Monterrey
+      type: query
+    - name: IdUser
+      value: jjlg
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Conversión de Lead a Cuenta
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Conversión de Lead a Cuenta (HU-07)**
+  Convierte un lead calificado en **Cuenta (Cliente)**: valida RFC y dirección fiscal, genera el **Número de Cliente** (consecutivo de la tabla `Cliente`), crea la cuenta como Tipo Contado y deja el lead en `Estatus=3` (Convertido) ligado al cliente.
+  Programa servidor: `lead.p` · Procedimiento: `convierteLead`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Convierte
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **``Folio``** · STRING · ✅ — Folio del lead a convertir.
+  **``RFC``** · STRING · ✅ — RFC (12–13 caracteres, se guarda en mayúsculas). El regex completo se valida en el front.
+  **``Calle``** · STRING · ✅ — Dirección fiscal.
+  **``NumExt``** · STRING · ✅ — Número exterior.
+  **``NumInt``** · STRING · ❌ — Número interior.
+  **``CP``** · STRING · ✅ — Código postal (5 dígitos).
+  **``Colonia``** · STRING · ✅ — Colonia.
+  **``Pais``** · STRING · ❌ — País (catálogo AdCorex).
+  **``Estado``** · STRING · ❌ — Estado (catálogo AdCorex).
+  **``Ciudad``** · STRING · ❌ — Ciudad (catálogo AdCorex).
+  **``IdUser``** · STRING · ✅ — Usuario que ejecuta. Vacío/nulo → `IdError=true` con "Se requiere el usuario (IdUser).".
+
+  ---
+
+  ## 5. Body
+
+  No aplica — los parámetros viajan en el **Query String** (ver secciones 4 y 7).
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json`                     |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Convierte?Folio=LD-2026-0007&RFC=CON010101AB1&Calle=Av Constitucion&NumExt=1200&CP=64000&Colonia=Centro&Pais=Mexico&Estado=Nuevo Leon&Ciudad=Monterrey&IdUser=jjlg
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Lead LD-2026-0007 convertido. Numero de cliente asignado: 55987.",
+    "NumeroCliente": 55987
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  - **`IdError`** · BOOLEAN
+  - **`Respuesta`** · CHARACTER.
+  - **`NumeroCliente`** · INTEGER — Número de cliente asignado (consecutivo de `Cliente`).
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - `IdUser`, `Folio`, `RFC`, `Calle`, `NumExt`, `CP`, `Colonia` obligatorios.
+  - RFC 12–13 caracteres (validación de formato completo en el front).
+  - Bloquea si `Estatus >= 3`.
+  - `Estatus` del lead pasa a `3` (Convertido) y se guarda `Id-Cliente`.
+  - Todo en una transacción: si falla la creación del cliente se revierte por completo.
+
+  > **Integración HU-06:** este servicio crea el `Cliente` con el subconjunto seguro de campos (Id-Cliente, RazonSocial, RFC, e-Mail, FecReg). El resto de la **Ficha Maestra** (Tipo Contado, dirección fiscal completa, vendedor, clasificación, anexos, perfil del contacto, etc.) corresponde a **HU-06** y debe completarse ahí. Si la tabla `Cliente` exige más campos obligatorios, la transacción se revierte y se devuelve el error.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

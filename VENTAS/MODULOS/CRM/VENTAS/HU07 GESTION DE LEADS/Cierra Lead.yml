@@ -1,0 +1,116 @@
+info:
+  name: Cierra Lead
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Cierra?Folio=LD-2026-0007&IdMotivoCierre=1&Nota=El cliente eligio otro proveedor&IdUser=jjlg
+  params:
+    - name: Folio
+      value: LD-2026-0007
+      type: query
+    - name: IdMotivoCierre
+      value: "1"
+      type: query
+    - name: Nota
+      value: El cliente eligio otro proveedor
+      type: query
+    - name: IdUser
+      value: jjlg
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Cierre de Lead (sin conversión)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Cierre de Lead (sin conversión) (HU-07)**
+  Cierra un lead que no se convertirá a cuenta. Deja `Estatus=4` (Cierre sin Conversión) y guarda el motivo (catálogo) y una nota opcional.
+  Programa servidor: `lead.p` · Procedimiento: `cierraLead`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Cierra
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **``Folio``** · STRING · ✅ — Folio del lead.
+  **``IdMotivoCierre``** · INTEGER · ✅ — FK a `MotivoCierreLead`.
+  **``Nota``** · STRING · ❌ — Nota adicional (obligatoria en el front cuando el motivo es "Otro").
+  **``IdUser``** · STRING · ✅ — Usuario que ejecuta. Vacío/nulo → `IdError=true` con "Se requiere el usuario (IdUser).".
+
+  ---
+
+  ## 5. Body
+
+  No aplica — los parámetros viajan en el **Query String** (ver secciones 4 y 7).
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json`                     |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Cierra?Folio=LD-2026-0007&IdMotivoCierre=1&Nota=El cliente eligio otro proveedor&IdUser=jjlg
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  { "IdError": false, "Respuesta": "Lead LD-2026-0007 cerrado sin conversion." }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  - **`IdError`** · BOOLEAN
+  - **`Respuesta`** · CHARACTER.
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - `IdUser`, `Folio`, `IdMotivoCierre` obligatorios; el motivo debe existir en el catálogo.
+  - Bloquea si `Estatus >= 3`.
+  - El lead sigue visible en el grid (no es baja lógica); cambia de estatus a `4`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

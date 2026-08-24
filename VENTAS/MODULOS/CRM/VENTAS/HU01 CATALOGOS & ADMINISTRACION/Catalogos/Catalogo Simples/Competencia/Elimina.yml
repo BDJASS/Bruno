@@ -1,0 +1,120 @@
+info:
+  name: Elimina
+  type: http
+  seq: 4
+
+http:
+  method: DELETE
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Simple/Elimina?IdUser=jjlg&Catalogo=Competencia&Id=24
+  params:
+    - name: IdUser
+      value: jjlg
+      type: query
+    - name: Catalogo
+      value: Competencia
+      type: query
+    - name: Id
+      value: "24"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Eliminación de Catálogo Simple
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Eliminación (física) de Catálogo Simple (HU-01)**
+  Elimina **físicamente** (`DELETE`) un registro de catálogo simple — **no** es baja lógica, el registro se borra de la BD. Catálogos válidos: `Competencia` · `FrecuenciaProy` · `MotivoDesactNR` · `MotivoPerdidaVta` · `MotivoReasignTM` · `Desventaja` · `OrigenLead`.
+  Programa: `catsimple.p` · Procedimiento: `eliminaCatalogo`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  DELETE
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Simple/Elimina
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  - **`Catalogo`** · STRING · ✅ — Cuál catálogo.
+  - **`Id`** · INTEGER · ✅ — Id del registro a eliminar.
+  - **`IdUser`** · STRING · ✅ — Usuario que ejecuta la eliminación.
+
+  ---
+
+  ## 5. Body
+
+  No aplica — los parámetros viajan en el **Query String** (ver secciones 4 y 7).
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json`                     |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  DELETE http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Simple/Elimina?IdUser=jjlg&Catalogo=Competencia&Id=24
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Registro fue eliminado: 9 - Lumen."
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  - **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error; `false` si la operación fue correcta.
+  - **`Respuesta`** · CHARACTER — Mensaje amigable de resultado (no expone verbos HTTP ni errores técnicos).
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - **`IdUser` es obligatorio** en todos los endpoints; si viene vacío o nulo → `IdError = true` con `"Se requiere el usuario (IdUser)."`.
+  - `Id` obligatorio y debe existir (`"No se encontro el registro."`).
+  - Es **eliminación física** (`DELETE`): el registro se borra de la BD, no queda inactivo.
+  - Bloqueo por concurrencia: `EXCLUSIVE-LOCK NO-WAIT`; si está ocupado → `"Registro ocupado, intente de nuevo."`.
+  - Mensaje de éxito: `"Registro fue eliminado: <Id> - <Nombre>."`.
+  - ⚠️ Cuando existan los módulos de Leads/TM que consumen estos catálogos, se **deberá agregar el bloqueo "no eliminar si está en uso" ANTES del `DELETE`** (hoy no hay tablas dependientes).
+  - Toda Alta / Actualización / Baja registra auditoría (`programas/auditoria.p`, app `oeVentas`).
+  - Ante cualquier fallo la respuesta es amigable y `IdError = true`; nunca se realiza la operación a medias (transacción con `UNDO`).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

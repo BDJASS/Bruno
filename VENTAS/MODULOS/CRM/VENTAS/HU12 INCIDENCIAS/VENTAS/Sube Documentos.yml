@@ -1,0 +1,124 @@
+info:
+  name: Sube Documentos
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Documento/Alta
+  body:
+    type: json
+    data: |
+      {
+        "dsDocAlta": {
+          "ttDocEnc": [
+            { "Folio": "INC-2026-0034", "IdUser": "jjlg", "Etapa": "A" }
+          ],
+          "ttDocFile": [
+            { "Nombre": "factura.pdf", "Extension": "pdf", "TipoMime": "application/pdf", "Contenido": "JVBERi0xLjQK..." },
+            { "Nombre": "foto.jpg",    "Extension": "jpg", "TipoMime": "image/jpeg",       "Contenido": "/9j/4AAQSkZJRg..." }
+          ]
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Subir Documentos a una Incidencia
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Subir Documentos a una Incidencia (HU-12)**
+  Permite **seguir adjuntando archivos** (de cualquier tipo) a una incidencia **ya creada**, sin volver a guardarla. Valida el folio y agrega 1..N documentos al BLOB (`DocIncidencia`). Es el servicio complementario del alta y de la atención cuando se quieren subir evidencias por separado.
+  Programa: `incdocalta.p` · Procedimiento: `subeDocumentos`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Documento/Alta
+  ```
+
+  ---
+
+  ## 4. Reglas
+
+  - **Encabezado obligatorio:** `Folio`, `IdUser` y `Etapa`.
+  - **Etapa obligatoria:** `A` = soporte de alta · `R` = evidencia de resolución. Si no se envía → error `"Se requiere colocar la Etapa A=Soporte de Alta R=Evidencia Resolucion."`.
+  - **Al menos un documento** en `ttDocFile`; por cada documento son obligatorios `Nombre` y `Extension`. Si faltan → error (`"Se requiere colocar el Nombre del Documento"` / `"...la extension del Documento"`).
+  - **Folio válido:** la incidencia debe existir.
+  - Acepta cualquier tipo de archivo; si no se manda `TipoMime` se guarda `application/octet-stream`.
+  - Los documentos con `Contenido` vacío se omiten; el consecutivo `Id-Doc` continúa desde el último de `DocIncidencia`.
+
+  ---
+
+  ## 5. Body (dataset `dsDocAlta`)
+
+  ```json
+  {
+    "dsDocAlta": {
+      "ttDocEnc": [
+        { "Folio": "INC-2026-0034", "IdUser": "jjlg", "Etapa": "A" }
+      ],
+      "ttDocFile": [
+        { "Nombre": "factura.pdf", "Extension": "pdf", "TipoMime": "application/pdf", "Contenido": "JVBERi0xLjQK..." },
+        { "Nombre": "foto.jpg",    "Extension": "jpg", "TipoMime": "image/jpeg",       "Contenido": "/9j/4AAQSkZJRg..." }
+      ]
+    }
+  }
+  ```
+
+  ---
+
+  ## 6. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "2 documento(s) agregado(s) a la incidencia INC-2026-0034.",
+    "Subidos": 2
+  }
+  ```
+
+  ---
+
+  ## 7. Campos
+
+  **`ttDocEnc`** — encabezado (1 fila):
+
+  - **`Folio`** · STRING · ✅ — Folio de la incidencia (debe existir).
+  - **`IdUser`** · STRING · ✅ — Usuario que sube los documentos.
+  - **`Etapa`** · STRING · ✅ — `A` = soporte de alta · `R` = evidencia de resolución.
+
+  **`ttDocFile`** — documentos (1..N):
+
+  - **`Nombre`** · STRING · ✅ — Nombre del documento.
+  - **`Extension`** · STRING · ✅ — Extensión del archivo (`pdf`, `jpg`, `png`, …).
+  - **`TipoMime`** · STRING · ❌ — MIME; si no se envía se guarda `application/octet-stream`.
+  - **`Contenido`** · STRING (Base64) · ✅ — Archivo codificado en Base64.
+
+  **Salida:**
+
+  - **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error.
+  - **`Respuesta`** · CHARACTER — Mensaje amigable de resultado.
+  - **`Subidos`** · INTEGER — Cantidad de documentos efectivamente agregados.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

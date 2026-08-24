@@ -1,0 +1,118 @@
+info:
+  name: Cancela Lead
+  type: http
+  seq: 8
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Cancela?Folio=LD-2026-0007&IdMotivoCancel=1&Observaciones=Registro duplicado&IdUser=jjlg
+  params:
+    - name: Folio
+      value: LD-2026-0007
+      type: query
+    - name: IdMotivoCancel
+      value: "1"
+      type: query
+    - name: Observaciones
+      value: Registro duplicado
+      type: query
+    - name: IdUser
+      value: jjlg
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Cancelación de Lead
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Cancelación de Lead (HU-07)**
+  Cancela un lead por causa administrativa (duplicado, datos erróneos, etc.). Acción **irreversible**: deja `Estatus=5` y hace **baja lógica** (`Activo=false`), por lo que deja de aparecer en el grid salvo que se consulte con filtro.
+  Programa servidor: `lead.p` · Procedimiento: `cancelaLead`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Cancela
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **``Folio``** · STRING · ✅ — Folio del lead.
+  **``IdMotivoCancel``** · INTEGER · ✅ — FK a `MotivoCancelacionLead`.
+  **``Especifica``** · STRING · ❌ (condicional) — Obligatorio cuando el motivo es "Otro".
+  **``Observaciones``** · STRING · ❌ — Texto libre.
+  **``IdUser``** · STRING · ✅ — Usuario que ejecuta. Vacío/nulo → `IdError=true` con "Se requiere el usuario (IdUser).".
+
+  ---
+
+  ## 5. Body
+
+  No aplica — los parámetros viajan en el **Query String** (ver secciones 4 y 7).
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json`                     |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Cancela?Folio=LD-2026-0007&IdMotivoCancel=1&Observaciones=Registro duplicado&IdUser=jjlg
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  { "IdError": false, "Respuesta": "Lead LD-2026-0007 cancelado." }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  - **`IdError`** · BOOLEAN
+  - **`Respuesta`** · CHARACTER.
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - `IdUser`, `Folio`, `IdMotivoCancel` obligatorios; el motivo debe existir.
+  - Si el motivo es "Otro" y no se envía `Especifica` → `IdError=true`.
+  - Baja lógica (`Activo=false`) + `Estatus=5`: sale del grid principal.
+  - Bloquea si `Estatus >= 3` (ya convertido/cerrado/cancelado).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

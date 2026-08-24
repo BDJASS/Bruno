@@ -1,0 +1,94 @@
+info:
+  name: Elimina Incidencia
+  type: http
+  seq: 8
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Elimina?Folio=INC-2026-0034&IdUser=jjlg&IdMotivoBaja=3&Comentario=Ticket de prueba
+  params:
+    - name: Folio
+      value: INC-2026-0034
+      type: query
+    - name: IdUser
+      value: jjlg
+      type: query
+    - name: IdMotivoBaja
+      value: "3"
+      type: query
+    - name: Comentario
+      value: Ticket de prueba
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Baja de Incidencia
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Baja (lógica) de Incidencia (HU-12)**
+  No borra físicamente: marca `Activo = FALSE` y guarda el **motivo de baja** (del catálogo), comentario, usuario y fecha. La incidencia deja de aparecer en las consultas activas pero conserva su historial.
+  Programa: `incelimina.p` · Procedimiento: `eliminaIncidencia`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Elimina
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  - **`Folio`** · STRING · ✅ — Incidencia a dar de baja
+  - **`IdUser`** · STRING · ✅ — Usuario que ejecuta
+  - **`IdMotivoBaja`** · INTEGER · ✅ — Motivo (catálogo `MotivoBaja`): p. ej. Ticket duplicado / Error de captura / Ticket de prueba / Cancelado por cliente
+  - **`Comentario`** · STRING · ❌ — Justificación
+
+  ---
+
+  ## 5. Ejemplo de Request
+
+  ```
+  POST http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Elimina?Folio=INC-2026-0034&IdUser=jjlg&IdMotivoBaja=3&Comentario=Ticket de prueba
+  ```
+
+  ---
+
+  ## 6. Ejemplo de Response
+
+  ```json
+  { "IdError": false, "Respuesta": "Incidencia INC-2026-0034 dada de baja." }
+  ```
+
+  ---
+
+  ## 7. Reglas y salida
+
+  - Folio válido; si ya estaba de baja → error `"La incidencia ya estaba dada de baja."`.
+  - Se toma `EXCLUSIVE-LOCK NO-WAIT` (falla rápido si está ocupada).
+  - **Salida** — **`IdError`** · BOOLEAN · **`Respuesta`** · CHARACTER.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

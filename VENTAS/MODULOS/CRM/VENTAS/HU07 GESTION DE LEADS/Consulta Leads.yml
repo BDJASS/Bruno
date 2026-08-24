@@ -1,0 +1,162 @@
+info:
+  name: Consulta Leads
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Consulta?IdUser=jjlg&IdVendedor=Todos&Estatus=&FechaIni=&FechaFin=&Busqueda=
+  params:
+    - name: IdUser
+      value: jjlg
+      type: query
+    - name: IdVendedor
+      value: Todos
+      type: query
+    - name: Estatus
+      value: ""
+      type: query
+    - name: FechaIni
+      value: ""
+      type: query
+    - name: FechaFin
+      value: ""
+      type: query
+    - name: Busqueda
+      value: ""
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Consulta de Leads (Grid + KPIs)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Consulta de Leads (Grid + KPIs) (HU-07)**
+  Grid principal del módulo de Leads con los 4 KPIs de semáforo. Filtra por vendedor, estatus, periodo (Fecha de Alta) y texto (folio/prospecto/razón social/teléfono). Excluye leads dados de baja (`Activo=false`, es decir cancelados).
+  Programa servidor: `lead.p` · Procedimiento: `leeLeads`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Consulta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **``IdUser``** · STRING · ✅ — Usuario que ejecuta la consulta.
+  **``IdVendedor``** · STRING · ❌ — Filtra por vendedor. Vacío o `Todos` = todos.
+  **``Estatus``** · STRING · ❌ — `1`Nuevo `2`En Proceso `3`Convertido `4`Cierre sin conversión `5`Cancelado. Vacío = todos.
+  **``FechaIni``** · STRING · ❌ — Inicio de periodo sobre Fecha de Alta (dd/mm/aaaa). Vacío = sin límite inferior.
+  **``FechaFin``** · STRING · ❌ — Fin de periodo sobre Fecha de Alta. Vacío = sin límite superior.
+  **``Busqueda``** · STRING · ❌ — Texto parcial en folio, prospecto, razón social o teléfono (insensible a may/min).
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json`                     |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Consulta?IdUser=jjlg&IdVendedor=Todos&Estatus=&FechaIni=&FechaFin=&Busqueda=
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Leads encontrados: 2.",
+    "dsLeads": {
+      "ttLead": [
+        {
+          "Id": 12, "Folio": "LD-2026-0007", "Prospecto": "Juan Perez",
+          "RazonSocial": "COMERCIAL DEL NORTE SA", "Correo": "jperez@cnorte.com",
+          "Telefono": "8112345678", "IdOrigen": 1, "Origen": "Referido",
+          "IdVendedor": "5197", "Vendedor": "JULIA LUCIO GARCIA",
+          "FecAlta": "2026-08-20", "FecUltAct": "2026-08-21",
+          "DiasSinSeg": 2, "Semaforo": "En Gestion",
+          "Estatus": 2, "EstatusDescr": "En Proceso", "IdCliente": 0
+        }
+      ],
+      "ttKpi": [
+        { "EnGestion": 1, "RequiereAtencion": 0, "RiesgoPerdida": 0, "NuevosSemana": 2 }
+      ]
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **`ttLead`** — filas del grid:
+  - **`Id`** · INTEGER — Id interno del lead.
+  - **`Folio`** · CHARACTER — `LD-AAAA-####`.
+  - **`Prospecto`** · CHARACTER — Nombre del contacto.
+  - **`RazonSocial`** · CHARACTER
+  - **`Correo`** · CHARACTER
+  - **`Telefono`** · CHARACTER — `-` si vacío.
+  **`IdOrigen`/`Origen`** · INTEGER/CHARACTER — Origen del lead (catálogo).
+  **`IdVendedor`/`Vendedor`** · CHARACTER — Vendedor asignado (nombre resuelto vía Empleado) o `Sin asignar`.
+  - **`FecAlta`** · DATE
+  - **`FecUltAct`** · DATE — Última llamada/correo.
+  - **`DiasSinSeg`** · INTEGER — `TODAY − FecUltAct`.
+  - **`Semaforo`** · CHARACTER — `En Gestion` (1–7) · `Requiere Atencion` (8–14) · `Riesgo de Perdida` (>14).
+  **`Estatus`/`EstatusDescr`** · INTEGER/CHARACTER — Estatus del lead.
+  - **`IdCliente`** · INTEGER — Cliente generado al convertir (0 = sin convertir).
+
+  - **`ttKpi`** — tarjetas (una fila): **`EnGestion`**
+  - **`RequiereAtencion`**
+  - **`RiesgoPerdida`**
+  - **`NuevosSemana`** · INTEGER.
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - `IdUser` obligatorio en todos los endpoints.
+  - KPIs se calculan sobre leads **activos** (Estatus 1–2), independientes del filtro del grid.
+  - `Nuevos Esta Semana` = leads con Fecha de Alta dentro de la semana calendario (Lunes–Domingo), excluye Cerrado/Cancelado.
+  - El semáforo y los días se recalculan en cada consulta (no se persisten).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

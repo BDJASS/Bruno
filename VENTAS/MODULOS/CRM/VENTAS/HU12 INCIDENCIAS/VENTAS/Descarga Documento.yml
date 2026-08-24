@@ -1,0 +1,120 @@
+info:
+  name: Descarga Documento
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Documento?IdUser=jjlg&IdDoc=101
+  params:
+    - name: IdUser
+      value: jjlg
+      type: query
+    - name: IdDoc
+      value: "101"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Descarga de Documento de Incidencia
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Descarga de Documento (BLOB) de Incidencia (HU-12)**
+  Devuelve el contenido (BLOB) de **un** documento, codificado en **Base64**, junto con su nombre / extensión / tipo MIME. Es el único servicio que toca el binario; el listado de documentos viaja ligero (metadatos) en `/Incidencia/Detalle`.
+  Programa servidor: `incdocdescarga.p` · Procedimiento: `descargaDocumento`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Documento
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  - **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta
+  - **`IdDoc`** · STRING · ✅ — Id del documento a descargar (viene de `ttIncDoc.IdDoc` del detalle)
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Incidencia/Documento?IdUser=jjlg&IdDoc=101
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Documento evidencia1.pdf listo.",
+    "Nombre": "evidencia1.pdf",
+    "Extension": "pdf",
+    "TipoMime": "application/pdf",
+    "Tamano": 84213,
+    "Contenido": "JVBERi0xLjQKJc..."
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  - **`IdError`** · BOOLEAN — `true` si el documento no existe o hubo error
+  - **`Respuesta`** · CHARACTER — Mensaje de resultado
+  - **`Nombre`** · CHARACTER — Nombre del archivo
+  - **`Extension`** · CHARACTER — `pdf` | `jpg` | `png` | `xlsx` | `docx`
+  - **`TipoMime`** · CHARACTER — `application/pdf`, `image/jpeg`, …
+  - **`Tamano`** · DECIMAL — Tamaño en bytes
+  - **`Contenido`** · LONGCHAR — Binario del documento en **Base64** (el front lo decodifica para mostrar/descargar)
+
+  ---
+
+  ## 10. Notas
+
+  - El binario es un LOB fuera de fila; sólo aquí se materializa (`COPY-LOB` → MEMPTR → `BASE64-ENCODE`).
+  - Para saber qué documentos tiene una incidencia use `/Incidencia/Detalle` (trae los metadatos sin el binario).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

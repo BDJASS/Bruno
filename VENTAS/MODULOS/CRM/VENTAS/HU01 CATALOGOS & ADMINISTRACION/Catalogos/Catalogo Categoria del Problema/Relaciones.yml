@@ -1,0 +1,123 @@
+info:
+  name: Relaciones
+  type: http
+  seq: 5
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Problema/Relaciones?IdProblema=11&IdUser=olds
+  params:
+    - name: IdProblema
+      value: "11"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Relaciones de una Categoría de Problema
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Relaciones de la Categoría (Soluciones y Causas) (HU-01, 1.0)**
+  Devuelve, para una categoría, sus soluciones asociadas (con Flete/Merma) y sus causas raíz asociadas (con estatus). Alimenta las subpestañas del detalle.
+  Programa: `catproblema.p` · Procedimiento: `leeRelaciones`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Problema/Relaciones
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  - **`IdProblema`** · INTEGER · ✅ — Id de la categoría de problema.
+  - **`IdUser`** · STRING · ✅ — Usuario que consulta.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Catalogo/Problema/Relaciones?IdProblema=11&IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Consulta ejecutada correctamente.",
+    "dsRelProblema": {
+      "ttRelSol": [ { "IdSolucion": 20, "Nombre": "Reposicion de Material CON Recoleccion", "Flete": true, "Merma": true } ],
+      "ttRelCau": [ { "IdCausaRaiz": 16, "Nombre": "Dano por fabrica", "EstatusDescr": "Activo" } ]
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  - **`ttRelSol`** (soluciones asociadas) — **`IdSolucion`** · INTEGER
+  - **`Nombre`** · CHARACTER
+  - **`Flete`** · BOOLEAN
+  - **`Merma`** · BOOLEAN (Flete/Merma vienen del maestro Solución, no se editan aquí).
+  - **`ttRelCau`** (causas asociadas) — **`IdCausaRaiz`** · INTEGER
+  - **`Nombre`** · CHARACTER
+  - **`EstatusDescr`** · CHARACTER.
+
+  - **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error; `false` si la operación fue correcta.
+  - **`Respuesta`** · CHARACTER — Mensaje amigable de resultado (no expone verbos HTTP ni errores técnicos).
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - **`IdUser` es obligatorio** en todos los endpoints; si viene vacío o nulo → `IdError = true` con `"Se requiere el usuario (IdUser)."`.
+  - `IdProblema` obligatorio (`"Se requiere el problema."`).
+  - Ante cualquier fallo la respuesta es amigable y `IdError = true`; nunca se realiza la operación a medias (transacción con `UNDO`).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

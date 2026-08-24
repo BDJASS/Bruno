@@ -1,0 +1,191 @@
+info:
+  name: Atender Incidencia
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Cedis/Atiende
+  body:
+    type: json
+    data: |
+      {
+        "dsIncAtiende": {
+          "ttAtEnc": [
+            {
+              "Folio": "INC-2026-0034",
+              "IdUser": "jvhernandez",
+              "NuevoEstatus": 3,
+              "NotasAtencion": "Se repuso el material y se recolectó el dañado.",
+              "CostoCostos": 0.00,
+              "NumGuia": "DHL-99887766"
+            }
+          ],
+          "ttAtDet": [
+            { "Renglon": 1, "IdResponsable": "jvhernandez", "NombreResponsable": "JORGE V. HERNANDEZ", "Comentario": "Repuesto OK" }
+          ],
+          "ttAtCausa": [
+            { "Renglon": 1, "IdCausaRaiz": 16, "EsPreseleccion": false }
+          ],
+          "ttAtSeg": [
+            { "Renglon": 1, "IdSolucion": 20, "IdActividad": 1, "Actividad": "Surtido",      "Area": "CEDIS", "EstadoAct": "C", "Comentario": "OK" },
+            { "Renglon": 1, "IdSolucion": 20, "IdActividad": 6, "Actividad": "Devoluciones", "Area": "CEDIS", "EstadoAct": "C", "Comentario": "Recolectado" }
+          ]
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Atención de Incidencia (CEDIS)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Atención de Incidencia — CEDIS (HU-12-2)**
+  Guarda la atención de una incidencia desde **CEDIS**: nuevo estatus, notas, costo de "Costos", número de guía, **responsable por renglón**, causas raíz y checklist de actividades. Los documentos de resolución se suben aparte (`/Incidencia/Documento/Alta`). El flujo de estatus es **unidireccional** (`1 → 2 → 3`, nunca retrocede).
+  Programa: `incatiende.p` · Procedimiento: `atiendeIncidencia`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Cedis/Atiende
+  ```
+
+  ---
+
+  ## 4. Reglas de negocio (importante)
+
+  - **Obligatorios:** `Folio`, `IdUser` y `NuevoEstatus`.
+  - **`NuevoEstatus` no puede venir nulo** y debe ser `1`, `2` o `3`. Si es nulo o fuera de rango → error.
+  - **Folio válido:** debe existir la incidencia y estar activa (no dada de baja).
+  - **Flujo unidireccional (RN-04):** el estatus solo avanza; si `NuevoEstatus < EstatusActual` → error.
+  - **Sello de tiempos:** al pasar a `2` (En Proceso) se sella `FecHoraProceso` (si estaba vacío); al pasar a `3` (Resuelta) se sella `FecHoraResol`.
+  - **Responsable es a NIVEL RENGLÓN** (`ttAtDet`): quien se hace cargo del trinomio **artículo-problema-solución** se guarda en `DetIncidencia.Id-Responsable` / `NombreResponsable`, **no** a nivel incidencia.
+  - **Causas (`ttAtCausa`) y checklist (`ttAtSeg`) se REEMPLAZAN**: se borran las previas de la incidencia y se recrean con lo que trae el body.
+  - **Documentos de resolución:** NO van en este servicio. Se suben con `/Incidencia/Documento/Alta` (`incdocalta.p`), `Etapa = "R"`.
+  - **Bloqueos:** la incidencia se toma `EXCLUSIVE-LOCK NO-WAIT` (falla rápido si otro la tiene). Los hijos (causas/checklist) se reemplazan con **buffer + `FIND ... NO-WAIT` uno a uno**, para no mantener un lock masivo sobre las tablas.
+
+  ---
+
+  ## 5. Body (dataset `dsIncAtiende`)
+
+  Cuatro temp-tables: `ttAtEnc` (1), `ttAtDet` (responsable por renglón), `ttAtCausa`, `ttAtSeg`.
+  > Los **documentos de resolución NO viajan aquí**: se suben con el servicio dedicado `/Incidencia/Documento/Alta` (`incdocalta.p`) usando `Etapa = "R"` (la incidencia ya existe, ese servicio solo valida el folio y sube el archivo).
+
+  ```json
+  {
+    "dsIncAtiende": {
+      "ttAtEnc": [
+        {
+          "Folio": "INC-2026-0034",
+          "IdUser": "jvhernandez",
+          "NuevoEstatus": 3,
+          "NotasAtencion": "Se repuso el material y se recolectó el dañado.",
+          "CostoCostos": 0.00,
+          "NumGuia": "DHL-99887766"
+        }
+      ],
+      "ttAtDet": [
+        { "Renglon": 1, "IdResponsable": "jvhernandez", "NombreResponsable": "JORGE V. HERNANDEZ", "Comentario": "Repuesto OK" }
+      ],
+      "ttAtCausa": [
+        { "Renglon": 1, "IdCausaRaiz": 16, "EsPreseleccion": false }
+      ],
+      "ttAtSeg": [
+        { "Renglon": 1, "IdSolucion": 20, "IdActividad": 1, "Actividad": "Surtido",      "Area": "CEDIS", "EstadoAct": "C", "Comentario": "OK" },
+        { "Renglon": 1, "IdSolucion": 20, "IdActividad": 6, "Actividad": "Devoluciones", "Area": "CEDIS", "EstadoAct": "C", "Comentario": "Recolectado" }
+      ]
+    }
+  }
+  ```
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                |
+  |----------------|----------------------|
+  | `Accept`       | `application/json`   |
+  | `Content-Type` | `application/json`   |
+
+  ---
+
+  ## 7. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Atencion guardada para la incidencia INC-2026-0034."
+  }
+  ```
+
+  ---
+
+  ## 8. Campos del Body
+
+  **Encabezado (`ttAtEnc`)**
+  - **`Folio`** · STRING · ✅ — Incidencia a atender
+  - **`IdUser`** · STRING · ✅ — Usuario CEDIS
+  - **`NuevoEstatus`** · INTEGER · ✅ — `1`/`2`/`3`; **no nulo**, solo avanza
+  - **`NotasAtencion`** · STRING · ❌ — Bitácora de atención
+  - **`CostoCostos`** · DECIMAL · ❌ — Costo de "Costos" (fuera del CostoTotal)
+  - **`NumGuia`** · STRING · ❌ — Número de guía de mensajería (texto, no costo)
+
+  **Responsable por renglón (`ttAtDet`)** · 0..N
+  - **`Renglon`** · INTEGER · ✅ — Renglón de `DetIncidencia`
+  - **`IdResponsable`** · STRING · ❌ — Usuario responsable del artículo-problema-solución
+  - **`NombreResponsable`** · STRING · ❌ — Nombre del responsable
+  - **`Comentario`** · STRING · ❌ — Nota (si vacío, no pisa el existente)
+
+  **Causas raíz (`ttAtCausa`)** · 0..N — **reemplaza**
+  - **`Renglon`** · INTEGER — Artículo
+  - **`IdCausaRaiz`** · INTEGER · ✅ (>0)
+  - **`EsPreseleccion`** · BOOLEAN — `true` = venía preseleccionada
+
+  **Checklist (`ttAtSeg`)** · 0..N — **reemplaza**
+  - **`Renglon`** / **`IdSolucion`** / **`IdActividad`** · INTEGER
+  - **`Actividad`** · STRING
+  - **`Area`** · STRING
+  - **`EstadoAct`** · STRING — `P` Pendiente · `C` Completado · `N` No aplica (default `P`)
+  - **`Comentario`** · STRING
+
+  > Los documentos de resolución se manejan en `/Incidencia/Documento/Alta` (`incdocalta.p`), no en este dataset.
+
+  ---
+
+  ## 9. Campos de Salida
+
+  - **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error
+  - **`Respuesta`** · CHARACTER — Mensaje de resultado / error
+
+  ---
+
+  ## 10. Mensajes de validación (ejemplos)
+
+  - `"El nuevo estatus es obligatorio y debe ser 1, 2 o 3."`
+  - `"No se permite regresar el estado de la incidencia."`
+  - `"No se encontro la incidencia INC-2026-0034."`
+  - `"La incidencia esta siendo modificada por otro usuario. Intente de nuevo."`
+
+  > ⚠️ **Prerrequisito de BD:** `DetIncidencia` requiere el campo **`NombreResponsable`** (char) además del ya existente `Id-Responsable`, para guardar el responsable por renglón.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS
