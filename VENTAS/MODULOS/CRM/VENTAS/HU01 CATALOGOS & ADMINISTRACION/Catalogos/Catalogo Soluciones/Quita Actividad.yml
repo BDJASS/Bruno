@@ -1,0 +1,118 @@
+info:
+  name: Quita Actividad
+  type: http
+  seq: 9
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Solucion/Actividad/Quita?IdSolucion=12&IdActividad=4&IdUser=jjlg
+  params:
+    - name: IdSolucion
+      value: "12"
+      type: query
+    - name: IdActividad
+      value: "4"
+      type: query
+    - name: IdUser
+      value: jjlg
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Quitar Actividad de una Solución
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Quitar Actividad de una Solución (HU-01 / HU-12)**
+  Mantenimiento fino de una **solución ya existente**: quita una actividad del puente `SolucionActividad` sin rehacer toda la solución (complementa al Alta `/Catalogo/Solucion/Alta`).
+  Programa servidor: `catsolucion.p` · Procedimiento: `quitaActividad`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Solucion/Actividad/Quita
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido
+
+  **`IdSolucion`** · INTEGER · ✅ — Solución a modificar (debe existir).
+  **`IdActividad`** · INTEGER · ✅ — Actividad a quitar.
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Todo va en el query string.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                |
+  |----------------|----------------------|
+  | `Accept`       | `application/json`   |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Solucion/Actividad/Quita?IdSolucion=12&IdActividad=4&IdUser=jjlg
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Actividad quitada de la solucion."
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error.
+  **`Respuesta`** · CHARACTER — Mensaje amigable de resultado.
+
+  Se elimina el renglón de `SolucionActividad` que liga la solución con la actividad.
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - **`IdUser` obligatorio**; vacío/nulo → `IdError=true`.
+  - **`IdSolucion`** e **`IdActividad`** requeridos; la actividad debe pertenecer a la solución (si no → `IdError=true`).
+  - **No deja la solución vacía:** si la actividad es la última de la solución → `IdError=true` con "debe conservar al menos una actividad; no se puede quitar la ultima". Es el candado que pediste.
+  - Toma el puente con `EXCLUSIVE-LOCK NO-WAIT`; si está ocupado → "Registro ocupado, intente de nuevo.".
+  - Operación transaccional (`UNDO`).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

@@ -5,10 +5,10 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Solucion/Config?IdSolucion=20&IdUser=olds
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Solucion/Config?IdSolucion=40&IdUser=olds
   params:
     - name: IdSolucion
-      value: "20"
+      value: "40"
       type: query
     - name: IdUser
       value: olds

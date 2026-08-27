@@ -1,7 +1,7 @@
 info:
-  name: HU07 GESTION DE LEADS
+  name: Datos Generales
   type: folder
-  seq: 3
+  seq: 1
 
 request:
   auth: inherit

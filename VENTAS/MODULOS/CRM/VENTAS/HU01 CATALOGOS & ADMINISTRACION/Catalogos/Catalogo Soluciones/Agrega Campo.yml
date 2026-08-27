@@ -1,0 +1,119 @@
+info:
+  name: Agrega Campo
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Solucion/Campo/Agrega?IdSolucion=40&IdCampo=5&IdUser=jjlg
+  params:
+    - name: IdSolucion
+      value: "40"
+      type: query
+    - name: IdCampo
+      value: "5"
+      type: query
+    - name: IdUser
+      value: jjlg
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Agregar Campo a una Solución
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Agregar Campo a una Solución (HU-01 / HU-12)**
+  Mantenimiento fino de una **solución ya existente**: agrega un campo del puente `SolucionCampo` sin rehacer toda la solución (complementa al Alta `/Catalogo/Solucion/Alta`).
+  Programa servidor: `catsolucion.p` · Procedimiento: `agregaCampo`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Solucion/Campo/Agrega
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido
+
+  **`IdSolucion`** · INTEGER · ✅ — Solución a modificar (debe existir).
+  **`IdCampo`** · INTEGER · ✅ — Campo a agregar.
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Todo va en el query string.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                |
+  |----------------|----------------------|
+  | `Accept`       | `application/json`   |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Solucion/Campo/Agrega?IdSolucion=12&IdCampo=4&IdUser=jjlg
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Campo agregado a la solucion."
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error.
+  **`Respuesta`** · CHARACTER — Mensaje amigable de resultado.
+
+  Registro de puente creado en `SolucionCampo` (Id-Solucion, Id-Campo, Orden).
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - **`IdUser` obligatorio**; vacío/nulo → `IdError=true`.
+  - **`IdSolucion`** debe existir (tabla `Solucion`).
+  - **`IdCampo`** debe existir y estar **activo** en su catálogo (`Campo`).
+  - **Sin duplicar:** si el campo ya está ligado a la solución → `IdError=true` con "ya pertenece a la solucion" (no se crea otra vez).
+  - El `Orden` se asigna al final (máximo actual + 1).
+  - Operación transaccional (`UNDO`): ante error no se guarda a medias.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

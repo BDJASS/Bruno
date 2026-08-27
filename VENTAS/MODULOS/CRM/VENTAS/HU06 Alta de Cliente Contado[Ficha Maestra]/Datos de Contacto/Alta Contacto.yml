@@ -1,0 +1,34 @@
+info:
+  name: Alta Contacto
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionCliente/DatosDeContactol/Alta
+  body:
+    type: json
+    data: |2-
+       {
+            "ttDatosContacto": [
+              {
+                "IdCliente": 54631,
+                "TipoContacto": "",
+                "Nombre": "NANCY RAMIREZ",
+                "Puesto": "",
+                "Telefono": "8442252428",
+                "Correo": "aayala@adosa.com.mx",
+                "WhatsApp": "8888",
+                "Categoria": "Alterno",
+                "Coment": "comentario masivo"
+              }
+            ]
+          }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

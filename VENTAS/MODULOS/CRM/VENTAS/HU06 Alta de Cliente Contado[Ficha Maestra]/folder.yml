@@ -1,0 +1,7 @@
+info:
+  name: HU06 Alta de Cliente Contado[Ficha Maestra]
+  type: folder
+  seq: 2
+
+request:
+  auth: inherit

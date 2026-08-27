@@ -12,14 +12,20 @@ http:
       {
         "dsSolAlta": {
           "ttEncSol": [
-            { "Nombre": "Reposicion de Material CON Recoleccion", "IdUser": "olds", "Flete": true, "Merma": true }
+            { "Nombre": "Solucion Adcorex Ejemplo", 
+             "IdUser": "olds", 
+             "Flete": true, 
+             "Merma": true }
           ],
           "ttCampoSel": [
             { "IdCampo": 1 },
-            { "IdCampo": 2 }
+            { "IdCampo": 2 },
+            { "IdCampo": 3 },
+            { "IdCampo": 4 }
           ],
           "ttActSel": [
             { "IdActividad": 1 },
+            { "IdActividad": 2 },
             { "IdActividad": 6 }
           ]
         }

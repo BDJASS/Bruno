@@ -5,10 +5,13 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/OrigenLead?IdUser=jjlg
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Simple/Consulta?IdUser=jjlg&Catalogo=OrigenLead
   params:
     - name: IdUser
       value: jjlg
+      type: query
+    - name: Catalogo
+      value: OrigenLead
       type: query
   auth: inherit
 
@@ -19,16 +22,14 @@ settings:
   maxRedirects: 5
   forwardAuthorizationHeader: true
 
-docs: |
-  # Servicio REST — Catálogo Origen del Lead
+docs: |-
+  # Servicio REST — Consulta de Catálogo Simple
 
   ---
 
   ## 1. Título del Servicio
 
-  **Catálogo Origen del Lead (HU-07)**
-  Devuelve el catálogo **Origen del Lead** (solo activos) para el combo "Origen" en Alta/Edición de Lead. Incluye el valor `Transferido TeleMarketing`.
-  Programa servidor: `lead.p` · Procedimiento: `leeOrigenLead`.
+  **Consulta de Catálogo Simple (HU-01)** Devuelve el listado de un catálogo simple (solo Id + Nombre + Activo). Un mismo endpoint sirve a varios catálogos mediante el parámetro `Catalogo`. Catálogos válidos: `Competencia` · `FrecuenciaProy` · `MotivoDesactNR` · `MotivoPerdidaVta` · `MotivoReasignTM` · `Desventaja` · `OrigenLead`. Programa: `catsimple.p` · Procedimiento: `leeCatalogo`.
 
   ---
 
@@ -43,7 +44,7 @@ docs: |
   ## 3. URL Completa
 
   ```
-  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/OrigenLead
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Simple/Consulta
   ```
 
   ---
@@ -52,7 +53,9 @@ docs: |
 
   > ✅ = Requerido · ❌ = Opcional
 
-  - **`IdUser`** · STRING · ✅ — Usuario que ejecuta. Vacío/nulo → `IdError=true` con "Se requiere el usuario (IdUser).".
+  - `Catalogo` · STRING · ✅ — Cuál catálogo consultar. Debe ser uno de la lista válida.
+  - `Busqueda` · STRING · ❌ — Texto parcial sobre el Nombre (insensible a mayúsculas). Vacío = todos.
+  - `IdUser` · STRING · ✅ — Usuario que ejecuta la consulta.
 
   ---
 
@@ -64,9 +67,9 @@ docs: |
 
   ## 6. Headers
 
-  | Header         | Valor                                  |
-  |----------------|----------------------------------------|
-  | `Accept`       | `application/json`                     |
+  | Header | Valor |
+  | --- | --- |
+  | `Accept` | `application/json` |
   | `Content-Type` | `application/json` *(opcional en GET)* |
 
   ---
@@ -74,7 +77,7 @@ docs: |
   ## 7. Ejemplo de Request
 
   ```
-  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/OrigenLead?IdUser=jjlg
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Simple/Consulta?IdUser=jjlg&Catalogo=Competencia
   ```
 
   ---
@@ -84,29 +87,35 @@ docs: |
   ```json
   {
     "IdError": false,
-    "Respuesta": "Origenes de lead encontrados: 8.",
-    "ttCatOrigen": [
-      { "Id": 1, "Nombre": "Referido" },
-      { "Id": 8, "Nombre": "Transferido TeleMarketing" }
+    "Respuesta": "Consulta ejecutada correctamente.",
+    "ttCat": [
+      { "Id": 12, "Nombre": "Office Depot", "Activo": true },
+      { "Id": 9,  "Nombre": "Lumen", "Activo": true }
     ]
   }
   ```
 
   ---
 
-  ## 9. Campos de la Respuesta (ttCatOrigen)
+  ## 9. Campos de la Respuesta
 
-  - **`Id`** · INTEGER — Clave del origen (`OrigenLead.Id-OrigenLead`).
-  - **`Nombre`** · CHARACTER — Texto del origen para el combo.
+  `ttCat` — arreglo de registros del catálogo:
 
-  Campos de salida generales — **`IdError`** · BOOLEAN · **`Respuesta`** · CHARACTER.
+  - `Id` · INTEGER — Clave única del registro.
+  - `Nombre` · CHARACTER — Descripción del registro.
+  - `Activo` · BOOLEAN — `true` = vigente · `false` = dado de baja (baja lógica).
+  - `IdError` · BOOLEAN — `true` si falló una validación o hubo error; `false` si la operación fue correcta.
+  - `Respuesta` · CHARACTER — Mensaje amigable de resultado (no expone verbos HTTP ni errores técnicos).
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - `IdUser` **es obligatorio** en todos los endpoints; si viene vacío o nulo → `IdError = true` con `"Se requiere el usuario (IdUser)."`.
+  - Si `Catalogo` no pertenece a la lista válida → `"Catalogo no valido: <valor>."`.
+  - La lista viene ordenada por Nombre. Incluye activos e inactivos (el front filtra si lo requiere).
+  - Ante cualquier fallo la respuesta es amigable y `IdError = true`; nunca se realiza la operación a medias (transacción con `UNDO`).
 
   ---
 
-  ## 10. Notas
-
-  - Solo devuelve registros con `OrigenLead.Activo = TRUE`, ordenados por Id.
-  - Este catálogo también es administrable vía `/Catalogo/Simple/*?Catalogo=OrigenLead`; aquí es solo lectura para el combo del Lead.
-
-  ---
   **Desarrollado por:** SIS10 - JASS

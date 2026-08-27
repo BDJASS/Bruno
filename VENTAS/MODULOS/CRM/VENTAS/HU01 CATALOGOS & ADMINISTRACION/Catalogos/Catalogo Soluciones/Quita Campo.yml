@@ -1,0 +1,118 @@
+info:
+  name: Quita Campo
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Solucion/Campo/Quita?IdSolucion=12&IdCampo=4&IdUser=jjlg
+  params:
+    - name: IdSolucion
+      value: "12"
+      type: query
+    - name: IdCampo
+      value: "4"
+      type: query
+    - name: IdUser
+      value: jjlg
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Quitar Campo de una Solución
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Quitar Campo de una Solución (HU-01 / HU-12)**
+  Mantenimiento fino de una **solución ya existente**: quita un campo del puente `SolucionCampo` sin rehacer toda la solución (complementa al Alta `/Catalogo/Solucion/Alta`).
+  Programa servidor: `catsolucion.p` · Procedimiento: `quitaCampo`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Solucion/Campo/Quita
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido
+
+  **`IdSolucion`** · INTEGER · ✅ — Solución a modificar (debe existir).
+  **`IdCampo`** · INTEGER · ✅ — Campo a quitar.
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Todo va en el query string.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                |
+  |----------------|----------------------|
+  | `Accept`       | `application/json`   |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Solucion/Campo/Quita?IdSolucion=12&IdCampo=4&IdUser=jjlg
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Campo quitado de la solucion."
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error.
+  **`Respuesta`** · CHARACTER — Mensaje amigable de resultado.
+
+  Se elimina el renglón de `SolucionCampo` que liga la solución con el campo.
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - **`IdUser` obligatorio**; vacío/nulo → `IdError=true`.
+  - **`IdSolucion`** e **`IdCampo`** requeridos; el campo debe pertenecer a la solución (si no → `IdError=true`).
+  - **No deja la solución vacía:** si el campo es el último de la solución → `IdError=true` con "debe conservar al menos un campo; no se puede quitar el ultimo". Es el candado que pediste.
+  - Toma el puente con `EXCLUSIVE-LOCK NO-WAIT`; si está ocupado → "Registro ocupado, intente de nuevo.".
+  - Operación transaccional (`UNDO`).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS
