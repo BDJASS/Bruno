@@ -1,0 +1,138 @@
+info:
+  name: Frecuencia de Compra
+  type: http
+  seq: 8
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/FichaMaestra/Consulta?Catalogo=FrecuenciaCompra&IdUser=jjlg
+  params:
+    - name: Catalogo
+      value: FrecuenciaCompra
+      type: query
+    - name: IdUser
+      value: jjlg
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Consulta de Catálogos de la Ficha Maestra
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Consulta de Catálogos de la Ficha Maestra (HU-06)**
+  Servicio de **solo lectura** que devuelve el contenido de los **7 catálogos administrables** que alimentan el TAB Ficha Maestra del alta de Cliente de Contado. Un solo GET genérico: el parámetro `Catalogo` indica cuál leer y regresa sus registros **activos** (`Id` + `Nombre`) ordenados por `Id`.
+  Programa servidor: `catfichamaestra.p` · Procedimiento: `leeCatalogo`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/FichaMaestra/Consulta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`Catalogo`** · STRING · ✅ — Catálogo a consultar. Valor inválido → `IdError=true`.
+  - `RolCompra` · `EstiloSocial` · `CanalPercepcion` · `TipoAnexo` · `EquipoProteccion` · `NivelSatisfaccion` · `CondicionPago` · `FrecuenciaCompra`
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta. Vacío/nulo → `IdError=true` con "Se requiere el usuario (IdUser).".
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/FichaMaestra/Consulta?Catalogo=RolCompra&IdUser=jjlg
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Consulta ejecutada correctamente.",
+    "ttCat": [
+      { "Id": 1, "Nombre": "Decisor" },
+      { "Id": 2, "Nombre": "Influenciador" },
+      { "Id": 3, "Nombre": "Pagador" },
+      { "Id": 4, "Nombre": "Usuario" }
+    ]
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta (ttCat)
+
+  **`Id`** · INTEGER — Clave del registro. Es el valor que se guarda como FK en la Ficha Maestra (p. ej. `FichaMaestra.Id-RolCompra`).
+  **`Nombre`** · CHARACTER — Texto que se muestra en el combo / chip.
+
+  Campos de salida generales — **`IdError`** · BOOLEAN · **`Respuesta`** · CHARACTER.
+
+  ---
+
+  ## 10. Catálogos y su destino en el modelo
+
+  | `Catalogo`           | Tabla                | Campo destino en Ficha Maestra        |
+  |----------------------|----------------------|---------------------------------------|
+  | `RolCompra`          | `RolCompra`          | `FichaMaestra.Id-RolCompra`           |
+  | `EstiloSocial`       | `EstiloSocial`       | `FichaMaestra.Id-EstiloSocial`        |
+  | `CanalPercepcion`    | `CanalPercepcion`    | `FichaMaestra.Id-CanalPercep`         |
+  | `TipoAnexo`          | `TipoAnexo`          | `FichaAnexo.Id-TipoAnexo`             |
+  | `EquipoProteccion`   | `EquipoProteccion`   | `FichaEPP.Id-EquipoProteccion`        |
+  | `NivelSatisfaccion`  | `NivelSatisfaccion`  | `FichaMaestra.Id-NivelSatisf`         |
+  | `CondicionPago`      | `CondicionPago`      | `FichaMaestra.Id-CondPago`            |
+  | `FrecuenciaCompra`   | `FrecuenciaCompra`   | `FichaMaestra.Id-FrecCompra`          |
+
+  ---
+
+  ## 11. Notas
+
+  - Servicio **solo GET** (lectura). El alta/edición de estos catálogos, si la PM lo requiere, se agregaría después (patrón `catsimple.p`).
+  - Solo se listan registros **activos** (`Activo = true`).
+  - Los valores base se cargan con `inccargacatalogos2.p` (UPSERT, re-ejecutable) y se limpian con `inclimpiacatalogos.p`.
+  - El catálogo `OrigenLead` (origen de la cuenta, que viene del Lead) **no** está aquí: se consulta por `/Catalogo/Simple/Consulta?Catalogo=OrigenLead` (HU-01).
+  - **`FrecuenciaCompra` es un catálogo PROPIO de la Ficha Maestra** — tiene los mismos valores que `FrecuenciaProy` (HU-01, "Frecuencia del Proyecto") pero es otro dominio/consumidor, por eso **no se reutiliza** `FrecuenciaProy`; se administra aquí.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

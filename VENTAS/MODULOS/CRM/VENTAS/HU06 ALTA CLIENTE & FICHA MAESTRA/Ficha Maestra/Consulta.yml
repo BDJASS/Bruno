@@ -1,0 +1,176 @@
+info:
+  name: Consulta
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ficha/Consulta?IdCliente=1024&IdUser=jjlg
+  params:
+    - name: IdCliente
+      value: "1024"
+      type: query
+    - name: IdUser
+      value: jjlg
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Consulta de Ficha Maestra
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Consulta de Ficha Maestra del Cliente (HU-06)**
+  Devuelve la **Ficha Maestra** de un cliente (1:1 por `Id-Cliente`) con sus tablas hijas en un **dataset anidado**: direcciones de embarque, anexos requeridos y equipo de protección (EPP). Si el cliente todavía no tiene ficha, regresa el dataset vacío con `IdError=false`.
+  Programa servidor: `fichamaestra.p` · Procedimiento: `leeFicha`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ficha/Consulta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`Id-Cliente`** · INTEGER · ✅ — Cliente del que se lee la ficha. Debe existir; si no → `IdError=true`.
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta. Vacío/nulo → `IdError=true`.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ficha/Consulta?Id-Cliente=1024&IdUser=jjlg
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  Dataset anidado: `ttFicha` → `ttDirEmb` + `ttAnexo` + `ttEPP`.
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Ficha encontrada.",
+    "dsFicha": {
+      "ttFicha": [
+        {
+          "IdCliente": 1024, "IdOrigenLead": 1, "FecProspecto": "2026-07-15",
+          "ProveedorActual": "Papelera del Norte", "MotivoCambioProveedor": "Precio y tiempos de entrega",
+          "IdNivelSatisf": 2, "IdFrecCompra": 1, "GastoPromedio": 15000.00, "PotencialAnual": 180000.00,
+          "HorariosRecibo": "Lun-Vie 9:00-17:00",
+          "RequiereEPP": true, "EntregasMultiples": true, "AnexosRequeridos": true,
+          "RequiereOC": true, "UsaPortalProv": false, "AltaFormalProv": false, "Politica3Cot": true,
+          "IdCondPago": 3,
+          "ContactoNombre": "Ana Ruiz", "ContactoPuesto": "Gerente de Compras",
+          "ContactoCorreo": "aruiz@cliente.com", "ContactoTelExt": "8181818181 Ext. 120",
+          "ContactoWhatsApp": "8181818181", "ContactoDepto": "Compras",
+          "IdRolCompra": 1, "IdEstiloSocial": 2, "IdCanalPercep": 1, "IdUser": "jjlg",
+          "ttDirEmb": [
+            { "NombreSucursal": "CEDIS Apodaca", "CalleNumero": "Av. Industria 100", "CP": "66600",
+              "IdCiudad": 39, "CiudadDescr": "Apodaca", "IdEstado": "NL", "EstadoDescr": "Nuevo Leon" }
+          ],
+          "ttAnexo": [
+            { "IdTipoAnexo": 1, "Descr": "Orden de Compra", "Otro": "" }
+          ],
+          "ttEPP": [
+            { "IdEquipoProteccion": 1, "Descr": "Casco" },
+            { "IdEquipoProteccion": 2, "Descr": "Chaleco" }
+          ]
+        }
+      ]
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **`ttFicha`** — ficha (1 registro, o vacío si no existe):
+  - **`IdCliente`** · INTEGER — Cliente (llave 1:1).
+  - **`IdOrigenLead`** · INTEGER — FK `OrigenLead` (viene del Lead).
+  - **`FecProspecto`** · DATE — Fecha de registro como prospecto.
+  - **`ProveedorActual`** · CHARACTER — Proveedor/competidor actual.
+  - **`MotivoCambioProveedor`** · CHARACTER — Por qué cambiaría de proveedor.
+  - **`IdNivelSatisf`** · INTEGER — FK `NivelSatisfaccion` (1-5).
+  - **`IdFrecCompra`** · INTEGER — FK `FrecuenciaCompra`.
+  - **`GastoPromedio`** · DECIMAL — Gasto promedio por periodo.
+  - **`PotencialAnual`** · DECIMAL — Calculado (Gasto × factor de frecuencia).
+  - **`HorariosRecibo`** · CHARACTER — Días/horarios de recibo.
+  - **`RequiereEPP` · `EntregasMultiples` · `AnexosRequeridos` · `RequiereOC` · `UsaPortalProv` · `AltaFormalProv` · `Politica3Cot`** · BOOLEAN — banderas. Las 3 primeras habilitan sus hijas.
+  - **`IdCondPago`** · INTEGER — FK `CondicionPago`.
+  - **`ContactoNombre` · `ContactoPuesto` · `ContactoCorreo` · `ContactoTelExt` · `ContactoWhatsApp` · `ContactoDepto`** · CHARACTER — perfil del contacto.
+  - **`IdRolCompra`** · INTEGER — FK `RolCompra`.
+  - **`IdEstiloSocial`** · INTEGER — FK `EstiloSocial`.
+  - **`IdCanalPercep`** · INTEGER — FK `CanalPercepcion`.
+
+  **`ttDirEmb`** — direcciones de embarque (0..N):
+  - **`NombreSucursal` · `CalleNumero` · `CP`** · CHARACTER.
+  - **`IdCiudad`** · INTEGER — FK `Ciudad` (es el valor que envía/selecciona el front).
+  - **`CiudadDescr`** · CHARACTER — Nombre de la ciudad (`Ciudad.Nombre`).
+  - **`IdEstado`** · CHARACTER — Estado ligado (`Ciudad.Id-Estado`) — derivado, no se captura.
+  - **`EstadoDescr`** · CHARACTER — Nombre del estado (`Estado.Nombre`).
+
+  **`ttAnexo`** — anexos requeridos (0..N):
+  - **`IdTipoAnexo`** · INTEGER — FK `TipoAnexo` (valor que envía el front).
+  - **`Descr`** · CHARACTER — Nombre del tipo de anexo (`TipoAnexo.Nombre`).
+  - **`Otro`** · CHARACTER — Descripción cuando el tipo es "Otro".
+
+  **`ttEPP`** — equipo de protección (0..N):
+  - **`IdEquipoProteccion`** · INTEGER — FK `EquipoProteccion` (valor que envía el front).
+  - **`Descr`** · CHARACTER — Nombre del equipo (`EquipoProteccion.Nombre`).
+
+  > El `Id-Cliente` y los consecutivos internos (`Id-DirEmb`/`Id-Anexo`/`Id-EPP`) **no viajan** en el JSON: el cliente ya está en `ttFicha` y los consecutivos los administra el servidor.
+
+  Campos de salida generales — **`IdError`** · BOOLEAN · **`Respuesta`** · CHARACTER.
+
+  ---
+
+  ## 10. Notas
+
+  - Los catálogos (`IdOrigenLead`, `IdNivelSatisf`, `IdFrecCompra`, `IdCondPago`, `IdRolCompra`, `IdEstiloSocial`, `IdCanalPercep`, `IdTipoAnexo`, `IdEquipoProteccion`) se resuelven a texto con `/Catalogo/FichaMaestra/Consulta` (y `OrigenLead` con `/Catalogo/Simple/Consulta`).
+  - Cliente sin ficha → dataset vacío e `IdError=false` (no es error).
+  - Los TAB **Datos Generales** y **Documentos** son de `Cliente` (procesos existentes); no viajan en este servicio.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

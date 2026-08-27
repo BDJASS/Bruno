@@ -1,0 +1,192 @@
+info:
+  name: Guarda
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ficha/Guarda
+  body:
+    type: json
+    data: |
+      {
+              "dsFicha": {
+                "ttFicha": [
+                  {
+                    "IdCliente": 1024, 
+                    "IdUser": "jjlg",
+                    "IdOrigenLead": 1, 
+                    "FecProspecto": "2026-07-15",
+                    "ProveedorActual": "Papelera del Norte", 
+                    "MotivoCambioProveedor": "Precio y tiempos de entrega",
+                    "IdNivelSatisf": 2, 
+                    "IdFrecCompra": 1, 
+                    "GastoPromedio": 15000.00, 
+                    "PotencialAnual": 180000.00,
+                    "HorariosRecibo": "Lun-Vie 9:00-17:00",
+                    "RequiereEPP": true, 
+                    "EntregasMultiples": true, 
+                    "AnexosRequeridos": true,
+                    "RequiereOC": true, 
+                    "UsaPortalProv": false, 
+                    "AltaFormalProv": false, 
+                    "Politica3Cot": true,
+                    "IdCondPago": 3,
+                    "ContactoNombre": "Ana Ruiz", 
+                    "ContactoPuesto": "Gerente de Compras",
+                    "ContactoCorreo": "aruiz@cliente.com", 
+                    "ContactoTelExt": "8181818181 Ext. 120",
+                    "ContactoWhatsApp": "8181818181", 
+                    "ContactoDepto": "Compras",
+                    "IdRolCompra": 1,
+                    "IdEstiloSocial": 2, 
+                    "IdCanalPercep": 1,
+                    "ttDirEmb": [
+                      { "NombreSucursal": "CEDIS Apodaca", 
+                       "CalleNumero": "Av. Industria 100",
+                       "CP": "66600", 
+                       "IdCiudad": 39 }
+                    ],
+                    "ttAnexo": [
+                      { "IdTipoAnexo": 1, 
+                       "Otro": "" }
+                    ],
+                    "ttEPP": [
+                      { "IdEquipoProteccion": 1 },
+                      { "IdEquipoProteccion": 2 }
+                    ]
+                  }
+                ]
+              }
+            }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Guardar Ficha Maestra (Alta / Actualiza)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Guardar Ficha Maestra del Cliente (HU-06)**
+  Recibe la Ficha Maestra por **body (dataset anidado)** y hace **UPSERT** por `Id-Cliente`: si el cliente no tenía ficha la **crea**, si ya tenía la **actualiza**. Las tablas hijas (direcciones de embarque, anexos, EPP) se **reemplazan por completo** (borra las existentes y crea las enviadas). Valida que el cliente exista y la **integridad referencial** de cada catálogo.
+  Programa servidor: `fichamaestra.p` · Procedimiento: `guardaFicha`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ficha/Guarda
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  No aplica. Todo viaja en el **body** (dataset `dsFicha`). El usuario va en `ttFicha.IdUser`.
+
+  ---
+
+  ## 5. Body
+
+  > ✅ = Requerido · ❌ = Opcional · Los Id de catálogo en `0` = "sin seleccionar" (no se valida). Si es `> 0`, debe existir en su catálogo.
+
+  **`ttFicha`** (1 registro): la ficha. Requeridos: **`IdCliente`** (✅, debe existir en Cliente) y **`IdUser`** (✅). El resto de obligatorios de negocio los valida el front.
+  **`ttDirEmb`** (0..N): direcciones de embarque. Se envían solo si `EntregasMultiples=true`. Campos: `NombreSucursal`, `CalleNumero`, `CP`, `IdCiudad` (> 0 debe existir en `Ciudad`).
+  **`ttAnexo`** (0..N): anexos. Se envían solo si `AnexosRequeridos=true`. Campos: `IdTipoAnexo` (> 0 debe existir en `TipoAnexo`) y `Otro`. **No se puede repetir** el mismo `IdTipoAnexo`.
+  **`ttEPP`** (0..N): equipo de protección. Se envían solo si `RequiereEPP=true`. Campo: `IdEquipoProteccion` (> 0 debe existir en `EquipoProteccion`). **No se puede repetir** el mismo `IdEquipoProteccion`.
+
+  > **Las hijas NO llevan `Id-Cliente` ni consecutivo (`Id-DirEmb`/`Id-Anexo`/`Id-EPP`):** el cliente sale de `ttFicha.IdCliente` (el servidor lo replica a cada hija) y los consecutivos los genera el servidor al recrearlas.
+
+  ```json
+  {
+    "dsFicha": {
+      "ttFicha": [
+        {
+          "IdCliente": 1024, "IdUser": "jjlg",
+          "IdOrigenLead": 1, "FecProspecto": "2026-07-15",
+          "ProveedorActual": "Papelera del Norte", "MotivoCambioProveedor": "Precio y tiempos de entrega",
+          "IdNivelSatisf": 2, "IdFrecCompra": 1, "GastoPromedio": 15000.00, "PotencialAnual": 180000.00,
+          "HorariosRecibo": "Lun-Vie 9:00-17:00",
+          "RequiereEPP": true, "EntregasMultiples": true, "AnexosRequeridos": true,
+          "RequiereOC": true, "UsaPortalProv": false, "AltaFormalProv": false, "Politica3Cot": true,
+          "IdCondPago": 3,
+          "ContactoNombre": "Ana Ruiz", "ContactoPuesto": "Gerente de Compras",
+          "ContactoCorreo": "aruiz@cliente.com", "ContactoTelExt": "8181818181 Ext. 120",
+          "ContactoWhatsApp": "8181818181", "ContactoDepto": "Compras",
+          "IdRolCompra": 1, "IdEstiloSocial": 2, "IdCanalPercep": 1,
+          "ttDirEmb": [
+            { "NombreSucursal": "CEDIS Apodaca", "CalleNumero": "Av. Industria 100", "CP": "66600", "IdCiudad": 39 }
+          ],
+          "ttAnexo": [
+            { "IdTipoAnexo": 1, "Otro": "" }
+          ],
+          "ttEPP": [
+            { "IdEquipoProteccion": 1 },
+            { "IdEquipoProteccion": 2 }
+          ]
+        }
+      ]
+    }
+  }
+  ```
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                |
+  |----------------|----------------------|
+  | `Accept`       | `application/json`   |
+  | `Content-Type` | `application/json`   |
+
+  ---
+
+  ## 7. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Ficha Maestra creada para el cliente 1024 (1 direccion(es), 1 anexo(s), 2 EPP).",
+    "IdCliente": 1024
+  }
+  ```
+
+  ---
+
+  ## 8. Campos de la Respuesta
+
+  **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error.
+  **`Respuesta`** · CHARACTER — Mensaje amigable (indica si fue alta o actualización y los conteos de hijas).
+  **`IdCliente`** · INTEGER — Cliente sobre el que se guardó la ficha.
+
+  ---
+
+  ## 9. Reglas y Validaciones
+
+  - **`IdUser` obligatorio** (`ttFicha.IdUser`); vacío/nulo → `"Se requiere el usuario (IdUser)."`.
+  - **`IdCliente` obligatorio y existente** en `Cliente`; si no → mensaje amigable.
+  - **Integridad referencial:** cada catálogo (`OrigenLead`, `NivelSatisfaccion`, `FrecuenciaCompra`, `CondicionPago`, `RolCompra`, `EstiloSocial`, `CanalPercepcion`) y de las hijas (`Ciudad`, `TipoAnexo`, `EquipoProteccion`) se valida **solo si el Id viene > 0**; `0` = sin seleccionar.
+  - **UPSERT:** por `Id-Cliente`. En alta se fija `Id-User`/`FecReg`; en edición `Id-UserMod`/`FecMod`.
+  - **Hijas = reemplazo total:** se borran las existentes del cliente y se recrean las enviadas (con consecutivo nuevo). Enviar arreglos vacíos deja al cliente sin hijas. El `Id-Cliente` de cada hija lo pone el servidor desde `ttFicha`.
+  - **Sin duplicados:** no se admite el mismo `IdTipoAnexo` dos veces, ni el mismo `IdEquipoProteccion` dos veces (→ mensaje "está repetido; no se puede duplicar"). Las direcciones de embarque sí pueden repetir ciudad (varias sucursales en la misma ciudad).
+  - Toda la operación es transaccional (`UNDO`): ante error no se guarda a medias.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS
