@@ -5,16 +5,14 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Gestion/Consulta?IdUser=olds&IdPedido=0322707
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Gestion/Consulta?ctFecRegIni=07/08/2026&ctFecRegFin=07/08/2026&IdUser=olds&Ubicaciones=11T
   params:
     - name: ctFecRegIni
       value: 07/08/2026
       type: query
-      disabled: true
     - name: ctFecRegFin
       value: 07/08/2026
       type: query
-      disabled: true
     - name: IdEstatus
       value: "99"
       type: query
@@ -25,6 +23,10 @@ http:
     - name: IdPedido
       value: "0322707"
       type: query
+      disabled: true
+    - name: Ubicaciones
+      value: 11T
+      type: query
   auth: inherit
 
 settings:
@@ -32,6 +34,7 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
 docs: |
   # Servicio REST — Consulta de Pedidos (Gestión)
@@ -80,6 +83,9 @@ docs: |
   > ⚠️ = Condicional. Si no se especifica `IdPedido`, el rango de fechas (`ctFecRegIni` **y** `ctFecRegFin`) es obligatorio.
   **`IdEstatus`** · STRING · ❌ — Estatus del pedido
   **`ReqCte`** · STRING · ❌ — Requisición del cliente
+  **`Ubicaciones`** · STRING · ❌ — Ubicaciones de venta (`Id-UbiVta`) permitidas en el listado por rango de fechas. Lista separada por comas
+  - Vacío = `11T,12F,12T,COM,ESP,GER,MFR,MLA,MLO` (ubicaciones de operación propia)
+  - **No aplica** cuando se busca por `IdPedido`: el folio puede pertenecer a cualquier otra ubicación y es válido consultarlo
 
   ---
 

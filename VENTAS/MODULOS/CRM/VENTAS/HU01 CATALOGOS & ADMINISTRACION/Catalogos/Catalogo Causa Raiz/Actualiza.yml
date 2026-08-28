@@ -5,13 +5,13 @@ info:
 
 http:
   method: PUT
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/CausaRaiz/Actualiza?Id=3&Nombre=Error de captura&Estatus=true&IdUser=olds
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/CausaRaiz/Actualiza?Id=30&Nombre=Error de captura PRUEBA 3&Estatus=true&IdUser=olds
   params:
     - name: Id
-      value: "3"
+      value: "30"
       type: query
     - name: Nombre
-      value: Error de captura
+      value: Error de captura PRUEBA 3
       type: query
     - name: Estatus
       value: "true"
