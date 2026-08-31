@@ -20,88 +20,174 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
 docs: |
-  # Servicio REST — Pedidos: Consulta de Solicitud de Cancelación
+  # Servicio REST — Pedidos: Requisición de Traspaso — Consulta
 
   ---
 
   ## 1. Título del Servicio
 
-  **Pedidos — Consulta de Solicitud de Cancelación**
-  Regresa los datos del pedido para la pantalla de solicitud de cancelación (cliente, RFC, estatus en texto, dirección, importe, factura, cortes) y la solicitud existente si ya hay una.
-  Programa servidor: `pedsolcanc.p` · Procedimiento: `leeSolicitudCancelacion` (GET) | Versión REST de `vtaa0060.p` (modo carácter). Módulo `/Ventas/Pedidos/`.
-
-  > El registro de la solicitud (y la cancelación inmediata si aplica) se hace con `POST /Ventas/Pedidos/SolicitudCancelacion` (ver `pedsolcanc-SolicitaCancelacion.md`).
+  **Requisición de Traspaso — Consulta**
+  Devuelve el encabezado y las partidas de una requisición por folio + resto, con las descripciones ya resueltas (almacenes, solicitante, artículo, color, presentación).
+  Programa servidor: `reqalm.p` · Procedimiento: `consultaRequisicion` | Equivale a `bodb0150.p` del modo carácter. Módulo `/Ventas/Pedidos/`.
 
   ---
 
-  ## 2. Método HTTP y URL
+  ## 2. Método HTTP
 
   ```
-  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/SolicitudCancelacion
+  GET
   ```
 
   ---
 
-  ## 3. Parámetros de Entrada (Query String)
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Requisicion/Consulta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
 
   > ✅ = Requerido · ❌ = Opcional
 
-  **`IdPedido`** · STRING · ✅ — Folio del pedido (se normaliza: primer carácter + resto a 6 dígitos)
-  **`Resto`** · STRING · ❌ — Resto del pedido; vacío = `0`
+  **`IdReq`** · STRING · ✅ — Folio de la requisición. Se convierte a mayúsculas
+  **`Resto`** · INTEGER · ❌ — Resto de la requisición. Vacío = `0`
 
   ---
 
-  ## 4. Ejemplo de Request
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
 
   ```
-  GET .../Ventas/Pedidos/SolicitudCancelacion?IdPedido=1123456&Resto=0
+  Content-Type: application/json
   ```
 
   ---
 
-  ## 5. Campos del Response (`ttSolCanc`)
+  ## 7. Ejemplo de Request
 
-  Datos del pedido más la solicitud existente:
-
-  - **Pedido:** cliente, RFC, **estatus en texto** (PAUSA EN EMBARQUE/SURTIDO, ORIGINAL, SURTIENDOSE, POR EMPACAR, EMPACANDOSE, POR FACTURAR, FACTURADO, EMBARCADO), dirección, importe, factura, bandera **`TieneCortes`**.
-  - **Solicitud existente:** `SolCancPed`, usuario + nombre, fecha, hora, motivo (vacíos si aún no hay solicitud).
-
-  **`Respuesta`** — confirma la consulta; puede anteponer los avisos (factura / cortes). En error trae el motivo del bloqueo.
+  ```
+  GET .../Ventas/Pedidos/Requisicion/Consulta?IdReq=R000123&Resto=0
+  ```
 
   ---
 
-  ## 6. Validaciones (mensajes exactos)
+  ## 8. Ejemplo de Response
 
-  Las reglas del pedido (`ValidaPedido`) se corren igual que en el POST:
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Requisicion R000123-0 consultada.",
+      "ttReqAlm": [
+        {
+          "IdReq": "R000123", "Resto": 0, "FecReg": "2026-07-20",
+          "IdEstatus": 2, "Estatus": "FIN DE SURTIDO",
+          "IdUbic": "MLO", "DescOrigen": "MATRIZ LOCAL",
+          "IdDest": "02B", "DescDest": "CEDIS",
+          "IdSolic": "JPG", "NomSolic": "JUAN PEREZ GARCIA",
+          "Coment1": "Reposicion semanal",
+          "IdPedido": "2956181", "PedResto": 0,
+          "Autorizada": true, "Cancelada": false
+        }
+      ],
+      "ttDetReq": [
+        {
+          "IdReq": "R000123", "Seq": 1, "Reng": 1, "IdArticulo": "096340",
+          "DescrArt": "PAPEL BOND CARTA", "IdColor": 2, "Kolor": "BLA",
+          "IdPres": 4, "Presentacion": "CAJA",
+          "CantPres": 10, "CantUMI": 100, "CantSurt": 60
+        }
+      ]
+    }
+  }
+  ```
 
-  | Caso | Comportamiento |
-  |------|----------------|
-  | Pedido/resto inexistente | `"Folio de pedido-resto inexistente, verifique..."` |
-  | Ligado en facturación (`Id-Liga` inicia con F) | `"El pedido se encuentra ligado en facturacion, favor de eliminar la liga antes de solicitar su cancelacion."` |
-  | Estatus > 5 o `EstPedido.FecEmb` asignada | `"El pedido ya fue embarcado."` |
-  | No autorizado por créditos (`EnFirme = false`) | `"El pedido no ha sido autorizado aun, para cancelarlo debe avisar al departamento de CREDITOS."` |
-  | Con factura asignada | **Aviso** (no bloquea): `"El pedido ya cuenta con folio de factura <folio>; favor de verificar que el documento ya haya sido cancelado."` |
-  | Con cortes | **Aviso** (no bloquea): `"El pedido contiene cortes."` |
+  ### Folio inexistente
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "Requisicion inexistente.",
+      "ttReqAlm": [],
+      "ttDetReq": []
+    }
+  }
+  ```
 
   ---
 
-  ## 7. Plan de Pruebas
+  ## 9. Campos de response — encabezado (`ttReqAlm`)
 
-  | # | Caso | Esperado |
-  |---|------|----------|
-  | C1 | GET pedido inexistente / ligado / embarcado / sin EnFirme | Mensajes de bloqueo exactos |
-  | C2 | GET pedido con factura o cortes | `IdError: false` + avisos en `Respuesta` |
-  | C3 | GET pedido con solicitud previa | Datos de la solicitud (usuario, fecha, motivo) en `ttSolCanc` |
+  **`IdReq`** · STRING — Folio de la requisición
+  **`Resto`** · INTEGER — Resto
+  **`FecReg`** · DATE — Fecha de registro
+  **`IdEstatus`** · INTEGER — Estatus numérico de `EstPedido.Estatus`. `0` si la requisición no tiene `EstPedido`
+  **`Estatus`** · STRING — Estatus en texto: el label **ESTATUS** de la pantalla del carácter (`bodb0150.p:67-79`). Vacío si no hay `EstPedido`
+  - `-2` PAUSA EMBARQUE · `-1` PAUSA SURTIDO · `0` ORIGINAL · `1` INICIO DE SURTIDO
+  - `2` FIN DE SURTIDO · `3` INICIO DE EMPAQUE · `4` FIN DE EMPAQUE
+  - `5` SALIDA POR TRASPASO · `6` EMBARCADO · otro = ENTRADA POR TRASPASO
+
+  **`IdUbic`** · STRING — Almacén origen (el que solicita)
+  **`DescOrigen`** · STRING — Descripción del almacén origen (`Almacen.Refer`)
+  **`IdDest`** · STRING — Almacén destino (el que surte)
+  **`DescDest`** · STRING — Descripción del almacén destino
+  **`IdSolic`** · STRING — Clave del solicitante
+  **`NomSolic`** · STRING — Nombre del solicitante (`PersAlm.Nombre`)
+  **`Coment1`** · STRING — Comentario de la requisición
+  **`IdPedido`** · STRING — Pedido ligado; vacío si no tiene
+  **`PedResto`** · INTEGER — Resto del pedido ligado
+  **`Autorizada`** · BOOLEAN — `true` = tiene folio real y ya comprometió inventario
+  **`Cancelada`** · BOOLEAN — `true` = requisición cancelada
 
   ---
 
-  ## 8. Resultado
+  ## 10. Campos de response — partidas (`ttDetReq`)
 
-  | Estado              | Descripción                                                  |
-  |---------------------|--------------------------------------------------------------|
-  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+  > El orden de los renglones es por **`Seq`** y luego por **`Reng`**. `bodb0150.p:132` recorre `DetReq` con `USE-INDEX Idx-Seq`, pero hay requisiciones reales con `Seq = 0` en todas las partidas (las que genera la requisición automática del CallCenter, por ejemplo). Con `Seq` empatado el índice no desempata y el grid sale en orden arbitrario, así que se agrega `Reng` como segundo criterio.
+
+  **`IdReq`** · STRING — Folio al que pertenece el renglón
+  **`Seq`** · INTEGER — Secuencia. Primer criterio de orden. Puede venir en `0` en requisiciones generadas por otros procesos
+  **`Reng`** · INTEGER — Número de renglón. Segundo criterio de orden
+  **`IdArticulo`** · STRING — Clave del artículo
+  **`DescrArt`** · STRING — Descripción del artículo (`Articulo.Descr`)
+  **`IdColor`** · INTEGER — Color; `0` = artículo sin color
+  **`Kolor`** · STRING — Abreviatura del color (`Kolor.Abrev`)
+  **`IdPres`** · INTEGER — Presentación
+  **`Presentacion`** · STRING — Descripción de la presentación (`ArtPres.Descr`)
+  **`CantPres`** · DECIMAL — Cantidad en la presentación capturada
+  **`CantUMI`** · DECIMAL — Cantidad en unidad mínima (`CantPres × ArtPres.Equiv`)
+  **`CantSurt`** · DECIMAL — Cantidad ya surtida. El carácter la muestra sólo cuando es distinta de cero (`bodb0150.p:130`)
+
+  ---
+
+  ## 11. Validaciones del Servicio
+
+  **`"Requisicion inexistente."`** — no hay `ReqAlm` con ese folio + resto
+  **`"Error en consulta de la requisicion: <detalle>"`** — error inesperado
+
+  ---
+
+  ## 12. Flujo de uso
+
+  Si no se conoce el folio, primero se listan las requisiciones del pedido:
+
+  ```
+  GET  .../Requisicion/PorPedido?IdPedido=2956181&Resto=0
+          ↓ el usuario elige un folio
+  GET  .../Requisicion/Consulta?IdReq=R000123&Resto=0
+  ```
 
   ---
   **Desarrollado por:** SIS10 - JASS

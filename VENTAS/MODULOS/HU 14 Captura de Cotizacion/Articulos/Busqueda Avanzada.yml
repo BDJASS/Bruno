@@ -5,10 +5,10 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Articulos/BusquedaAvanzada?sDescr=TAMA
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Articulos/BusquedaAvanzada?sDescr=TAMAÑ
   params:
     - name: sDescr
-      value: TAMA
+      value: TAMAÑ
       type: query
     - name: IdMarca
       value: "5"

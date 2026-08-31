@@ -1,0 +1,125 @@
+info:
+  name: Consulta
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/PersonalAlmacen/Consulta?IdUser=jjlg&Busqueda=MU
+  params:
+    - name: IdUser
+      value: jjlg
+      type: query
+    - name: Busqueda
+      value: MU
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Consulta de Personal de Almacén
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Consulta de Personal de Almacén (Catálogo)**
+  Devuelve el listado del personal de almacén **activo**, ordenado por Iniciales, con búsqueda opcional por Iniciales o Nombre. Es la versión REST del ayuda carácter `invf0020.p` (seeksoft sobre `PersAlm`).
+  Programa: `catpersonalalm.p` · Procedimiento: `leePersonalAlm`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/PersonalAlmacen/Consulta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`Busqueda`** · STRING · ❌ — Texto parcial que filtra por Iniciales **o** Nombre (tipo "contiene", insensible a mayúsculas). Vacío = todo el personal activo.
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/PersonalAlmacen/Consulta?IdUser=jjlg&Busqueda=MU
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Consulta ejecutada correctamente.",
+    "ttPersonalAlm": [
+      { "IdPer": 15, "Iniciales": "JMM", "Nombre": "JOSE MUÑOZ MARTINEZ", "Activo": true },
+      { "IdPer": 8,  "Iniciales": "RPC", "Nombre": "ROBERTO PEÑA CRUZ", "Activo": true }
+    ]
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **`ttPersonalAlm`** — arreglo del personal de almacén:
+
+  **`IdPer`** · INTEGER — Clave del personal.
+  **`Iniciales`** · CHARACTER — Iniciales del personal.
+  **`Nombre`** · CHARACTER — Nombre completo (con la Ñ normalizada).
+  **`Activo`** · BOOLEAN — `true` = vigente.
+
+  **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error; `false` si la operación fue correcta.
+  **`Respuesta`** · CHARACTER — Mensaje amigable de resultado (no expone verbos HTTP ni errores técnicos).
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - **`IdUser` es obligatorio**; si viene vacío o nulo → `IdError = true` con `"Se requiere el usuario (IdUser)."`.
+  - Solo se devuelve personal **activo** (`PersAlm.Activo`), ordenado por **Iniciales**.
+  - `Busqueda` filtra por Iniciales o Nombre con coincidencia parcial; vacío devuelve todos los activos.
+  - El `Nombre` viene con la **Ñ normalizada** (los bytes CP850 mal guardados se convierten a Ñ real para que se serialice bien en UTF-8).
+  - Ante cualquier fallo la respuesta es amigable y `IdError = true`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

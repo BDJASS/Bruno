@@ -43,88 +43,302 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
 docs: |
-  # Servicio REST — Pedidos: Consulta de Solicitud de Cancelación
+  # Servicio REST — Pedidos: Requisición de Traspaso — Alta
 
   ---
 
   ## 1. Título del Servicio
 
-  **Pedidos — Consulta de Solicitud de Cancelación**
-  Regresa los datos del pedido para la pantalla de solicitud de cancelación (cliente, RFC, estatus en texto, dirección, importe, factura, cortes) y la solicitud existente si ya hay una.
-  Programa servidor: `pedsolcanc.p` · Procedimiento: `leeSolicitudCancelacion` (GET) | Versión REST de `vtaa0060.p` (modo carácter). Módulo `/Ventas/Pedidos/`.
-
-  > El registro de la solicitud (y la cancelación inmediata si aplica) se hace con `POST /Ventas/Pedidos/SolicitudCancelacion` (ver `pedsolcanc-SolicitaCancelacion.md`).
+  **Requisición de Traspaso — Alta**
+  Crea la requisición **completa en una sola petición**: recibe el encabezado por query string y todas las partidas en el **body**. Valida todo antes de tocar la base; si está correcto toma el folio real **REQRTP**, crea `ReqAlm` + `DetReq` **ya autorizada**, compromete inventario en el almacén destino y genera las tareas de traspaso para destinos `02B`/`02A`.
+  Programa servidor: `reqalm.p` · Procedimiento: `creaRequisicion` | Versión REST de `inva0150.p` + `inva0152.p`. Módulo `/Ventas/Pedidos/`.
 
   ---
 
-  ## 2. Método HTTP y URL
+  ## 2. Método HTTP
 
   ```
-  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/SolicitudCancelacion
+  POST
   ```
 
   ---
 
-  ## 3. Parámetros de Entrada (Query String)
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Requisicion
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
 
   > ✅ = Requerido · ❌ = Opcional
 
-  **`IdPedido`** · STRING · ✅ — Folio del pedido (se normaliza: primer carácter + resto a 6 dígitos)
-  **`Resto`** · STRING · ❌ — Resto del pedido; vacío = `0`
+  **`Origen`** · STRING · ✅ — Almacén que solicita (`Almacen.Id-Alm`). Se convierte a mayúsculas
+  - El front lo saca de **`Usuario.Id-Ubicacion`** del usuario en sesión
+  - Sólo los usuarios de la lista autorizada pueden mandar uno **distinto** al suyo (ver §9)
+  **`IdDest`** · STRING · ✅ — Almacén destino, el que surte. No puede ser `01F` ni igual a `Origen`
+  **`IdSolic`** · STRING · ✅ — Solicitante; debe existir en `PersAlm` y estar activo
+  **`Coment1`** · STRING · ❌ — Comentario de la requisición
+  **`IdPedido`** · STRING · ❌ — Pedido a ligar. Si viene, cada artículo debe pertenecer a ese pedido y tener cantidad pendiente
+  **`PedResto`** · INTEGER · ❌ — Resto del pedido ligado. Vacío = `0`
+  **`IdPS`** · INTEGER · ❌ — Pedido sugerido. Si viene **y el body no trae partidas**, se precargan desde el sugerido según disponible en el destino
+  **`Confirmar`** · LOGICAL · ❌ — `false`/omitido en el primer intento. Si alguna cantidad excede 3× el consumo promedio mensual, el servicio devuelve `RequiereConfirmacion = true` y **no crea nada**; el front muestra el aviso y reenvía el mismo body con `Confirmar=true`
+  **`IdUser`** · STRING · ✅ — Usuario que registra (queda en `ReqAlm.Id-Per` y en la auditoría). **De aquí sale el `g-Origen`** del modo carácter: el servicio lee `Usuario.Id-Ubicacion` y con eso calcula el consumo promedio, valida el catálogo de tienda y la consignación, y genera las tareas. El front **no** manda esa ubicación
 
   ---
 
-  ## 4. Ejemplo de Request
+  ## 5. Body
+
+  **TABLE `ttPartidaIn`** — las partidas de la requisición.
+
+  > El body puede venir **vacío** únicamente si se manda `IdPS`: en ese caso el servicio precarga las partidas desde el pedido sugerido. En cualquier otro caso, una requisición sin artículos se rechaza.
+
+  **`IdArticulo`** · STRING · ✅ — Clave del artículo. Se rellena a 6 posiciones con ceros
+  **`IdColor`** · INTEGER · ❌ — Color. `0` = artículo sin color
+  **`IdPres`** · INTEGER · ✅ — Presentación (`ArtPres.Id-Pres`)
+  **`CantPres`** · DECIMAL · ✅ — Cantidad en la presentación. Debe ser mayor a cero
+
+  > La confirmación del consumo promedio **no va por partida**: es el parámetro `Confirmar` de la petición, porque aplica a la requisición completa. Así el usuario confirma una sola vez, aunque sean varios artículos los que la disparen.
+
+  ```json
+  {
+    "ttPartidaIn": [
+      { "IdArticulo": "096340", "IdColor": 2, "IdPres": 4, "CantPres": 10 },
+      { "IdArticulo": "021118", "IdColor": 0, "IdPres": 1, "CantPres": 5  }
+    ]
+  }
+  ```
+
+  > ⚠️ La temp-table va **plana**: `{ "ttPartidaIn": [ ... ] }`, con el arreglo de renglones directo bajo el nombre del parámetro. **No** se anida `{ "ttPartidaIn": { "ttPartidaIn": [...] } }` — esa forma es la que usa PASOE para *serializar la salida*, y en la entrada provoca:
+  >
+  > ```
+  > Error parsing JSON: unexpected token: bracket. (15360)
+  > JSON value of ProDataset or temp-table parameter is invalid or empty. (16992)
+  > An incomplete client request. (8020)
+  > ```
+
+  ---
+
+  ## 6. Headers
 
   ```
-  GET .../Ventas/Pedidos/SolicitudCancelacion?IdPedido=1123456&Resto=0
+  Content-Type: application/json
   ```
 
   ---
 
-  ## 5. Campos del Response (`ttSolCanc`)
+  ## 7. Ejemplo de Request
 
-  Datos del pedido más la solicitud existente:
+  ```
+  POST .../Ventas/Pedidos/Requisicion?Origen=02B&IdDest=03A&IdSolic=34&Coment1=Req%20de%20Adcorex&IdPedido=2965291&PedResto=0&IdUser=olds
+  ```
 
-  - **Pedido:** cliente, RFC, **estatus en texto** (PAUSA EN EMBARQUE/SURTIDO, ORIGINAL, SURTIENDOSE, POR EMPACAR, EMPACANDOSE, POR FACTURAR, FACTURADO, EMBARCADO), dirección, importe, factura, bandera **`TieneCortes`**.
-  - **Solicitud existente:** `SolCancPed`, usuario + nombre, fecha, hora, motivo (vacíos si aún no hay solicitud).
+  ```json
+  {
+    "ttPartidaIn": [
+      { "IdArticulo": "069108", "IdColor": 0, "IdPres": 3, "CantPres": 4 },
+      { "IdArticulo": "069106", "IdColor": 0, "IdPres": 3, "CantPres": 7 },
+      { "IdArticulo": "069102", "IdColor": 0, "IdPres": 3, "CantPres": 5 }
+    ]
+  }
+  ```
 
-  **`Respuesta`** — confirma la consulta; puede anteponer los avisos (factura / cortes). En error trae el motivo del bloqueo.
-
-  ---
-
-  ## 6. Validaciones (mensajes exactos)
-
-  Las reglas del pedido (`ValidaPedido`) se corren igual que en el POST:
-
-  | Caso | Comportamiento |
-  |------|----------------|
-  | Pedido/resto inexistente | `"Folio de pedido-resto inexistente, verifique..."` |
-  | Ligado en facturación (`Id-Liga` inicia con F) | `"El pedido se encuentra ligado en facturacion, favor de eliminar la liga antes de solicitar su cancelacion."` |
-  | Estatus > 5 o `EstPedido.FecEmb` asignada | `"El pedido ya fue embarcado."` |
-  | No autorizado por créditos (`EnFirme = false`) | `"El pedido no ha sido autorizado aun, para cancelarlo debe avisar al departamento de CREDITOS."` |
-  | Con factura asignada | **Aviso** (no bloquea): `"El pedido ya cuenta con folio de factura <folio>; favor de verificar que el documento ya haya sido cancelado."` |
-  | Con cortes | **Aviso** (no bloquea): `"El pedido contiene cortes."` |
+  > Los espacios de `Coment1` van codificados como `%20`. Tomcat suele tolerar el espacio literal, pero no todos los clientes lo escapan igual.
 
   ---
 
-  ## 7. Plan de Pruebas
+  ## 8. Ejemplo de Response
 
-  | # | Caso | Esperado |
-  |---|------|----------|
-  | C1 | GET pedido inexistente / ligado / embarcado / sin EnFirme | Mensajes de bloqueo exactos |
-  | C2 | GET pedido con factura o cortes | `IdError: false` + avisos en `Respuesta` |
-  | C3 | GET pedido con solicitud previa | Datos de la solicitud (usuario, fecha, motivo) en `ttSolCanc` |
+  ### Alta correcta
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "RequiereConfirmacion": false,
+      "Respuesta": "Se genero la requisicion R000123 con 2 articulo(s). ADVERTENCIA: el ruteo por areas/racks del CEDIS no se aplica en esta version REST; la requisicion queda en un solo folio (las tareas si fueron generadas).",
+      "ttReqAlm": [ { "IdReq": "R000123", "Resto": 0, "IdUbic": "MLO", "IdDest": "02B", "Autorizada": true } ],
+      "ttDetReq": [ { "Seq": 1, "Reng": 1, "IdArticulo": "021118", "CantPres": 5, "CantUMI": 5 } ]
+    }
+  }
+  ```
+
+  ### Rechazo por existencia
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "RequiereConfirmacion": false,
+      "Respuesta": "No hay existencia suficiente del articulo 096340 para solicitar al almacen 02B. Solicitado: 120.00 Disponible: 45.00"
+    }
+  }
+  ```
+
+  ### Necesita confirmación (excede 3× el consumo promedio)
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "RequiereConfirmacion": true,
+      "Respuesta": "La cantidad solicitada de los articulos 096340, 021118 sobrepasa 3 veces su consumo promedio mensual."
+    }
+  }
+  ```
+
+  El front muestra el aviso, y si el usuario acepta reenvía **el mismo body** con `Confirmar=true`.
 
   ---
 
-  ## 8. Resultado
+  ## 8.1 Cómo interpretar la respuesta
 
-  | Estado              | Descripción                                                  |
-  |---------------------|--------------------------------------------------------------|
-  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+  El front debe evaluar en este orden:
+
+  **`RequiereConfirmacion = true`** — no se creó nada, pero **no hay nada mal**: falta que el usuario acepte. Mostrar diálogo de confirmación y reenviar con `Confirmar=true`
+  **`IdError = true`** (y `RequiereConfirmacion = false`) — no se creó nada por un error real. Mostrar `Respuesta` como error
+  **`IdError = false`** — la requisición se creó. `ttReqAlm`/`ttDetReq` traen el folio y las partidas
+
+  > Cuando `RequiereConfirmacion` es `true`, `IdError` **también** viene en `true`: sirve para que un front que no conozca la bandera nueva no interprete por error que la requisición ya se creó.
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  ### Encabezado — bloquean
+
+  **`"Se requiere el usuario (IdUser)."`**
+  **`"Se requiere el almacen de origen."`**
+  **`"El usuario <IdUser> solo puede levantar requisiciones de su almacen (<ubic>)."`** — mandó un `Origen` distinto a su `Usuario.Id-Ubicacion` y no está en la lista autorizada
+  **`"Almacen no existe."`** — el origen no existe
+  **`"No existe el Almacen."`** — el destino no existe, o es `01F`
+  **`"No puede hacer requisiciones a su mismo almacen."`**
+  **`"No existe como personal de Almacen."`** — solicitante inexistente o inactivo
+  **`"No existe un pedido sugerido con ese numero."`**
+  **`"Pedido NO Existe o no tiene un estatus valido."`** — el pedido ligado debe ser `EnFirme`, estatus ≤ 5, y si es 5 debe estar `Adelantado`
+  **`"La requisicion no tiene articulos."`**
+  **`"El articulo <cod> viene repetido en la requisicion."`** — mismo artículo+color dos veces en el body
+
+  ### Encabezado — avisos, no bloquean
+
+  **Comentario duplicado (solo almacén `ALF`)** — `"Comentario duplicado en Requisicion # N de la fecha ..."`. Se antepone a la `Respuesta` de éxito
+
+  ### Por partida — bloquean
+
+  **`"La cantidad debe ser mayor a cero. Favor de Verificar."`**
+  **`"Existe una restriccion del articulo <cod> en el almacen destino <dest>. Alta denegada."`** — tabla `RTrasp`
+  **`"El Articulo <cod> no existe o esta inactivo."`** — inexistente o `Id-TipoArt = "D"`
+  **`"No existe el articulo <cod> con ese Color."`**
+  **`"Presentacion inexistente para el articulo <cod>."`**
+  **`"No se permiten decimales en la presentacion del articulo <cod>."`** — cuando `ArtPres.SiDec = false`
+  **`"El articulo <cod> no existe en el catalogo del cliente."`** — solo si el **origen es almacén de consignación**: el artículo debe estar en un contrato vigente del cliente o de sus asociados
+  **`"El articulo <cod> no existe en el almacen requerido."`** — no hay `ArtUbic` en el destino
+  **`"No hay existencia suficiente del articulo <cod> para solicitar al almacen <dest>. Solicitado: X Disponible: Y"`** — disponible = `Exist − Compro`
+  **`"El articulo <cod> no pertenece al pedido relacionado '<ped>' o bien no hay cantidades pendientes de entrega."`**
+  **`"El usuario <IdUser> no tiene ubicacion asignada; avise al Departamento de Sistemas."`** — `Usuario.Id-Ubicacion` vacío. Sin ese dato no se puede calcular el consumo promedio ni repartir las tareas
+
+  ### Por partida — requieren confirmación, no bloquean
+
+  **3× el consumo promedio mensual** — `"La cantidad solicitada de los articulos <lista> sobrepasa 3 veces su consumo promedio mensual."` con `RequiereConfirmacion = true`. Se **acumulan todos** los artículos que la disparan y se pide **una sola** confirmación
+
+  ### Por partida — avisos, no bloquean
+
+  **Catálogo del almacén origen** — `"El articulo <cod> no existe en el catalogo de su almacen. "`. Solo cuando la ubicación del usuario es de tipo tienda (`Almacen.Tipo = "T"`) y no hay `ArtUbic` en ella o su `Maximo <= 0`. En el carácter también es aviso: el `NEXT-PROMPT`/`NEXT` está comentado (`inva0152.p:202-205`)
+
+  ### Concurrencia — reintentables
+
+  **`"El folio de requisiciones esta siendo usado por otro usuario; espere unos segundos y vuelva a intentar."`**
+  **`"El inventario del articulo <cod> esta siendo afectado por otro proceso; espere unos segundos y vuelva a intentar."`**
+  **`"La localizacion <loc> del articulo <cod> esta siendo usada por otro proceso..."`** — al generar tareas
+  **`"El folio de tareas del almacen <dest> esta siendo usado por otro usuario..."`**
+
+  Todos los candados usan `NO-WAIT`: el servicio falla en segundos en lugar de dejar la petición esperando hasta `-lkwtmo` (30 min por omisión) reteniendo un agente de PASOE.
+
+  ---
+
+  ## 10. Por qué el alta va en una sola petición
+
+  En el carácter toda la sesión de captura vive dentro de **una sola transacción** (`inva0150.p:232-233`, bloque `Blk-trans`), desde el `CREATE ReqAlm` hasta la confirmación de salida **"Acepta la Requisicion que acaba de dar de alta?"** (`:567-592`). Si el usuario contesta que no, o sale con ENDKEY, el `UNDO blk-trans` (`:618-619`) deshace encabezado y partidas completos. Por eso el carácter **no necesita ningún `DELETE ReqAlm`** y no deja registros huérfanos.
+
+  El folio temporal **TMPRTP** existe únicamente porque la pantalla necesita un registro físico del cual colgar los `DetReq` mientras el operador captura: es un borrador, no un documento de negocio.
+
+  En HTTP no se puede sostener una transacción entre peticiones. Un flujo troceado en varios endpoints pierde ese rollback, y cada alta abandonada dejaría un `ReqAlm` huérfano permanente. Recibiendo todo junto se obtiene la misma semántica **todo-o-nada**, con el borrador viviendo en el front, que es donde corresponde.
+
+  **Consecuencias para el front:**
+
+  - **No hay folio temporal.** El borrador se arma en el cliente y se manda completo.
+  - **Un POST exitoso deja la requisición ya autorizada**, igual que el "SI" del carácter.
+  - **No existe un estado "capturada pero no autorizada"** — el carácter tampoco lo tiene.
+
+  ---
+
+  ## 11. Efectos del alta
+
+  Todo ocurre dentro de una sola transacción:
+
+  1. Folio real **REQRTP** — serie por almacén destino para `02B`/`03A`/`FUG`/`11`; serie global para el resto.
+  2. `ReqAlm` con `Autorizada = TRUE` y `AutPor = 'AUT'`. Si el origen es almacén de consignación, se copia el correo del cliente.
+  3. `EstPedido` de seguimiento (`Tipo = 1`, cliente del almacén origen).
+  4. `DetReq` por partida, numeradas secuencialmente.
+  5. **Compromiso de inventario en el destino** — `ArtUbic.Exist −= CantPres × Equiv` y `Compro +=` (réplica de `bodd0502.i`). La existencia se **revalida dentro de la transacción**, no solo al validar.
+  6. **Tareas de traspaso** para destinos `02B`/`02A` vía `programas/bodd1085_rest.p`.
+
+  Si cualquier paso falla, no se crea nada y no se consume folio.
+
+  ---
+
+  ## 12. Observaciones Técnicas
+
+  ### Quién puede cambiar el `Origen`
+
+  En el carácter, el `SET l-origen` que permite teclear otro almacén está condicionado a `CAN-DO(l-Usuarios, USERID("DICTDB"))` (`inva0150.p:203`). Para todos los demás la pantalla nunca deja cambiarlo y la requisición queda en su propia ubicación.
+
+  El servicio replica esa regla: si `Origen` **es distinto** de `Usuario.Id-Ubicacion`, el usuario debe estar en la lista autorizada. Si es igual, no se valida nada.
+
+  La lista está **parametrizada** en `adosa.URL`:
+
+  ```
+  Parametro = "Requisicion-Origen-Usuarios"
+  Valor     = "JVHQ,CDD,ALEX,FRANC,OLDS,JJLG,EOM,EGL,FALG"
+  ```
+
+  Mismo patrón que `"Cotizacion-Margen-Usuarios"` en `cotdetalle.p`. Si el registro **no existe**, viene vacío, o alguien lo borra, se usa la lista fija de `inva0150.p:124` — así el servicio nunca queda sin regla ni se abre de más mientras el parámetro no esté registrado.
+
+  Para cambiar quién puede hacerlo basta actualizar el `Valor` en `adosa.URL`, sin recompilar.
+
+  ---
+
+  ### `g-Origen` sale del `IdUser`, no del `Origen`
+
+  En modo carácter `g-Origen` viene de `{sia00000.var}` y equivale a **`Usuario.Id-Ubicacion`** del usuario que inició sesión. En PASOE el agente se conecta a la base con una sola cuenta de servicio, así que no se puede resolver desde la sesión: el servicio lo saca del `IdUser` de la petición.
+
+  Es un dato **distinto** del parámetro `Origen`, que es el almacén de la requisición y se guarda en `ReqAlm.Id-Ubic`. Para la mayoría de los usuarios coinciden, pero en el carácter sólo los usuarios privilegiados pueden cambiar el origen (`inva0150.p:203-230`), y en ese caso difieren.
+
+  Tres cosas usan `g-Origen` y por eso miran la ubicación del **usuario**:
+
+  **Consumo promedio mensual** — `inva0152.p:427` pasa `g-Origen` como `p-IdAlm` a `inva0002.p`
+  **Catálogo de tienda** — `inva0152.p:198` busca `ArtUbic` en `g-Origen`
+  **Consignación** — `inva0152.p:88` hace el `FIND Almacen` sobre `g-Origen`
+
+  ### Programas de ADOSA
+
+  **`programas/bodd1085_rest.p`** — versión propia del `bodd1085.p` de `procs`. El original resuelve `g-Origen` desde `sia00000.var`; `g-Origen` decide si se excluyen las localizaciones de RECIBO al repartir la cantidad, así que con el valor equivocado el reparto sale mal en silencio. Esta versión recibe el `IdUser` y saca la ubicación de la tabla `Usuario`.
+
+  **`inva0002.p`** (consumo promedio mensual) se llama directo, **sin** versión `_rest`: recibe el almacén por parámetro (`p-IdAlm`), no lo toma de `sia00000.var`. Son **ocho** parámetros y el primero es `INPUT-OUTPUT` acumulativo, por lo que se inicializa en cero antes de cada llamada.
+
+  ---
+
+  ## 13. Limitaciones (fase 2 — validar con almacén)
+
+  1. **Ruteo por áreas/racks del CEDIS no replicado** — la pantalla parte la requisición a `02B`/`02A` en múltiples folios por área según `Localizacion` (includes `invd0150.i`–`invd0169.i`). Aquí queda en **un solo folio**; las tareas sí se generan. La `Respuesta` lo advierte en cada alta a `02B`/`02A`.
+  2. **Existencia localizada de 02B** — la validación por localización (`DetLoc3`, errores 1/2/4) se sustituye por disponible (`Exist − Compro`).
+  3. **Monto mínimo de envío** ($500/$3,000 según zona) — aviso interactivo de la pantalla, no aplicado.
+  4. **Captura por UPC/código de barras** — el front debe resolver artículo/color/presentación y mandarlos explícitos.
 
   ---
   **Desarrollado por:** SIS10 - JASS
