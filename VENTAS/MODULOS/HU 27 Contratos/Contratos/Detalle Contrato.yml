@@ -5,10 +5,10 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Contratos/Detalle?IdContrato=2434
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Contratos/Detalle?IdContrato=2444
   params:
     - name: IdContrato
-      value: "2434"
+      value: "2444"
       type: query
   auth: inherit
 
@@ -17,6 +17,7 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
 docs: |
   # Servicio REST — Contratos: Detalle

@@ -1,0 +1,161 @@
+info:
+  name: Busqueda Avanzada
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Articulos/BusquedaAvanzada?sDescr=TAMA
+  params:
+    - name: sDescr
+      value: TAMA
+      type: query
+    - name: IdMarca
+      value: "5"
+      type: query
+      disabled: true
+    - name: IdArticulo
+      value: "017011"
+      type: query
+      disabled: true
+    - name: IdGrupo
+      value: ""
+      type: query
+      disabled: true
+    - name: IdFamilia
+      value: ""
+      type: query
+      disabled: true
+    - name: sMedidas
+      value: ""
+      type: query
+      disabled: true
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Búsqueda Avanzada de Artículos
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Búsqueda Avanzada de Artículos (Catálogo)**
+  Devuelve un listado ligero de artículos filtrado por múltiples criterios (código, familia, grupo, marca, proveedor, modelo, descripción, genérico, medidas y peso). Solo regresa los campos esenciales: `IdArticulo`, `Descr`, `IdTipoArt`, `TpoCorte`.
+  Programa: `articulo3_p.p` · Procedimiento: `leeArticulos`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Articulos/BusquedaAvanzada
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · Todos los filtros son opcionales y se combinan con AND. Si no se envía ninguno, regresa todos los artículos activos.
+
+  **`IdArticulo`** · STRING (numérico) · ❌ — Código exacto del artículo. `0` o vacío = no filtra por código.
+
+  **`IdFamilia`** · STRING (numérico) · ❌ — Filtra por familia; internamente expande a todos los grupos de esa familia. Se ignora si se envía `IdGrupo`.
+
+  **`IdGrupo`** · STRING (numérico) · ❌ — Filtra por grupo. Tiene prioridad sobre `IdFamilia`.
+
+  **`IdMarca`** · STRING (numérico) · ❌ — Filtra por marca.
+
+  **`IdProv`** · STRING (numérico) · ❌ — Filtra por proveedor.
+
+  **`sModelo`** · STRING · ❌ — Búsqueda tipo "contiene" sobre el Modelo.
+
+  **`sDescr`** · STRING · ❌ — Búsqueda tipo "contiene" sobre la Descripción. Los espacios se tratan como comodín (`"PAPEL BOND"` → `*PAPEL*BOND*`). Además dispara la búsqueda por sinónimos (`ArtSinon`).
+
+  **`sGenerico`** · STRING · ❌ — Búsqueda tipo "contiene" sobre el Genérico.
+
+  **`sMedidas`** · STRING · ❌ — Búsqueda tipo "contiene" sobre las Medidas.
+
+  **`sPeso`** · STRING · ❌ — Búsqueda tipo "contiene" sobre el Peso.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Articulos/BusquedaAvanzada?sDescr=BOND%20BLANCO&IdMarca=12
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Consulta generada.",
+    "ttArticulo": [
+      { "IdArticulo": "10045", "Descr": "PAPEL BOND BLANCO 75 GMS. 57 X 87 CMS.", "IdTipoArt": "P", "TpoCorte": 1 },
+      { "IdArticulo": "10046", "Descr": "PAPEL BOND BLANCO 90 GMS. CARTA", "IdTipoArt": "P", "TpoCorte": 0 }
+    ]
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **`ttArticulo`** — arreglo de artículos que cumplen los filtros:
+
+  **`IdArticulo`** · CHARACTER — Código del artículo.
+  **`Descr`** · CHARACTER — Descripción del artículo (con el reacomodo de gramaje/medidas aplicado para papeles BOND, CUBIERTO, MULTICAPA, FOAMY y ADHESIVO).
+  **`IdTipoArt`** · CHARACTER — Tipo de artículo.
+  **`TpoCorte`** · INTEGER — Tipo de corte.
+
+  **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error; `false` si la operación fue correcta.
+  **`Respuesta`** · CHARACTER — Mensaje amigable de resultado (no expone verbos HTTP ni errores técnicos).
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - Todos los filtros numéricos (`IdArticulo`, `IdFamilia`, `IdGrupo`, `IdMarca`, `IdProv`) deben ser numéricos; si vienen con un valor no numérico → `IdError = true` con un mensaje amigable (p. ej. `"Numero de articulo invalido."`).
+  - Siempre se filtran únicamente artículos **activos** y con `Id-TipoArt <> 'U'`.
+  - `IdGrupo` tiene prioridad sobre `IdFamilia`: si se envía grupo, la familia se ignora.
+  - Cuando se envía `sDescr`, además de la búsqueda directa por Descripción se ejecuta una segunda búsqueda por **sinónimos** (`ArtSinon`); los resultados se **deduplican** por `IdArticulo`.
+  - La `Descr` se normaliza para papeles BOND BLANCO / BOND COLORES / CUBIERTO (reacomodo de gramaje, medidas y "CARTA") y se recompone para MULTICAPA (1C/2C), FOAMY y ADHESIVO.
+  - Ante cualquier fallo la respuesta es amigable y `IdError = true`; el detalle técnico nunca se expone al front.
+
+  > **Nota:** a diferencia de los catálogos CRM, este endpoint **no** recibe `IdUser`; se registró solo con los filtros de búsqueda.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

@@ -5,10 +5,10 @@ info:
 
 http:
   method: POST
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Cierra?Folio=LD-2026-0007&IdMotivoCierre=1&Nota=El cliente eligio otro proveedor&IdUser=jjlg
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Cierra?Folio=LD-2026-0003&IdMotivoCierre=1&Nota=El cliente eligio otro proveedor&IdUser=jjlg
   params:
     - name: Folio
-      value: LD-2026-0007
+      value: LD-2026-0003
       type: query
     - name: IdMotivoCierre
       value: "1"

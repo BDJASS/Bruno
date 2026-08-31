@@ -5,10 +5,10 @@ info:
 
 http:
   method: POST
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Cancela?Folio=LD-2026-0007&IdMotivoCancel=1&Observaciones=Registro duplicado&IdUser=jjlg
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Cancela?Folio=LD-2026-0001&IdMotivoCancel=1&Observaciones=Registro duplicado&IdUser=jjlg
   params:
     - name: Folio
-      value: LD-2026-0007
+      value: LD-2026-0001
       type: query
     - name: IdMotivoCancel
       value: "1"
