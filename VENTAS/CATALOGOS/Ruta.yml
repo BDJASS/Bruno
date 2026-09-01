@@ -1,0 +1,124 @@
+info:
+  name: "Ruta "
+  type: http
+  seq: 11
+
+http:
+  method: GET
+  url: http://192.0.1.14:8813/RestADOSASysAdmin/rest/RestADOSASysAdmin/RutaCob?IdRuta=
+  params:
+    - name: IdRuta
+      value: ""
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+docs: |-
+  # Servicio REST — Catálogo de Rutas de Cobranza
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **SysAdmin — Catálogo de Rutas de Cobranza**
+  Servicio de **solo consulta** que expone el catálogo de rutas de cobranza de la tabla `Ruta` con dos campos: identificador y descripción. Sirve como catálogo genérico para poblar combos, listados y búsquedas de ruta en aplicaciones front-end.
+  Programa servidor: `cxcf0050.p` · Procedure: `GetRuta`
+
+  > Lectura con `NO-LOCK`: no genera bloqueos. Resultado ordenado alfabéticamente por descripción (`Ruta.Descr`).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8813/RestADOSASysAdmin/rest/RestADOSASysAdmin/RutaCob
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdRuta`** · STRING · ❌ — Filtra a una ruta específica por `Id-Rutacob` (3 caracteres)
+  - Vacío o sin valor = regresa **todas** las rutas (modo catálogo)
+  - Con valor = regresa solo la ruta con ese `Id-Rutacob`
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ### Catálogo completo
+
+  ```
+  GET http://192.0.1.14:8813/RestADOSASysAdmin/rest/RestADOSASysAdmin/RutaCob
+  ```
+
+  ### Una ruta específica
+
+  ```
+  GET http://192.0.1.14:8813/RestADOSASysAdmin/rest/RestADOSASysAdmin/RutaCob
+      ?IdRuta=001
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "OK",
+      "ttRuta": {
+        "ttRuta": [
+          { "IdRuta": "001", "Descripcion": "CENTRO" },
+          { "IdRuta": "002", "Descripcion": "NORTE" },
+          { "IdRuta": "003", "Descripcion": "SUR" }
+        ]
+      }
+    }
+  }
+  ```
+
+  ### Campos de `ttRuta`
+
+  **`IdRuta`** · STRING — Id de la ruta de cobranza (`Ruta.Id-Rutacob`, 3 caracteres)
+  **`Descripcion`** · STRING — Nombre o descripción de la ruta (`Ruta.Descr`, máx. 30 caracteres)
+
+  ---
+
+  ## 9. Valores de `Respuesta`
+
+  - `"OK"` — Consulta exitosa (con o sin registros)
+  - `"Ruta no existe: <id>"` — Se pidió un `IdRuta` específico y no está en la tabla (`IdError = true`)
+  - `"Error: <mensaje>"` — Error de ejecución capturado por `CATCH` (`IdError = true`)

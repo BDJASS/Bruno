@@ -5,13 +5,13 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/MargenesPorCliente?FechaInicial=2026-01-01&FechaFinal=2026-01-31&Reporte=1&IdUser=olds&Margen=1
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/MargenesPorCliente?FechaInicial=2026-08-01&FechaFinal=2026-09-01&Reporte=1&IdUser=olds&Margen=2&Seleccionar=10&SeleccionarLista=32269,4064
   params:
     - name: FechaInicial
-      value: 2026-01-01
+      value: 2026-08-01
       type: query
     - name: FechaFinal
-      value: 2026-01-31
+      value: 2026-09-01
       type: query
     - name: Reporte
       value: "1"
@@ -20,7 +20,13 @@ http:
       value: olds
       type: query
     - name: Margen
-      value: "1"
+      value: "2"
+      type: query
+    - name: Seleccionar
+      value: "10"
+      type: query
+    - name: SeleccionarLista
+      value: 32269,4064
       type: query
   auth: inherit
 
@@ -29,20 +35,25 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
-docs: |-
-  # Servicio REST — Márgenes por Cliente · Grid General
+docs: |
+  # Servicio REST — Márgenes por Cliente
+
+  > **Nota de alcance:** este documento describe **solo los parámetros activos** que
+  > el front utiliza actualmente. El servicio expone más parámetros en el
+  > `resourceModel` (rangos de zona/vendedor/resp/ruta/giro, filtros de días
+  > promedio, descuentos, plazo, flete, subdistribuidores, etc.), pero **ya no se
+  > usan**: si se omiten, el programa los normaliza a sus valores por defecto
+  > (ver §9).
 
   ---
 
   ## 1. Título del Servicio
 
-  **Reporte 01 — Márgenes por Cliente (modo Grid General)**
-  Llamada estándar para poblar el **grid principal** de márgenes por cliente: retorna en `ttMargen` un renglón por cliente con sus ventas, descuentos, costo y margen del periodo. En este modo `ttDetalle` siempre viene vacío.
+  **Reporte 01 — Márgenes por Cliente**
+  Retorna el análisis de márgenes de venta agrupado por cliente, con opción de detalle por factura/remisión.
   Programa servidor: `ventas-rep001.p` | Basado en: `vtac0090.p`
-
-  > 📌 Para el clic **DETALLE** sobre un renglón del grid, ver el documento
-  > `ventas-rep001-MargenesPorCliente-DetalleCliente.md` (mismo endpoint, otros parámetros).
 
   ---
 
@@ -54,39 +65,40 @@ docs: |-
 
   ---
 
-  ## 3. URL Completa
+  ## 3. URL Base
 
   ```
-  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/MargenesPorCliente
+  http://<host>:<puerto>/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/MargenesPorCliente
   ```
 
   ---
 
-  ## 4. Parámetros de Entrada (Query String)
+  ## 4. Parámetros de Entrada (Query String) — ACTIVOS
 
   > ✅ = Requerido · ❌ = Opcional
 
   **`FechaInicial`** · DATE · ✅ — Fecha inicial del periodo
-  - Formato: `YYYY-MM-DD` · Ej: `2026-05-12`
+  - Formato: `YYYY-MM-DD`
 
   **`FechaFinal`** · DATE · ✅ — Fecha final del periodo
-  - Formato: `YYYY-MM-DD` · Ej: `2026-06-11`
+  - Formato: `YYYY-MM-DD`
 
   **`Reporte`** · INT · ✅ — Tipo de reporte
-  - Para el grid general enviar siempre `1` (Resumido)
+  - `1` Resumido (solo `ttMargen`) · `2` Detallado (incluye `ttDetalle`)
+
+  **`Margen`** · INT · ✅ — Base de cálculo del margen
+  - `1` Sobre costo · `2` Sobre venta
+
+  **`Seleccionar`** · INT · ✅ — Criterio de selección de clientes
+  - `1` General · `2` Zona · `3` Responsable · `4` Vendedor · `5` Agente · `6` Ruta · `7` Giro · `8` Cliente · `9` ListaCte · `10` Contratos
+
+  **`SeleccionarLista`** · STRING · ❌ — CSV de códigos, **según `Seleccionar`**
+  - `Seleccionar=8` (Cliente) → Id-Cliente (se autocompleta a 6 dígitos). Ej: `"575,4064"`
+  - `Seleccionar=2/3/4/5/6/7/9` → códigos de zona / resp / vendedor / ruta / giro / lista
+  - `Seleccionar=1` (General) → **no aplica**, se ignora
 
   **`IdUser`** · STRING · ✅ — Usuario que ejecuta el reporte
-  - Ej: `"olds"`
-
-  **`Margen`** · INT · ❌ — Base de cálculo del margen
-  - `1` Sobre costo · `2` Sobre venta
-  - Si se omite, el servicio asume `1` (Sobre costo)
-
-  > ℹ️ El resto de los parámetros del servicio (`Zonas`, `Condicion`, `Ordenado`,
-  > `Seleccionar`, `Selectivo`, filtros de descuento, etc.) **se omiten** en esta
-  > llamada — el backend les aplica valores por defecto: General / Todos /
-  > Alfabético / sin filtros. La referencia completa de parámetros está en
-  > `ventas-rep001-MargenesPorCliente.md`.
+  - Si viene vacío, el servicio responde `IdError=true`, `Respuesta="Enviar Usuario"`
 
   ---
 
@@ -98,22 +110,23 @@ docs: |-
 
   ## 6. Headers
 
-  | Header         | Valor                                  |
-  |----------------|----------------------------------------|
-  | `Accept`       | `application/json`                     |
-  | `Content-Type` | `application/json` *(opcional en GET)* |
+  | Header | Valor |
+  |--------|-------|
+  | `Accept` | `application/json` |
 
   ---
 
   ## 7. Ejemplo de Request
 
   ```
-  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/MargenesPorCliente
-      ?FechaInicial=2026-05-12
-      &FechaFinal=2026-06-11
+  GET .../Ventas/Reporte/MargenesPorCliente
+      ?FechaInicial=2026-08-01
+      &FechaFinal=2026-09-01
       &Reporte=1
+      &Margen=2
+      &Seleccionar=10
+      &SeleccionarLista=32269,4064
       &IdUser=olds
-      &Margen=1
   ```
 
   ---
@@ -123,31 +136,35 @@ docs: |-
   ```json
   {
     "IdError": false,
-    "Respuesta": "OK",
+    "Respuesta": "25 cliente(s) encontrado(s).",
     "dsOutput": {
       "ttMargen": [
         {
-          "IdCliente": 575,
+          "IdCliente": 4064,
           "RazSoc": "DISTRIBUIDORA EJEMPLO SA DE CV",
           "Iniciales": "JGR",
+          "IdSegmento": "D3",
+          "Segmento": "DISTRIBUIDOR",
           "Sel": "NORTE",
           "IdZona": 3,
+          "Condicion": "Credito",
           "Limite": 50000,
           "Plazo": 30,
-          "Factor": 0.0,
-          "FletePag": false,
           "DesCtdo": 2.0,
+          "Factor": 0.0,
           "DescPP1": "2.5,1.5",
+          "FletePag": false,
           "DPromPago": 28.4,
           "DPromCart": 32.1,
           "Importe": 148250.00,
           "Descto": 7412.50,
-          "PorDes": 5.00,
+          "PorDes": -5.00,
           "Neto": 140837.50,
           "Costo": 112670.00,
           "Dif": 28167.50,
           "ImpFlete": 0.00,
-          "Margen": 19.99
+          "Margen": 20.00,
+          "Orden": 1
         }
       ],
       "ttDetalle": []
@@ -155,93 +172,97 @@ docs: |-
   }
   ```
 
-  > **Nota:** En el modo grid (`Reporte=1`) `ttDetalle` **siempre** se retorna vacío.
+  > `ttDetalle` solo trae registros cuando `Reporte=2`. Con `Reporte=1` (grid) se retorna vacío.
 
-  ### Campos de `ttMargen` (1 registro por cliente — renglón del grid)
+  ### Campos de `ttMargen`
 
-  **`IdCliente`** · INT — Clave del cliente *(usar este valor para el clic DETALLE)*
+  **`IdCliente`** · INT — Clave del cliente
   **`RazSoc`** · STRING — Razón social
   **`Iniciales`** · STRING — Iniciales del vendedor asignado
-  **`Sel`** · STRING — Etiqueta del criterio de selección (zona, giro, etc.)
-  **`IdZona`** · INT — Clave de zona del cliente
+  **`IdSegmento`** · STRING — Clave del segmento de distribución
+  **`Segmento`** · STRING — Descripción del segmento
+  **`Sel`** · STRING — Descripción de la **zona** del cliente (etiqueta de display)
+  **`IdZona`** · INT — Clave de zona
+  **`Condicion`** · STRING — `"Contado"` o `"Credito"` según límite/plazo del cliente
   **`Limite`** · INT — Límite de crédito
-  **`Plazo`** · INT — Plazo de crédito en días
+  **`Plazo`** · INT — Plazo de crédito (días)
+  **`DesCtdo`** · DECIMAL — % descuento contado
   **`Factor`** · DECIMAL — Factor fijo de descuento
-  **`FletePag`** · BOOLEAN — `true` = cliente paga flete
-  **`DesCtdo`** · DECIMAL — Porcentaje de descuento contado
   **`DescPP1`** · STRING — Descuentos pronto pago en formato `"pp1,pp2"`
+  **`FletePag`** · BOOLEAN — `true` = cliente paga flete
   **`DPromPago`** · DECIMAL — Días promedio de pago (1 decimal)
   **`DPromCart`** · DECIMAL — Días promedio de cartera (1 decimal)
   **`Importe`** · DECIMAL — Importe bruto de ventas del periodo
   **`Descto`** · DECIMAL — Total de descuentos aplicados
-  **`PorDes`** · DECIMAL — Porcentaje de descuento promedio
+  **`PorDes`** · DECIMAL — % de descuento promedio
   **`Neto`** · DECIMAL — Importe neto (Importe − Descto)
-  **`Costo`** · DECIMAL — Costo total de los artículos vendidos
+  **`Costo`** · DECIMAL — Costo total de lo vendido
   **`Dif`** · DECIMAL — Diferencia Neto − Costo
   **`ImpFlete`** · DECIMAL — Importe de flete cargado
-  **`Margen`** · DECIMAL — % de margen según parámetro `Margen` (sobre costo o sobre venta)
+  **`Margen`** · DECIMAL — % de margen según `Margen` (sobre costo o sobre venta)
+  **`Orden`** · INT — Secuencia de salida ya ordenada (ver §9, orden por selección)
 
-  ### Response de error controlado
+  ### Campos de `ttDetalle` *(solo cuando `Reporte=2`)*
+
+  **`IdCliente`** · INT — Clave del cliente
+  **`IdFactura`** · STRING — Número de factura o remisión
+  **`FecReg`** · DATE — Fecha del documento
+  **`Factor`** · STRING — `"F"` si se aplicó precio factor
+  **`FletePag`** · BOOLEAN — `true` = documento incluye flete
+  **`Importe`** · DECIMAL — Importe bruto del documento
+  **`Descto`** · DECIMAL — Descuento aplicado
+  **`PorDes`** · DECIMAL — % de descuento
+  **`Neto`** · DECIMAL — Neto del documento
+  **`Costo`** · DECIMAL — Costo del documento
+  **`Dif`** · DECIMAL — Diferencia Neto − Costo
+  **`ImpFlete`** · DECIMAL — Importe de flete del documento
+  **`Margen`** · DECIMAL — % de margen del documento
+
+  ### Response de error / vacío
 
   ```json
-  {
-    "IdError": true,
-    "Respuesta": "Enviar Usuario",
-    "dsOutput": {
-      "ttMargen": [],
-      "ttDetalle": []
-    }
-  }
+  { "IdError": true, "Respuesta": "Enviar Usuario", "dsOutput": { "ttMargen": [], "ttDetalle": [] } }
+  { "IdError": true, "Respuesta": "No se encontraron Registros", "dsOutput": { "ttMargen": [], "ttDetalle": [] } }
   ```
 
   ---
 
-  ## 9. Validaciones del Servicio
+  ## 9. Observaciones Técnicas
 
-  | Condición | Comportamiento |
-  |-----------|----------------|
-  | `IdUser` vacío o no enviado | `IdError: true` — `"Enviar Usuario"` |
-  | `FechaInicial` no enviada | Default: hoy − 30 días *(enviarla siempre desde el front)* |
-  | `FechaFinal` no enviada | Default: hoy *(enviarla siempre desde el front)* |
-  | `Reporte` fuera de rango `1-2` o no enviado | Se normaliza a `1` (Resumido) |
-  | `Margen` fuera de rango `1-2` o no enviado | Se normaliza a `1` (Sobre costo) |
-  | Parámetros de filtro no enviados | Defaults: General / Todos / Alfabético / sin filtros |
+  1. **Fechas:** en formato `YYYY-MM-DD`; el AppServer OpenEdge las convierte a `DATE`.
 
-  ---
+  2. **Parámetros omitidos = valores por defecto.** Al enviar solo los activos, el
+     programa normaliza el resto así:
+     - Ubicación (`Zonas`) = **General**
+     - Condición de venta = **Todos** (contado + crédito)
+     - Orden = **Alfabético**
+     - Selectivo = **Todos** · SubDistribuidores = **General**
+     - Todos los filtros numéricos (importe mínimo, descuentos, plazos, días
+       promedio, flete) = **0 (sin filtro)**
 
-  ## 10. Evidencia de Ejecución
+  3. **`SeleccionarLista` depende de `Seleccionar`.** Es el CSV de códigos del
+     criterio elegido. Con `Seleccionar=1` (General) no se usa.
 
-  *Pendiente de captura por parte del equipo de QA.*
-  Adjuntar screenshot de la herramienta de prueba (Bruno / Postman / curl) mostrando:
-  - URL completa con parámetros
-  - Status HTTP `200 OK`
-  - Cuerpo de respuesta con al menos un registro en `ttMargen`
+  4. **Orden de la salida (`Orden`).** Las filas se agrupan por el criterio de
+     `Seleccionar` y dentro se ordenan alfabéticamente (o por ventas descendente),
+     **igual que la pantalla carácter** (`vtac0090`, `BREAK BY Sel`):
+     - `Seleccionar=1` (General): orden alfabético por razón social.
+     - `Seleccionar=10` (Contratos): **agrupado por contrato** (titular + asociados
+       juntos), luego por razón social.
+     - `Seleccionar=2/3/4/5/6/7`: agrupado por zona / resp / vendedor / ruta / giro.
 
-  ---
-
-  ## 11. Fecha de Prueba
-
-  | Ambiente | Fecha      | Ejecutado por |
-  |----------|------------|---------------|
-  | DEV      | 2026-06-11 | *(pendiente)* |
-
-  ---
-
-  ## 12. Resultado
-
-  | Estado              | Descripción                                                       |
-  |---------------------|-------------------------------------------------------------------|
-  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
-
-  ---
-
-  ## 13. Observaciones Técnicas
-
-  1. **Uso en el grid:** Cada registro de `ttMargen` es un renglón del grid. El campo `IdCliente` debe conservarse en el renglón porque es el valor que se envía en `SeleccionarLista` al hacer clic en **DETALLE**.
-  2. **Periodo y margen consistentes:** Guardar en el estado del front los valores de `FechaInicial`, `FechaFinal` y `Margen` usados para poblar el grid — la llamada de DETALLE debe enviar **exactamente los mismos** para que las cifras cuadren con el renglón.
-  3. **Margen sobre costo vs. sobre venta:**
+  5. **Margen sobre costo vs. sobre venta:**
      - `Margen=1` → `((Neto − Costo) / Costo) × 100`
-     - `Margen=2` → `((Neto − Costo) / Neto) × 100`
-  4. **Rendimiento:** Con `Reporte=1` el servicio omite el llenado de `ttDetalle`. No usar `Reporte=2` para poblar el grid general — el tiempo de respuesta crece considerablemente al desglosar todos los documentos de todos los clientes.
-  5. **Clientes excluidos:** El reporte excluye automáticamente los clientes internos.
-  6. **Autenticación:** El servicio corre sobre OpenEdge PASOE. Si el ambiente requiere autenticación Bearer, incluir el header `Authorization: Bearer <token>`.
+     - `Margen=2` → `(1 − (Costo / (Neto))) × 100`  *(sobre venta)*
+
+  6. **Modo resumido vs. detallado:** con `Reporte=1` el servicio omite el llenado
+     de `ttDetalle` para optimizar el tiempo de respuesta.
+
+  7. **Clientes excluidos:** se excluyen automáticamente los clientes internos
+     (`Id-Cliente` 1, 2, 4). El `Id-Cliente=3` (Mostrador) entra en contado.
+
+  8. **`Respuesta`:** en éxito devuelve `"<N> cliente(s) encontrado(s)."`.
+
+  ---
+
+  **Desarrollado por:** SIS10 - JASS
