@@ -1,0 +1,76 @@
+info:
+  name: Actualiza
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Agenda/Actualiza
+  body:
+    type: json
+    data: |
+      {
+        "dsAgenda": {
+          "ttEnc": [
+            {
+              "IdAgenda": 5, "IdUser": "jjlg", "IdVendedor": "001",
+              "FecHoraIni": "2026-08-25T12:00:00", "FecHoraFin": "2026-08-25T13:00:00",
+              "IdTipoActividad": 1, "Titulo": "Visita Cliente (reprogramada)", "Ubicacion": "Av. Industria 100",
+              "Descripcion": "Ajuste de hora", "Contacto": "Ana Ruiz", "Comentarios": "", "Observaciones": ""
+            }
+          ],
+          "ttObj": []
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST - Actualizar Actividad (Agenda)
+
+  ## 1. Titulo
+  **Edicion de Actividad (HU-05)** - edita datos generales (RN-02: **solo semana en curso**). Si se envian objetivos, se reemplazan (1-3). Programa `agenda.p` . Proc `actualizaAgenda`.
+
+  ## 2. Metodo
+  ```
+  PUT
+  ```
+  ## 3. URL
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Agenda/Actualiza
+  ```
+  ## 5. Body (dataset `dsAgenda`)
+  > `ttEnc.IdAgenda` requerido. `ttObj` vacio = no toca los objetivos.
+  ```json
+  {
+    "dsAgenda": {
+      "ttEnc": [
+        {
+          "IdAgenda": 5, "IdUser": "jjlg", "IdVendedor": "001",
+          "FecHoraIni": "2026-08-25T12:00:00", "FecHoraFin": "2026-08-25T13:00:00",
+          "IdTipoActividad": 1, "Titulo": "Visita Cliente (reprogramada)", "Ubicacion": "Av. Industria 100",
+          "Descripcion": "Ajuste de hora", "Contacto": "Ana Ruiz", "Comentarios": "", "Observaciones": ""
+        }
+      ],
+      "ttObj": []
+    }
+  }
+  ```
+  ## 7. Response
+  ```json
+  { "IdError": false, "Respuesta": "Actividad actualizada." }
+  ```
+  ## 9. Reglas
+  - `IdUser` e `IdAgenda` requeridos; la actividad debe existir.
+  - **RN-02:** si la actividad es de una **semana anterior**, es de solo lectura -> error.
+  - Si viene fecha/hora: fin>inicio, mismo dia. Si viene `IdTipoActividad`/`IdVendedor`: deben existir.
+  - Si `ttObj` trae filas: se validan (1-3, completos) y **reemplazan** los objetivos.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

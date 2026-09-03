@@ -1,7 +1,7 @@
 info:
-  name: HU07 GESTION DE LEADS
+  name: HU05 AGENDA
   type: folder
-  seq: 4
+  seq: 2
 
 request:
   auth: inherit

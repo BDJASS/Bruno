@@ -1,0 +1,65 @@
+info:
+  name: Detalle Actividad
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Agenda/Detalle?Id-Agenda=5&IdUser=jjlg
+  params:
+    - name: Id-Agenda
+      value: "5"
+      type: query
+    - name: IdUser
+      value: jjlg
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST - Detalle de una Actividad
+
+  ## 1. Titulo
+  **Detalle de Actividad de Agenda (HU-05)** - devuelve una actividad con sus **objetivos SMART** (dataset anidado). Programa `agenda.p` . Proc `detalleAgenda`.
+
+  ## 2. Metodo
+  ```
+  GET
+  ```
+  ## 3. URL
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Agenda/Detalle
+  ```
+  ## 4. Parametros (Query String)
+  **`Id-Agenda`** . INTEGER . OK - Actividad a consultar.
+  **`IdUser`** . STRING . OK - Usuario.
+
+  ## 7. Ejemplo
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Agenda/Detalle?Id-Agenda=5&IdUser=jjlg
+  ```
+  ## 8. Response
+  ```json
+  {
+    "IdError": false, "Respuesta": "Actividad encontrada.",
+    "dsDetalle": { "ttDet": [ {
+       "IdAgenda": 5, "IdVendedor": "001", "FecHoraIni": "2026-08-25T10:00:00", "FecHoraFin": "2026-08-25T11:00:00",
+       "TipoCliente": "A", "IdCliente": 1024, "IdOportunidad": 12, "Contacto": "Ana Ruiz", "IdLead": 0, "Cuenta": "ACME SA",
+       "IdTipoActividad": 1, "TipoActividad": "Visita", "Titulo": "Visita Cliente", "Ubicacion": "Av. Industria 100",
+       "IdEstatus": 2, "Estatus": "Realizada", "IdResultadoObt": 1, "ResultadoObt": "Exitoso - Objetivo Cumplido",
+       "MotivoJustif": "", "NotasResultado": "", "ComentSeguimiento": "", "AcuerdosRealizados": "", "ProximosPasos": "",
+       "ttObjUI": [ { "Orden": 1, "IdAccionSmart": 1, "Accion": "Obtener", "Metrica": "1 cotizacion firmada", "Proposito": "avanzar al cierre", "Enunciado": "" } ]
+    } ] }
+  }
+  ```
+  ## 9. Campos
+  **`ttDet`** - todos los datos de la actividad (ids + descripcion de catalogos). **`ttObjUI`** - objetivos SMART (Orden, Accion id+nombre, Metrica, Proposito, Enunciado).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

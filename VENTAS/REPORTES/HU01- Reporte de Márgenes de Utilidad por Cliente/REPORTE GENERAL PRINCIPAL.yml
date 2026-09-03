@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/MargenesPorCliente?FechaInicial=2026-08-01&FechaFinal=2026-09-01&Reporte=1&IdUser=olds&Margen=2&Seleccionar=10&SeleccionarLista=32269,4064
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/MargenesPorCliente?FechaInicial=2026-08-01&FechaFinal=2026-09-01&Reporte=1&IdUser=olds&Margen=2&Seleccionar=11&SeleccionarLista=E1
   params:
     - name: FechaInicial
       value: 2026-08-01
@@ -23,10 +23,10 @@ http:
       value: "2"
       type: query
     - name: Seleccionar
-      value: "10"
+      value: "11"
       type: query
     - name: SeleccionarLista
-      value: 32269,4064
+      value: E1
       type: query
   auth: inherit
 
@@ -90,11 +90,12 @@ docs: |
   - `1` Sobre costo · `2` Sobre venta
 
   **`Seleccionar`** · INT · ✅ — Criterio de selección de clientes
-  - `1` General · `2` Zona · `3` Responsable · `4` Vendedor · `5` Agente · `6` Ruta · `7` Giro · `8` Cliente · `9` ListaCte · `10` Contratos
+  - `1` General · `2` Zona · `3` Responsable · `4` Vendedor · `5` Agente · `6` Ruta · `7` Giro · `8` Cliente · `9` ListaCte · `10` Contratos · `11` Segmento
 
   **`SeleccionarLista`** · STRING · ❌ — CSV de códigos, **según `Seleccionar`**
   - `Seleccionar=8` (Cliente) → Id-Cliente (se autocompleta a 6 dígitos). Ej: `"575,4064"`
   - `Seleccionar=2/3/4/5/6/7/9` → códigos de zona / resp / vendedor / ruta / giro / lista
+  - `Seleccionar=11` (Segmento) → Id-Segmento de distribución (mayúsculas; cada uno debe existir en el catálogo). Ej: `"D3,MA"` · Vacío = todos los clientes con segmento asignado
   - `Seleccionar=1` (General) → **no aplica**, se ignora
 
   **`IdUser`** · STRING · ✅ — Usuario que ejecuta el reporte
@@ -250,6 +251,7 @@ docs: |
      - `Seleccionar=10` (Contratos): **agrupado por contrato** (titular + asociados
        juntos), luego por razón social.
      - `Seleccionar=2/3/4/5/6/7`: agrupado por zona / resp / vendedor / ruta / giro.
+     - `Seleccionar=11` (Segmento): agrupado por segmento de distribución.
 
   5. **Margen sobre costo vs. sobre venta:**
      - `Margen=1` → `((Neto − Costo) / Costo) × 100`

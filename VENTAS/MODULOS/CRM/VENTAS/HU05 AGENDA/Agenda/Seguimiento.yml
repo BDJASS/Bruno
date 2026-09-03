@@ -1,0 +1,70 @@
+info:
+  name: Seguimiento
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Agenda/Seguimiento?Id-Agenda=5&Id-Estatus=2&Id-ResultadoObt=1&MotivoJustif=&IdUser=jjlg
+  params:
+    - name: Id-Agenda
+      value: "5"
+      type: query
+    - name: Id-Estatus
+      value: "2"
+      type: query
+    - name: Id-ResultadoObt
+      value: "1"
+      type: query
+    - name: MotivoJustif
+      value: ""
+      type: query
+    - name: IdUser
+      value: jjlg
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST - Seguimiento / Cumplimiento de Actividad
+
+  ## 1. Titulo
+  **Seguimiento de Actividad (HU-05)** - captura resultado + estatus/cumplimiento. Programa `agenda.p` . Proc `seguimientoAgenda`.
+
+  ## 2. Metodo
+  ```
+  POST
+  ```
+  ## 3. URL
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Agenda/Seguimiento
+  ```
+  ## 4. Parametros (Query String)
+  **`Id-Agenda`** . INTEGER . OK - Actividad.
+  **`Id-Estatus`** . INTEGER . OK - Estatus/cumplimiento (catalogo EstatusAgenda).
+  **`Id-ResultadoObt`** . INTEGER . opcional - Resultado obtenido (catalogo).
+  **`MotivoJustif`** . STRING . **Obligatorio si Estatus = Cancelada o No Realizada**.
+  **`NotasResultado` . `ComentSeguim` . `Acuerdos` . `ProximosPasos`** . STRING . opcional.
+  **`IdUser`** . STRING . OK.
+
+  ## 7. Ejemplo
+  ```
+  POST http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Agenda/Seguimiento?Id-Agenda=5&Id-Estatus=2&Id-ResultadoObt=1&IdUser=jjlg
+  ```
+  ## 8. Response
+  ```json
+  { "IdError": false, "Respuesta": "Seguimiento guardado (estatus: Realizada)." }
+  ```
+  ## 9. Reglas
+  - **Motivo obligatorio** si el estatus es Cancelada o No Realizada.
+  - **Candado SMART:** no permite marcar **Realizada** si el **Objetivo 1** SMART esta incompleto (falta Accion/Metrica/Proposito).
+  - Valida existencia del estatus y del resultado (si viene). Toma la actividad con lock; si esta ocupada, avisa.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

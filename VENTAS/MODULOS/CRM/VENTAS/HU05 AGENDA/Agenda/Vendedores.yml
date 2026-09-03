@@ -1,0 +1,57 @@
+info:
+  name: Vendedores
+  type: http
+  seq: 7
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Agenda/Vendedores?TipoVen=0&IdUser=jjlg
+  params:
+    - name: TipoVen
+      value: "0"
+      type: query
+    - name: IdUser
+      value: jjlg
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST - Vendedores (Responsable de la Agenda)
+
+  ## 1. Titulo
+  **Vendedores Consultivos (HU-05)** - combo "Responsable". Programa `catagenda.p` . Proc `leeVendedoresConsultivos`.
+
+  ## 2. Metodo
+  ```
+  GET
+  ```
+  ## 3. URL
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Agenda/Vendedores
+  ```
+  ## 4. Parametros (Query String)
+  **`TipoVen`** . INTEGER . opcional - Filtra por tipo de vendedor. **0 = todos los activos.** (El valor de "Ventas Consultivas" esta **pendiente de confirmar con la PM**.)
+  **`IdUser`** . STRING . OK.
+
+  ## 7. Ejemplo
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Agenda/Vendedores?TipoVen=0&IdUser=jjlg
+  ```
+  ## 8. Response
+  ```json
+  { "IdError": false, "Respuesta": "Consulta ejecutada correctamente.",
+     "ttVend": [ { "IdVendedor": "001", "Nombre": "JUAN PEREZ" } ] }
+  ```
+  ## 9. Notas
+  - El nombre se resuelve `Vendedor.Iniciales -> Empleado.Nombre`.
+  - Cuando la PM confirme el `TipoVen` de "Ventas Consultivas", el front lo envia para filtrar el combo.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

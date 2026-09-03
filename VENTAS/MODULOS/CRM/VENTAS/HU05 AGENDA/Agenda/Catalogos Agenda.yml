@@ -1,0 +1,56 @@
+info:
+  name: Catalogos Agenda
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Agenda/Consulta?Catalogo=TipoActividad&IdUser=jjlg
+  params:
+    - name: Catalogo
+      value: TipoActividad
+      type: query
+    - name: IdUser
+      value: jjlg
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST - Catalogos de la Agenda
+
+  ## 1. Titulo
+  **Catalogos de la Agenda (HU-05)** - GET generico: `TipoActividad`, `EstatusAgenda`, `ResultadoObtenido`, `AccionSmart`. Programa `catagenda.p` . Proc `leeCatalogo`.
+
+  ## 2. Metodo
+  ```
+  GET
+  ```
+  ## 3. URL
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Agenda/Consulta
+  ```
+  ## 4. Parametros (Query String)
+  **`Catalogo`** . STRING . OK - `TipoActividad` . `EstatusAgenda` . `ResultadoObtenido` . `AccionSmart`.
+  **`IdUser`** . STRING . OK.
+
+  ## 7. Ejemplo
+  ```
+  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Agenda/Consulta?Catalogo=TipoActividad&IdUser=jjlg
+  ```
+  ## 8. Response
+  ```json
+  { "IdError": false, "Respuesta": "Consulta ejecutada correctamente.",
+     "ttCat": [ { "Id": 1, "Nombre": "Visita", "RequiereUbicacion": true }, { "Id": 2, "Nombre": "Llamada Primer Contacto", "RequiereUbicacion": false } ] }
+  ```
+  ## 9. Campos
+  **`Id`** . **`Nombre`** . **`RequiereUbicacion`** (solo relevante para `TipoActividad`: true = muestra/pide Ubicacion, RN-05).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS
