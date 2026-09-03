@@ -1,0 +1,86 @@
+info:
+  name: Ciudad
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Ciudad
+  params:
+    - name: IdEstado
+      value: "019"
+      type: query
+      disabled: true
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |-
+  # Catálogo — Ciudades
+
+  **Servicio:** RestADOSACyc
+
+  **Autor:** SIS10 — JASS
+
+  ---
+
+  ## Resumen
+
+  Tercer nivel de la cascada **País → Estado → Ciudad**. Devuelve las ciudades,
+  normalmente filtradas por el estado elegido. El `IdCiudad` seleccionado es el
+  que se envía en la **alta / edición de embarque** (de él se derivan ciudad,
+  estado y país).
+
+  ---
+
+  ## 1. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 2. URL
+
+  ```
+  /Ciudad
+  ```
+
+  ---
+
+  ## 3. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  - ❌ **`IdEstado`** · STRING — Filtra las ciudades de ese estado. Si se
+    **omite**, devuelve todas las ciudades.
+
+  ---
+
+  ## 4. Respuesta (arreglo `ttCiudad`)
+
+  - **`IdCiudad`** · INTEGER — Id de la ciudad. Es el valor que se envía como
+    `IdCiudad` en la alta / edición de embarque.
+
+  - **`Nombre`** · STRING — Nombre de la ciudad.
+
+  - **`IdEstado`** · STRING — Estado al que pertenece.
+
+  ### Ejemplo
+
+  ```json
+  {
+    "ttCiudad": [
+      { "IdCiudad": 158, "Nombre": "SALTILLO", "IdEstado": "005" }
+    ]
+  }
+  ```
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

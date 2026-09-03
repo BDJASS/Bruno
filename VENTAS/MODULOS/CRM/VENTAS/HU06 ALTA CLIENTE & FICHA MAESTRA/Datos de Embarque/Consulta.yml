@@ -5,10 +5,10 @@ info:
 
 http:
   method: GET
-  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionCliente/DatosEmbarque/Consulta?IdCliente=13726
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionCliente/DatosEmbarque/Consulta?IdCliente=3396
   params:
     - name: IdCliente
-      value: "13726"
+      value: "3396"
       type: query
   auth: inherit
 
@@ -18,3 +18,59 @@ settings:
   followRedirects: true
   maxRedirects: 5
   forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Consulta de Datos de Embarque
+
+  Devuelve **todas** las direcciones de embarque de un cliente (puede tener
+  varias).
+
+  ---
+
+  ## 1. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 2. URL
+
+  ```
+  /GestionCliente/DatosEmbarque/Consulta
+  ```
+
+  ---
+
+  ## 3. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  - **`IdCliente`** · INTEGER · ✅ — Cliente a consultar.
+
+  ---
+
+  ## 4. Respuesta (arreglo `ttCliEmb`)
+
+  Cada dirección incluye:
+
+  - **`IdRegistro`** · INTEGER — Identificador del registro (RECID). **Se usa
+    para editar (PUT) y eliminar (DELETE)** esa dirección; consérvalo en el front.
+
+  - **`IdCliente`** · INTEGER — Cliente dueño de la dirección.
+
+  - **`IdCliEmb`** · STRING — Código de la dirección (puede venir vacío).
+
+  - **`IdCiudad`** · INTEGER — Id de la ciudad (derivado de los nombres
+    guardados). Sirve para preseleccionar la ciudad al editar.
+
+  - **`Poblacion`** · STRING — Nombre de la ciudad · **`Estado`** · STRING —
+    Nombre del estado.
+
+  - **`RazonSocial`**, **`Calle`**, **`Colonia`**, **`Delegacion`**, **`CP`**,
+    **`ReferenciaEmbarque`**, **`Telefono`**, **`Correo`**, **`Atencion`**,
+    **`RutaEmbarque`** — Datos de la dirección.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

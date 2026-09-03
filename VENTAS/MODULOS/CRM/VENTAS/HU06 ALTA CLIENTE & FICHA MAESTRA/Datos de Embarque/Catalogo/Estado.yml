@@ -1,0 +1,83 @@
+info:
+  name: Estado
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Estado?IdPais=1
+  params:
+    - name: IdPais
+      value: "1"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |-
+  # Catálogo — Estados
+
+  **Servicio:** RestADOSACyc
+
+  **Autor:** SIS10 — JASS
+
+  ---
+
+  ## Resumen
+
+  Segundo nivel de la cascada **País → Estado → Ciudad**. Devuelve los estados,
+  normalmente filtrados por el país elegido. El `IdEstado` seleccionado se usa
+  para filtrar el catálogo de **Ciudad**.
+
+  ---
+
+  ## 1. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 2. URL
+
+  ```
+  /Estado
+  ```
+
+  ---
+
+  ## 3. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  - ❌ **`IdPais`** · STRING — Filtra los estados de ese país. Si se **omite**,
+    devuelve todos los estados.
+
+  ---
+
+  ## 4. Respuesta (arreglo `ttEstado`)
+
+  - **`IdEstado`** · STRING — Id del estado (se envía como `IdEstado` al catálogo de Ciudad).
+
+  - **`Nombre`** · STRING — Nombre del estado.
+
+  - **`IdPais`** · STRING — País al que pertenece.
+
+  ### Ejemplo
+
+  ```json
+  {
+    "ttEstado": [
+      { "IdEstado": "019", "Nombre": "NUEVO LEON", "IdPais": "1" }
+    ]
+  }
+  ```
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

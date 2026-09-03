@@ -1,0 +1,90 @@
+info:
+  name: Ruta Embarque
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/RutasEmbarque
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |-
+  # Catálogo — Rutas de Embarque
+
+  **Servicio:** RestADOSACyc
+
+  **Autor:** SIS10 — JASS
+
+  ---
+
+  ## Resumen
+
+  Devuelve el catálogo completo de **rutas de embarque**, para llenar el combo de
+  `RutaEmbarque` en la alta / edición de direcciones de embarque. Basado en la
+  ayuda de Rutas de Embarque del modo caracter.
+
+  ---
+
+  ## 1. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 2. URL
+
+  ```
+  /RutasEmbarque
+  ```
+
+  ---
+
+  ## 3. Parámetros de Entrada
+
+  Ninguno. Devuelve todas las rutas ordenadas por `IdRutaEmb`.
+
+  ---
+
+  ## 4. Respuesta (arreglo `ttRutaEmb`)
+
+  - **`IdRutaEmb`** · INTEGER — Id de la ruta. Es el valor que se envía como
+    `RutaEmbarque` en la alta / edición de embarque.
+
+  - **`Descr`** · STRING — Descripción / nombre de la ruta.
+
+  - **`Nte`** · STRING — Colindancia norte.
+
+  - **`Sur`** · STRING — Colindancia sur.
+
+  - **`Ote`** · STRING — Colindancia oriente.
+
+  - **`Pte`** · STRING — Colindancia poniente.
+
+  ### Ejemplo
+
+  ```json
+  {
+    "ttRutaEmb": [
+      {
+        "IdRutaEmb": 1,
+        "Descr": "RUTA CENTRO",
+        "Nte": "AV. NORTE",
+        "Sur": "AV. SUR",
+        "Ote": "CALLE ORIENTE",
+        "Pte": "CALLE PONIENTE"
+      }
+    ]
+  }
+  ```
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

@@ -1,0 +1,185 @@
+info:
+  name: Edicion
+  type: http
+  seq: 3
+
+http:
+  method: PUT
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionCliente/DatosEmbarque/Edicion?IdUser=nmra
+  params:
+    - name: IdUser
+      value: nmra
+      type: query
+  body:
+    type: json
+    data: |-
+      {
+        "ttCliEmb": [
+          {
+            "IdCliente": 13726,
+            "IdRegistro": 987654,
+            "IdCliEmb": "SUC01",
+            "RazonSocial": "CLIENTE DEMO SA DE CV",
+            "Calle": "AV. UNIVERSIDAD 4567",
+            "Colonia": "REPUBLICA",
+            "IdCiudad": 158,
+            "Delegacion": "",
+            "CP": "25280",
+            "ReferenciaEmbarque": "Nueva ubicacion, boca de tormenta",
+            "Telefono": "8447654321",
+            "Correo": "embarques2@cliente.com",
+            "Atencion": "MARIA LOPEZ",
+            "RutaEmbarque": 2
+          }
+        ]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Edición de Datos de Embarque
+
+  Actualiza una o varias direcciones de embarque **existentes** de un cliente.
+  Cada dirección se identifica por su **`IdRegistro`** (el que devuelve el GET de
+  consulta) junto con el `IdCliente`. Se usa `IdRegistro` porque hay direcciones
+  sin código `IdCliEmb`. Reglas basadas en el proceso de captura de embarques en
+  modo caracter.
+
+  ---
+
+  ## 1. Método HTTP
+
+  ```
+  PUT
+  ```
+
+  ---
+
+  ## 2. URL
+
+  ```
+  /GestionCliente/DatosEmbarque/Edicion
+  ```
+
+  ---
+
+  ## 3. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  - **`IdUser`** · STRING · ✅ — Usuario que edita (queda en la auditoría).
+
+  ---
+
+  ## 4. Body (JSON)
+
+  Arreglo `ttCliEmb` con una o varias direcciones a actualizar.
+
+  > ✅ = Obligatorio · ❌ = Opcional · 🟡 = Recomendado
+
+  ### Campos llave (obligatorios para localizar el registro)
+
+  - ✅ **`IdRegistro`** · INTEGER — Identificador del registro (tomado del GET de
+    consulta). Es la llave para ubicar la dirección a actualizar.
+
+  - ✅ **`IdCliente`** · INTEGER — Cliente dueño de la dirección. El `IdRegistro`
+    debe pertenecer a este cliente.
+
+  ### Campos actualizables
+
+  - ❌ **`IdCliEmb`** · STRING — Código de la dirección de embarque (editable).
+
+  - 🟡 **`RazonSocial`** · STRING — Razón social de la dirección.
+
+  - 🟡 **`Calle`** · STRING — Calle y número (`CalleNo`).
+
+  - 🟡 **`Colonia`** · STRING — Colonia.
+
+  - 🟡 **`IdCiudad`** · INTEGER — Id de la ciudad. **Si se envía**, el servicio
+    deriva y guarda ciudad, estado y país (no necesitas mandar `Poblacion`/`Estado`).
+
+  - ❌ **`Poblacion`** · STRING — Ciudad. Solo se usa si **no** envías `IdCiudad`.
+
+  - ❌ **`Estado`** · STRING — Estado. Solo se usa si **no** envías `IdCiudad`.
+
+  - ❌ **`Delegacion`** · STRING — Delegación / municipio.
+
+  - 🟡 **`CP`** · STRING — Código postal. Si se envía, se valida.
+
+  - ❌ **`ReferenciaEmbarque`** · STRING — Referencias de ubicación.
+
+  - 🟡 **`Telefono`** · STRING — Teléfono de contacto.
+
+  - ❌ **`Correo`** · STRING — Correo de contacto.
+
+  - 🟡 **`Atencion`** · STRING — Persona de atención. No admite comillas ni `&`.
+
+  - ❌ **`RutaEmbarque`** · INTEGER — Ruta de embarque. Si se envía (distinta de `0`), debe existir.
+
+  > **Nulos:** un campo de texto opcional puede omitirse o enviarse como `null`;
+  > el servicio lo trata como vacío (no falla).
+
+  ---
+
+  ## 5. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 6. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Se actualizaron 1 direccion(es) de embarque."
+  }
+  ```
+
+  ---
+
+  ## 7. Campos de la Respuesta
+
+  - **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error; `false` si fue correcto.
+
+  - **`Respuesta`** · STRING — Mensaje amigable de resultado.
+
+  ---
+
+  ## 8. Reglas y Validaciones
+
+  - **`IdUser`** es obligatorio; si viene vacío o nulo → `IdError = true`.
+
+  - **`IdRegistro`** es obligatorio para identificar el registro (se obtiene del GET).
+
+  - El registro (`IdRegistro`) **debe existir** y **pertenecer** al `IdCliente`
+    enviado; si no → `IdError = true` (para crear una nueva, usar el **POST** de alta).
+
+  - Si se envía **`IdCiudad`**, debe existir; el servicio guarda ciudad, estado y
+    país derivados del catálogo.
+
+  - Si el registro está **bloqueado** por otro usuario → el mensaje indica **qué
+    usuario** lo tiene bloqueado.
+
+  - **`Atencion`** no debe contener comillas (`"` o `'`) ni el caracter `&`.
+
+  - **`RutaEmbarque`**, si se envía distinta de `0`, debe existir.
+
+  - **`CP`**, si se envía, se valida el código postal.
+
+  - Cada actualización genera **auditoría** en `CambioCte`
+    (`Descr = "CliEmb"`, `ValorNuevo = IdCliEmb/Calle`, `ValorOld = "CAMBIO"`).
+
+  - Ante cualquier fallo la respuesta es amigable y `IdError = true`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

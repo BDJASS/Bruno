@@ -1,0 +1,126 @@
+info:
+  name: Eliminar
+  type: http
+  seq: 4
+
+http:
+  method: DELETE
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/GestionCliente/DatosEmbarque/Eliminar?IdUser=nmra&IdCliente=3396&IdRegistro=19963
+  params:
+    - name: IdUser
+      value: nmra
+      type: query
+    - name: IdCliente
+      value: "3396"
+      type: query
+    - name: IdRegistro
+      value: "19963"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |-
+  # Servicio REST — Eliminación de Datos de Embarque
+
+  **Servicio:** RestADOSACyc
+
+  **Autor:** SIS10 — JASS
+
+  ---
+
+  ## Resumen
+
+  Elimina **una** dirección de embarque específica de un cliente. La dirección se
+  identifica por su **`IdRegistro`** (el que devuelve el GET de consulta), no por
+  `IdCliEmb` (que puede venir vacío en registros existentes). Reglas basadas en el
+  proceso de captura de embarques en modo caracter.
+
+  ---
+
+  ## 1. Método HTTP
+
+  ```
+  DELETE
+  ```
+
+  ---
+
+  ## 2. URL
+
+  ```
+  /GestionCliente/DatosEmbarque/Eliminar
+  ```
+
+  ---
+
+  ## 3. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  - ✅ **`IdUser`** · STRING — Usuario que elimina (queda en la auditoría).
+
+  - ✅ **`IdCliente`** · INTEGER — Cliente dueño de la dirección.
+
+  - ✅ **`IdRegistro`** · INTEGER — Identificador del registro (tomado del GET de
+    consulta). El `IdRegistro` debe pertenecer a ese cliente.
+
+  ---
+
+  ## 4. Body
+
+  No aplica — los parámetros viajan en el **Query String**.
+
+  ---
+
+  ## 5. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 6. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Direccion de embarque eliminada correctamente."
+  }
+  ```
+
+  ---
+
+  ## 7. Campos de la Respuesta
+
+  - **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error; `false` si fue correcto.
+
+  - **`Respuesta`** · STRING — Mensaje amigable de resultado.
+
+  ---
+
+  ## 8. Reglas y Validaciones
+
+  - **`IdUser`**, **`IdCliente`** e **`IdRegistro`** son obligatorios; si falta
+    alguno → `IdError = true`.
+
+  - El **cliente debe existir**; si no → `IdError = true`.
+
+  - El registro (`IdRegistro`) **debe existir** y **pertenecer** al `IdCliente`
+    enviado; si no → `IdError = true`.
+
+  - Si el registro está **bloqueado** por otro usuario, el mensaje indica **qué
+    usuario** lo tiene bloqueado.
+
+  - La baja genera **auditoría** en `CambioCte`
+    (`Descr = "CliEmb"`, `ValorNuevo = IdCliEmb/Calle`, `ValorOld = "BAJA"`).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

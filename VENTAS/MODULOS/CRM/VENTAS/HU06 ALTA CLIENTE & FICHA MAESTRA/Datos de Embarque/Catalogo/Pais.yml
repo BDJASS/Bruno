@@ -1,0 +1,74 @@
+info:
+  name: Pais
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Pais
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |-
+  # Catálogo — Países
+
+  **Servicio:** RestADOSACyc
+
+  **Autor:** SIS10 — JASS
+
+  ---
+
+  ## Resumen
+
+  Primer nivel de la cascada de ubicación **País → Estado → Ciudad**. Devuelve
+  solo los países que tienen estados y ciudades configurados. El `IdPais`
+  seleccionado se usa para filtrar el catálogo de **Estado**.
+
+  ---
+
+  ## 1. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 2. URL
+
+  ```
+  /Pais
+  ```
+
+  ---
+
+  ## 3. Parámetros de Entrada
+
+  Ninguno. Devuelve todos los países válidos.
+
+  ---
+
+  ## 4. Respuesta (arreglo `ttPais`)
+
+  - **`IdPais`** · STRING — Id del país (se envía como `IdPais` al catálogo de Estado).
+
+  - **`Nombre`** · STRING — Nombre del país.
+
+  ### Ejemplo
+
+  ```json
+  {
+    "ttPais": [
+      { "IdPais": "1", "Nombre": "MEXICO" }
+    ]
+  }
+  ```
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

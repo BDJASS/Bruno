@@ -5,13 +5,13 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Detalle?IdCot=2083476&IdCliente=35&IdUser=olds
+  url: http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Detalle?IdCot=2144410&IdCliente=56665&IdUser=olds
   params:
     - name: IdCot
-      value: "2083476"
+      value: "2144410"
       type: query
     - name: IdCliente
-      value: "35"
+      value: "56665"
       type: query
     - name: IdUser
       value: olds
@@ -23,6 +23,7 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
 docs: |
   # Servicio REST — Detalle de Cotización
