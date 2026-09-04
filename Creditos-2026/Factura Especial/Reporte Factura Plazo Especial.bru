@@ -85,6 +85,7 @@ docs {
   **`PlazoFac`** · INT — Plazo de la factura (días)
   **`Total`** · DECIMAL — Importe total de la factura (MXN)
   **`Saldo`** · DECIMAL — Saldo real a la fecha de corte (MXN). `0` si la factura ya no tiene movimiento de saldo
+  **`DiasVencido`** · INT — Días vencidos a la fecha de corte (`FecFin - FecVenc`). `0` si aún no vence
   **`IdVendedor`** · STRING — Clave del vendedor de la factura
   **`Vendedor`** · STRING — Nombre del vendedor; `"Vendedor no identificado"` si no se resuelve
   
@@ -107,6 +108,7 @@ docs {
         "PlazoFac": 90,
         "Total": 88250.50,
         "Saldo": 42100.00,
+        "DiasVencido": 3,
         "IdVendedor": "0104",
         "Vendedor": "JUAN PEREZ"
       }

@@ -53,7 +53,7 @@ docs {
   > ✅ = Requerido · ❌ = Opcional
   
   **`Fecha`** · STRING (fecha) · ❌ — Fecha de corte del reporte
-  - Formato: `MM/DD/YYYY` · Ej: `"09/04/2026"`
+  - Formato: `YYYY-MM-DD` · Ej: `"2026-09-04"`
   - Vacía o inválida = fecha actual del servidor (`HOY`)
   - Se incluyen movimientos con `FecReg <=` esta fecha
   
@@ -78,7 +78,7 @@ docs {
   
   ```
   GET http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/SaldoTemporada
-      ?Fecha=09/04/2026
+      ?Fecha=2026-09-04
   ```
   
   Sin parámetro (usa la fecha del servidor):
@@ -245,7 +245,7 @@ docs {
   
   ## 12. Observaciones Técnicas
   
-  1. **Fecha en URL:** Se envía como texto en formato `MM/DD/YYYY`. Si se omite, viene vacía o no es una fecha válida, el servicio usa la fecha actual del servidor (`HOY`).
+  1. **Fecha en URL:** Se envía como texto en formato `YYYY-MM-DD`. Si se omite, viene vacía o no es una fecha válida, el servicio usa la fecha actual del servidor (`HOY`).
   2. **Criterio de temporada:** Solo se listan facturas cuya condición corresponde a temporada (`S`, `E`, `N`). El resto de las facturas se ignora.
   3. **Cálculo del saldo:** El saldo de cada factura parte del saldo del movimiento de factura y se ajusta sumando los movimientos posteriores no afectados relacionados con la misma referencia, hasta la fecha de corte. Solo se incluyen las facturas cuyo saldo resultante es mayor a cero.
   
