@@ -1,0 +1,257 @@
+meta {
+  name: SaldoTemporada - Sin Fecha (HOY)
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/SaldoTemporada
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 200
+  res.body.IdError: eq false
+}
+
+docs {
+  # Servicio REST — Saldo de Facturas de Temporada
+  
+  ---
+  
+  ## 1. Título del Servicio
+  
+  **CyC 0870 — Saldo de Facturas de Temporada**
+  Retorna las facturas de temporada con saldo vigente a una fecha de corte, más los totales agrupados por tipo de temporada. Se basó en el reporte que corría en modo carácter.
+  Endpoint: `/SaldoTemporada`
+  
+  ---
+  
+  ## 2. Método HTTP
+  
+  ```
+  GET
+  ```
+  
+  ---
+  
+  ## 3. URL Completa
+  
+  ```
+  http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/SaldoTemporada
+  ```
+  
+  ---
+  
+  ## 4. Parámetros de Entrada (Query String)
+  
+  > ✅ = Requerido · ❌ = Opcional
+  
+  **`Fecha`** · STRING (fecha) · ❌ — Fecha de corte del reporte
+  - Formato: `MM/DD/YYYY` · Ej: `"09/04/2026"`
+  - Vacía o inválida = fecha actual del servidor (`HOY`)
+  - Se incluyen movimientos con `FecReg <=` esta fecha
+  
+  ---
+  
+  ## 5. Body
+  
+  No aplica. Método `GET`.
+  
+  ---
+  
+  ## 6. Headers
+  
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+  
+  ---
+  
+  ## 7. Ejemplo de Request
+  
+  ```
+  GET http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/SaldoTemporada
+      ?Fecha=09/04/2026
+  ```
+  
+  Sin parámetro (usa la fecha del servidor):
+  
+  ```
+  GET http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/SaldoTemporada
+  ```
+  
+  ---
+  
+  ## 8. Ejemplo de Response
+  
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "OK",
+    "dsSaldoTemporada": {
+      "dsSaldoTemporada": {
+        "ttDetalle": [
+          {
+            "IdCliente": 35947,
+            "RazonSocial": "IMAPCOLOR",
+            "IdFactura": "5139992",
+            "FecReg": "2026-05-12",
+            "FecVenc": "2026-08-10",
+            "Tipo": "S",
+            "ImporteIni": 139722.00,
+            "Saldo": 139722.00
+          },
+          {
+            "IdCliente": 41022,
+            "RazonSocial": "COMERCIALIZADORA DEL NORTE",
+            "IdFactura": "5140588",
+            "FecReg": "2026-06-03",
+            "FecVenc": "2026-09-01",
+            "Tipo": "E",
+            "ImporteIni": 88250.50,
+            "Saldo": 42100.00
+          },
+          {
+            "IdCliente": 41022,
+            "RazonSocial": "COMERCIALIZADORA DEL NORTE",
+            "IdFactura": "5141003",
+            "FecReg": "2026-07-18",
+            "FecVenc": "2026-10-16",
+            "Tipo": "N",
+            "ImporteIni": 210000.00,
+            "Saldo": 210000.00
+          }
+        ],
+        "ttTotales": [
+          {
+            "TotalTempS": 139722.00,
+            "TotalTempE": 42100.00,
+            "TotalTempN": 210000.00,
+            "TotalImporte": 437972.50,
+            "TotalSaldo": 391822.00,
+            "FechaCorte": "2026-09-04"
+          }
+        ]
+      }
+    }
+  }
+  ```
+  
+  ### Campos de nivel raíz
+  
+  **`IdError`** · BOOLEAN — `true` = ocurrió un error controlado; `false` = ejecución correcta
+  **`Respuesta`** · STRING — `"OK"` en éxito; `"Error: ..."` cuando `IdError = true`
+  **`dsSaldoTemporada`** · DATASET — Contenedor de las tablas `ttDetalle` y `ttTotales`
+  
+  ### Campos de `ttDetalle`
+  
+  Un renglón por factura de temporada con saldo positivo a la fecha de corte.
+  
+  **`IdCliente`** · INT — Número de cliente del movimiento
+  **`RazonSocial`** · STRING — Nombre o razón social del cliente en la factura
+  **`IdFactura`** · STRING — Folio de la factura
+  **`FecReg`** · DATE — Fecha de registro de la factura. Formato: `YYYY-MM-DD`
+  **`FecVenc`** · DATE — Fecha de vencimiento de la factura (`Factura.fecvence`). Formato: `YYYY-MM-DD`
+  **`Tipo`** · STRING — Tipo de temporada. `S` = Surtido; `E` = Especial; `N` = Nueva
+  **`ImporteIni`** · DECIMAL — Importe inicial (total) de la factura (MXN)
+  **`Saldo`** · DECIMAL — Saldo real a la fecha de corte, ajustado por movimientos posteriores no afectados (MXN)
+  
+  ### Campos de `ttTotales`
+  
+  Un solo renglón con los acumulados del reporte.
+  
+  **`TotalTempS`** · DECIMAL — Suma de saldos de facturas tipo `S` (MXN)
+  **`TotalTempE`** · DECIMAL — Suma de saldos de facturas tipo `E` (MXN)
+  **`TotalTempN`** · DECIMAL — Suma de saldos de facturas tipo `N` (MXN)
+  **`TotalImporte`** · DECIMAL — Suma de los importes iniciales de todas las facturas listadas (MXN)
+  **`TotalSaldo`** · DECIMAL — Suma de todos los saldos listados = `TotalTempS + TotalTempE + TotalTempN` (MXN)
+  **`FechaCorte`** · DATE — Fecha de corte efectivamente usada. Formato: `YYYY-MM-DD`
+  
+  ### Response sin resultados
+  
+  Cuando no hay facturas de temporada con saldo a la fecha, `ttDetalle` regresa vacío y `ttTotales` regresa un renglón con todos los totales en cero:
+  
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "OK",
+    "dsSaldoTemporada": {
+      "dsSaldoTemporada": {
+        "ttDetalle": [],
+        "ttTotales": [
+          {
+            "TotalTempS": 0.00,
+            "TotalTempE": 0.00,
+            "TotalTempN": 0.00,
+            "TotalImporte": 0.00,
+            "TotalSaldo": 0.00,
+            "FechaCorte": "2026-09-04"
+          }
+        ]
+      }
+    }
+  }
+  ```
+  
+  ### Response de error controlado
+  
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Error: [descripción del error]",
+    "dsSaldoTemporada": {
+      "dsSaldoTemporada": {
+        "ttDetalle": [],
+        "ttTotales": []
+      }
+    }
+  }
+  ```
+  
+  ---
+  
+  ## 9. Evidencia de Ejecución
+  
+  *Pendiente de captura por parte del equipo de QA.*
+  Adjuntar screenshot de la herramienta de prueba (Postman / Insomnia / curl) mostrando:
+  - URL completa con parámetro `Fecha`
+  - Status HTTP `200 OK`
+  - Cuerpo de respuesta con al menos un registro en `ttDetalle` y el renglón de `ttTotales`
+  
+  ---
+  
+  ## 10. Fecha de Prueba
+  
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | 2026-09-04 | *(pendiente)* |
+  
+  ---
+  
+  ## 11. Resultado
+  
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA  |
+  
+  ---
+  
+  ## 12. Observaciones Técnicas
+  
+  1. **Fecha en URL:** Se envía como texto en formato `MM/DD/YYYY`. Si se omite, viene vacía o no es una fecha válida, el servicio usa la fecha actual del servidor (`HOY`).
+  2. **Criterio de temporada:** Solo se listan facturas cuya condición corresponde a temporada (`S`, `E`, `N`). El resto de las facturas se ignora.
+  3. **Cálculo del saldo:** El saldo de cada factura parte del saldo del movimiento de factura y se ajusta sumando los movimientos posteriores no afectados relacionados con la misma referencia, hasta la fecha de corte. Solo se incluyen las facturas cuyo saldo resultante es mayor a cero.
+  
+     > Corrección respecto al reporte de modo carácter: el ajuste del saldo ahora se acumula **por factura**. En la versión previa el acumulado no se reiniciaba entre facturas y podía arrastrar importes de facturas anteriores; en la práctica el defecto quedaba enmascarado porque pocas facturas tienen movimientos de ajuste.
+  
+  4. **Orden del detalle:** Los renglones se entregan ordenados por fecha de registro y folio de factura.
+  5. **Autenticación:** El servicio corre sobre OpenEdge PASOE. Si el ambiente requiere autenticación Bearer, incluir el header `Authorization: Bearer <token>`.
+  
+}

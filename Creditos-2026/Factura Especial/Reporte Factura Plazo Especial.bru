@@ -1,0 +1,135 @@
+meta {
+  name: Reporte Factura Plazo Especial
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/ReporteFacturaPlazo?FecInicio=2026-08-01&FecFin=2026-09-04&Vendedor=&SoloPendientes=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FecInicio: 2026-08-01
+  FecFin: 2026-09-04
+  Vendedor: 
+  SoloPendientes: true
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # Reporte de Facturas con Plazo Especial
+  
+  ## 1. Descripción
+  
+  Lista las facturas cuyo **plazo de factura supera el plazo de crédito del cliente**
+  (facturas con plazo especial) dentro de un rango de fechas de registro, con opción
+  de filtrar por uno o varios vendedores.
+  
+  Se agregaron dos campos por renglón:
+  - **`FecVenc`** — Fecha de vencimiento de la factura.
+  - **`Saldo`** — Saldo real de la factura, calculado igual que el reporte de saldo de
+    temporada (saldo del movimiento de factura más los movimientos posteriores no
+    afectados hasta la fecha de corte), **sin** filtrar por condición de temporada.
+  
+  ---
+  
+  ## 2. Servicio
+  
+  **Endpoint:** `/ReporteFacturaPlazo`
+  **Método:** `GET`
+  
+  ---
+  
+  ## 3. Parámetros de entrada (Query String)
+  
+  > ✅ = Requerido · ❌ = Opcional
+  
+  **`FecInicio`** · DATE · ❌ — Fecha de registro inicial del rango
+  - Formato: `YYYY-MM-DD` · Vacío = sin límite inferior
+  
+  **`FecFin`** · DATE · ❌ — Fecha de registro final del rango
+  - Formato: `YYYY-MM-DD` · Vacío = sin límite superior
+  - También se usa como **fecha de corte del saldo**; si viene vacío se usa HOY
+  
+  **`Vendedor`** · STRING · ❌ — Lista de Id de vendedor separada por comas
+  - Ej: `"0100,0104"` · Vacío = todos los vendedores
+  
+  **`SoloPendientes`** · BOOLEAN · ❌ — Filtra solo facturas pendientes (con saldo)
+  - `false` / omitido = todas las facturas con plazo especial (comportamiento por default)
+  - `true` = solo las que tienen `Saldo > 0`
+  
+  ---
+  
+  ## 4. Campos de response
+  
+  ### Nivel raíz
+  
+  **`IdError`** · BOOLEAN — `true` = ocurrió un error controlado; `false` = ejecución correcta
+  **`Respuesta`** · STRING — `"OK"` en éxito; `"Error: ..."` cuando `IdError = true`
+  **`ttFactura`** · ARRAY — Renglones del reporte
+  
+  ### Campos de `ttFactura`
+  
+  **`IdFactura`** · STRING — Folio de la factura
+  **`FechaReg`** · DATE — Fecha de registro de la factura (`YYYY-MM-DD`)
+  **`FecVenc`** · DATE — Fecha de vencimiento de la factura (`YYYY-MM-DD`)
+  **`IdCliente`** · INT — Número de cliente
+  **`NumCliente`** · STRING — Razón social del cliente
+  **`PlazoNormal`** · INT — Plazo de crédito del cliente (días)
+  **`PlazoFac`** · INT — Plazo de la factura (días)
+  **`Total`** · DECIMAL — Importe total de la factura (MXN)
+  **`Saldo`** · DECIMAL — Saldo real a la fecha de corte (MXN). `0` si la factura ya no tiene movimiento de saldo
+  **`IdVendedor`** · STRING — Clave del vendedor de la factura
+  **`Vendedor`** · STRING — Nombre del vendedor; `"Vendedor no identificado"` si no se resuelve
+  
+  ---
+  
+  ## 5. Ejemplo de response
+  
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "OK",
+    "ttFactura": [
+      {
+        "IdFactura": "5140588",
+        "FechaReg": "2026-06-03",
+        "FecVenc": "2026-09-01",
+        "IdCliente": 41022,
+        "NumCliente": "COMERCIALIZADORA DEL NORTE",
+        "PlazoNormal": 30,
+        "PlazoFac": 90,
+        "Total": 88250.50,
+        "Saldo": 42100.00,
+        "IdVendedor": "0104",
+        "Vendedor": "JUAN PEREZ"
+      }
+    ]
+  }
+  ```
+  
+  ---
+  
+  ## 6. Notas técnicas
+  
+  - El **saldo** se calcula con la misma lógica que `/SaldoTemporada`: saldo del
+    movimiento de factura (`Id-MC = 1`) más los movimientos posteriores no afectados
+    (`Id-MC > 3`, `Afectado = FALSE`) de la misma referencia, hasta la fecha de corte.
+    La diferencia es que aquí **no** se filtra por condición (`Id-Cond`).
+  - La **fecha de corte del saldo** es `FecFin`; si viene vacío, se usa HOY.
+  - El sub-barrido de ajuste del saldo usa el índice `idx-afecrefsaldomc`
+    (Afectado, RefSaldo, Id-MC) para máxima selectividad.
+  - **`SoloPendientes = true`** descarta las facturas con `Saldo <= 0`. El filtro
+    se aplica justo después de calcular el saldo y antes de resolver el vendedor,
+    por lo que las descartadas no generan lecturas adicionales.
+  
+  ---
+  
+  **Desarrollado por:** SIS10 - JASS
+}

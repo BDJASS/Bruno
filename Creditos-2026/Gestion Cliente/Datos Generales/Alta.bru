@@ -1,0 +1,351 @@
+meta {
+  name: Alta
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{RestADOSACyc}}/GestionCliente/DatosGenerales/Alta?IdUser=nmra
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdUser: nmra
+}
+
+body:json {
+  {
+    "ttDatosGral": [
+      {
+        "IdCliente": 0,
+        "CP": "25298",
+        "Colonia": "LEANDRO VALLE",
+        "Calle": "RENATO VEGA",
+        "NumExt": "136",
+        "NumInt": "",
+        "IdRamo": "4",
+        "IdGiro": 75,
+        "Propietario": "",
+        "CURP": "",
+        "Correo": "nuevo.cliente@dominio.com",
+        "Telefono": "8444154910",
+        "Fijo": "8441234567",
+        "Ext": "",
+        "IdCiudad": 158,
+        "IdVendedor": "V01",
+        "IdSegmento": ""
+      }
+    ],
+    "ttInfoFiscal": [
+      {
+        "RFCFiscal": "RDE1111142R8",
+        "RazonSocial": "REALCE DESARROLLOS SA DE CV",
+        "NomEmpresa": "REALCE DESARROLLOS",
+        "RegimenCapital": "SA DE CV",
+        "ApP": "",
+        "ApM": "",
+        "Nombre": "",
+        "FormasPago": "03",
+        "UsoCFDI": "G03",
+        "Regimen": "601",
+        "BuzonFiscal": ""
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # DatosGenerales — Alta de Cliente (POST)
+
+  **Módulo:** Gestión de Créditos / CYC
+
+  **Servicio:** RestADOSACyc
+
+  **Autor:** SIS10 — JASS
+
+  **Estatus:** Implementado ✅
+
+  ---
+
+  ## Resumen
+
+  Da de alta un cliente nuevo (datos generales). Las reglas se basan en el
+  proceso de alta de clientes en modo caracter.
+
+  - El **folio (`IdCliente`) se asigna automáticamente** (primer libre entre
+    `10000` y `90000`); **no** se envía en el body.
+
+  - El cliente se da de alta **sin contacto**. El contacto se captura después
+    con el endpoint `POST /GestionCliente/DatosDeContactol/Alta`.
+
+  ---
+
+  # Endpoint
+
+  **Método:** `POST`
+
+  **Ruta:** `/GestionCliente/DatosGenerales/Alta`
+
+  El **body** es el dataset `dsDatosGral` con dos bloques obligatorios:
+  `ttDatosGral` y `ttInfoFiscal`.
+
+  > ✅ = Obligatorio · ❌ = Opcional · 🟡 = Obligatorio condicional
+
+  > **Campos opcionales / nulos:** un campo de texto opcional puede omitirse o
+  > enviarse como `null`; el servicio lo trata como vacío (no falla) y no lo
+  > registra en la bitácora. Los campos obligatorios sí deben venir con valor.
+
+  ---
+
+  ## Parámetro de Query String
+
+  - ✅ **`IdUser`** · STRING — Usuario que realiza el alta (queda en la auditoría).
+
+  ---
+
+  ## Regla clave — Tipo de persona según el RFC
+
+  El tipo de persona **se determina por la longitud del RFC**:
+
+  - RFC de **12** caracteres → **Persona Moral** → `NomEmpresa` es obligatorio.
+
+  - RFC de **13** caracteres → **Persona Física** → se usan `ApP`, `ApM` y
+    `Nombre`; el `CURP` es opcional (si se envía, debe ser de 18 caracteres).
+
+  > El tipo de persona (`Cliente.Tipo`) lo determina el servicio a partir del
+  > RFC. **No se recibe en el body**: no envíes `Tipo` ni `TipoPersona` en el alta.
+
+  ---
+
+  ## Bloque `ttDatosGral`
+
+  ### Campos obligatorios
+
+  - ✅ **`NumExt`** · STRING — Número exterior (use `"S/N"` si no se conoce).
+
+  - ✅ **`Telefono`** · STRING — Celular. Exactamente 10 dígitos numéricos.
+
+  - ✅ **`Correo`** · STRING — Correo con formato válido y único entre clientes.
+
+  - ✅ **`IdCiudad`** · INTEGER — Debe existir en el catálogo de ciudades.
+
+  - ✅ **`IdRamo`** · STRING — Debe existir en el catálogo de ramos.
+
+  - ✅ **`IdGiro`** · INTEGER — Debe existir para el `IdRamo` enviado.
+
+  ### Campos opcionales
+
+  - 🟡 **`CP`** · STRING — Código postal. Si se envía, se valida (muy recomendable).
+
+  - ❌ **`Calle`** · STRING — Nombre de la calle (recomendable).
+
+  - ❌ **`Colonia`** · STRING — Colonia (recomendable).
+
+  - ❌ **`NumInt`** · STRING — Número interior.
+
+  - ❌ **`Propietario`** · STRING — Nombre del propietario.
+
+  - ❌ **`CURP`** · STRING — Solo persona física; si se envía debe ser de 18.
+
+  - ❌ **`Fijo`** · STRING — Teléfono fijo (si se envía, mínimo 10 dígitos).
+
+  - ❌ **`Ext`** · STRING — Extensión.
+
+  - ❌ **`IdVendedor`** · STRING — Si se envía, debe existir en el catálogo.
+
+  - ❌ **`IdSegmento`** · STRING — Si se envía se respeta; si no, se calcula solo.
+
+  - ❌ **`IdCliente`** · INTEGER — Se ignora; el folio se asigna automáticamente.
+
+  ---
+
+  ## Bloque `ttInfoFiscal`
+
+  ### Campos obligatorios
+
+  - ✅ **`RFCFiscal`** · STRING — RFC. Se normaliza (mayúsculas, sin espacios) y
+    se valida ante el SAT. Único, salvo el RFC genérico o la lista de excepciones.
+
+  - ✅ **`RazonSocial`** · STRING — Razón social. Única entre clientes.
+
+  - ✅ **`Regimen`** · STRING — Régimen fiscal. Debe existir y ser compatible con
+    el tipo de persona.
+
+  - 🟡 **`NomEmpresa`** · STRING — Obligatorio cuando el RFC es de 12 (persona moral).
+
+  ### Campos opcionales
+
+  - ❌ **`RegimenCapital`** · STRING — Régimen societario (ej. `SA DE CV`).
+
+  - ❌ **`ApP`** · STRING — Apellido paterno (persona física).
+
+  - ❌ **`ApM`** · STRING — Apellido materno (persona física).
+
+  - ❌ **`Nombre`** · STRING — Nombre(s) (persona física).
+
+  - ❌ **`UsoCFDI`** · STRING — Si se envía, debe existir en el catálogo.
+
+  - ❌ **`FormasPago`** · STRING — Forma de pago.
+
+  - ❌ **`BuzonFiscal`** · STRING — Si se envía se valida; si va vacío se toma el `Correo`.
+
+  > **Compatibilidad Régimen ↔ persona** (salvo RFC genérico):
+  >
+  > - Persona **física** NO admite régimen `601`, `603`, `620`.
+  >
+  > - Persona **moral** NO admite régimen `605`, `612`, `616`.
+
+  ---
+
+  ## Bloque `ttCredito` — No aplica en el alta
+
+  No se usa al dar de alta. La calidad nace fija en `42` y la clase/cobrador se
+  definen después por las reglas del módulo de crédito. Se puede **omitir del
+  body** por completo.
+
+  ---
+
+  ## Valores asignados automáticamente por el servicio
+
+  - **`FecReg`** — Fecha de hoy.
+
+  - **`Id-Zona`** — `1`.
+
+  - **`BackOrder`** — `1`.
+
+  - **`Id-Calidad`** — `42` (fijo en el alta).
+
+  - **`TipoCol`** — Siempre `1` (COLONIA). No se captura; no se recibe en el body.
+
+  - **Dirección completa** — Se arma con `Calle`, `NumExt` y `NumInt`, y se
+    normaliza automáticamente.
+
+  - **`Id-Resp` (Responsable)** — `IdGiro = 45` → `30`; Ciudad del estado `019`
+    con `CveZona = 1` → `33`; en cualquier otro caso → `9`.
+
+  - **`Id-ClaseCte` (Clase)** — Se deriva del responsable: `33` → `1` (Local),
+    `9` → `2` (Foráneo), `30` → `3` (Corporativo). Si no se reconoce, respaldo a
+    `1`. No se recibe en el body.
+
+  - **`BuzonFiscal`** — Igual al `Correo` si va vacío.
+
+  - **`Id-Segmento`** — Se calcula automáticamente si va vacío.
+
+  > Al guardar, también se retira el pre-registro fiscal del RFC capturado.
+
+  ---
+
+  ## Ejemplo — Persona Física (RFC de 13)
+
+  ```json
+  {
+    "ttDatosGral": [
+      {
+        "IdCliente": 0,
+        "CP": "64000",
+        "Colonia": "CENTRO",
+        "Calle": "JUAREZ",
+        "NumExt": "100",
+        "NumInt": "",
+        "IdRamo": "01",
+        "IdGiro": 12,
+        "Propietario": "",
+        "CURP": "PEPJ800101HNLABC09",
+        "Correo": "juan.perez@dominio.com",
+        "Telefono": "8112345678",
+        "Fijo": "",
+        "Ext": "",
+        "IdCiudad": 39,
+        "IdVendedor": "V01",
+        "IdSegmento": ""
+      }
+    ],
+    "ttInfoFiscal": [
+      {
+        "RFCFiscal": "PEPJ800101AB1",
+        "RazonSocial": "JUAN PEREZ PEREZ",
+        "NomEmpresa": "",
+        "RegimenCapital": "",
+        "ApP": "PEREZ",
+        "ApM": "PEREZ",
+        "Nombre": "JUAN",
+        "FormasPago": "03",
+        "UsoCFDI": "G03",
+        "Regimen": "612",
+        "BuzonFiscal": ""
+      }
+    ]
+  }
+  ```
+
+  ---
+
+  ## Respuesta
+
+  **`IdCliente`** · INTEGER — Folio nuevo asignado (`0` si hubo error)
+  **`IdError`** · BOOLEAN — `true` = error; `false` = alta exitosa
+  **`Respuesta`** · STRING — Mensaje descriptivo
+
+  ### Éxito
+
+  ```json
+  {
+    "IdCliente": 10231,
+    "IdError": false,
+    "Respuesta": "Cliente dado de alta correctamente con el folio 10231."
+  }
+  ```
+
+  ### Error (ejemplos de `Respuesta`)
+
+  ```json
+  {
+    "IdCliente": 0,
+    "IdError": true,
+    "Respuesta": "El SAT informa que el RFC ingresado no existe en sus registros."
+  }
+  ```
+
+  - `"El parametro IdUser es requerido."`
+  - `"El RFC del cliente es requerido."`
+  - `"Ya existe el RFC registrado con el cliente: 12345 ..."`
+  - `"La razon social del cliente es requerida."`
+  - `"Es obligatorio capturar el nombre de la empresa para persona moral."`
+  - `"Ya existe el cliente 12345 registrado con la razon social: ..."`
+  - `"Ciudad inexistente, favor de verificar."`
+  - `"Folio de ramo inexistente, favor de verificar."`
+  - `"Folio de giro inexistente para el ramo 4."`
+  - `"Regimen fiscal no existe, favor de verificar."`
+  - `"Regimen fiscal no compatible con persona fisica." / "... persona moral."`
+  - `"Favor de ingresar el celular (Tel1) a 10 digitos."`
+  - `"Debe ingresar un correo electronico para el cliente."`
+  - `"Ya existe el cliente 12345 registrado con el correo: ..."`
+  - `"El numero exterior es obligatorio (use 'S/N' si no se conoce)."`
+  - `"No hay folios disponibles para dar de alta el cliente."`
+
+  ---
+
+  ## Auditoría (CambioCte)
+
+  El alta registra en `CambioCte` los campos capturados con `Id-User = IdUser`,
+  fecha, hora y `ValorNuevo` (con `ValorOld` vacío), basado en la alta en modo
+  caracter. Campos considerados: `Tipo`, `RFC`, `CURP`, `RazonSocial`, `ApP`,
+  `ApM`, `Nombre`, `Propietario`, `CP`, `Calle`, `NumExt`, `NumInt`, `TipoCol`,
+  `Colonia`, `Id-Ciudad`, `Tel1`, `Tel2`, `Tel3`, `Id-RFiscal`, `Id-Ramo`,
+  `Id-Giro`, `Id-Vendedor`, `Id-UsoCFDI`, `e-Mail`, `BuzonFiscal`, `NomEmpresa`,
+  `RSocietario`.
+
+  > **Solo se registra bitácora de los campos que traen valor.** Un campo que no
+  > se envía (o llega vacío/`null`, por ejemplo `ApP` en persona moral) **no**
+  > genera renglón en `CambioCte`.
+
+  ---
+
+  **Desarrollado por:** SIS10 - JASS
+}
