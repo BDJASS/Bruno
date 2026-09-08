@@ -5,16 +5,13 @@ info:
 
 http:
   method: POST
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/generaFactura?IdPedido=2968082&Resto=0&Origen=02B&IdUser=olds
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/generaFactura?IdPedido=2968082&Resto=0&IdUser=olds
   params:
     - name: IdPedido
       value: "2968082"
       type: query
     - name: Resto
       value: "0"
-      type: query
-    - name: Origen
-      value: 02B
       type: query
     - name: IdUser
       value: olds
@@ -155,7 +152,7 @@ docs: |
   ## 1. Título del Servicio
 
   **Facturación — Generación de la Factura**
-  **Genera** la factura de un pedido: consume el folio real, crea `Factura`/`DetFactura`, afecta inventario y cuentas por cobrar (CxC), descompromete y marca el pedido facturado. Port del motor carácter `vtaa0499.p` (crédito) a REST, no interactivo, en **una sola transacción**. **No timbra** (el CFDI es un paso aparte, ver [TimbraFactura](pedfactura-TimbraFactura.md)).
+  **Genera** la factura de un pedido: consume el folio real, crea `Factura`/`DetFactura`, afecta inventario y cuentas por cobrar (CxC), descompromete y marca el pedido facturado. Port del motor carácter `vtaa0499.p` (crédito) a REST, no interactivo, en **una sola transacción**. **Timbra el CFDI automáticamente** tras generar (igual que el carácter, que corre `vtac2060.p` al final); si el PAC falla, la factura sigue válida y el timbrado es reintentable con [TimbraFactura](pedfactura-TimbraFactura.md).
   Programa servidor: `pedfactura.p` · Procedimiento: `generaFactura`. Módulo `/Ventas/Pedidos/`.
 
   > ⚠️ **Proceso crítico (dinero, folios fiscales, inventario, CxC).** Requiere compilar en PDSOE y **QA contra una factura de carácter** antes de producción (ver §11).
@@ -186,7 +183,7 @@ docs: |
   **`IdPedido`** · STRING · ✅ — Folio del pedido (se normaliza)
   **`Resto`** · STRING · ❌ — Resto; vacío = `0`
   > **El origen ya NO se recibe:** se **deriva del usuario** (`Usuario.Id-Ubicacion` donde `Usuario.Id-User = IdUser`); determina la serie del folio y el almacén de la factura. Usuario inexistente / sin ubicación → error.
-  **`IvaGlobal`** · DECIMAL · ❌ — IVA global para comparar contra la zona (default `16`)
+  > **El IVA ya NO se recibe** (se eliminó el parámetro `IvaGlobal`): la tasa de referencia se toma de `SysGeneral.Porc-IVA` (16), igual que `g-Iva` en carácter; la zona del cliente decide frontera / tasa aplicada.
 
   ---
 
@@ -246,7 +243,7 @@ docs: |
   {
     "response": {
       "IdError": false,
-      "Respuesta": "Factura FACCEDIS0012345 generada para el pedido 2965291-0. Pendiente de timbrado CFDI.",
+      "Respuesta": "Factura FACCEDIS0012345 generada y timbrada correctamente. UUID: 5D8A...-...-...",
       "IdFactura": "0012345"
     }
   }
@@ -282,7 +279,7 @@ docs: |
   8. **CxC** (`{cxca0001.i}`): cargo a `MovCliente` con `Saldo = Factura.Tot`.
   9. **COMMIT** + auditoría (`programas/auditoria.p`, módulo Pedidos).
 
-  **Decisiones aplicadas:** sin validación de límite de crédito (igual que el motor); una sola transacción, folio real directo (sin `TMPFAC`); no timbra CFDI (paso aparte).
+  **Decisiones aplicadas:** sin validación de límite de crédito (igual que el motor carácter, cuyo `vtad0125.p` está comentado en crédito); una sola transacción, folio real directo (sin `TMPFAC`); **auto-timbra** el CFDI tras el commit (`vtac2060.p`); folio con `EXCLUSIVE-LOCK NO-WAIT` + reintentos; correo de auditoría (`correotarjeta.i`). Totales completos: recálculo IVA plano + ajuste "II" (`vtaa0500.i`), seguro, descuento `DesCred`, IVA flete y retención `regaltex`.
 
   ---
 

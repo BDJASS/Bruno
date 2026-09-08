@@ -5,9 +5,9 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Agenda/Consulta?Id-Vendedor=001&FecIni=2026-08-24&FecFin=2026-08-30&IdUser=jjlg
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Agenda/Consulta?IdVendedor=1&FecIni=2026-08-24&FecFin=2026-08-30&IdUser=jjlg
   params:
-    - name: Id-Vendedor
+    - name: IdVendedor
       value: "1"
       type: query
     - name: FecIni
@@ -49,13 +49,13 @@ docs: |-
 
   ## 4. Parametros (Query String)
 
-  > OK = Requerido 
+  > OK = Requerido
   >
-  > `Id-Vendedor` . STRING . OK - Vendedor (responsable). 
+  > `IdVendedor` . STRING . OK - Vendedor (responsable).
   >
-  > `FecIni` . DATE . OK - Lunes de la semana (YYYY-MM-DD). 
+  > `FecIni` . DATE . OK - Lunes de la semana (YYYY-MM-DD).
   >
-  > `FecFin` . DATE . OK - Domingo de la semana (YYYY-MM-DD). 
+  > `FecFin` . DATE . OK - Domingo de la semana (YYYY-MM-DD).
   >
   > `IdUser` . STRING . OK - Usuario que ejecuta.
 
@@ -83,13 +83,13 @@ docs: |-
 
   ## 9. Campos
 
-  `ttKpi` (1 fila) - `Programadas` = total de la semana (denominador) . 
+  `ttKpi` (1 fila) - `Programadas` = total de la semana (denominador) .
 
-  `Realizadas`**/**`Canceladas`**/**`NoRealizadas` . 
+  `Realizadas`**/**`Canceladas`**/**`NoRealizadas` .
 
-  `Pendientes` = estatus Programada . 
+  `Pendientes` = estatus Programada .
 
-  `PctCumplimiento` = Realizadas/Programadas x100 (entero, &lt;=100). 
+  `PctCumplimiento` = Realizadas/Programadas x100 (entero, &lt;=100).
 
   `ttAgUI` - una fila por actividad: Id, fechas/horas, tipo (id+nombre), Titulo, Cuenta (cliente o lead), Estatus (id+nombre), Ubicacion.
 

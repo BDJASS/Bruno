@@ -13,16 +13,32 @@ http:
         "dsAgenda": {
           "ttEnc": [
             {
-              "IdAgenda": 0, "IdUser": "jjlg", "IdVendedor": "001",
-              "FecHoraIni": "2026-08-25T10:00:00", "FecHoraFin": "2026-08-25T11:00:00",
-              "TipoCliente": "A", "IdCliente": 1024, "IdOportunidad": 12, "Contacto": "Ana Ruiz", "IdLead": 0,
-              "IdTipoActividad": 1, "Titulo": "Visita Cliente", "Ubicacion": "Av. Industria 100",
-              "Descripcion": "Presentacion de propuesta", "MontoEstimado": 15000.00, "ProbCierre": 60,
-              "Comentarios": "", "Observaciones": ""
+              "IdAgenda": 0, 
+              "IdUser": "jjlg", 
+              "IdVendedor": "001",
+              "FecHoraIni": "2026-08-25T10:00:00", 
+              "FecHoraFin": "2026-08-25T11:00:00",
+              "TipoCliente": "A", 
+              "IdCliente": 1024, 
+              "IdOportunidad": 12, 
+              "Contacto": "Ana Ruiz", 
+              "IdLead": 0,
+              "IdTipoActividad": 1, 
+              "Titulo": "Visita Cliente", 
+              "Ubicacion": "Av. Industria 100",
+              "Descripcion": "Presentacion de propuesta",
+              "MontoEstimado": 15000.00, 
+              "ProbCierre": 60,
+              "Comentarios": "", 
+              "Observaciones": ""
             }
           ],
           "ttObj": [
-            { "Orden": 1, "IdAccionSmart": 1, "Metrica": "1 cotizacion firmada", "Proposito": "avanzar al cierre", "Enunciado": "" }
+            { "Orden": 1, 
+             "IdAccionSmart": 1, 
+             "Metrica": "1 cotizacion firmada", 
+             "Proposito": "avanzar al cierre", 
+             "Enunciado": "" }
           ]
         }
       }
@@ -39,7 +55,7 @@ docs: |
   # Servicio REST - Alta de Actividad (Agenda)
 
   ## 1. Titulo
-  **Alta de Actividad en la Agenda (HU-05)** - crea la actividad con sus **objetivos SMART** (body dataset). Programa `agenda.p` . Proc `creaAgenda`.
+  **Alta de Actividad en la Agenda (HU-05)** - crea la actividad con sus **objetivos SMART** (body dataset). 
 
   ## 2. Metodo
   ```

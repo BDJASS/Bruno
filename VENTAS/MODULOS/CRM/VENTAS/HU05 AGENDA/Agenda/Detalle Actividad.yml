@@ -5,9 +5,9 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Agenda/Detalle?Id-Agenda=5&IdUser=jjlg
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Agenda/Detalle?IdAgenda=5&IdUser=jjlg
   params:
-    - name: Id-Agenda
+    - name: IdAgenda
       value: "5"
       type: query
     - name: IdUser
@@ -22,29 +22,39 @@ settings:
   maxRedirects: 5
   forwardAuthorizationHeader: true
 
-docs: |
+docs: |-
   # Servicio REST - Detalle de una Actividad
 
   ## 1. Titulo
-  **Detalle de Actividad de Agenda (HU-05)** - devuelve una actividad con sus **objetivos SMART** (dataset anidado). Programa `agenda.p` . Proc `detalleAgenda`.
+
+  **Detalle de Actividad de Agenda (HU-05)** - devuelve una actividad con sus **objetivos SMART** (dataset anidado).
 
   ## 2. Metodo
+
   ```
   GET
   ```
+
   ## 3. URL
+
   ```
   http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Agenda/Detalle
   ```
+
   ## 4. Parametros (Query String)
-  **`Id-Agenda`** . INTEGER . OK - Actividad a consultar.
-  **`IdUser`** . STRING . OK - Usuario.
+
+  `IdAgenda` . INTEGER . OK - Actividad a consultar. 
+
+  `IdUser` . STRING . OK - Usuario.
 
   ## 7. Ejemplo
+
   ```
   GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Agenda/Detalle?Id-Agenda=5&IdUser=jjlg
   ```
+
   ## 8. Response
+
   ```json
   {
     "IdError": false, "Respuesta": "Actividad encontrada.",
@@ -58,8 +68,11 @@ docs: |
     } ] }
   }
   ```
+
   ## 9. Campos
-  **`ttDet`** - todos los datos de la actividad (ids + descripcion de catalogos). **`ttObjUI`** - objetivos SMART (Orden, Accion id+nombre, Metrica, Proposito, Enunciado).
+
+  `ttDet` - todos los datos de la actividad (ids + descripcion de catalogos). `ttObjUI` - objetivos SMART (Orden, Accion id+nombre, Metrica, Proposito, Enunciado).
 
   ---
+
   **Desarrollado por:** SIS10 - JASS

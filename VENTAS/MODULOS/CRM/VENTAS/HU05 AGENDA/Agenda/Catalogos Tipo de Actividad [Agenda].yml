@@ -1,5 +1,5 @@
 info:
-  name: Catalogos Agenda
+  name: Catalogos Tipo de Actividad [Agenda]
   type: http
   seq: 6
 
@@ -26,7 +26,7 @@ docs: |
   # Servicio REST - Catalogos de la Agenda
 
   ## 1. Titulo
-  **Catalogos de la Agenda (HU-05)** - GET generico: `TipoActividad`, `EstatusAgenda`, `ResultadoObtenido`, `AccionSmart`. Programa `catagenda.p` . Proc `leeCatalogo`.
+  **Catalogos de la Agenda (HU-05)** - GET generico: `TipoActividad`, `EstatusAgenda`, `ResultadoObtenido`, `AccionSmart`. 
 
   ## 2. Metodo
   ```

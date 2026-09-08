@@ -35,7 +35,7 @@ docs: |
   # Servicio REST - Actualizar Actividad (Agenda)
 
   ## 1. Titulo
-  **Edicion de Actividad (HU-05)** - edita datos generales (RN-02: **solo semana en curso**). Si se envian objetivos, se reemplazan (1-3). Programa `agenda.p` . Proc `actualizaAgenda`.
+  **Edicion de Actividad (HU-05)** - edita datos generales (RN-02: **solo semana en curso**). Si se envian objetivos, se reemplazan (1-3).
 
   ## 2. Metodo
   ```

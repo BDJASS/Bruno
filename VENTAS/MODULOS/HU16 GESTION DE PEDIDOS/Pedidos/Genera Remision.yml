@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/generaRemisionContado?IdPedido=2981608&Resto=0&Origen=02B&IdUser=olds
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/generaRemisionContado?IdPedido=2981608&Resto=0&IdUser=olds&Ajuste=
   params:
     - name: IdPedido
       value: "2981608"
@@ -13,11 +13,11 @@ http:
     - name: Resto
       value: "0"
       type: query
-    - name: Origen
-      value: 02B
-      type: query
     - name: IdUser
       value: olds
+      type: query
+    - name: Ajuste
+      value: ""
       type: query
   body:
     type: json
@@ -298,17 +298,17 @@ settings:
   maxRedirects: 5
 
 docs: |
-  # Servicio REST — Facturación: Genera Factura
+  # Servicio REST — Facturación: Genera Remisión (Contado)
 
   ---
 
   ## 1. Título del Servicio
 
-  **Facturación — Generación de la Factura**
-  **Genera** la factura de un pedido: consume el folio real, crea `Factura`/`DetFactura`, afecta inventario y cuentas por cobrar (CxC), descompromete y marca el pedido facturado. Port del motor carácter `vtaa0499.p` (crédito) a REST, no interactivo, en **una sola transacción**. **No timbra** (el CFDI es un paso aparte, ver [TimbraFactura](pedfactura-TimbraFactura.md)).
-  Programa servidor: `pedfactura.p` · Procedimiento: `generaFactura`. Módulo `/Ventas/Pedidos/`.
+  **Facturación — Generación de la Remisión de Contado**
+  **Genera** la remisión de contado de un pedido: consume el folio real (`REMCEDIS`/`REMISION`), crea `Remision`/`DetRemis`, afecta inventario, valida la **política de venta** (monto mínimo), aplica el **descuento por pronto pago (DPP)**, genera los **movimientos de caja** si el pedido está pagado con depósito conciliado, descompromete y marca el pedido facturado. Port del motor carácter `vtaa0399.p` (contado) a REST, no interactivo, en **una sola transacción**. **Timbra el CFDI automáticamente** (`vtac2070.p`) si el folio es de serie electrónica (prefijo G/C/J/S/F). Contado = EFECTIVO: **no** carga CxC/`MovCliente`.
+  Programa servidor: `pedfactura.p` · Procedimiento: `generaRemisionContado`. Módulo `/Ventas/Pedidos/`.
 
-  > ⚠️ **Proceso crítico (dinero, folios fiscales, inventario, CxC).** Requiere compilar en PDSOE y **QA contra una factura de carácter** antes de producción (ver §11).
+  > ⚠️ **Proceso crítico (dinero, folios fiscales, inventario, caja).** Requiere compilar en PDSOE (`pedfactura.p` + `vtad0125_rest.p`) y **QA contra una remisión de carácter** antes de producción (ver §11).
 
   ---
 
@@ -323,7 +323,7 @@ docs: |
   ## 3. URL Completa
 
   ```
-  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/generaFactura
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/generaRemisionContado
   ```
 
   ---
@@ -336,13 +336,14 @@ docs: |
   **`IdPedido`** · STRING · ✅ — Folio del pedido (se normaliza)
   **`Resto`** · STRING · ❌ — Resto; vacío = `0`
   > **El origen ya NO se recibe:** se **deriva del usuario** (`Usuario.Id-Ubicacion` donde `Usuario.Id-User = IdUser`); determina la serie del folio y el almacén de la factura. Usuario inexistente / sin ubicación → error.
-  **`IvaGlobal`** · DECIMAL · ❌ — IVA global para comparar contra la zona (default `16`)
+  > **El IVA ya NO se recibe** (se eliminó el parámetro `IvaGlobal`): se toma de `SysGeneral.Porc-IVA` (16), igual que `g-Iva` en carácter.
+  **`Ajuste`** · STRING · ❌ — Auto-arreglo de política de venta (equivale al Sí/No del carácter). Vacío = ninguno · `II` = aceptar Precio Público II (re-tarifica) · `PASA` = pasa por mercancía (Id-Entrega 3) · `TAXI` = taxi por cobrar (Id-Entrega 14). Solo se manda cuando el POST anterior regresó el marcador `[RequiereAjuste:...]`.
 
   ---
 
   ## 5. Body — `dsFactura` (el dataset COMPLETO que devolvió el GET)
 
-  El front regresa **el mismo `dsFactura`** que obtuvo de [datosGeneralesCredito](pedfactura-DatosGeneralesCredito.md) (o Contado), con las ediciones que hizo el usuario en **Embarque / Memo / Requisición**. `generaFactura` arma la factura **desde el pedido** y, de la fila de `ttFacturaGral`, toma **solo los campos editables** para sobreescribir. Los renglones (`ttFacturaDet`) se **ignoran** y se re-leen de `DetPedido` (integridad fiscal). El dataset es **opcional**: sin fila en `ttFacturaGral`, la factura se genera 100% desde el pedido (retrocompatible).
+  El front regresa **el mismo `dsFactura`** que obtuvo de [datosGeneralesContado](pedfactura-DatosGeneralesContado.md), con las ediciones que hizo el usuario en **Embarque / Memo / Requisición**. `generaRemisionContado` arma la remisión **desde el pedido** y, de la fila de `ttFacturaGral`, toma **solo los campos editables** para sobreescribir. Los renglones (`ttFacturaDet`) se **ignoran** y se re-leen de `DetPedido` (integridad fiscal). El dataset es **opcional**: sin fila en `ttFacturaGral`, la remisión se genera 100% desde el pedido (retrocompatible).
 
   ```json
   {
@@ -362,13 +363,13 @@ docs: |
   }
   ```
 
-  Campos que `generaFactura` **usa** del body (el resto de `ttFacturaGral` es consulta y se ignora):
+  Campos que `generaRemisionContado` **usa** del body (el resto de `ttFacturaGral` es consulta y se ignora):
 
-  **Generales:** **`Requisicion`** · STRING → `Factura.Requisicion`
+  **Generales:** **`Requisicion`** · STRING → `Remision.Requisicion`
   **Embarque:** **`RazonSocial1`** · **`CalleNo1`** · **`Colonia1`** · STRING · **`IdCiudad1`** · INTEGER (clave; deriva `Ciudad1`/`Estado1` del catálogo) · **`Delegacion1`** · **`CP1`** · STRING · **`IdRutaEmb`** · INTEGER (solo si `Id-Tran = 0`) · **`Tel1`** · **`Fax1`** · **`Email`** · **`Attn1`** · STRING
-  **Memo:** **`Observaciones1`** · **`Observaciones2`** · STRING → `Factura.Observaciones[1..2]`
+  **Memo:** **`Observaciones1`** · **`Observaciones2`** · STRING → `Remision.Observaciones[1..2]`
 
-  > `ttFacturaDet` puede ir **vacío**: `generaFactura` **no** lo usa (re-lee `DetPedido`). Solo el encabezado editable (Embarque/Memo/Requisición) es sobreescribible; totales, renglones y datos fiscales salen de `Pedido`/`DetPedido`.
+  > `ttFacturaDet` puede ir **vacío**: `generaRemisionContado` **no** lo usa (re-lee `DetPedido`). Solo el encabezado editable (Embarque/Memo/Requisición) es sobreescribible; totales, renglones y datos fiscales salen de `Pedido`/`DetPedido`.
 
   ---
 
@@ -383,7 +384,7 @@ docs: |
   ## 7. Ejemplo de Request
 
   ```
-  POST .../Pedido/generaFactura?IdUser=olds&IdPedido=2965291&Resto=0
+  POST .../Pedido/generaRemisionContado?IdUser=olds&IdPedido=2981608&Resto=0
   ```
 
   ---
@@ -396,8 +397,8 @@ docs: |
   {
     "response": {
       "IdError": false,
-      "Respuesta": "Factura FACCEDIS0012345 generada para el pedido 2965291-0. Pendiente de timbrado CFDI.",
-      "IdFactura": "0012345"
+      "Respuesta": "Remision 24993CB generada y timbrada correctamente. UUID: 5D8A...-...-...",
+      "IdRemision": "24993CB"
     }
   }
   ```
@@ -405,8 +406,9 @@ docs: |
   ### Error
 
   ```json
-  { "response": { "IdError": true, "Respuesta": "PEDIDO YA FACTURADO, FOLIO: F0012345", "IdFactura": "" } }
-  { "response": { "IdError": true, "Respuesta": "No se encontro el consecutivo de folio para la serie FACCEDIS (almacen ''). Verifique el catalogo de folios.", "IdFactura": "" } }
+  { "response": { "IdError": true, "Respuesta": "PEDIDO YA FACTURADO, FOLIO: 24990XB", "IdRemision": "" } }
+  { "response": { "IdError": true, "Respuesta": "[RequiereAjuste:II] NO SE PUEDEN HACER VENTAS DE CONTADO CON MAYOREO POR MENOS DE $500.00 Desea cambiar a Precio Publico II?", "IdRemision": "" } }
+  { "response": { "IdError": true, "Respuesta": "ESTE PEDIDO TIENE CONDICIONES DE CREDITO; facturar por el flujo de CREDITO.", "IdRemision": "" } }
   ```
 
   ---
@@ -415,33 +417,32 @@ docs: |
 
   **`IdError`** · BOOLEAN — `true` si no se pudo generar (nada se guarda; la transacción se deshace)
   **`Respuesta`** · STRING — mensaje al usuario
-  **`IdFactura`** · STRING — folio de la factura generada (vacío si hubo error)
+  **`IdRemision`** · STRING — folio de la remisión generada (vacío si hubo error)
 
   ---
 
-  ## 10. Qué hace (una transacción; réplica de `PROCEDURE Actualiza` de `vtaa0499.p`)
+  ## 10. Qué hace (una transacción; réplica del motor de contado `vtaa0399.p`)
 
-  1. **Bloqueos** (igual que `validaPedidoFacturable`): ya facturado, solicitud de cancelación, `*** GRAFICO`, RFC < 12.
-  2. **Folio real:** serie `FAC`/`FACCEDIS`(02B)/`FACFUG`(FUG)/`FACFRON`(frontera); consecutivo de `Folio` (o `VFolio` si origen ≠ 02B/FUG) con `EXCLUSIVE-LOCK` e incremento.
-  3. **`CREATE Factura`** — datos fiscales/envío del pedido (con fallback a `Cliente`), `VersionSAT = "4.0"`, `Id-Captura = IdUser`.
-     - **3b. Override editable (`ttFacturaGral` del body `dsFactura`):** si viene fila, se sobreescriben los campos de **Embarque** (`RazonSocial1`, `CalleNo1`, `Colonia1`, `Delegacion1`, `CP1`, `Tel1`, `Fax1`, `e-mail`, `Attn1`, `Id-RutaEmb` si `Id-Tran=0`), **Memo** (`Observaciones[1..2]`) y **Requisición**. La clave `IdCiudad1` deriva `Ciudad1`/`Estado1` del catálogo (igual que el carácter al capturar la ciudad de embarque).
-  4. **`DetFactura`** por cada `DetPedido` (Tipo<3): `Cant`, `Importe`, `PorcIVA` forzado por serie (11/16), `Iva`, y **costo** (`HCosto × ArtPres.Equiv`, más costo especial de contrato vía `CostoEspecial`).
-  5. **Inventario** (`{vtaa0004.i}`) para renglones no entregados; los empacados se liberan con los subprogramas.
-  6. **Totales** de la factura (`SubTotal`, `IVA`, `Tot`).
-  7. **Subprogramas del motor:** `vtaa0508.p` (descompromete) · `embd0020.p` (marca facturado: `Id-Estatus = 5`, `Id-Factura`) · `vtaa0524.p` (recalcula IVA) · `vtaa0494.p` (descompromete no surtido).
-  8. **CxC** (`{cxca0001.i}`): cargo a `MovCliente` con `Saldo = Factura.Tot`.
-  9. **COMMIT** + auditoría (`programas/auditoria.p`, módulo Pedidos).
-
-  **Decisiones aplicadas:** sin validación de límite de crédito (igual que el motor); una sola transacción, folio real directo (sin `TMPFAC`); no timbra CFDI (paso aparte).
+  1. **Bloqueos** (igual que `validaPedidoFacturable`): ya facturado, solicitud de cancelación, `*** GRAFICO`, RFC < 12. **Reglas de contado:** pedido de crédito (`Id-Cond > 0`) → error; cliente de frontera → error (facturar por CRÉDITO).
+  2. **Folio real:** `REMCEDIS` (02B) / `REMISION` (FUG en `Folio`; otros orígenes en `VFolio`), formato `STRING(Folio,"99999") + Prefijo` con rollover de prefijo, `EXCLUSIVE-LOCK NO-WAIT` + aviso de quién lo tiene (`usuariolock.i`).
+  3. **`CREATE Remision`** — datos fiscales/envío del pedido (con fallback a `Cliente`), `VersionSAT = "4.0"`, `TipoVenta = 2`, `Id-Captura = IdUser`. `Pagada = TRUE` si hay `DepBanco` conciliado del pedido.
+     - **3b. Override editable (`ttFacturaGral` del body `dsFactura`):** Embarque / Memo / Requisición (igual que factura).
+  4. **`DetRemis`** por cada `DetPedido` (Tipo<3): `Cant`, `Importe`, `PorcIVA`, `Iva`, **costo** (`HCosto × Equiv` + `CostoEspecial`), pedimentos (`vtaa0503`) y series (`vtad0020`).
+  5. **Inventario** (`{vtaa0004.i}`, Tipomov `SVtaR`) para renglones no entregados.
+  6. **Totales** con ajuste **"II"** (`vtaa0400.i`; el "II" trae IVA incluido → se resta del subtotal).
+  7. **Política de venta** (`vtad0125_rest.p`, monto mínimo): código 0 pasa; 4 = aviso; **5/6 bloquean** con `[RequiereAjuste:...]` salvo que llegue `Ajuste` (`II`/`PASA`/`TAXI`) → auto-arregla (re-tarifica "II" o cambia entrega) y **re-valida**.
+  8. **Descuento por Pronto Pago (DPP):** del pedido (`DescPP1/2`) o `Cliente.DesCtdo` (fallback); ajusta `Descuento`/`IVA`/`Tot`.
+  9. **Caja/pago:** si `Pagada`, genera `MovCaja` + `DetMovC` (`GeneraMovsCaja`, port de `p-generaMovsCaja`); abre `CtlCaja` automáticamente si no hay una abierta.
+  10. **Subprogramas:** `vtaa0508.p` (descompromete) · `embd0020.p "Remision"` (marca facturado) · `vtaa0405.p` (distribuye IVA/estadística) · `vtaa0494.p`.
+  11. **COMMIT** → **auto-timbra** `vtac2070.p` (si folio de serie electrónica G/C/J/S/F) → auditoría + **correo** (`correotarjeta.i`). Contado = EFECTIVO: **no** carga CxC/`MovCliente`.
 
   ---
 
   ## 11. Notas técnicas / QA (antes de producción)
 
-  1. **Compilar en PDSOE** y confirmar que los includes **`vtaa0004.i`** y **`cxca0001.i`** estén en el PROPATH del AppServer (si no, agregarlos o inlinear su lógica).
-  2. **Probar en DEV con un pedido de prueba** y comparar `Factura` / `DetFactura` / `MovCliente` (CxC) / `ArtUbic` (inventario) **contra el proceso carácter**, campo por campo.
-  3. Confirmar el 3er parámetro de la serie/tasa según el tipo (el motor de crédito pasa `3`).
-  4. **Registrar** el recurso en `resourceModel.xml` (path `/Pedido/generaFactura`, **POST**, operación `pedfactura..generaFactura`) y regenerar `pedfactura.pidl`.
+  1. **Compilar en PDSOE** `pedfactura.p` + `vtad0125_rest.p`; confirmar `vtaa0004.i` en el PROPATH y acceso a las tablas de caja (`CtlCaja`/`MovCaja`/`DetMovC`/`CorteCaja`/`Caja`/`Cajero`/`DepBanco`).
+  2. **Probar en DEV** y comparar `Remision` / `DetRemis` / `ArtUbic` (inventario) / `MovCaja` **contra el proceso carácter**, campo por campo.
+  3. El recurso `/Pedido/generaRemisionContado` ya está en `resourceModel.xml` con `Ajuste` (sin `IvaGlobal`); regenerar `pedfactura.pidl` al compilar.
 
   ---
 
@@ -450,11 +451,12 @@ docs: |
   | # | Caso | Esperado |
   |---|------|----------|
   | P1 | Sin `IdUser` | `"Se requiere el usuario (IdUser)."` |
-  | P2 | Pedido facturable | `Factura`/`DetFactura` creadas; `IdFactura` con folio; pedido a estatus 5 |
-  | P3 | Comparar contra carácter | `Factura.Tot`, `DetFactura`, `MovCliente`, `ArtUbic` iguales |
-  | P4 | Pedido ya facturado | `"PEDIDO YA FACTURADO..."`, nada se crea |
-  | P5 | Serie sin consecutivo de folio | Mensaje de folio, transacción deshecha |
-  | P6 | Reintento del mismo pedido | Bloqueado (ya tiene `Id-Factura`) |
+  | P2 | Pedido de contado normal | `Remision`/`DetRemis` creadas; `IdRemision` con folio; timbrada |
+  | P3 | Comparar contra carácter | `Remision.Tot`, `DetRemis`, `ArtUbic` iguales |
+  | P4 | Pedido bajo mínimo (mayoreo) | `[RequiereAjuste:II] ...` → reenviar con `Ajuste=II` |
+  | P5 | Pedido pagado con depósito conciliado | `Pagada=TRUE` + `MovCaja`/`DetMovC` generados |
+  | P6 | Remisión "II" | `Tot` sin doble IVA (subtotal neto de IVA) |
+  | P7 | Pedido de crédito (`Id-Cond>0`) | `"ESTE PEDIDO TIENE CONDICIONES DE CREDITO..."` |
 
   ---
   **Desarrollado por:** SIS10 - JASS
