@@ -1,0 +1,358 @@
+meta {
+  name: Movimiento Cliente Historico - Con Fecha
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/MovimientoClienteHistorico?Cliente=575&Fecha=2025-09-09
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Cliente: 575
+  Fecha: 2025-09-09
+}
+
+headers {
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 200
+  res.body.IdError: eq false
+}
+
+docs {
+  # Servicio REST — Movimientos de Cliente (Histórico)
+  
+  ---
+  
+  ## 1. Título del Servicio
+  
+  **Movimientos de Cliente — Histórico**
+  Devuelve los movimientos históricos de un cliente a partir de una fecha, con la **misma estructura** que el servicio de movimientos vigente (`/MovimientoCliente`): datos del cliente, detalle de movimientos y totales de cartera. Se basó en la consulta de movimientos de cliente en modo carácter, opción **Histórico / Cartera**.
+  **`ttDetalle`** trae los movimientos **históricos** desde la fecha; **`ttCliente`** y **`ttCartera`** reflejan la **cartera ACTUAL** del cliente (saldo, por vencer, vencido, antigüedad y métricas de hoy) — igual que lo que muestra la vista Hist en modo carácter.
+  Endpoint: `/MovimientoClienteHistorico`
+  
+  ---
+  
+  ## 2. Método HTTP
+  
+  ```
+  GET
+  ```
+  
+  ---
+  
+  ## 3. URL Completa
+  
+  ```
+  http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/MovimientoClienteHistorico
+  ```
+  
+  ---
+  
+  ## 4. Parámetros de Entrada (Query String)
+  
+  > ✅ = Requerido · ❌ = Opcional
+  
+  **`Cliente`** · INT · ✅ — Número de cliente a consultar
+  - Ej: `34762` · Si no existe, se regresa `Respuesta` con el mensaje de error y el dataset vacío
+  
+  **`Fecha`** · STRING (fecha) · ❌ — Fecha "desde" del histórico
+  - Formato: `YYYY-MM-DD` · Ej: `"2025-01-01"`
+  - Vacía o inválida = **HOY − 365** (un año atrás), mismo default que la opción en modo carácter
+  - Tope máximo: HOY (si se envía una fecha futura se ajusta a HOY)
+  - Se incluyen movimientos con `FecReg >=` esta fecha
+  
+  ---
+  
+  ## 5. Body
+  
+  No aplica. Método `GET`.
+  
+  ---
+  
+  ## 6. Headers
+  
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+  
+  ---
+  
+  ## 7. Ejemplo de Request
+  
+  ```
+  GET http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/MovimientoClienteHistorico
+      ?Cliente=34762&Fecha=2025-01-01
+  ```
+  
+  Sin `Fecha` (usa HOY − 365):
+  
+  ```
+  GET http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/MovimientoClienteHistorico
+      ?Cliente=34762
+  ```
+  
+  ---
+  
+  ## 8. Ejemplo de Response
+  
+  > Valores ilustrativos. La estructura es idéntica a la del servicio vigente `/MovimientoCliente`.
+  
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "OK",
+    "dsMov": {
+      "dsMov": {
+        "ttCliente": [
+          {
+            "IdCliente": 34762,
+            "RazonSocial": "PAPELERIA EL ESCRITORIO SA DE CV",
+            "Telefono": "8181811212   ",
+            "CalleNo": "AV. UNIVERSIDAD",
+            "NumExterior": "1450",
+            "Colonia": "CENTRO",
+            "Estatus": true,
+            "LineaCredito": 200000.00,
+            "Plazo": 30,
+            "IdVendedor": "V012",
+            "Vendedor": "JUAN PEREZ",
+            "IdResp": 3,
+            "Resp": "MARIA LOPEZ",
+            "IdCob": 5,
+            "Cobrador": "PEDRO RAMIREZ",
+            "CteDig": "34762-05",
+            "UsrModLimite": "MLOPEZ",
+            "FecModLimite": "2024-02-15",
+            "UsrModPlazo": "",
+            "FecModPlazo": null,
+            "MontoPagare": 0.00,
+            "FecVencPagare": null
+          }
+        ],
+        "ttDetalle": [
+          {
+            "IdCliente": 34762,
+            "Documento": "5098877",
+            "Fecha": "2025-02-05",
+            "PlazoFactura": 30,
+            "Descripcion": "FACT",
+            "Cargo": 18500.00,
+            "Credito": null,
+            "Saldo": 0.00,
+            "Antiguedad": null,
+            "Referencia": "A1500",
+            "NotaCredito": false,
+            "TipoAcuse": "",
+            "FolioEstatus": "",
+            "Acuse": "",
+            "Registro": null,
+            "Margen": 22.50,
+            "Acomodo": 10,
+            "Id-MC": 1,
+            "FacAutorizadoPor": "",
+            "FacturaEnTransito": false,
+            "FormaPago": ""
+          },
+          {
+            "IdCliente": 34762,
+            "Documento": "5098877",
+            "Fecha": "2025-03-01",
+            "PlazoFactura": null,
+            "Descripcion": "PAGO",
+            "Cargo": null,
+            "Credito": 18500.00,
+            "Saldo": null,
+            "Antiguedad": null,
+            "Referencia": "",
+            "NotaCredito": false,
+            "TipoAcuse": "",
+            "FolioEstatus": "",
+            "Acuse": "",
+            "Registro": null,
+            "Margen": null,
+            "Acomodo": 20,
+            "Id-MC": 57,
+            "FacAutorizadoPor": "",
+            "FacturaEnTransito": false,
+            "FormaPago": "TRANSFERENCIA"
+          }
+        ],
+        "ttCartera": [
+          {
+            "id": 1,
+            "Moneda": "$",
+            "IdCliente": 34762,
+            "saldo": 45200.00,
+            "porvencer": 12000.00,
+            "montovencido": 33200.00,
+            "treinta": 15000.00,
+            "sesenta": 10200.00,
+            "noventa": 8000.00,
+            "noventamas": 0.00,
+            "diacartera": 47,
+            "promedio": 38,
+            "margenpromedio": 21.35,
+            "deposito": 5000.00,
+            "depositocontado": 0.00,
+            "SaldoTempEscolar": 0.00
+          }
+        ]
+      }
+    }
+  }
+  ```
+  
+  ### Campos de nivel raíz
+  
+  **`IdError`** · BOOLEAN — `false` = ejecución correcta; `true` = error controlado (cliente inexistente o inactivo)
+  **`Respuesta`** · STRING — `"OK"` en éxito; trae el texto del error cuando `IdError = true`
+  **`dsMov`** · DATASET — Contenedor de las tablas `ttCliente`, `ttDetalle` y `ttCartera`
+  
+  ### Campos de `ttCliente`
+  
+  Un solo renglón con los datos del cliente (encabezado).
+  
+  **`IdCliente`** · INT — Número de cliente
+  **`RazonSocial`** · STRING — Razón social del cliente
+  **`Telefono`** · STRING — Teléfonos concatenados (Tel1 + Tel2 + Tel3)
+  **`CalleNo`** · STRING — Calle del domicilio
+  **`NumExterior`** · STRING — Número exterior
+  **`Colonia`** · STRING — Colonia
+  **`Estatus`** · BOOLEAN — `true` = cliente activo
+  **`LineaCredito`** · DECIMAL — Límite de crédito (MXN)
+  **`Plazo`** · INT — Plazo de crédito en días
+  **`IdVendedor`** · STRING — Clave del vendedor
+  **`Vendedor`** · STRING — Nombre del vendedor
+  **`IdResp`** · INT — Id del responsable
+  **`Resp`** · STRING — Nombre del responsable
+  **`IdCob`** · INT — Id del cobrador
+  **`Cobrador`** · STRING — Nombre del cobrador
+  **`CteDig`** · STRING — Cliente con dígito verificador (ej. `"34762-05"`)
+  **`UsrModLimite`** · STRING — Último usuario que modificó el límite (tabla `CambioCte`)
+  **`FecModLimite`** · DATE — Fecha del último cambio de límite. Formato: `YYYY-MM-DD`
+  **`UsrModPlazo`** · STRING — Último usuario que modificó el plazo
+  **`FecModPlazo`** · DATE — Fecha del último cambio de plazo. Formato: `YYYY-MM-DD`
+  **`MontoPagare`** · DECIMAL — Suma de pagarés activos del cliente (módulo de Pagarés)
+  **`FecVencPagare`** · DATE — Vencimiento del pagaré activo más próximo. Formato: `YYYY-MM-DD`
+  
+  ### Campos de `ttDetalle`
+  
+  Un renglón por movimiento histórico (`FecReg >=` la fecha), agrupado y ordenado por documento (`Acomodo`).
+  
+  **`IdCliente`** · INT — Número de cliente del movimiento
+  **`Documento`** · STRING — Documento/Referencia de saldo (folio de factura u otro)
+  **`Fecha`** · DATE — Fecha de registro del movimiento. Formato: `YYYY-MM-DD`
+  **`PlazoFactura`** · INT — Plazo de la factura (Id-MC 1) o días entre movimiento y factura. `null` si no aplica
+  **`Descripcion`** · STRING — Descripción del tipo de movimiento (catálogo `TabMC`)
+  **`Cargo`** · DECIMAL — Importe cuando es cargo (> 0). `null` cuando no aplica
+  **`Credito`** · DECIMAL — Importe cuando es crédito/abono. `null` cuando no aplica
+  **`Saldo`** · DECIMAL — Saldo del documento. `null` en renglones que no son documento con saldo
+  **`Antiguedad`** · INT — Días de antigüedad **respecto a HOY**, solo para facturas con saldo. `null` en otros casos
+  **`Referencia`** · STRING — Referencia fiscal / NCR / devolución según el movimiento
+  **`NotaCredito`** · BOOLEAN — `true` = el movimiento tiene NCR en referencia
+  **`TipoAcuse`** · STRING — Tipo de acuse cuando existe (tabla `Acuse`)
+  **`FolioEstatus`** · STRING — Estatus del folio en portal (tabla `RefPortal`)
+  **`Acuse`** · STRING — Acuse del portal (tabla `RefPortal`)
+  **`Registro`** · DATE — Fecha de registro en portal. `null` si no aplica
+  **`Margen`** · DECIMAL — Margen de la factura (neto si está pagada, de venta si tiene saldo). `null` si no aplica
+  **`Acomodo`** · INT — Orden de despliegue (documento y sus liquidaciones consecutivas)
+  **`Id-MC`** · INT — Id del tipo de movimiento (`<= 3` documento; `> 3` liquidación/abono)
+  **`FacAutorizadoPor`** · STRING — Autorizó la factura (Id-MC 1), cuando aplica
+  **`FacturaEnTransito`** · BOOLEAN — Siempre `false` en histórico (concepto solo de cartera vigente)
+  **`FormaPago`** · STRING — Forma de pago del abono de crédito (catálogo `TipoPago` por Id-MC)
+  
+  > También puede venir el campo interno `Rec` (RECID de apoyo). No es de consumo; puede ignorarse.
+  
+  ### Campos de `ttCartera`
+  
+  **Cartera ACTUAL del cliente** (foto de hoy, idéntica a `/MovimientoCliente`), no del corte histórico. Renglón `id = 1` en pesos; si hay saldo en moneda extranjera se agrega `id = 2` (US).
+  
+  **`id`** · INT — `1` = pesos (MXN); `2` = dólares (US)
+  **`Moneda`** · STRING — `"$"` para pesos; `"US"` para dólares
+  **`IdCliente`** · INT — Número de cliente
+  **`saldo`** · DECIMAL — Saldo total ACTUAL del cliente
+  **`porvencer`** · DECIMAL — Monto por vencer (actual)
+  **`montovencido`** · DECIMAL — Monto vencido actual (`saldo − porvencer`)
+  **`treinta`** · DECIMAL — Vencido 1–30 días (**respecto a HOY**)
+  **`sesenta`** · DECIMAL — Vencido 31–60 días
+  **`noventa`** · DECIMAL — Vencido 61–90 días
+  **`noventamas`** · DECIMAL — Vencido más de 90 días
+  **`diacartera`** · INT — Días cartera (máximo) de la cartera vigente
+  **`promedio`** · DECIMAL — Promedio de días de pago del cliente (vigente)
+  **`margenpromedio`** · DECIMAL — Margen promedio del cliente (vigente)
+  **`deposito`** · DECIMAL — Depósitos en tránsito a crédito, últimos 180 días
+  **`depositocontado`** · DECIMAL — Depósitos de contado, últimos 180 días
+  **`SaldoTempEscolar`** · DECIMAL — Saldo de temporada escolar (Id-Cond 1 o 4) cuando aplica
+  
+  ### Response sin resultados
+  
+  Cliente válido pero sin movimientos históricos desde la fecha: `ttDetalle` vacío. `ttCliente` y `ttCartera` igual traen la **cartera ACTUAL** del cliente (puede tener saldo aunque el histórico esté vacío).
+  
+  ### Response de error controlado
+  
+  Cuando el cliente no existe o está inactivo, `Respuesta` trae el texto y el dataset viene vacío:
+  
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "El cliente NO Existe",
+    "dsMov": { "dsMov": { "ttCliente": [], "ttDetalle": [], "ttCartera": [] } }
+  }
+  ```
+  
+  Cliente inactivo:
+  
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Cuenta inactivada por: MLOPEZ Fecha: 15/03/2025          ",
+    "dsMov": { "dsMov": { "ttCliente": [], "ttDetalle": [], "ttCartera": [] } }
+  }
+  ```
+  
+  ---
+  
+  ## 9. Evidencia de Ejecución
+  
+  *Pendiente de captura por parte del equipo de QA.*
+  Adjuntar screenshot de la herramienta de prueba (Postman / Insomnia / curl) mostrando:
+  - URL completa con parámetros `Cliente` y `Fecha`
+  - Status HTTP `200 OK`
+  - Cuerpo de respuesta con `ttCliente`, `ttDetalle` y `ttCartera`
+  
+  ---
+  
+  ## 10. Fecha de Prueba
+  
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | 2026-09-09 | *(pendiente)* |
+  
+  ---
+  
+  ## 11. Resultado
+  
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA  |
+  
+  ---
+  
+  ## 12. Observaciones Técnicas
+  
+  1. **Fecha en URL:** Se envía como texto `YYYY-MM-DD`. Si se omite, viene vacía o no es válida, el servicio usa **HOY − 365**. Una fecha futura se ajusta a HOY.
+  2. **Misma estructura que cartera vigente:** El dataset `dsMov` (`ttCliente` / `ttDetalle` / `ttCartera`) es idéntico al del servicio `/MovimientoCliente`; solo cambia la fuente (histórica) y el criterio de fecha (`FecReg >=` la fecha, en lugar de hasta hoy).
+  3. **Fuente de datos:** Movimientos históricos (tabla `HistMovCte`). Para cortes que **cruzan de año**, se agrega además el archivo histórico profundo (base `Hist`) **cuando está conectado** en el servidor; si no lo está, se responde con el histórico reciente disponible.
+  4. **Antigüedad y buckets vencidos:** Se calculan **respecto a HOY** (no respecto a la fecha de corte), igual que en la consulta de modo carácter y que el servicio de cartera vigente.
+  5. **Resumen = cartera ACTUAL:** `ttCliente` y `ttCartera` (saldo, por vencer, vencido, buckets, `diacartera`, `promedio`, `margenpromedio`, `deposito`, `depositocontado`) reflejan la **foto de hoy** del cliente, reutilizando `/MovimientoCliente`. El corte de fecha solo afecta a `ttDetalle` (los movimientos históricos). Reproduce lo que muestra la vista Hist del modo carácter, donde el resumen de cartera no cambia al ver el histórico.
+  6. **No incluye facturas de contado recientes:** Las remisiones de contado de los últimos días pertenecen a la cartera vigente y no forman parte del histórico.
+  7. **Autenticación:** El servicio corre sobre OpenEdge PASOE. Si el ambiente requiere autenticación Bearer, incluir el header `Authorization: Bearer <token>`.
+  
+}
