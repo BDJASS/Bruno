@@ -1,0 +1,211 @@
+info:
+  name: 1 Alta Oportunidad
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/Alta
+  body:
+    type: json
+    data: |
+      {
+        "dsOportIn": {
+          "ttEnc": [
+            { "IdUser": "jjlg", 
+             "IdCliente": 55987, 
+             "Nombre": "Equipamiento oficinas 2026",
+             "IdTipoProy": 3, 
+             "Presupuesto": 250000.00, 
+             "IdFrecProy": 5, 
+              "FecTentCierre": "2026-10-15",
+              "IdVendedor": "5197", 
+             "DecisorNombre": "ESTEFANIA HERNANDEZ", 
+              "IdProcAutoriz": 2,
+              "IdUrgencia": 1, 
+             "ConfirmadaCliente": true, 
+             "IdCompetencia": 12, 
+              "SolicitudMuestra": false,
+              "DescValorAgregado": "Instalacion y capacitacion incluidas", 
+             "SolicitarApoyo": false,
+              "MontoCotizado": 248500.00, 
+              "FecPresentacion": "2026-09-20" }
+          ],
+          "ttCfs": [ {
+                     "IdPrioridad": 1 }, 
+                      { "IdPrioridad": 4 }
+                   ],
+          "ttVa":  [ { 
+                      "IdValorAgr": 1 }, 
+                     { "IdValorAgr": 2 } 
+                   ],
+          "ttCvbv": [ { "Orden": 1,
+                       "Caracteristica": "Mobiliario ergonomico", 
+                       "Ventaja": "Reduce fatiga",
+                       "Beneficio": "Mayor productividad", 
+                       "Validacion": "Le interesa reducir el ausentismo?" } 
+                    ],
+          "ttCorreo": []
+        },
+        "ContratoNombre": "",
+        "ContratoMime": "",
+        "ContratoB64": ""
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Alta de Oportunidad
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Alta de Oportunidad (HU-08)**
+  Crea una oportunidad de venta a partir de una **cuenta (Cliente) existente**. Captura datos del proyecto, mapeo del decisor, prioridades CFS, argumento comercial (CVBV + Valor Agregado) y emisión de la oferta. Genera el **folio `OPP-AAAA-NNNN`**, nace en **Etapa = Receptividad** / **Estado = Activa** y corre el **motor de Pipeline** el motor de Pipeline, que puede subirla a **Enfoque** si ya existe una visita SMART "Realizada" (HU-05).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/Alta
+  ```
+
+  ---
+
+  ## 4. Parámetros de entrada (Body JSON)
+
+  Los datos viajan en el **body** como dataset `dsOportIn` (encabezado `ttEnc` + hijas `ttCfs`, `ttCvbv`, `ttVa`, `ttCorreo`).
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  ### Encabezado (`ttEnc`) — un solo registro
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta.
+  **`IdCliente`** · INTEGER · ✅ — La cuenta. Debe existir en `Cliente`.
+  **`Nombre`** · STRING · ✅ — Nombre de la oportunidad (máx. 200).
+  **`IdTipoProy`** · INTEGER · ✅ — FK `TipoProyecto` (activo).
+  **`Presupuesto`** · DECIMAL · ✅ — Presupuesto estimado MXN (> 0).
+  **`IdFrecProy`** · INTEGER · ❌ — FK `FrecuenciaProy`.
+  **`FecTentCierre`** · DATE · ✅ — Fecha tentativa de cierre. Debe ser ≥ hoy.
+  **`IdVendedor`** · STRING · ✅ — FK `Vendedor` responsable.
+  **`DecisorNombre`** · STRING · ✅ — Contacto con firma final. Debe ser un contacto de la cuenta en `CteEmp` (llave `Id-Cliente`+`Nombre`). El puesto y correo se toman como snapshot.
+  **`IdProcAutoriz`** · INTEGER · ✅ — FK `ProcesoAutoriz` (activo).
+  **`IdUrgencia`** · INTEGER · ✅ — FK `UrgenciaOport` (activo).
+  **`ConfirmadaCliente`** · BOOLEAN · ❌ — `true` = el cliente confirmó las prioridades. Default `false`.
+  **`ImpactoStatusQuo`** · STRING · ❌ — Consecuencias de no cambiar de proveedor.
+  **`IdCompetencia`** · INTEGER · ❌ — FK `Competencia`.
+  **`SolicitudMuestra`** · BOOLEAN · ❌ — `true` exige `DescMuestra`.
+  **`DescMuestra`** · STRING · ❌ — Obligatorio si `SolicitudMuestra=true`.
+  **`DescValorAgregado`** · STRING · ❌ — Descripción libre del valor agregado.
+  **`SolicitarApoyo`** · BOOLEAN · ❌ — `true` exige `ApoyoRequerido` y ≥ 1 correo.
+  **`ApoyoRequerido`** · STRING · ❌ — Obligatorio si `SolicitarApoyo=true`.
+  **`IdCot`** · STRING · ❌ — Folio/Núm. de la cotización asociada (HU14/H16). Máx. 7 caracteres.
+  **`MontoCotizado`** · DECIMAL · ❌ — Monto Cotizado Final (= Monto Total de la cotización).
+  **`FecCotizacion`** · DATE · ❌ — Fecha de la cotización.
+  **`FecPresentacion`** · DATE · ✅ — Fecha planeada de presentación al cliente.
+  **`FecRealPresentacion`** · DATE · ❌ — Fecha real de presentación.
+
+  > ℹ️ El **contrato es OPCIONAL en el alta** — se manda en 3 **parámetros escalares** aparte del dataset: `ContratoNombre`, `ContratoMime` y `ContratoB64` (base64, ≤10 MB, PDF/DOC/DOCX/JPG/PNG). Si `ContratoB64` va vacío, no se adjunta. También se puede subir/cambiar después con `/Oportunidad/Documento/Carga`. El binario se guarda en `DocOportunidad`, no en la tabla principal. *(Van como escalares porque OpenEdge no admite `LONGCHAR` dentro de un temp-table; al exponer, mapear estos 3 al **body** junto con `dsOportIn`.)*
+
+  ### Hijas
+
+  **`ttCfs`** (mín. 1) — **`IdPrioridad`** · INTEGER — FK `PrioridadCFS`.
+  **`ttVa`** (mín. 1) — **`IdValorAgr`** · INTEGER — FK `ValorAgregado`.
+  **`ttCvbv`** (0..N) — **`Orden`** · INTEGER · **`Caracteristica`** · **`Ventaja`** · **`Beneficio`** · **`Validacion`** · STRING. Las filas totalmente vacías se ignoran.
+  **`ttCorreo`** (obligatorio si `SolicitarApoyo`) — **`Correo`** · STRING.
+  ### Contrato opcional (parámetros escalares, fuera de `dsOportIn`)
+  **`ContratoNombre`** · STRING · ❌ — Nombre del archivo (ej. `contrato.pdf`).
+  **`ContratoMime`** · STRING · ❌ — Tipo MIME (PDF/DOC/DOCX/JPG/PNG).
+  **`ContratoB64`** · LONGCHAR · ❌ — Contenido en base64 (≤10 MB). Vacío = no se adjunta.
+
+  ---
+
+  ## 5. Headers
+
+  | Header         | Valor                |
+  |----------------|----------------------|
+  | `Accept`       | `application/json`   |
+  | `Content-Type` | `application/json`   |
+
+  ---
+
+  ## 6. Ejemplo de Request (body)
+
+  ```json
+  {
+    "dsOportIn": {
+      "ttEnc": [{
+        "IdUser": "jjlg", "IdCliente": 55987, "Nombre": "Equipamiento oficinas 2026",
+        "IdTipoProy": 3, "Presupuesto": 250000.00, "IdFrecProy": 5,
+        "FecTentCierre": "2026-10-15", "IdVendedor": "5197",
+        "DecisorNombre": "ING. LUIS RAMOS", "IdProcAutoriz": 2,
+        "IdUrgencia": 1, "ConfirmadaCliente": true, "IdCompetencia": 12,
+        "SolicitudMuestra": false, "DescValorAgregado": "Instalación y capacitación incluidas",
+        "SolicitarApoyo": false, "MontoCotizado": 248500.00, "FecPresentacion": "2026-09-20"
+      }],
+      "ttCfs": [{ "IdPrioridad": 1 }, { "IdPrioridad": 4 }],
+      "ttVa":  [{ "IdValorAgr": 1 }, { "IdValorAgr": 2 }],
+      "ttCvbv": [{ "Orden": 1, "Caracteristica": "Mobiliario ergonómico",
+        "Ventaja": "Reduce fatiga", "Beneficio": "Mayor productividad",
+        "Validacion": "¿Le interesa reducir el ausentismo?" }],
+      "ttCorreo": []
+    }
+  }
+  ```
+
+  ---
+
+  ## 7. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Oportunidad creada. Folio: OPP-2026-0001.",
+    "NuevoId": 1,
+    "FolioNuevo": "OPP-2026-0001",
+    "dsOportIn": { }
+  }
+  ```
+
+  ---
+
+  ## 8. Campos de la Respuesta
+
+  **`IdError`** · BOOLEAN
+  **`Respuesta`** · STRING — Mensaje amigable.
+  **`NuevoId`** · INTEGER — `Id-Oportunidad` generado.
+  **`FolioNuevo`** · STRING — Folio `OPP-AAAA-NNNN`.
+
+  ---
+
+  ## 9. Reglas y Validaciones
+
+  - `IdUser` obligatorio.
+  - La **cuenta** debe existir; `Nombre`, `IdTipoProy`, `Presupuesto` (>0), `FecTentCierre` (≥ hoy), `IdVendedor`, `DecisorNombre`, `IdProcAutoriz`, `IdUrgencia`, `FecPresentacion` obligatorios.
+  - **Decisor**: debe ser un contacto de la cuenta en `CteEmp` (`Id-Cliente` + `Nombre`); se guarda snapshot de puesto y correo.
+  - **CFS** mínimo 1; **Valor Agregado** mínimo 1.
+  - Si `SolicitudMuestra=true` → `DescMuestra` obligatorio.
+  - Si `SolicitarApoyo=true` → `ApoyoRequerido` + al menos 1 correo obligatorios.
+  - **Folio** `OPP-AAAA-NNNN`: consecutivo por año (reinicia en enero), único (`idx-anioconsec`).
+  - Nace en **Etapa=Receptividad (1)** / **Estado=Activa (1)**. El motor el motor de Pipeline la sube a **Enfoque (2)** si la cuenta tiene RFC+Razón Social y existe una visita SMART "Realizada" (HU-05) ligada a la oportunidad.
+  - *Pendiente Fase 2:* si `SolicitarApoyo`, envío de correo a los destinatarios (plantilla "Solicitar Apoyo").
+  - Todo en una transacción: si algo falla, se revierte por completo.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

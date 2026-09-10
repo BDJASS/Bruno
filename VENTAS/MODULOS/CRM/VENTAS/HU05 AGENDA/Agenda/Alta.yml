@@ -15,9 +15,9 @@ http:
             {
               "IdAgenda": 0, 
               "IdUser": "jjlg", 
-              "IdVendedor": "001",
-              "FecHoraIni": "2026-08-25T10:00:00", 
-              "FecHoraFin": "2026-08-25T11:00:00",
+              "IdVendedor": "0003",
+              "FecHoraIni": "2026-09-10T10:10:00", 
+              "FecHoraFin": "2026-09-10T11:15:00",
               "TipoCliente": "A", 
               "IdCliente": 1024, 
               "IdOportunidad": 12, 

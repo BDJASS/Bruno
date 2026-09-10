@@ -1,0 +1,122 @@
+info:
+  name: 5 Documento Descarga
+  type: http
+  seq: 5
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/Documento/Descarga?IdDoc=1&IdUser=jjlg
+  params:
+    - name: IdDoc
+      value: 1
+      type: query
+    - name: IdUser
+      value: jjlg
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Documentos de Oportunidad (Contrato)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Documentos de Oportunidad (HU-08/09)**
+  Carga y descarga de archivos adjuntos de la oportunidad (el **Contrato de la Empresa** y, a futuro, OC / cotización PDF). El binario se guarda en la tabla `DocOportunidad` (BLOB), **fuera de la tabla principal**, para que el grid y el detalle sean rápidos. El detalle solo trae la *metadata*; el binario se baja bajo demanda con `Descarga`.
+
+  ---
+
+  ## 2. Endpoint A — Carga de documento
+
+  ### Método / URL
+  ```
+  POST  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/Documento/Carga
+  ```
+
+  ### Parámetros
+
+  Son **parámetros escalares** (`pContenidoB64` es `LONGCHAR`; OpenEdge no admite `LONGCHAR` en temp-tables, por eso no se usa dataset). Al exponer en PDSOE, mapear `pContenidoB64` (y los demás) al **body** por el tamaño del base64.
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdOportunidad`** · INTEGER · ✅ — Oportunidad dueña del documento.
+  **`TipoDoc`** · STRING · ❌ — `Contrato` (default), `OrdenCompra`, `CotizacionPDF`. Para `Contrato` se **reemplaza** el anterior (uno vigente).
+  **`NombreArchivo`** · STRING · ❌ — Nombre original (ej. `contrato-cnorte.pdf`).
+  **`MimeType`** · STRING · ❌ — Tipo MIME. Si se envía, solo se permite: `application/pdf`, `application/msword`, `application/vnd.openxmlformats-officedocument.wordprocessingml.document`, `image/jpeg`, `image/jpg`, `image/png`.
+  **`ContenidoB64`** · LONGCHAR · ✅ — Contenido del archivo en **base64**. Máx. **10 MB** (ya decodificado).
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta.
+
+  ### Ejemplo Body (mapeo JSON de los escalares)
+  ```json
+  {
+    "IdOportunidad": 1, "TipoDoc": "Contrato", "NombreArchivo": "contrato-cnorte.pdf",
+    "MimeType": "application/pdf", "ContenidoB64": "JVBERi0xLjcNCiXi48/T...", "IdUser": "jjlg"
+  }
+  ```
+
+  ### Ejemplo Response
+  ```json
+  { "IdError": false, "Respuesta": "Documento cargado (Contrato).", "NuevoIdDoc": 3 }
+  ```
+
+  ### Campos de respuesta
+  **`IdError`** · BOOLEAN · **`Respuesta`** · STRING · **`NuevoIdDoc`** · INTEGER — `Id-DocOport` generado.
+
+  ---
+
+  ## 3. Endpoint B — Descarga de documento
+
+  Devuelve el binario en base64 **solo cuando se solicita**.
+
+  ### Método / URL
+  ```
+  GET  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/Documento/Descarga
+  ```
+
+  ### Parámetros (Query String)
+
+  **`IdDoc`** · INTEGER · ✅ — `Id-DocOport` (viene en `ttDocUI` del detalle).
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta.
+
+  ### Ejemplo Request
+  ```
+  GET .../Oportunidad/Documento/Descarga?IdDoc=3&IdUser=jjlg
+  ```
+
+  ### Ejemplo Response
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Documento recuperado.",
+    "Archivo": "contrato-cnorte.pdf",
+    "Mime": "application/pdf",
+    "Bytes": 542118,
+    "ContenidoB64": "JVBERi0xLjcNCiXi48/T..."
+  }
+  ```
+
+  ### Campos de respuesta
+  **`Archivo`** · STRING — Nombre del archivo.
+  **`Mime`** · STRING — Tipo MIME (para que el navegador lo abra correctamente).
+  **`Bytes`** · INTEGER — Tamaño en bytes.
+  **`ContenidoB64`** · LONGCHAR — Contenido en base64; el front lo decodifica para visualizar/descargar.
+
+  ---
+
+  ## 4. Reglas y Validaciones
+
+  - `IdUser` obligatorio en ambos endpoints.
+  - Carga: la oportunidad debe existir; el archivo no puede estar vacío ni exceder **10 MB**; MIME (si se envía) restringido a PDF/DOC/DOCX/JPG/PNG.
+  - `TipoDoc = "Contrato"` mantiene **un solo** contrato vigente por oportunidad (reemplaza el anterior).
+  - El binario vive en `DocOportunidad.Contenido` (BLOB); **nunca** viaja en `/Oportunidad/Consulta` ni en `/Oportunidad/Detalle` (ahí solo va la metadata).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

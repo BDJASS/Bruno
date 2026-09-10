@@ -1,0 +1,142 @@
+info:
+  name: 3 Detalle Oportunidad
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/Detalle?IdOportunidad=1&IdUser=jjlg
+  params:
+    - name: IdOportunidad
+      value: 1
+      type: query
+    - name: IdUser
+      value: jjlg
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Detalle de Oportunidad
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Detalle de Oportunidad (HU-08)**
+  Devuelve el detalle completo de una oportunidad con sus tablas hijas anidadas: prioridades CFS, tabla CVBV, valor agregado y correos de apoyo. Todos los catálogos vienen resueltos a su nombre.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/Detalle
+  ```
+
+  ---
+
+  ## 4. Parámetros de entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdOportunidad`** · INTEGER · ✅ — Id de la oportunidad.
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                |
+  |----------------|----------------------|
+  | `Accept`       | `application/json`   |
+  | `Content-Type` | `application/json`   |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Oportunidad/Detalle?IdOportunidad=1&IdUser=jjlg
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response (resumido)
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Oportunidad encontrada.",
+    "dsOportDet": {
+      "ttDet": [{
+        "Id": 1, "Folio": "OPP-2026-0001", "IdCliente": 55987, "Cuenta": "COMERCIAL DEL NORTE SA",
+        "Nombre": "Equipamiento oficinas 2026", "IdTipoProy": 3, "TipoProy": "Oficina",
+        "Presupuesto": 250000.00, "IdFrecProy": 5, "FrecProy": "Anual",
+        "FecTentCierre": "2026-10-15", "IdVendedor": "5197", "Vendedor": "JULIA LUCIO GARCIA",
+        "DecisorNombre": "ING. LUIS RAMOS", "DecisorPuesto": "Gerente de Compras", "DecisorCorreo": "lramos@cnorte.com",
+        "IdProcAutoriz": 2, "ProcAutoriz": "Comite de Compras",
+        "IdUrgencia": 1, "Urgencia": "Alta", "ConfirmadaCliente": true,
+        "ImpactoStatusQuo": "", "IdCompetencia": 12, "Competencia": "Office Depot",
+        "SolicitudMuestra": false, "DescMuestra": "",
+        "DescValorAgregado": "Instalación y capacitación incluidas",
+        "SolicitarApoyo": false, "ApoyoRequerido": "",
+        "IdCot": "COT1234", "MontoCotizado": 248500.00, "FecCotizacion": null,
+        "EstadoCotiza": "Generada", "FecPresentacion": "2026-09-20",
+        "FecRealPresentacion": null,
+        "IdEtapa": 2, "Etapa": "Enfoque", "IdEstado": 1, "Estado": "Activa",
+        "FecCierre": null, "FecReg": "2026-08-31",
+        "ttCfsUI":  [{ "IdPrioridad": 1, "Prioridad": "Financieras" }, { "IdPrioridad": 4, "Prioridad": "Servicio" }],
+        "ttCvbvUI": [{ "Orden": 1, "Caracteristica": "Mobiliario ergonómico", "Ventaja": "Reduce fatiga",
+                       "Beneficio": "Mayor productividad", "Validacion": "¿Le interesa reducir el ausentismo?" }],
+        "ttVaUI":   [{ "IdValorAgr": 1, "ValorAgregado": "Servicios de Apoyo" }, { "IdValorAgr": 2, "ValorAgregado": "Consultoria" }],
+        "ttCorreoUI": [],
+        "ttDocUI":  [{ "IdDoc": 3, "TipoDoc": "Contrato", "NombreArchivo": "contrato-cnorte.pdf",
+                       "MimeType": "application/pdf", "Tamano": 542118, "FecCarga": "2026-09-05T11:20:00" }]
+      }]
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **`ttDet`** — encabezado con todos los campos de la oportunidad (catálogos resueltos a nombre: `TipoProy`, `FrecProy`, `ProcAutoriz`, `Urgencia`, `Competencia`, `Etapa`, `Estado`). `Decisor*` = snapshot del contacto (`CteEmp`).
+  **`ttCfsUI`** — prioridades CFS: **`IdPrioridad`** · INTEGER · **`Prioridad`** · STRING.
+  **`ttCvbvUI`** — filas CVBV: **`Orden`** · INTEGER · **`Caracteristica`**/**`Ventaja`**/**`Beneficio`**/**`Validacion`** · STRING.
+  **`ttVaUI`** — valor agregado: **`IdValorAgr`** · INTEGER · **`ValorAgregado`** · STRING.
+  **`ttCorreoUI`** — correos de apoyo: **`Correo`** · STRING.
+  **`ttDocUI`** — documentos adjuntos (**solo metadata**, sin el binario): **`IdDoc`** · INTEGER — para descargar con `/Oportunidad/Documento/Descarga` · **`TipoDoc`** · STRING (`Contrato`, ...) · **`NombreArchivo`** · **`MimeType`** · STRING · **`Tamano`** · DECIMAL (bytes) · **`FecCarga`** · DATETIME.
+
+  > **Campos HU-09 en `ttDet`** (para el modal Ver/Editar de 6 pasos): `PctPenalizacion`, `DecisorTelefono`, `DescOportunidad`, `Observaciones`, `ValorTotalCuenta`, `CotizadoAFecha`, `ProxAccionResumen` (Paso 6), más `HuboObjeciones` (0=sin responder·1=Sí·2=No) y `EtapaMaxAlcanzada`.
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - `IdUser` e `IdOportunidad` obligatorios.
+  - Si la oportunidad no existe → `IdError=true` con mensaje amigable.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

@@ -5,10 +5,10 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Agenda/Detalle?IdAgenda=5&IdUser=jjlg
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Agenda/Detalle?IdAgenda=2&IdUser=jjlg
   params:
     - name: IdAgenda
-      value: "5"
+      value: "2"
       type: query
     - name: IdUser
       value: jjlg
