@@ -13,10 +13,18 @@ http:
         "dsAgenda": {
           "ttEnc": [
             {
-              "IdAgenda": 5, "IdUser": "jjlg", "IdVendedor": "001",
-              "FecHoraIni": "2026-08-25T12:00:00", "FecHoraFin": "2026-08-25T13:00:00",
-              "IdTipoActividad": 1, "Titulo": "Visita Cliente (reprogramada)", "Ubicacion": "Av. Industria 100",
-              "Descripcion": "Ajuste de hora", "Contacto": "Ana Ruiz", "Comentarios": "", "Observaciones": ""
+              "IdAgenda": 6, 
+              "IdUser": "jjlg", 
+              "IdVendedor": "0003",
+              "FecHoraIni": "2026-09-10T10:00:00.000",
+              "FecHoraFin": "2026-09-10T11:00:00.000",
+              "IdCliente": 1024,
+              "IdTipoActividad": 1, 
+              "Titulo": "Visita Cliente (reprogramada)", 
+              "Ubicacion": "Av. Industria 100",
+              "Descripcion": "Ajuste de hora", 
+              "Contacto": "Ana Ruiz", 
+              "Comentarios": "", "Observaciones": ""
             }
           ],
           "ttObj": []

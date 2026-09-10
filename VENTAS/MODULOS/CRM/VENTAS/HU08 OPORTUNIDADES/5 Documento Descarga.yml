@@ -8,7 +8,7 @@ http:
   url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/Documento/Descarga?IdDoc=1&IdUser=jjlg
   params:
     - name: IdDoc
-      value: 1
+      value: "1"
       type: query
     - name: IdUser
       value: jjlg
