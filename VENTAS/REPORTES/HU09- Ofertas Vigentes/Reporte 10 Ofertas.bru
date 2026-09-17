@@ -29,4 +29,10 @@ docs {
   **Parámetros:**
   - `IdOfer` ❌ — Clave de la oferta. Vacío = todas las ofertas.
     Ej: `ENERO`, `PROMO1`, `VERANO24`
+
+  **Ticket #3201 — Proveedor del artículo:**
+  Se agregan al response los campos del proveedor (con caché por `Id-Prov`
+  para no demorar la consulta):
+  - `IdProv` — Número de proveedor del artículo (Articulo.Id-Prov)
+  - `NomProv` — Nombre del proveedor (Prov.Nombre)
 }

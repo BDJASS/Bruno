@@ -42,8 +42,7 @@ docs: |
   ## 1. Título del Servicio
 
   **Consulta de Leads (Grid + KPIs) (HU-07)**
-  Grid principal del módulo de Leads con los 4 KPIs de semáforo. Filtra por vendedor, estatus, periodo (Fecha de Alta) y texto (folio/prospecto/razón social/teléfono). Excluye leads dados de baja (`Activo=false`, es decir cancelados).
-  Programa servidor: `lead.p` · Procedimiento: `leeLeads`.
+  Grid principal del módulo de Leads con los 4 KPIs de semáforo. Filtra por vendedor, estatus, periodo (Fecha de Alta) y texto (folio/prospecto/razón social/teléfono). **El grid incluye TODOS los estatus, incluidos los Cancelados** (Estatus=5): con `Estatus` vacío trae todo, y `Estatus=5` lista solo los cancelados. *(Los cancelados quedan con `Activo=false`, pero el grid ya no filtra por `Activo`.)*
 
   ---
 
@@ -69,7 +68,7 @@ docs: |
 
   **``IdUser``** · STRING · ✅ — Usuario que ejecuta la consulta.
   **``IdVendedor``** · STRING · ❌ — Filtra por vendedor. Vacío o `Todos` = todos.
-  **``Estatus``** · STRING · ❌ — `1`Nuevo `2`En Proceso `3`Convertido `4`Cierre sin conversión `5`Cancelado. Vacío = todos.
+  **``Estatus``** · STRING · ❌ — `1`Nuevo `2`En Gestión `3`Convertido `4`Cierre sin conversión `5`Cancelado. **Vacío = todos (incluye Cancelados)**; `5` = solo cancelados.
   **``FechaIni``** · STRING · ❌ — Inicio de periodo sobre Fecha de Alta (dd/mm/aaaa). Vacío = sin límite inferior.
   **``FechaFin``** · STRING · ❌ — Fin de periodo sobre Fecha de Alta. Vacío = sin límite superior.
   **``Busqueda``** · STRING · ❌ — Texto parcial en folio, prospecto, razón social o teléfono (insensible a may/min).
@@ -112,9 +111,9 @@ docs: |
           "RazonSocial": "COMERCIAL DEL NORTE SA", "Correo": "jperez@cnorte.com",
           "Telefono": "8112345678", "IdOrigen": 1, "Origen": "Referido",
           "IdVendedor": "5197", "Vendedor": "JULIA LUCIO GARCIA",
-          "FecAlta": "2026-08-20", "FecUltAct": "2026-08-21",
-          "DiasSinSeg": 2, "Semaforo": "En Gestion",
-          "Estatus": 2, "EstatusDescr": "En Proceso", "IdCliente": 0
+          "FecAlta": "2026-08-20", "FecUltAct": "2026-09-13",
+          "DiasSinSeg": 2, "Semaforo": "En Tiempo",
+          "Estatus": 2, "EstatusDescr": "En Gestion", "IdCliente": 0
         }
       ],
       "ttKpi": [
@@ -137,10 +136,10 @@ docs: |
   - **`Telefono`** · CHARACTER — `-` si vacío.
   **`IdOrigen`/`Origen`** · INTEGER/CHARACTER — Origen del lead (catálogo).
   **`IdVendedor`/`Vendedor`** · CHARACTER — Vendedor asignado (nombre resuelto vía Empleado) o `Sin asignar`.
-  - **`FecAlta`** · DATE
-  - **`FecUltAct`** · DATE — Última llamada/correo.
+  - **`FecAlta`** · DATE — Fecha de alta.
+  - **`FecUltAct`** · DATE — Fecha de la última llamada/correo (base del semáforo).
   - **`DiasSinSeg`** · INTEGER — `TODAY − FecUltAct`.
-  - **`Semaforo`** · CHARACTER — `En Gestion` (1–7) · `Requiere Atencion` (8–14) · `Riesgo de Perdida` (>14).
+  - **`Semaforo`** · CHARACTER — `Nuevo` (Estatus 1, sin gestión) · `En Tiempo` (0–7, verde) · `Requiere Atencion` (8–14, ámbar) · `Riesgo de Perdida` (>14, rojo) · `Cerrado` (gris, Estatus 3/4/5). Bandas de color solo para Estatus 2 (En Gestión); antigüedad = `TODAY − FecUltAct`.
   **`Estatus`/`EstatusDescr`** · INTEGER/CHARACTER — Estatus del lead.
   - **`IdCliente`** · INTEGER — Cliente generado al convertir (0 = sin convertir).
 
@@ -154,9 +153,29 @@ docs: |
   ## 10. Reglas y Validaciones
 
   - `IdUser` obligatorio en todos los endpoints.
-  - KPIs se calculan sobre leads **activos** (Estatus 1–2), independientes del filtro del grid.
-  - `Nuevos Esta Semana` = leads con Fecha de Alta dentro de la semana calendario (Lunes–Domingo), excluye Cerrado/Cancelado.
+  - **El grid trae todos los estatus (incl. Cancelados);** la única baja lógica es la cancelación (Estatus=5, `Activo=false`) — cierre (4) y convertido (3) conservan `Activo=true`.
+  - **Cards de gestión activa** (`EnGestion`/`RequiereAtencion`/`RiesgoPerdida`) cuentan **solo** leads en **Estatus 2** (En Gestión = ya tuvieron ≥1 gestión). La antigüedad = `TODAY − FecUltAct`. Un lead Nuevo (Estatus 1, sin gestión) no cuenta.
+  - `Nuevos Esta Semana` = leads con Fecha de Alta dentro de la semana en curso **Lunes 00:00 → Sábado 23:59:59** (Lun–Sáb), excluye Cerrado/Cancelado.
   - El semáforo y los días se recalculan en cada consulta (no se persisten).
+  - *Rendimiento:* la vista "todos" ordena por `FecAlta DESC`. Cuando se dé de alta el índice **`idx-fecalta` (`- FecAlta`)** en la tabla `Lead`, se elimina ese *sort*; por vendedor/estatus ya lo cubren `idx-vendedor`/`idx-estatus`.
+
+  ---
+
+  ## 11. Ticket 3204 (HU-F-07) — Reglas de Card, Estatus & Semáforos
+
+  **Implementado (reusando columnas existentes — sin campos nuevos en `Lead`):**
+  - Estatus `2` re-rotulado **En Gestión** (mismo código `2`).
+  - Semáforo: **Nuevo** (Estatus 1) **/ En Tiempo / Requiere Atención / Riesgo de Pérdida / Cerrado** (3/4/5); antigüedad = `TODAY − FecUltAct`; bandas de color solo para Estatus 2.
+  - Cards de gestión activa gated por **Estatus 2**; `Nuevos Esta Semana` **Lun–Sáb**.
+  - **Timeline** de gestión (llamadas/correos) en `/Lead/Detalle` (ver ese doc).
+
+  **Modelo de datos (registrar en BD antes de compilar):**
+  - **Único objeto nuevo:** tabla `LeadActividad` (timeline; match por Teléfono/Correo). Def en `Docs/tablas-HU12/LeadActividad.txt`. `Lead` **no cambia** (se reusa `Estatus` + `FecUltAct`).
+
+  **Pendiente:**
+  - **`[P1]`** El **proceso de match** que alimenta `LeadActividad` y mantiene en `Lead` `FecUltAct` + el salto `Estatus 1→2` (fuente InConcert / correos de salida; **no** HU-11). Sin él los 3 cards de gestión salen 0. Loader de prueba: `inccargaleadactividad.p`.
+  - **`[P2]`** Confirmar con PM el ancla de antigüedad: última actualización (asumido, = fórmula del card) vs 1ª gestión (narrativa; requeriría agregar `FecPrimerGestion`).
+  - **`[P3]`** Origen **"Transferido TeleMarketing"** ya sembrado (`OrigenLead`=8); el mecanismo de transferencia depende de **HU-11** (el grid ya lo muestra sin depender de HU-11).
 
   ---
   **Desarrollado por:** SIS10 - JASS

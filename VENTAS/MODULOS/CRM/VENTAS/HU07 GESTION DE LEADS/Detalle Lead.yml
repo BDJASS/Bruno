@@ -5,13 +5,13 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Detalle?IdUser=jjlg&Folio=LD-2026-0001
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Detalle?IdUser=jjlg&Folio=LD-2026-0013
   params:
     - name: IdUser
       value: jjlg
       type: query
     - name: Folio
-      value: LD-2026-0001
+      value: LD-2026-0013
       type: query
   auth: inherit
 
@@ -30,10 +30,9 @@ docs: |
   ## 1. Título del Servicio
 
   **Detalle del Lead (HU-07)**
-  Devuelve el encabezado del lead. Alimenta el modal Ver/Editar Lead.
-  Programa servidor: `lead.p` · Procedimiento: `leeLead`.
+  Devuelve el encabezado del lead **y el timeline de gestión** (llamadas/correos). Alimenta el modal Ver/Editar Lead.
 
-  > **Nota:** el **timeline de actividades** (`LeadActividad`) se **omite por ahora** — la tabla no se dio de alta; se definirá cómo se alimentará (probablemente desde InConcert). Su `.txt` queda en `Docs/tablas-HU12/`.
+  > **Timeline:** el `dsLeadDet` trae `ttLeadDet` (encabezado) **+ `ttTimeline`** (interacciones desde `LeadActividad`, más reciente primero). La tabla `LeadActividad` ya está dada de alta; la alimenta el proceso de match (Teléfono/Correo) desde InConcert / correos de salida. Si el lead aún no tiene actividades, `ttTimeline` viene vacío.
 
   ---
 
@@ -97,20 +96,58 @@ docs: |
           "RazonSocial": "COMERCIAL DEL NORTE SA", "Correo": "jperez@cnorte.com",
           "Telefono": "8112345678", "IdOrigen": 1, "Origen": "Referido",
           "IdVendedor": "5197", "Vendedor": "JULIA LUCIO GARCIA",
-          "FecAlta": "2026-08-20", "FecUltAct": "2026-08-21", "DiasSinSeg": 2,
-          "Semaforo": "En Gestion", "Estatus": 2, "EstatusDescr": "En Proceso", "IdCliente": 0 }
+          "FecAlta": "2026-08-20", "FecUltAct": "2026-09-13", "DiasSinSeg": 2,
+          "Semaforo": "En Tiempo", "Estatus": 2, "EstatusDescr": "En Gestion", "IdCliente": 0,
+          "FecEstatus": null, "IdMotivo": 0, "Motivo": "", "MotivoNota": "" }
+      ],
+      "ttTimeline": [
+        { "Id": 41, "Tipo": "CORREO", "Sentido": "SALIDA", "FecHora": "2026-09-13T11:00:00",
+          "Fecha": "2026-09-13", "Telefono": "", "Duracion": 0, "Resultado": "",
+          "Correo": "jperez@cnorte.com", "Asunto": "Propuesta comercial ADOSA",
+          "Detalle": "Envio de propuesta", "Origen": "CORREO", "Usuario": "jjlg" },
+        { "Id": 40, "Tipo": "LLAMADA", "Sentido": "SALIDA", "FecHora": "2026-09-12T10:15:00",
+          "Fecha": "2026-09-12", "Telefono": "8112345678", "Duracion": 120, "Resultado": "Contestada",
+          "Correo": "", "Asunto": "", "Detalle": "Primer contacto", "Origen": "INCONCERT", "Usuario": "jjlg" }
       ]
     }
   }
+  ```
+
+  **Ejemplo — Lead Cancelado (Estatus 5)** — `ttLeadDet` con los campos del cierre:
+
+  ```json
+  { "Folio": "LD-2026-0007", "Estatus": 5, "EstatusDescr": "Cancelado",
+    "FecEstatus": "2026-09-14", "IdMotivo": 1, "Motivo": "Lead duplicado",
+    "MotivoNota": "Ya existia como cliente activo" }
   ```
 
   ---
 
   ## 9. Campos de la Respuesta
 
-  **`ttLeadDet`** — mismos campos del grid (ver Consulta).
+  **`ttLeadDet`** — encabezado; mismos campos del grid (ver Consulta), **más** los del cierre (Ticket 3202):
+  - **`FecEstatus`** · DATE — Fecha en que se registró el estatus de cierre (fecha de última modificación, sellada al cerrar/cancelar). Solo se llena en Estatus 4/5; vacía en el resto.
+  - **`IdMotivo`** · INTEGER — Id del motivo (de cierre o de cancelación según el estatus). `0` si no aplica.
+  - **`Motivo`** · CHARACTER — Nombre del motivo: catálogo `MotivoCierreLead` (Estatus 4) o `MotivoCancelacionLead` (Estatus 5).
+  - **`MotivoNota`** · CHARACTER — Justificación capturada: `NotaCierre` (4) o `MotCancelOtro`/`Observaciones` (5).
 
-  > El `dsLeadDet` por ahora solo trae `ttLeadDet` (encabezado). El timeline de actividades queda pendiente (ver nota en §1).
+  > **Ticket 3202:** estos 4 campos solo vienen con valor cuando `Estatus` = **4 (Cierre sin Conversión)** o **5 (Cancelado)**. En cualquier otro estatus llegan vacíos (`FecEstatus` nula, `IdMotivo` 0, `Motivo`/`MotivoNota` ""), y el front los muestra únicamente en esos dos estatus.
+
+  **`ttTimeline`** — interacciones de gestión (más reciente primero):
+  - **`Id`** · INTEGER — Id de la actividad.
+  - **`Tipo`** · CHARACTER — `LLAMADA` / `CORREO`.
+  - **`Sentido`** · CHARACTER — `SALIDA` / `ENTRADA`.
+  - **`FecHora`** · DATETIME · **`Fecha`** · DATE — Momento de la interacción.
+  - **`Telefono`** · CHARACTER — Número marcado (llamada).
+  - **`Duracion`** · INTEGER — Segundos (llamada).
+  - **`Resultado`** · CHARACTER — Resultado de la llamada.
+  - **`Correo`** · CHARACTER — Destino (correo).
+  - **`Asunto`** · CHARACTER — Subject (correo).
+  - **`Detalle`** · CHARACTER — Nota / resumen.
+  - **`Origen`** · CHARACTER — `INCONCERT` / `MANUAL` / `CORREO`.
+  - **`Usuario`** · CHARACTER — Quién marcó/envió.
+
+  > Si el lead aún no tiene actividades registradas, `ttTimeline` viene vacío.
 
   ---
 

@@ -17,38 +17,200 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
-docs: |-
-  **Reporte  — Consulta de Artículos en Oferta**
-  Programa: `ventas-rep010.p` | Basado en: `cnfa0590.p`
+docs: |
+  # Servicio REST — Consulta de Artículos en Oferta
 
-  Retorna los artículos registrados en una oferta específica, incluyendo presentación,
-  color, porcentajes de descuento, vigencia y estatus activo.
+  ---
 
-  **Parámetros:**
-  - `IdOfer` (string, opcional): Clave de la oferta a consultar. Vacío = todas las ofertas.
-    Ej: `ENERO`, `PROMO1`, `VERANO24`
+  ## 1. Título del Servicio
 
-  **Ejemplo — oferta específica:**
+  **Reporte 10 — Consulta de Artículos en Oferta (OfertasVigentes)**
+  Retorna los artículos registrados en una oferta específica, incluyendo presentación, color, porcentajes de descuento, vigencia, y estatus. Permite consultar todas las ofertas o filtrar por clave de oferta.
+
+  ---
+
+  ## 2. Método HTTP
+
   ```
-  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/OfertasVigentes?IdOfer=enero
-  ```
-
-  **Ejemplo — todas las ofertas:**
-  ```
-  GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/OfertasVigentes
+  GET
   ```
 
-  **Campos de respuesta (ttArch):**
-  - `IdOfer` — Clave de la oferta
-  - `IdArticulo` — Clave del artículo
-  - `Descr` — Descripción del artículo en oferta
-  - `IdPres` — Clave de presentación
-  - `IdColor` — Clave de color (0 = todos los colores)
-  - `NomColor` — Abreviatura de color o "TODOS"
-  - `PorcMay` — % descuento mayoreo
-  - `PorcPro` — % descuento promoción
-  - `FecIni` / `FecFin` — Vigencia de la oferta
-  - `Contado` — true = solo contado
-  - `NoPP` — true = no aplica precio de proveedor
-  - `Activo` — true = oferta activa
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8850/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/OfertasVigentes
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdOfer`** · STRING · ❌ — Clave de la oferta a consultar
+  - Vacío o sin parámetro = retorna **todas** las ofertas
+  - Ej: `"ENERO"` · `"PROMO1"` · `"VERANO24"`
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET http://192.0.1.14:8850/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/OfertasVigentes
+      ?IdOfer=enero
+  ```
+
+  ### Consultar todas las ofertas (sin filtro):
+
+  ```
+  GET http://192.0.1.14:8850/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/OfertasVigentes
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "3 registros encontrados.",
+    "dsOutput": {
+      "ttArch": [
+        {
+          "IdOfer": "ENERO",
+          "IdArticulo": "ART001",
+          "Descr": "ACEITE MOTOR 5W30 1L",
+          "IdProv": 1234,
+          "NomProv": "LUBRICANTES DEL NORTE SA DE CV",
+          "IdPres": 1,
+          "IdColor": 0,
+          "NomColor": "TODOS",
+          "PorcMay": 10.00,
+          "PorcPro": 5.00,
+          "FecIni": "2026-01-01",
+          "FecFin": "2026-01-31",
+          "Contado": false,
+          "NoPP": false,
+          "Activo": true
+        },
+        {
+          "IdOfer": "ENERO",
+          "IdArticulo": "ART045",
+          "Descr": "FILTRO DE AIRE UNIVERSAL",
+          "IdProv": 5678,
+          "NomProv": "REFACCIONES INDUSTRIALES SA",
+          "IdPres": 1,
+          "IdColor": 3,
+          "NomColor": "ROJO",
+          "PorcMay": 8.00,
+          "PorcPro": 4.00,
+          "FecIni": "2026-01-01",
+          "FecFin": "2026-01-31",
+          "Contado": true,
+          "NoPP": false,
+          "Activo": true
+        }
+      ]
+    }
+  }
+  ```
+
+  ### Campos de `ttArch`
+
+  **`IdOfer`** · STRING — Clave de la oferta (ej. `"ENERO"`, `"VERANO24"`)
+  **`IdArticulo`** · STRING — Clave del artículo en oferta
+  **`Descr`** · STRING — Descripción del artículo tal como aparece en la oferta
+  **`IdProv`** · INT — Número de proveedor del artículo (`Articulo.Id-Prov`); `0` si el artículo no existe o no tiene proveedor
+  **`NomProv`** · STRING — Nombre del proveedor (`Prov.Nombre`); vacío si no se localiza
+  **`IdPres`** · INT — Clave de la presentación del artículo
+  **`IdColor`** · INT — Clave de color; `0` = sin color asignado (aplica a todos los colores)
+  **`NomColor`** · STRING — Abreviatura del color (tabla `Kolor`); `"TODOS"` cuando `IdColor = 0`
+  **`PorcMay`** · DECIMAL — Porcentaje de descuento para clientes mayoreo
+  **`PorcPro`** · DECIMAL — Porcentaje de descuento para clientes promoción
+  **`FecIni`** · DATE — Fecha de inicio de vigencia de la oferta
+  **`FecFin`** · DATE — Fecha de fin de vigencia de la oferta
+  **`Contado`** · BOOLEAN — `true` = oferta aplica solo a ventas de contado; `false` = aplica a crédito y contado
+  **`NoPP`** · BOOLEAN — `true` = no aplica precio de proveedor; `false` = precio de proveedor permitido
+  **`Activo`** · BOOLEAN — `true` = oferta activa; `false` = oferta inactiva
+
+  > Los registros se retornan ordenados por `idx-Pres` (índice de presentación de `ArtOfer`).
+  > El campo `NomColor` siempre retorna `"TODOS"` cuando `IdColor = 0`, independientemente del valor en la base de datos.
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Error: tabla ArtOfer no disponible.",
+    "dsOutput": {
+      "ttArch": []
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdOfer` vacío o no enviado | Retorna **todos** los artículos en oferta sin filtrar |
+  | `IdOfer` con valor | Filtra exclusivamente por esa clave de oferta |
+  | `IdOfer = ?` (null PASOE) | Se normaliza a vacío — retorna todas las ofertas |
+  | No existen registros para el `IdOfer` indicado | Retorna `ttArch: []` con `IdError: false` y `"0 registros encontrados."` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+  Adjuntar screenshot de la herramienta de prueba (Bruno / Postman / curl) mostrando:
+  - URL completa con parámetros
+  - Status HTTP `200 OK`
+  - Cuerpo de respuesta con al menos un registro en `ttArch`
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | 2026-03-31 | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Fuente de datos:** El servicio consulta directamente la tabla `ArtOfer` usando el índice `idx-Pres`. La estrategia de acceso es idéntica al programa carácter `cnfa0590.p`.
+  2. **Color `TODOS`:** Cuando `ArtOfer.Id-Color = 0`, el artículo aplica a todos los colores disponibles. El campo `NomColor` retorna `"TODOS"` en este caso.
+  3. **Sin filtro de vigencia:** El servicio **no filtra** por `FecIni` / `FecFin` — retorna todos los artículos registrados en la oferta, incluyendo vencidos. El front-end es responsable de filtrar por vigencia si se requiere.
+  4. **Ofertas en mayúsculas:** La clave `IdOfer` en la base de datos está en mayúsculas (ej. `"ENERO"`). El parámetro `IdOfer` es sensible a mayúsculas/minúsculas según el motor OpenEdge.
+  5. **Autenticación:** El servicio corre sobre OpenEdge PASOE. Si el ambiente requiere autenticación Bearer, incluir el header `Authorization: Bearer <token>`.
+  6. **Proveedor del artículo (Ticket #3201):** Por cada renglón se resuelve el proveedor vía `Articulo.Id-Prov` → `Prov.Nombre`. Para no relanzar el `FIND Prov` por cada artículo, el nombre se **cachea** en un temp-table por `Id-Prov` (los artículos suelen repetir proveedor), evitando demorar la consulta. Si el artículo no se localiza, `IdProv` retorna `0` y `NomProv` vacío.

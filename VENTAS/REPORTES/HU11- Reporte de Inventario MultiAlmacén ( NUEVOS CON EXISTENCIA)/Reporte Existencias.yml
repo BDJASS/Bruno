@@ -17,8 +17,9 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
-docs: |-
+docs: |
   # Servicio REST — Existencias MultiAlmacén por Artículo
 
   ---
@@ -100,6 +101,8 @@ docs: |-
         "NombreGiro": "PAPELERIA",
         "IdMarca": 45,
         "NombreMarca": "SCRIBE",
+        "IdCatego": "0105",
+        "NombreCatego": "CUADERNOS PROFESIONALES",
         "IdProv": 1801,
         "NomProv": "GRUPO SCRIBE SA DE CV",
         "IdColor": 0,
@@ -146,6 +149,8 @@ docs: |-
   **`NombreGiro`** · STRING — Descripción del giro
   **`IdMarca`** · INT — Clave de la marca; `0` si no tiene
   **`NombreMarca`** · STRING — Descripción de la marca
+  **`IdCatego`** · STRING — Clave de la categoría del artículo (`Articulo.Id-Catego`); vacío si no tiene
+  **`NombreCatego`** · STRING — Descripción de la categoría (`Catego.Descr` donde `Catego.Id-Catego = Articulo.Id-Catego`)
   **`IdProv`** · INT — Clave del proveedor del artículo
   **`NomProv`** · STRING — Nombre del proveedor
   **`IdColor`** · INT — Clave de color; `0` = artículo sin color
@@ -178,7 +183,7 @@ docs: |-
   **`Transito`** · DECIMAL — Cantidad en tránsito (requisiciones + traspasos en camino)
   **`ExTotal`** · DECIMAL — Existencia total general (suma de todos + tránsito)
 
-  > Cada renglón es por **artículo + color**: un artículo con varios colores genera varios renglones (distínguelos con `IdColor` / `AbrevColor`). Los datos del artículo (Descr, Grupo, Giro, Marca, etc.) se repiten en cada color.
+  > Cada renglón es por **artículo + color**: un artículo con varios colores genera varios renglones (distínguelos con `IdColor` / `AbrevColor`). Los datos del artículo (Descr, Grupo, Giro, Marca, Categoría, etc.) se repiten en cada color.
 
   ### Response de error controlado
 
@@ -238,5 +243,6 @@ docs: |-
   4. **Tránsito:** `Transito` incluye requisiciones surtidas en camino (`DetReq` + `ReqAlm` + `EstPedido` con estatus < 7) y traspasos enviados aún no recibidos (`DetSTrasp` sin entrada registrada). Se suma a `ExTotal`.
   5. **Indicadores min/máx:** `+` cuando la existencia supera el máximo configurado por 20% (`> Maximo × 1.20`); `-` cuando está por debajo del mínimo; vacío en rango normal. Se calculan **antes** de la conversión a UMI.
   6. **Giro vía proveedor:** El giro proviene del proveedor del artículo (`Prov.Id-Giro → Giro`), no de un campo directo del artículo.
-  7. **Rendimiento:** El servicio recorre todos los artículos activos tipo `N`; el nombre del proveedor se resuelve con caché interno para no golpear `Prov` por cada renglón. Aun así es un barrido completo de catálogo — conviene que el front lo consuma con un indicador de carga.
+  7. **Rendimiento:** El servicio recorre todos los artículos activos tipo `N`; el nombre del proveedor y el de la **categoría** se resuelven con caché interno en memoria (`ttCacheProv` / `ttCacheCatego`) para no golpear `Prov` ni `Catego` por cada renglón. Como las categorías se repiten mucho entre artículos, la lectura de `Catego` sólo ocurre la primera vez que aparece cada categoría; el resto de los renglones se resuelven sin acceso a BD, por lo que la columna de categoría **no agrega tiempo perceptible** al barrido. Aun así es un barrido completo de catálogo — conviene que el front lo consuma con un indicador de carga.
   8. **Autenticación:** El servicio corre sobre OpenEdge PASOE. Si el ambiente requiere autenticación Bearer, incluir el header `Authorization: Bearer <token>`.
+  9. **Categoría (ticket 3162):** Se agregaron los campos `IdCatego` / `NombreCatego` a la salida (la columna de color ya existía). La categoría es una clasificación del artículo (`Articulo.Id-Catego`) y su nombre proviene de `Catego.Descr`. Se resuelve con caché (ver punto 7), por lo que no impacta los tiempos del reporte.

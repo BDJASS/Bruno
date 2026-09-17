@@ -5,10 +5,10 @@ info:
 
 http:
   method: POST
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Alta?NombreContacto=Juan Perez&RazonSocial=COMERCIAL DEL NORTE SA&Correo=jperez@cnorte.com&Telefono=8112345678&IdOrigen=1&IdVendedor=5197&IdUser=jjlg
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Lead/Alta?NombreContacto=Juan Pablo Tercero&RazonSocial=COMERCIAL DEL NORTE SA&Correo=jperez@cnorte.com&Telefono=8112345678&IdOrigen=1&IdVendedor=5197&IdUser=jjlg
   params:
     - name: NombreContacto
-      value: Juan Perez
+      value: Juan Pablo Tercero
       type: query
     - name: RazonSocial
       value: COMERCIAL DEL NORTE SA
