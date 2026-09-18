@@ -1,0 +1,171 @@
+info:
+  name: Reporte Vales por Factura ---DETALLE MONEDERO
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/ValesPorFactura/DetalleMonedero?NumMonedero=000032906621&IdUser=olds
+  params:
+    - name: NumMonedero
+      value: "000032906621"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Detalle de Monedero
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Reporte 11A (Detalle) — Aplicaciones de un Monedero**
+  Drill-down del modal **"Monederos Aplicados — Factura N"**. Al dar clic en el **Núm. Monedero** de un renglón del modal, retorna los movimientos/aplicaciones asociados a ese monedero (una fila por aplicación) sin salir del contexto del modal.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/ValesPorFactura/DetalleMonedero
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`NumMonedero`** · STRING · ✅ — Número de monedero a consultar (`Vale.Id-Vale`)
+  - Es el `NumMonedero` del renglón del modal · Se valida que el monedero exista
+
+  **`IdUser`** · STRING · ✅ — Usuario que consulta
+  - Requerido en todas las operaciones del servicio (insumo de bitácora)
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Reporte/ValesPorFactura/DetalleMonedero?NumMonedero=416872875927&IdUser=desarrollo10
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  > La respuesta es la tabla **`ttMonederoDet`**: una fila por cada aplicación (movimiento) del monedero, ordenadas por fecha.
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Monedero 416872875927: 2 aplicacion(es).",
+    "ttMonederoDet": [
+      {
+        "Documento": "9931025",
+        "Cajero": "JUAN PEREZ GARCIA",
+        "Fecha": "2026-02-01",
+        "Tienda": "MATRIZ",
+        "ImporteAplicado": 5000.00
+      },
+      {
+        "Documento": "9931180",
+        "Cajero": "MARIA LOPEZ RUIZ",
+        "Fecha": "2026-02-15",
+        "Tienda": "P. LIVAS",
+        "ImporteAplicado": 9811.05
+      }
+    ]
+  }
+  ```
+
+  ### Campos de `ttMonederoDet`
+
+  **`Documento`** · STRING — Remisión donde se aplicó el monedero (`DetVale.Id-Remision`)
+  **`Cajero`** · STRING — Nombre del empleado que aplicó (`Empleado.Nombre`), vía `Remision.Id-Vendedor` → `Vendedor.Iniciales` → `Empleado.Iniciales`
+  **`Fecha`** · DATE — Fecha de aplicación (`DetVale.FecApl`)
+  **`Tienda`** · STRING — Descripción de la tienda/ubicación (`UbiVta.Descr`), vía `Remision.Id-Ubic` → `UbiVta.Id-UbiVta`
+  **`ImporteAplicado`** · DECIMAL — Importe aplicado en esa remisión (`DetVale.Importe`)
+
+  > Si el monedero existe pero aún no se ha aplicado, `ttMonederoDet` regresa **vacío** con `IdError = false`.
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "El monedero 999999999999 no existe.",
+    "ttMonederoDet": []
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Mensaje de error |
+  |-----------|-----------------|
+  | `IdUser` vacío | `Se requiere el usuario (IdUser).` |
+  | `NumMonedero` vacío | `Se requiere el numero de monedero.` |
+  | `NumMonedero` no existe en `Vale` | `El monedero N no existe.` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+
+  ---
+  **Desarrollado por:** SIS10 - JASS
