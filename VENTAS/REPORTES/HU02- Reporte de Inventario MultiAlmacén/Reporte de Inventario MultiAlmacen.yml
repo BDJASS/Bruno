@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/InventarioMultiAlmacen?Opciones=1&Orden=1&ReportePor=2&IncExist=1&UnidadesEn=1&Resagados=1&TipoArt=1&SelTipoArt=&Temporada=1&Comprador=&IdUser=olds
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/InventarioMultiAlmacen?Opciones=1&Categorias=&Articulo=&Orden=1&ReportePor=2&IncExist=1&UnidadesEn=1&Resagados=1&TipoArt=1&SelTipoArt=&Temporada=1&Comprador=&IdUser=olds
   params:
     - name: Opciones
       value: "1"
@@ -17,11 +17,9 @@ http:
     - name: Categorias
       value: ""
       type: query
-      disabled: true
     - name: Articulo
       value: ""
       type: query
-      disabled: true
     - name: Orden
       value: "1"
       type: query
@@ -59,6 +57,7 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
 docs: |-
   # Servicio REST — Inventario Multi Almacén
