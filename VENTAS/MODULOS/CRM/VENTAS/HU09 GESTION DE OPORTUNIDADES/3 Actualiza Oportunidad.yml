@@ -1,0 +1,169 @@
+info:
+  name: 3 Actualiza Oportunidad
+  type: http
+  seq: 3
+
+http:
+  method: PUT
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/Actualiza
+  body:
+    type: json
+    data: |
+      {
+        "dsOportIn": {
+          "ttEnc": [
+            { "IdUser": "jjlg", 
+             "IdOportunidad": 1, 
+             "IdTipoProy": 3, 
+             "Presupuesto": 260000.00,
+              "IdFrecProy": 5, 
+             "FecTentCierre": "2026-10-20", 
+             "DecisorNombre": "ESTEFANIA HERNANDEZ",
+              "DecisorPuesto": "Gerente de Compras", 
+             "DecisorCorreo": "lramos@cnorte.com",
+             "DecisorTelefono": "8112345678",
+              "IdProcAutoriz": 2, 
+              "IdUrgencia": 1, 
+             "ConfirmadaCliente": true,
+              "ImpactoStatusQuo": "Riesgo de desabasto",
+              "IdCompetencia": 12, 
+             "PctPenalizacion": 5.0, 
+             "SolicitudMuestra": false, 
+             "DescValorAgregado": "Instalacion incluida",
+              "SolicitarApoyo": false, 
+              "IdCot": "COT1234",
+              "MontoCotizado": 258000.00, 
+             "FecPresentacion": "2026-09-20",
+              "FecRealPresentacion": "2026-09-21", 
+             "DescOportunidad": "Renovacion de mobiliario 3 pisos",
+              "Observaciones": "Cliente pide entrega escalonada", 
+             "ValorTotalCuenta": 1200000.00,
+              "CotizadoAFecha": 258000.00, 
+             "ProxAccionResumen": "Cerrar en visita",
+              "ContratoNombre": "", 
+             "ContratoMime": "", 
+             "ContratoB64": "" }
+          ],
+          "ttCfs": [ { "IdPrioridad": 1 }, 
+                     { "IdPrioridad": 4 } 
+                   ],
+          "ttVa": [ { "IdValorAgr": 1 } 
+                  ],
+          "ttCvbv": [], 
+          "ttCorreo": []
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Actualiza Oportunidad (Ver/Editar)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Actualiza Oportunidad (HU-09)**
+  Edita los campos editables de una oportunidad desde el modal Ver/Editar (6 pasos). **Cuenta, Nombre y Folio quedan bloqueados**; el **Vendedor se cambia solo por Asignar Vendedor**. Reemplaza las hijas (CFS, CVBV, Valor Agregado, Correos de apoyo), opcionalmente el contrato, y corre el motor de Pipeline.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  PUT
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/Actualiza
+  ```
+
+  ---
+
+  ## 4. Parámetros de entrada (Body JSON)
+
+  Mismo dataset `dsOportIn` que el Alta (`ttEnc` + hijas `ttCfs`, `ttCvbv`, `ttVa`, `ttCorreo`). El encabezado `ttEnc` agrega estos campos respecto al Alta:
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdOportunidad`** · INTEGER · ✅ — Oportunidad a editar.
+  **`DecisorPuesto`** · STRING · ❌ — Cargo del decisor (editable).
+  **`DecisorCorreo`** · STRING · ❌ — Email del decisor (editable).
+  **`DecisorTelefono`** · STRING · ❌ — Teléfono del decisor (editable).
+  **`PctPenalizacion`** · DECIMAL · ❌ — % de penalización.
+  **`DescOportunidad`** · STRING · ❌ — Descripción/contexto (Paso 6).
+  **`Observaciones`** · STRING · ❌ — Notas internas (Paso 6).
+  **`ValorTotalCuenta`** · DECIMAL · ❌ — Valor total de la cuenta (Paso 6).
+  **`CotizadoAFecha`** · DECIMAL · ❌ — Cotizado a la fecha (Paso 6).
+  **`ProxAccionResumen`** · STRING · ❌ — Próxima acción, resumen (Paso 6).
+
+  > **NO editables** (se ignoran aunque se envíen): `IdCliente` (Cuenta), `Nombre`, `Folio`, `IdVendedor`. El resto de campos editables (Tipo, Presupuesto, Frecuencia, Decisor, Proc. Autorización, CFS, Urgencia, Confirmada, Impacto, Competencia, Muestra, Valor Agregado, Solicitar Apoyo, oferta) son iguales al Alta. Ver [Alta de Oportunidad](oportunidad-AltaOportunidad.md) §4.
+
+  ---
+
+  ## 5. Headers
+
+  | Header         | Valor                |
+  |----------------|----------------------|
+  | `Accept`       | `application/json`   |
+  | `Content-Type` | `application/json`   |
+
+  ---
+
+  ## 6. Ejemplo de Request (body, resumido)
+
+  ```json
+  {
+    "dsOportIn": {
+      "ttEnc": [{
+        "IdUser": "jjlg", "IdOportunidad": 1,
+        "IdTipoProy": 3, "Presupuesto": 260000.00, "IdFrecProy": 5, "FecTentCierre": "2026-10-20",
+        "DecisorNombre": "ING. LUIS RAMOS", "DecisorPuesto": "Gerente de Compras",
+        "DecisorCorreo": "lramos@cnorte.com", "DecisorTelefono": "8112345678",
+        "IdProcAutoriz": 2, "IdUrgencia": 1, "ConfirmadaCliente": true,
+        "ImpactoStatusQuo": "Riesgo de desabasto", "IdCompetencia": 12, "PctPenalizacion": 5.0,
+        "SolicitudMuestra": false, "DescValorAgregado": "Instalacion incluida",
+        "SolicitarApoyo": false, "IdCot": "COT1234", "MontoCotizado": 258000.00,
+        "FecPresentacion": "2026-09-20", "FecRealPresentacion": "2026-09-21",
+        "DescOportunidad": "Renovacion de mobiliario 3 pisos", "Observaciones": "Cliente pide entrega escalonada",
+        "ValorTotalCuenta": 1200000.00, "CotizadoAFecha": 258000.00, "ProxAccionResumen": "Cerrar en visita"
+      }],
+      "ttCfs": [{ "IdPrioridad": 1 }, { "IdPrioridad": 4 }],
+      "ttVa":  [{ "IdValorAgr": 1 }],
+      "ttCvbv": [],
+      "ttCorreo": []
+    }
+  }
+  ```
+
+  ---
+
+  ## 7. Ejemplo de Response
+
+  ```json
+  { "IdError": false, "Respuesta": "Oportunidad actualizada.", "dsOportIn": { } }
+  ```
+
+  ---
+
+  ## 8. Reglas y Validaciones
+
+  - `IdUser` e `IdOportunidad` obligatorios; la oportunidad debe existir (se bloquea con `NO-WAIT`).
+  - Mismas validaciones que el Alta para los editables: TipoProyecto activo, Presupuesto > 0, FecTentCierre requerida, Decisor debe existir en `CteEmp` de la cuenta, ProcAutoriz/Urgencia activos, **CFS mín. 1**, **Valor Agregado mín. 1**, Muestra→descripción, **Apoyo→requerido+≥1 correo (`ttCorreo` acepta varios correos separados por coma)**, FecPresentación requerida.
+  - **Hijas se reemplazan** (se borran y se recrean desde el body).
+  - **Contrato opcional** en campos de `ttEnc`: `ContratoNombre`/`ContratoMime`/`ContratoB64` (base64 STRING, ≤10 MB): si `ContratoB64` trae contenido, **reemplaza** el contrato vigente; si va vacío, se conserva el actual. También editable con `/Oportunidad/Documento/Carga`.
+  - Al guardar corre el motor de Pipeline (puede avanzar la etapa).
+  - Todo en una transacción; si algo falla, se revierte.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

@@ -1,0 +1,133 @@
+info:
+  name: 7 Guarda Objeciones
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/GuardaObjeciones
+  body:
+    type: json
+    data: |
+      {
+        "dsObjIn": {
+          "ttObjEncIn": [ { "IdUser": "jjlg", "IdOportunidad": 1, "HuboObjeciones": 1 } ],
+          "ttObjIn": [
+            { "LineaObj": 1, "IdTipoObjecion": 2, "ArgumentoResolucion": "Se mostro el ahorro anual estimado",
+              "IdEstatusObjecion": 1,
+              "ttEvidIn": [ { "LineaObj": 1, "IdTipoEvidencia": 2 }, { "LineaObj": 1, "IdTipoEvidencia": 3 } ] }
+          ]
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Objeciones de la Oportunidad
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Registro de Objeciones (HU-09)**
+  Modal "Registrar Objeciones": bitácora de retroalimentación negativa del cliente. Cada objeción lleva Tipo, Evidencias (múltiples), Argumento de Resolución y Estatus. Máximo 5 por oportunidad.
+
+  ---
+
+  ## 2. Endpoint A — Consulta
+
+  ### Método / URL
+  ```
+  GET  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/Objeciones
+  ```
+
+  ### Parámetros (Query String)
+
+  > ✅ = Requerido
+
+  **`IdOportunidad`** · INTEGER · ✅ — Oportunidad.
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta.
+
+  ### Ejemplo Response
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Objeciones consultadas: 1.",
+    "dsObjeciones": {
+      "ttHdr": [
+        { "IdOportunidad": 1, "HuboObjeciones": 1, "Total": 1,
+          "Resueltas": 0, "Pendientes": 1, "NoResueltas": 0, "SinEstatus": 0,
+          "ttObj": [
+            { "IdObjecion": 1, "IdTipoObjecion": 2, "TipoObjecion": "Status Quo",
+              "ArgumentoResolucion": "Se mostro el ahorro anual", "IdEstatusObjecion": 2, "EstatusObjecion": "Pendiente",
+              "ttEvid": [ { "IdTipoEvidencia": 2, "TipoEvidencia": "Demostracion" } ] }
+          ] }
+      ]
+    }
+  }
+  ```
+
+  ### Campos
+  **`ttHdr`** (una fila) — **`HuboObjeciones`** · INTEGER (`0` sin responder · `1` Sí · `2` No) + resumen: **`Total`**, **`Resueltas`**, **`Pendientes`**, **`NoResueltas`**, **`SinEstatus`**.
+  **`ttObj`** (tarjetas) — **`IdObjecion`** · INTEGER · **`IdTipoObjecion`**/**`TipoObjecion`** · **`ArgumentoResolucion`** · **`IdEstatusObjecion`**/**`EstatusObjecion`**.
+  **`ttEvid`** (por objeción) — **`IdTipoEvidencia`**/**`TipoEvidencia`**.
+
+  ---
+
+  ## 3. Endpoint B — Guardar
+
+  ### Método / URL
+  ```
+  POST  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/GuardaObjeciones
+  ```
+
+  ### Body JSON (`dsObjIn`)
+
+  **`ttObjEncIn`** (una fila):
+  - **`IdUser`** · STRING · ✅ — Usuario.
+  - **`IdOportunidad`** · INTEGER · ✅ — Oportunidad.
+  - **`HuboObjeciones`** · INTEGER · ✅ — `1` = Sí · `2` = No. (`0`/otro → error "Indica si hubo objeciones".)
+
+  **`ttObjIn`** (0..5 objeciones; obligatorio ≥1 si `HuboObjeciones=1`):
+  - **`LineaObj`** · INTEGER — llave local (1..N) para ligar sus evidencias.
+  - **`IdTipoObjecion`** · INTEGER · **`ArgumentoResolucion`** · STRING (≤100) · **`IdEstatusObjecion`** · INTEGER.
+  - **`ttEvidIn`** (anidado, ≥1 por objeción): **`LineaObj`** + **`IdTipoEvidencia`** · INTEGER.
+
+  ### Ejemplo Body
+  ```json
+  {
+    "dsObjIn": {
+      "ttObjEncIn": [ { "IdUser": "jjlg", "IdOportunidad": 1, "HuboObjeciones": 1 } ],
+      "ttObjIn": [
+        { "LineaObj": 1, "IdTipoObjecion": 2, "ArgumentoResolucion": "Se mostro el ahorro anual", "IdEstatusObjecion": 1,
+          "ttEvidIn": [ { "LineaObj": 1, "IdTipoEvidencia": 2 }, { "LineaObj": 1, "IdTipoEvidencia": 3 } ] }
+      ]
+    }
+  }
+  ```
+  > Para "No hubo objeciones": enviar `HuboObjeciones: 2` y `ttObjIn` vacío — se borra la bitácora y se considera válida.
+
+  ### Ejemplo Response
+  ```json
+  { "IdError": false, "Respuesta": "Objeciones guardadas correctamente.", "dsObjIn": { } }
+  ```
+
+  ---
+
+  ## 4. Reglas y Validaciones
+
+  - `IdUser` obligatorio; la oportunidad debe existir (bloqueo `NO-WAIT`).
+  - `HuboObjeciones` debe estar respondido (`1`/`2`).
+  - Si `HuboObjeciones=1`: mínimo **1** objeción, máximo **5**. Por cada objeción se valida en orden **Tipo → Evidencias (≥1) → Argumento (no vacío) → Estatus**, deteniéndose en el primer faltante con *"Objeción N: …"*.
+  - La bitácora se **reemplaza** por completo (borra objeciones y evidencias previas, recrea).
+  - Se fija `Oportunidad.HuboObjeciones`.
+  - *Motor Fase 2:* el avance Evaluación→Decisión exige que todas las objeciones estén en Estatus "Resuelta" (se enganchará con el motor).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

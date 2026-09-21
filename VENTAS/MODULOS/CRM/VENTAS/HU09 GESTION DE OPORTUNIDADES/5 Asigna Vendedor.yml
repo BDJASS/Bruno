@@ -1,0 +1,107 @@
+info:
+  name: 5 Asigna Vendedor
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/AsignaVendedor?IdOportunidad=1&IdVendedor=5203&IdUser=jjlg
+  params:
+    - name: IdOportunidad
+      value: "1"
+      type: query
+    - name: IdVendedor
+      value: "5203"
+      type: query
+    - name: IdUser
+      value: jjlg
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Asignar Vendedor a Oportunidad
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Asignar Vendedor (HU-09)**
+  Cambia el vendedor asignado a una oportunidad. Acción permitida solo a **Gerente de Ventas / Responsable Consultivo** (la visibilidad del botón la controla el front según el rol).
+
+  ---
+
+  ## 2. Endpoint A — Vendedores disponibles
+
+  ### Método / URL
+  ```
+  GET  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/VendedoresAsignar
+  ```
+
+  ### Parámetros (Query String)
+
+  > ✅ = Requerido
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta.
+
+  ### Ejemplo Response
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Consulta ejecutada correctamente.",
+    "ttVend": [
+      { "IdVendedor": "5197", "Nombre": "JULIA LUCIO GARCIA" },
+      { "IdVendedor": "5203", "Nombre": "CARLOS PEREZ" }
+    ]
+  }
+  ```
+
+  ### Campos de `ttVend`
+  **`IdVendedor`** · STRING — Clave del vendedor.
+  **`Nombre`** · STRING — Nombre (vía `Empleado`).
+
+  > **Rol:** se toma de `Vendedor.Gerente` (logi). La persona se identifica por `Id-User = Vendedor.Iniciales` (estándar del sistema). Este endpoint devuelve los vendedores **activos** (pool asignable / "Agentes"); si se decide excluir a los gerentes de la lista, se filtra por `Gerente = NO`.
+
+  ---
+
+  ## 3. Endpoint B — Asignar
+
+  ### Método / URL
+  ```
+  POST  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/AsignaVendedor
+  ```
+
+  ### Parámetros (Query String)
+
+  **`IdOportunidad`** · INTEGER · ✅ — Oportunidad a reasignar.
+  **`IdVendedor`** · STRING · ✅ — Nuevo vendedor (debe existir).
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta.
+
+  ### Ejemplo Request
+  ```
+  POST .../Oportunidad/AsignaVendedor?IdOportunidad=1&IdVendedor=5203&IdUser=jjlg
+  ```
+
+  ### Ejemplo Response
+  ```json
+  { "IdError": false, "Respuesta": "Vendedor asignado correctamente." }
+  ```
+
+  ---
+
+  ## 4. Reglas y Validaciones
+
+  - `IdUser` obligatorio en ambos endpoints; `IdOportunidad` e `IdVendedor` obligatorios en Asignar.
+  - La oportunidad debe existir (se bloquea con `NO-WAIT`); el vendedor debe existir.
+  - Si la oportunidad ya tiene ese vendedor, responde mensaje amigable sin cambios.
+  - Actualiza `Id-Vendedor` + `Id-UserMod`/`FecMod` y registra auditoría.
+  - **Gate por rol (Gerente de Ventas):** validado en backend. Solo procede si el `IdUser` que ejecuta corresponde a un `Vendedor` con `Gerente = YES` (se resuelve por `Vendedor.Iniciales = IdUser`; si no, se intenta como `Id-Vendedor`). Si no es gerente: *"Solo el Gerente de Ventas puede reasignar el vendedor de una oportunidad."*
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

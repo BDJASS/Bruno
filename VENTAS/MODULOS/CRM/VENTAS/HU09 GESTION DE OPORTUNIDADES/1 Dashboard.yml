@@ -1,0 +1,145 @@
+info:
+  name: 1 Dashboard
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/Dashboard?IdVendedor=Todos&IdUser=jjlg
+  params:
+    - name: IdVendedor
+      value: Todos
+      type: query
+    - name: FechaIni
+      value: ""
+      type: query
+      disabled: true
+    - name: FechaFin
+      value: ""
+      type: query
+      disabled: true
+    - name: IdUser
+      value: jjlg
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Dashboard de Oportunidades
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Dashboard de Oportunidades (HU-09)**
+  Devuelve los indicadores del tablero de gestión del pipeline: Total de Oportunidades, Valor del Pipeline, Ciclo de Venta Promedio, Cierre del Mes, Win Rate y la Tasa de Conversión por Etapa. Filtra por vendedor y por periodo (sobre la Fecha de Cierre).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/Dashboard
+  ```
+
+  ---
+
+  ## 4. Parámetros de entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdVendedor`** · STRING · ❌ — Filtra por vendedor. Vacío o `Todos` = todos.
+  **`FechaIni`** · STRING · ❌ — Inicio de periodo sobre la Fecha de Cierre (dd/mm/aaaa). Aplica a Win Rate y Ciclo de Venta.
+  **`FechaFin`** · STRING · ❌ — Fin de periodo sobre la Fecha de Cierre.
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                |
+  |----------------|----------------------|
+  | `Accept`       | `application/json`   |
+  | `Content-Type` | `application/json`   |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Oportunidad/Dashboard?IdVendedor=Todos&FechaIni=&FechaFin=&IdUser=jjlg
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Tablero calculado: 128 oportunidad(es).",
+    "dsDashboard": {
+      "ttKpi": [
+        { "TotalOportunidades": 128, "ValorPipeline": 4230000.00,
+          "CicloVentaProm": 34, "CerradasCiclo": 41, "CierreEsteMes": 12,
+          "WinRate": 61.0, "Ganadas": 25, "Perdidas": 16 }
+      ],
+      "ttConv": [
+        { "IdEtapa": 1, "Etapa": "Receptividad", "Alcanzaron": 128, "PctAvance": 82.0 },
+        { "IdEtapa": 2, "Etapa": "Enfoque",      "Alcanzaron": 105, "PctAvance": 74.3 },
+        { "IdEtapa": 3, "Etapa": "Conocimiento", "Alcanzaron": 78,  "PctAvance": 65.4 },
+        { "IdEtapa": 4, "Etapa": "Evaluacion",   "Alcanzaron": 51,  "PctAvance": 80.4 },
+        { "IdEtapa": 5, "Etapa": "Decision",     "Alcanzaron": 41,  "PctAvance": 0.0 }
+      ]
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **`ttKpi`** — una fila:
+  - **`TotalOportunidades`** · INTEGER — Total de oportunidades activas registradas.
+  - **`ValorPipeline`** · DECIMAL — Σ Presupuesto de las oportunidades en Estado = Activa.
+  - **`CicloVentaProm`** · INTEGER — Días promedio (Fecha de Cierre − Fecha de Registro) de las cerradas.
+  - **`CerradasCiclo`** · INTEGER — N de cerradas sobre las que se promedió ("Promedio sobre N cerradas").
+  - **`CierreEsteMes`** · INTEGER — Oportunidades con Fecha Tentativa de Cierre en el mes/año en curso.
+  - **`WinRate`** · DECIMAL — `Ganadas ÷ (Ganadas + Perdidas) × 100` del periodo.
+  - **`Ganadas`** / **`Perdidas`** · INTEGER — Conteos del periodo.
+
+  **`ttConv`** — Tasa de Conversión por Etapa (5 filas):
+  - **`IdEtapa`** / **`Etapa`** · INTEGER/STRING — Etapa del pipeline (1..5).
+  - **`Alcanzaron`** · INTEGER — Oportunidades que alcanzaron esa etapa (por `EtapaMaxAlcanzada`).
+  - **`PctAvance`** · DECIMAL — % que avanzó a la etapa siguiente (`reached[N+1] ÷ reached[N] × 100`); 0 en Decisión.
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - `IdUser` obligatorio.
+  - Total y Valor Pipeline son foto actual (solo activas); Win Rate y Ciclo de Venta consideran únicamente cerradas (Ganada/Perdida) dentro del periodo si se envía.
+  - El filtro de vendedor aplica a todos los indicadores.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

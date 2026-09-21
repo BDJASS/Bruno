@@ -1,0 +1,7 @@
+info:
+  name: HU09 GESTION DE OPORTUNIDADES
+  type: folder
+  seq: 6
+
+request:
+  auth: inherit

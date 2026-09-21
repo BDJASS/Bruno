@@ -1,0 +1,124 @@
+info:
+  name: 9 Confirma Evaluacion
+  type: http
+  seq: 9
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/ConfirmaEvaluacion
+  body:
+    type: json
+    data: |
+      {
+        "dsEvalIn": {
+          "ttEvalEncIn": [
+            { "IdUser": "jjlg", "IdOportunidad": 1, "EstatusFinal": 2, "EvaluaOtroProveedor": true,
+              "IdCompetidor": 12, "NivelAmenaza": "Media", "MontoFinalReal": 258000.00,
+              "FecPrimeraCompra": "2026-09-25", "IdTecnicaCierre": 2, "RequiereOC": false,
+              "AplicaDirEmbarque": true, "TipoDirEmbarque": "Cliente", "IdDirEmb": 3, "DireccionEmbOtra": "" }
+          ],
+          "ttDesvIn": [ { "IdDesventaja": 1 }, { "IdDesventaja": 5 } ],
+          "ttMotIn": []
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Evaluar & Cierre de Oportunidad (ECO)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Evaluación & Cierre — ECO (HU-09)**
+  Modal "Evaluar Oportunidad": inteligencia competitiva + cierre formal **Ganada / Perdida**. Al confirmar, la oportunidad queda en Etapa **Decisión** con su estado final y `FecCierre`, y debe capturarse el **Análisis Post-Cierre** (Fase 5).
+
+  ---
+
+  ## 2. Endpoint A — Consulta (precarga del modal)
+
+  ### Método / URL
+  ```
+  GET  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/Evaluacion
+  ```
+
+  ### Parámetros (Query String)
+
+  > ✅ = Requerido
+
+  **`IdOportunidad`** · INTEGER · ✅ · **`IdUser`** · STRING · ✅
+
+  ### Respuesta — `dsEval`
+  **`ttEvalHdr`** (una fila): `IdEstado`/`Estado`, `TieneEvaluacion` (bool), `EvaluaOtroProveedor`, `IdCompetidor`/`Competidor`, `NivelAmenaza`, `MontoFinalReal`, `FecPrimeraCompra`, `IdTecnicaCierre`/`TecnicaCierre`, `AplicaDirEmbarque`, `TipoDirEmbarque`, `IdDirEmb`, `DireccionEmbOtra`.
+  **`ttDesvUI`** (anidada): `IdDesventaja`/`Desventaja` — "Nuestra Desventaja".
+  **`ttMotUI`** (anidada): `IdMotPerdida`/`MotivoPerdida` — motivos de pérdida.
+
+  > Si aún no hay evaluación, `ttEvalHdr` viene con `TieneEvaluacion=false` y los campos en su valor por defecto (modal en blanco).
+
+  ---
+
+  ## 3. Endpoint B — Confirmar (cierre)
+
+  ### Método / URL
+  ```
+  POST  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/ConfirmaEvaluacion
+  ```
+
+  ### Body JSON (`dsEvalIn`)
+
+  **`ttEvalEncIn`** (una fila):
+  > ✅ = Requerido · ❌ = Opcional
+
+  - **`IdUser`** · STRING · ✅ · **`IdOportunidad`** · INTEGER · ✅
+  - **`EstatusFinal`** · INTEGER · ✅ — `2` Ganada · `3` Perdida.
+  - **`EvaluaOtroProveedor`** · BOOLEAN · ❌ — si `true` → `IdCompetidor` + `NivelAmenaza` obligatorios.
+  - **`IdCompetidor`** · INTEGER · **`NivelAmenaza`** · STRING (`Alta`/`Media`/`Baja`).
+  - **Ganada (`EstatusFinal=2`)**: **`MontoFinalReal`** · DECIMAL (>0) · **`FecPrimeraCompra`** · DATE · **`IdTecnicaCierre`** · INTEGER — obligatorios.
+    - **`RequiereOC`** · BOOLEAN — si `true`, debe existir un documento `OrdenCompra` (subido con `/Oportunidad/Documento/Carga`, `TipoDoc="OrdenCompra"`).
+    - **`AplicaDirEmbarque`** · BOOLEAN — si `true`: `TipoDirEmbarque` = `Cliente` (con `IdDirEmb`) u `Otra` (con `DireccionEmbOtra`).
+  - **`ttMotIn`** (Perdida): **`IdMotPerdida`** · INTEGER — mínimo 1.
+  - **`ttDesvIn`** (si `EvaluaOtroProveedor`): **`IdDesventaja`** · INTEGER — múltiple.
+
+  ### Ejemplo Body (Ganada)
+  ```json
+  {
+    "dsEvalIn": {
+      "ttEvalEncIn": [{
+        "IdUser": "jjlg", "IdOportunidad": 1, "EstatusFinal": 2,
+        "EvaluaOtroProveedor": true, "IdCompetidor": 12, "NivelAmenaza": "Media",
+        "MontoFinalReal": 258000.00, "FecPrimeraCompra": "2026-09-25", "IdTecnicaCierre": 2,
+        "RequiereOC": true, "AplicaDirEmbarque": true, "TipoDirEmbarque": "Cliente", "IdDirEmb": 3
+      }],
+      "ttDesvIn": [ { "IdDesventaja": 1 }, { "IdDesventaja": 5 } ],
+      "ttMotIn": []
+    }
+  }
+  ```
+
+  ### Ejemplo Response
+  ```json
+  { "IdError": false, "Respuesta": "Oportunidad cerrada como GANADA. Registra el Analisis Post-Cierre.", "dsEvalIn": { } }
+  ```
+
+  ---
+
+  ## 4. Reglas y Validaciones
+
+  - `IdUser` e `IdOportunidad` obligatorios; oportunidad existe (bloqueo `NO-WAIT`).
+  - `EstatusFinal` = 2 o 3.
+  - Si evalúa a otro proveedor → competidor + nivel de amenaza.
+  - **Ganada**: Monto Final Real (>0), Fecha 1ª Compra y Técnica de Cierre; OC adjunta si `RequiereOC`; Dirección de Embarque si `AplicaDirEmbarque`.
+  - **Perdida**: al menos un motivo de pérdida.
+  - Guarda `OportEvaluacion` (1:1), reemplaza `OportEvalDesventaja` y `OportMotivoPerdida`.
+  - Cierre: fija `Id-EstadoOport` (2/3), `FecCierre` = now, **`Id-Etapa = 5` (Decisión)** y `EtapaMaxAlcanzada`. El motivo principal se copia a `Oportunidad.Id-MotPerdida`.
+  - Tras confirmar, el front abre el **Análisis Post-Cierre** (Fase 5). Si se abandona sin guardar, se revierte a Evaluación (Fase 5).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

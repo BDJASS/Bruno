@@ -1,0 +1,117 @@
+info:
+  name: 10 Analisis Consulta
+  type: http
+  seq: 10
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/AnalisisCierre?IdOportunidad=1&IdUser=jjlg
+  params:
+    - name: IdOportunidad
+      value: "1"
+      type: query
+    - name: IdUser
+      value: jjlg
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Análisis Post-Cierre
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Análisis Post-Cierre (HU-09)**
+  Asistente de 4 pasos que se captura al cerrar una oportunidad (Ganada/Perdida). Mientras no se guarde, la oportunidad tiene un análisis **pendiente** (3+ pendientes por vendedor bloquean el Alta en HU-08). Si se abandona sin guardar, el cierre se revierte a Evaluación.
+
+  ---
+
+  ## 2. Endpoint A — Consulta
+
+  ### Método / URL
+  ```
+  GET  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/AnalisisCierre
+  ```
+
+  ### Parámetros (Query String)
+  > ✅ = Requerido
+
+  **`IdOportunidad`** · INTEGER · ✅ · **`IdUser`** · STRING · ✅
+
+  ### Respuesta — `ttAnalisis` (una fila)
+  **`Existe`** · BOOLEAN — si ya hay registro · **`Realizado`** · BOOLEAN — si ya se completó.
+  **`TipoAnalisis`** · STRING — `Ganada`/`Perdida` (derivado del estado).
+  **`Cuenta`** / **`NombreOport`** · STRING — encabezado.
+  **`LogroObjetivo`** · BOOLEAN (Paso 1) · **`TextoComo`** (Paso 2) · **`TextoAprendi`** (Paso 3) · STRING.
+  **`IdProximaAccion`** / **`ProximaAccion`** · INTEGER/STRING (Paso 4) · **`FecProgramada`** · DATE · **`NotaAdicional`** · STRING · **`FecCaptura`** · DATETIME.
+
+  ---
+
+  ## 3. Endpoint B — Guardar
+
+  ### Método / URL
+  ```
+  POST  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/GuardaAnalisis
+  ```
+
+  ### Body JSON (`ttAnalisisIn`, una fila)
+  - **`IdUser`** · STRING · ✅ · **`IdOportunidad`** · INTEGER · ✅
+  - **`LogroObjetivo`** · BOOLEAN (Paso 1).
+  - **`TextoComo`** · STRING · ✅ — Paso 2, **mín. 20 caracteres**.
+  - **`TextoAprendi`** · STRING · ✅ — Paso 3, **mín. 10 caracteres**.
+  - **`IdProximaAccion`** · INTEGER · ✅ — Paso 4 (FK `ProximaAccion`).
+  - **`FecProgramada`** · DATE — obligatoria salvo que la acción sea "Sin acción por ahora".
+  - **`NotaAdicional`** · STRING · ❌
+
+  ### Ejemplo Body
+  ```json
+  {
+    "ttAnalisisIn": [{
+      "IdUser": "jjlg", "IdOportunidad": 1, "LogroObjetivo": true,
+      "TextoComo": "Se cerro por la propuesta de valor y el servicio postventa ofrecido",
+      "TextoAprendi": "El comite decide por servicio, no solo precio",
+      "IdProximaAccion": 5, "FecProgramada": "2026-09-30", "NotaAdicional": "Coordinar con logistica"
+    }]
+  }
+  ```
+
+  ### Ejemplo Response
+  ```json
+  { "IdError": false, "Respuesta": "Analisis Post-Cierre guardado correctamente." }
+  ```
+
+  ---
+
+  ## 4. Endpoint C — Revertir cierre
+
+  Si se abandona el análisis sin guardarlo, regresa la oportunidad a **Evaluación** sin conservar el estatus de cierre.
+
+  ### Método / URL
+  ```
+  POST  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/RevierteCierre
+  ```
+
+  ### Parámetros (Query String)
+  **`IdOportunidad`** · INTEGER · ✅ · **`IdUser`** · STRING · ✅
+
+  ### Efecto
+  `Id-EstadoOport = 1 (Activa)`, `Id-Etapa = 4 (Evaluación)`, `FecCierre` vacía, `Id-MotPerdida = 0`.
+
+  ---
+
+  ## 5. Reglas y Validaciones
+
+  - `IdUser` obligatorio en todos.
+  - **Guardar**: la oportunidad debe estar **cerrada** (Ganada/Perdida); Paso 2 ≥ 20 chars, Paso 3 ≥ 10 chars, Próxima Acción obligatoria, Fecha Programada obligatoria salvo "Sin acción por ahora". Marca `Realizado=TRUE` y `FecCaptura`.
+  - **Revertir**: solo si está cerrada y **el análisis no se ha guardado** (`Realizado=FALSE`); si ya se guardó, no se revierte.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS
