@@ -5,10 +5,10 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/ValesPorFactura/DetalleMonedero?NumMonedero=000032906621&IdUser=olds
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/ValesPorFactura/DetalleMonedero?NumMonedero=013482931174&IdUser=olds
   params:
     - name: NumMonedero
-      value: "000032906621"
+      value: "013482931174"
       type: query
     - name: IdUser
       value: olds

@@ -5,13 +5,13 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/ValesPorFactura?FechaInicial=2026-07-20&FechaFinal=2026-07-21
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/ValesPorFactura?FechaInicial=2026-07-23&FechaFinal=2026-07-23
   params:
     - name: FechaInicial
-      value: 2026-07-20
+      value: 2026-07-23
       type: query
     - name: FechaFinal
-      value: 2026-07-21
+      value: 2026-07-23
       type: query
     - name: Vendedor
       value: ""

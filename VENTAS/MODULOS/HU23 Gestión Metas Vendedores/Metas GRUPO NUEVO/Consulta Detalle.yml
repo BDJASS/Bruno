@@ -125,7 +125,7 @@ docs: |
 
   **Las derivadas viajan ya resueltas.** `##`, `Gran Total` y `TOTAL NETO` se calculan en el servidor. Si el front las recalculara podría desviarse del reporte — que es justo lo que se quiere evitar.
 
-  **El subtotal por departamento también.** El reporte imprime `(TOTAL BY w-Ventas.Id-UbiVta)` en las 11 columnas numéricas y deja una línea en blanco entre grupos; eso es `ttTotalGrupo`, con los mismos campos ya sumados. El reporte **no** imprime gran total de todos los departamentos, así que aquí tampoco se devuelve.
+  **El subtotal por departamento también.** El reporte imprime `(TOTAL BY w-Ventas.Id-UbiVta)` en las 11 columnas numéricas y deja una línea en blanco entre grupos; eso es `ttTotalGrupo`, con los mismos campos ya sumados. El reporte **no** imprime gran total de todos los departamentos, así que aquí tampoco se devuelve. A esas columnas del reporte, `ttTotalGrupo` agrega **un solo campo extra**, `Factor` (el factor de crecimiento capturado del grupo-año, ticket 3263): no sale del reporte ni de `VtaRealVend`, es contexto de la meta.
 
   ---
 
@@ -176,7 +176,8 @@ docs: |
             "NumTotal": 598,    "GranTotal": 3846086,
             "NumDev": 14,       "TotDev": 41870,
             "NumCanc": 5,       "TotCanc": 22141,
-            "TotalNeto": 3782075
+            "TotalNeto": 3782075,
+            "Factor": 9.5
           }
         ]
       }
@@ -209,6 +210,10 @@ docs: |
   **`FecFin`** · DATE — Último día del mes, o el **día de corte** si el mes va en curso; `null` si el mes no se ha calculado
   **`Periodo`** · STRING — El encabezado del reporte armado: `"Del 1 de ENERO de 2026 Al 31 de ENERO de 2026"`
   **`Grupos`** · STRING — Lista de ubicaciones pedida, o `"TODAS"` (igual que el reporte cuando no se filtra)
+
+  ### Campo extra en `ttTotalGrupo` (fuera del reporte)
+
+  **`Factor`** · DECIMAL — Factor de crecimiento capturado del grupo-año (`9`, `9.5`, …), **sin redondear**; `0` si el grupo aún no tiene meta capturada de ese año (`MetaGrupo.Factor`). Es contexto de la meta (ticket 3263), no una columna de `vtac2020.p`. **Ojo:** un grupo sin venta ese mes no genera renglón de subtotal, así que ahí el factor no viaja.
 
   ---
 

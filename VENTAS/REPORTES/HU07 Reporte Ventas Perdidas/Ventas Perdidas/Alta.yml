@@ -1,0 +1,214 @@
+info:
+  name: Alta
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/VentasPerdidas/Alta
+  body:
+    type: json
+    data: |
+      {
+        "dsVPAlta": {
+          "ttVPAlta": [
+            {
+              "IdUser": "olds",
+              "IdCliente": 575,
+              "IdArticulo": "021118",
+              "IdColor": 2,
+              "IdPres": 2,
+              "Cantidad": 12,
+              "Importe": 500,
+              "IdMotivo": 2,
+              "Comentario": "Sin existencia en CEDIS al momento del pedido"
+            }
+          ]
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |+
+  # Servicio REST -- Ventas Perdidas: Alta
+
+  ---
+
+  ## 1. Titulo del Servicio
+
+  **Ventas Perdidas -- Alta desde la captura de pedido**
+  Registra una **venta perdida** cuando, durante la captura de un pedido, una linea de articulo no se puede vender (por **precio** o por **desabasto**). El front ya armo la partida con `/Pedido/Captura/Partidas`; al marcarla como venta perdida manda solo lo que el usuario decide y el servidor **deriva** el vendedor (de las iniciales), el proveedor (del articulo) y **calcula** el precio unitario con el mismo motor de precio del cliente. Admite **1..N renglones** (normalmente 1) y graba **todo o nada**.
+
+  ---
+
+  ## 2. Metodo HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/VentasPerdidas/Alta
+  ```
+
+  ---
+
+  ## 4. Parametros de Entrada (Query String)
+
+  No aplica. Los datos viajan en el **body** (ver seccion 5).
+
+  ---
+
+  ## 5. Body -- DATASET `dsVPAlta` -> tabla `ttVPAlta`
+
+  > Requerido / Opcional. Vacio/0 = el servidor lo deriva o calcula.
+
+  **`IdUser`** · STRING · Requerido -- Iniciales del usuario; deriva el vendedor y el almacen
+  **`IdCliente`** · INTEGER · Requerido -- Cliente del pedido
+  **`RazonSocial`** · STRING · Requerido SOLO si `IdCliente = 3` (mostrador); en el resto se ignora
+  **`IdArticulo`** · STRING · Requerido -- Articulo solicitado
+  **`IdColor`** · INTEGER · Opcional -- Color (`0` = sin color)
+  **`IdPres`** · INTEGER · Requerido -- Presentacion seleccionada, no puede ser 0
+  **`Cantidad`** · DECIMAL · Requerido -- Cantidad no surtida (> 0)
+  **`Importe`** · DECIMAL · Opcional -- Importe; vacio/`0` = `Cantidad x PrecUnit`
+  **`IdMotivo`** · INTEGER · Requerido -- `1` = Precio, `2` = Desabasto, otro = `3` (Otro)
+  **`Comentario`** · STRING · Requerido -- Observacion (se guarda a 50 caracteres)
+  **`IdAlm`** · STRING · Opcional -- Almacen de surtido; si vacio `02B`
+  **`IdPedido` / `IdCot`** · STRING · Opcional -- Pedido / cotizacion origen (normalmente vacios en captura)
+  **`PlazoTV`, `Vigencia`, `PrecioTemp`, `PrecCalc`, `TipoPrecio`** · STRING · Opcional -- Criterios de precio (mismos de `/Pedido/Captura/Partidas`)
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```json
+  {
+    "dsVPAlta": {
+      "ttVPAlta": [
+        {
+          "IdUser": "jass",
+          "IdCliente": 575,
+          "IdArticulo": "021118",
+          "IdColor": 2,
+          "IdPres": 1,
+          "Cantidad": 12,
+          "Importe": 0,
+          "IdMotivo": 2,
+          "Comentario": "Sin existencia en CEDIS al momento del pedido"
+        }
+      ]
+    }
+  }
+  ```
+
+  Cliente 3 (mostrador) con razon social e importe ajustado por descuento:
+
+  ```json
+  {
+    "dsVPAlta": {
+      "ttVPAlta": [
+        {
+          "IdUser": "jass", "IdCliente": 3, "RazonSocial": "FERRETERIA EL TORNILLO SA",
+          "IdArticulo": "021118", "IdColor": 2, "IdPres": 1,
+          "Cantidad": 5, "Importe": 420.50, "IdMotivo": 1,
+          "Comentario": "Cliente pidio precio de lista de otra sucursal"
+        }
+      ]
+    }
+  }
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Venta perdida registrada correctamente."
+  }
+  ```
+
+  ### Campos de respuesta
+
+  **`IdError`** · BOOLEAN -- `true` si no se grabo (validacion o error); no se creo ningun registro
+  **`Respuesta`** · STRING -- Mensaje amigable del resultado
+
+  El folio interno (`Id-VtaPer`) se asigna en el servidor pero **no se regresa** en la respuesta.
+
+  ### Response con error de validacion
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Se requiere la Razon Social para el cliente 3."
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Caso | Comportamiento |
+  |------|----------------|
+  | `IdUser` vacio | `IdError: true` -- `"Se requiere el usuario (IdUser)."` |
+  | Sin vendedor con esas iniciales | `IdError: true` -- `"No se encontro un vendedor con las iniciales X."` |
+  | `IdCliente <= 0` | `IdError: true` -- `"Se requiere el cliente (IdCliente)."` |
+  | Cliente inexistente | `IdError: true` -- `"No existe el cliente N."` |
+  | `IdCliente = 3` sin Razon Social | `IdError: true` -- `"Se requiere la Razon Social para el cliente 3."` |
+  | `IdArticulo` vacio | `IdError: true` -- `"Se requiere el articulo."` |
+  | Articulo inexistente | `IdError: true` -- `"No existe el articulo X."` |
+  | `IdPres <= 0` | `IdError: true` -- `"Se requiere la presentacion del articulo X."` |
+  | `Cantidad <= 0` | `IdError: true` -- `"La cantidad debe ser mayor a cero."` |
+  | `IdMotivo <= 0` | `IdError: true` -- `"Se requiere el tipo de venta perdida (1 = Precio, 2 = Desabasto)."` |
+  | `Comentario` vacio | `IdError: true` -- `"Se requiere el comentario de la venta perdida."` |
+
+  > El alta es todo-o-nada: si cualquier renglon falla, no se graba ninguno.
+
+  ---
+
+
+
+  ---
+
+  ## 11. Evidencia de Ejecucion
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 12. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 13. Resultado
+
+  | Estado              | Descripcion                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | Pendiente prueba    | Servicio desplegado en DEV. Pendiente de ejecucion formal por QA. |
+
+  ---
+

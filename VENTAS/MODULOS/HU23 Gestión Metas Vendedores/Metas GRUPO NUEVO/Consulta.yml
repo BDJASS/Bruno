@@ -32,7 +32,7 @@ docs: |
   ## 1. Título del Servicio
 
   **Meta por Grupo — Consulta**
-  Devuelve, por grupo (ubicación de venta), **un solo renglón con tres bloques de 12 meses**: la meta capturada del año, la venta real del mismo año y la venta real del año anterior (el histórico).
+  Devuelve, por grupo (ubicación de venta), **un solo renglón con tres bloques de 12 meses**: la meta capturada del año, la venta real del mismo año y la venta real del año anterior (el histórico). Incluye además el **factor de crecimiento** capturado del año (decimal, sin redondear).
   Programa servidor: `metagrupo.p` · Procedimiento: `leeMetaGrupo` | Tabla: `MetaGrupo`
   Reemplaza a `metavendedor.p` / `leeMetaVendedor`, que trabajaba por **vendedor** sobre `EstVendedor`.
 
@@ -111,6 +111,7 @@ docs: |
                 "IdUbiVta": "02B",
                 "Anio": 2026,
                 "AnioAnt": 2025,
+                "Factor": 9.5,
 
                 "MetaEne": 3500000, "MetaFeb": 3500000, "MetaMar": 3800000,
                 "MetaAbr": 3800000, "MetaMay": 4000000, "MetaJun": 4000000,
@@ -143,6 +144,7 @@ docs: |
   **`IdUbiVta`** · STRING — Grupo / ubicación de venta
   **`Anio`** · INT — Año consultado
   **`AnioAnt`** · INT — Año del histórico (`Anio - 1`)
+  **`Factor`** · DECIMAL — Factor de crecimiento capturado del año consultado (`9`, `9.5`, …). **Sin redondear** (no es un importe); `0` si el grupo aún no tiene meta capturada de ese año (`MetaGrupo.Factor`)
   **`MetaEne`** … **`MetaDic`** · INT — Meta **capturada** (pesos enteros) del año consultado (`MetaGrupo.Presup[1..12]`)
   **`MetaTotal`** · INT — Suma de las 12 metas
   **`RealEne`** … **`RealDic`** · INT — Venta real neta del año consultado (pesos enteros) (`MetaGrupo.Real[1..12]`)

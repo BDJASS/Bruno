@@ -21,6 +21,7 @@ http:
             "ttMetaCaptura": [
               {
                 "IdUbiVta": "10A",
+                "Factor": 9.5,
                 "MetaEne": 150000.00, "MetaFeb": 150000.00, "MetaMar": 165000.00,
                 "MetaAbr": 150000.00, "MetaMay": 170000.00, "MetaJun": 160000.00,
                 "MetaJul": 150000.00, "MetaAgo": 155000.00, "MetaSep": 160000.00,
@@ -45,9 +46,9 @@ docs: |
   ## 1. Título del Servicio
 
   **Meta por Grupo — Guardar Metas**
-  Guardado **masivo** de las 12 metas mensuales por grupo (ubicación de venta) para un año. Upsert por grupo-año: actualiza el registro si existe, lo da de alta si no. Todo o nada.
+  Guardado **masivo** de las 12 metas mensuales y el factor de crecimiento por grupo (ubicación de venta) para un año. Upsert por grupo-año: actualiza el registro si existe, lo da de alta si no. Todo o nada.
   Programa servidor: `metagrupo.p` · Procedimiento: `guardaMetaGrupo` | Tabla: `MetaGrupo`
-  Escribe **únicamente** `Presup[1..12]` más la huella de captura. **Nunca** toca la venta real.
+  Escribe **únicamente** `Presup[1..12]` y `Factor` más la huella de captura. **Nunca** toca la venta real.
 
   ---
 
@@ -81,7 +82,7 @@ docs: |
 
   ## 5. Body
 
-  Dataset `dsMetaCaptura` con N registros. **Las 12 metas son obligatorias en cada registro.**
+  Dataset `dsMetaCaptura` con N registros. **Las 12 metas y el `Factor` son obligatorios en cada registro.**
 
   ```json
   {
@@ -89,6 +90,7 @@ docs: |
       "ttMetaCaptura": [
         {
           "IdUbiVta": "02B",
+          "Factor": 9.5,
           "MetaEne": 3500000.00, "MetaFeb": 3500000.00, "MetaMar": 3800000.00,
           "MetaAbr": 3800000.00, "MetaMay": 4000000.00, "MetaJun": 4000000.00,
           "MetaJul": 4200000.00, "MetaAgo": 4200000.00, "MetaSep": 4500000.00,
@@ -96,6 +98,7 @@ docs: |
         },
         {
           "IdUbiVta": "11A",
+          "Factor": 9,
           "MetaEne": 1200000.00, "MetaFeb": 1200000.00, "MetaMar": 1250000.00,
           "MetaAbr": 1250000.00, "MetaMay": 1300000.00, "MetaJun": 1300000.00,
           "MetaJul": 1350000.00, "MetaAgo": 1350000.00, "MetaSep": 1400000.00,
@@ -109,6 +112,7 @@ docs: |
   ### Campos de `ttMetaCaptura`
 
   **`IdUbiVta`** · STRING · ✅ — Grupo / ubicación de venta. Debe existir en `UbiVta` y no venir repetido en el lote
+  **`Factor`** · DECIMAL · ✅ — Factor de crecimiento (`9`, `9.5`, …), **un valor por grupo**. El front lo usa para calcular las metas; el servicio lo guarda **tal cual** (no recalcula), solo para dejar rastro de qué factor se aplicó. Se acepta `0`; no se aceptan negativos
   **`MetaEne`** … **`MetaDic`** · DECIMAL · ✅ — Meta de cada mes. **Los 12 son obligatorios**; un mes ausente o `null` rechaza el lote completo. Meta en cero se envía como `0`, no como `null`. No se aceptan negativos
 
   ---
@@ -177,6 +181,8 @@ docs: |
   | Grupo repetido en el lote | `IdError: true` — `"El grupo <id> viene mas de una vez en el lote..."` |
   | Un mes nulo o ausente | `IdError: true` — `"Grupo <id>: la meta del mes de <MES> es obligatoria..."` |
   | Un mes negativo | `IdError: true` — `"Grupo <id>: meta invalida (negativa) para el mes de <MES>."` |
+  | `Factor` nulo o ausente | `IdError: true` — `"Grupo <id>: el factor de crecimiento es obligatorio y no puede venir nulo."` |
+  | `Factor` negativo | `IdError: true` — `"Grupo <id>: factor de crecimiento invalido (negativo)."` |
   | Registro bloqueado por otro proceso | `IdError: true`; **no se guarda nada** |
   | Lote correcto | Guardado OK — `"Metas guardadas correctamente."` |
 
