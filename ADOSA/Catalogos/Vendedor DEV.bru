@@ -5,17 +5,144 @@ meta {
 }
 
 get {
-  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Vendedor
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Vendedor?Agenda=true
   body: none
   auth: inherit
 }
 
 params:query {
-  ~Agenda: true
+  Agenda: true
   ~TipoVen: 3
 }
 
 settings {
   encodeUrl: true
   timeout: 0
+}
+
+docs {
+  # Servicio REST — Catálogo de Vendedores (DEV)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **CyC — Catálogo de Vendedores**
+  Servicio de **solo consulta** que expone vendedores de la tabla `Vendedor` junto con el nombre del empleado relacionado (ligado por `Iniciales`). Sirve para poblar combos y listados de vendedor. Tiene **dos modos** de operación según el parámetro `Agenda`.
+
+  > Lectura con `NO-LOCK` (sin bloqueos). Resultado ordenado alfabéticamente por `Nombre`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  DEV : 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Vendedor
+  PROD: 192.0.1.9:8816/RestADOSACyc/rest/RestADOSACyc/Vendedor
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · Ambos son opcionales
+
+  **`Agenda`** · STRING · ❌ — Activa el **modo Agenda**. Si se envía con cualquier valor (excepto vacío / `0` / `no` / `false`) regresa **solo** los vendedores activos del módulo Agenda: una lista fija de `Iniciales` parametrizada en la tabla `URL` (Parámetro `VendedoresAgenda`).
+  - Ej: `true` · `1` · `si` · Vacío o sin enviar = **modo normal**
+
+  **`TipoVen`** · INTEGER · ❌ — Filtra por tipo de vendedor. Solo aplica en **modo normal** (se ignora si se envía `Agenda`).
+  - `1` Directo · `2` Captura · `3` Agente de Ventas · Vacío = todos los tipos
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplos de Request
+
+  ### Modo normal — todos los vendedores activos
+
+  ```
+  GET 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Vendedor
+  ```
+
+  ### Modo normal — solo Agentes de Ventas
+
+  ```
+  GET 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Vendedor?TipoVen=3
+  ```
+
+  ### Modo Agenda — vendedores del módulo Agenda
+
+  ```
+  GET 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Vendedor?Agenda=true
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "ttVendedor": [
+      {
+        "IdVendedor": "0034",
+        "Nombre": "ADAN CESAR LOPEZ TORRES",
+        "TipoVen": 3,
+        "IdUbivta": "COM",
+        "Iniciales": "ACLT",
+        "Activo": true,
+        "IdInconcert": ""
+      },
+      {
+        "IdVendedor": "1235",
+        "Nombre": "GERARDO RAMIRO GONZALEZ MARTIN",
+        "TipoVen": 1,
+        "IdUbivta": "MLA",
+        "Iniciales": "GRGM",
+        "Activo": true,
+        "IdInconcert": ""
+      }
+    ]
+  }
+  ```
+
+  ### Campos de `ttVendedor`
+
+  **`IdVendedor`** · STRING — Clave del vendedor (`Vendedor.Id-Vendedor`, 4 caracteres)
+  **`Nombre`** · STRING — Nombre del empleado ligado por `Iniciales`; `"Sin asignar"` si no hay empleado
+  **`TipoVen`** · INTEGER — Tipo de vendedor: `1` Directo · `2` Captura · `3` Agente de Ventas
+  **`IdUbivta`** · STRING — Clave del área/ubicación de venta (`Vendedor.id-ubivta`, 3 caracteres; ej. `COM`, `GER`, `ESP`, `WEB`)
+  **`Iniciales`** · STRING — Iniciales del vendedor/empleado (`Vendedor.Iniciales`, 4 caracteres)
+  **`Activo`** · BOOLEAN — `true` = vigente; `false` = dado de baja
+  **`IdInconcert`** · STRING — Id del vendedor en inConcert. **Reservado**: actualmente regresa vacío (`""`), pendiente de integración.
+
+  ---
+
+  ## 9. Notas de Comportamiento
+
+  - **Modo normal** (sin `Agenda`): regresa vendedores **activos** que tengan al menos un **cliente activo** con `Id-Cliente > 11`; opcionalmente acotado por `TipoVen`.
+  - **Modo Agenda** (`Agenda` con valor): regresa **solo** los vendedores **activos** cuyas `Iniciales` están en la lista del módulo Agenda; `TipoVen` no aplica.
+  - La lista del módulo Agenda se administra en la tabla `URL` (Parámetro `VendedoresAgenda`, valores separados por coma) y se puede modificar **sin recompilar** el servicio.
+  - El resultado siempre viene ordenado por `Nombre`.
 }
