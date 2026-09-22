@@ -1,0 +1,124 @@
+info:
+  name: Proxima Accion
+  type: http
+  seq: 16
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Oportunidad/Consulta?Catalogo=ProximaAccion&IdUser=jjlg
+  params:
+    - name: Catalogo
+      value: ProximaAccion
+      type: query
+    - name: IdUser
+      value: jjlg
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Catálogos y Contactos de Oportunidad
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Catálogos de Oportunidad (HU-08)**
+  Alimenta los selects del formulario de Oportunidad y el autocomplete del Decisor.
+
+  ---
+
+  ## 2. Endpoint A — Catálogos del formulario
+
+  ### Método / URL
+  ```
+  GET  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Oportunidad/Consulta
+  ```
+
+  ### Parámetros (Query String)
+
+  > ✅ = Requerido
+
+  **`Catalogo`** · STRING · ✅ — Nombre del catálogo a leer. Uno de:
+  - **HU-08:** `TipoProyecto` · `ProcesoAutoriz` · `PrioridadCFS` · `UrgenciaOport` · `ValorAgregado` · `FrecuenciaProy` · `Competencia` · `EstadoOportunidad` · `EtapaPipeline`
+  - **HU-09:** `TipoObjecion` · `EstatusObjecion` · `TipoEvidenciaObjecion` · `MotivoPerdidaOport` · `TecnicaCierre` · `ProximaAccion` · `Desventaja`
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta.
+
+  ### Ejemplo Request
+  ```
+  GET .../Catalogo/Oportunidad/Consulta?Catalogo=PrioridadCFS&IdUser=jjlg
+  ```
+
+  ### Ejemplo Response
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Consulta ejecutada correctamente.",
+    "ttCat": [
+      { "Id": 1, "Nombre": "Financieras" }, { "Id": 2, "Nombre": "Desempeno" },
+      { "Id": 3, "Nombre": "Imagen" }, { "Id": 4, "Nombre": "Servicio" },
+      { "Id": 5, "Nombre": "Relacion" }
+    ]
+  }
+  ```
+
+  ### Campos de `ttCat`
+  **`Id`** · INTEGER — Clave del catálogo.
+  **`Nombre`** · STRING — Descripción. Solo devuelve activos.
+
+  ---
+
+  ## 3. Endpoint B — Contactos de la cuenta (Decisor)
+
+  Alimenta el autocomplete "¿Quién tiene la firma final?" con los contactos de la cuenta (tabla `CteEmp`).
+
+  ### Método / URL
+  ```
+  GET  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/Contactos
+  ```
+
+  ### Parámetros (Query String)
+
+  **`IdCliente`** · INTEGER · ✅ — La cuenta.
+  **`Busqueda`** · STRING · ❌ — Texto parcial en nombre o puesto.
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta.
+
+  ### Ejemplo Request
+  ```
+  GET .../Oportunidad/Contactos?IdCliente=55987&Busqueda=&IdUser=jjlg
+  ```
+
+  ### Ejemplo Response
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Consulta ejecutada correctamente.",
+    "ttContacto": [
+      { "Nombre": "ING. LUIS RAMOS", "Puesto": "Gerente de Compras",
+        "Correo": "lramos@cnorte.com", "Telefono": "8112345678", "Principal": true }
+    ]
+  }
+  ```
+
+  ### Campos de `ttContacto`
+  **`Nombre`** · STRING — Nombre del contacto (llave natural con `IdCliente`; es lo que se envía en `DecisorNombre`).
+  **`Puesto`** · STRING · **`Correo`** · STRING · **`Telefono`** · STRING.
+  **`Principal`** · BOOLEAN — `true` = responsable de compras.
+
+  ---
+
+  ## 4. Reglas
+
+  - `IdUser` obligatorio en ambos endpoints.
+  - `leeCatalogo`: si el catálogo no está en la lista permitida → `IdError=true`.
+  - Solo se devuelven registros activos (catálogos).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS
