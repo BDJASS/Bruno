@@ -1,0 +1,136 @@
+info:
+  name: Buscar
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/CteAG/Buscar?IdUser=olds&Texto=Juan Manuel
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: Texto
+      value: Juan Manuel
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Búsqueda de Cliente para Alta (Artes Gráficas)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Búsqueda de clientes para el alta al catálogo de Artes Gráficas (HU-29)**
+  Busca en el catálogo **general** de clientes (todos los giros) por Razón Social o número de cliente, **excluyendo** a los que ya están en el catálogo de Artes Gráficas (`CteAG`). Alimenta el modal de alta. No crea clientes nuevos.
+  Programa: `cteag.p` · Procedimiento: `buscarClienteAlta`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/CteAG/Buscar
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`Texto`** · STRING · ✅ — Texto a buscar: parte de la Razón Social o el número de cliente. Mínimo 2 caracteres.
+
+  **`IdUser`** · STRING · ✅ — Usuario que consulta.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../CteAG/Buscar?IdUser=olds&Texto=Juan Manuel
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  Los resultados viajan dentro del dataset `dsBusqueda` → arreglo `ttClienteBusq`.
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Busqueda ejecutada (2 resultado(s)).",
+    "dsBusqueda": {
+      "ttClienteBusq": [
+        { "IdCliente": 512, "RazonSocial": "Juan Manuel Editores SA", "Giro": "Editoriales" },
+        { "IdCliente": 733, "RazonSocial": "Papeleria Juan Manuel", "Giro": "Papelerias" }
+      ]
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  Dentro de `dsBusqueda.ttClienteBusq` (una fila por cliente encontrado):
+
+  **`IdCliente`** · INTEGER — Número de cliente del catálogo general.
+  **`RazonSocial`** · CHARACTER — Razón Social del cliente.
+  **`Giro`** · CHARACTER — Descripción del giro del cliente (`Giro.Descr`); vacío si no tiene giro.
+
+  **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error; `false` si la operación fue correcta.
+  **`Respuesta`** · CHARACTER — Mensaje amigable con el número de resultados.
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - **`IdUser` es obligatorio**; si viene vacío o nulo → `"Se requiere el usuario (IdUser)."`.
+  - **`Texto` mínimo 2 caracteres**; si es más corto → `"Escribe al menos 2 caracteres para buscar."`.
+  - Coincidencia por Razón Social (subcadena) **o** por número de cliente exacto.
+  - **Excluye** los clientes que ya están en el catálogo de Artes Gráficas (`CteAG`).
+  - Aquí **no** se filtra por cliente activo; esa validación se hace en el Alta.
+  - Ordenado por Razón Social.
+
+  ---
+
+  ## 11. Servicios Relacionados
+
+  - Consulta (grid): `GET /CteAG/Consulta`.
+  - Alta (usa el `IdCliente` elegido aquí): `POST /CteAG/Alta`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

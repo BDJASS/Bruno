@@ -1,0 +1,7 @@
+info:
+  name: HU29 CATALOGO CLIENTES ARTES GRAFICAS
+  type: folder
+  seq: 16
+
+request:
+  auth: inherit

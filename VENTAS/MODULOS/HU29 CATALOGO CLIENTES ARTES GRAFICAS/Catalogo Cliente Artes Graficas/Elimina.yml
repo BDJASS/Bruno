@@ -1,0 +1,125 @@
+info:
+  name: Elimina
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/CteAG/Elimina?IdUser=olds&IdCliente=343
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdCliente
+      value: "343"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Baja de Cliente del Catálogo de Artes Gráficas
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Baja de un cliente del catálogo de Artes Gráficas (HU-29)**
+  Quita un cliente del catálogo `CteAG`. **No afecta** el registro maestro del cliente (`Cliente`) ni otros módulos: solo lo saca del catálogo de Artes Gráficas.
+  Programa: `cteag.p` · Procedimiento: `eliminaCliente`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  > Se expone como `POST` (estilo baja), no `DELETE`.
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/CteAG/Elimina
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdCliente`** · INTEGER · ✅ — Número de cliente a quitar del catálogo.
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la baja.
+
+  ---
+
+  ## 5. Body
+
+  No aplica — los parámetros viajan en el **Query String** (ver secciones 4 y 7).
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST .../CteAG/Elimina?IdUser=olds&IdCliente=343
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "'Editorial Graficos SA' se quito del catalogo de Artes Graficas."
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error; `false` si la operación fue correcta.
+  **`Respuesta`** · CHARACTER — Mensaje amigable de resultado.
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - **`IdUser` es obligatorio**; si viene vacío o nulo → `"Se requiere el usuario (IdUser)."`.
+  - **`IdCliente` es obligatorio** y mayor a cero → `"Se requiere el cliente (Id-Cliente)."`.
+  - **Debe estar en el catálogo:** si el cliente no está en `CteAG` → `"El cliente no se encuentra en el catalogo de Artes Graficas."`.
+  - **Bloqueo por concurrencia:** si el registro está ocupado por otro proceso → `"El registro esta ocupado, intente de nuevo."` (`EXCLUSIVE-LOCK NO-WAIT`).
+  - **Baja física** del registro `CteAG`; la tabla `Cliente` no se toca.
+  - Deja auditoría (`programas/auditoria.p`, app `oeVentas`).
+  - Ante cualquier fallo la respuesta es amigable y `IdError = true`; nunca se realiza la operación a medias (transacción con `UNDO`).
+
+  ---
+
+  ## 11. Servicios Relacionados
+
+  - Consulta (grid): `GET /CteAG/Consulta`.
+  - Alta: `POST /CteAG/Alta`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

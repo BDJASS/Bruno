@@ -1,0 +1,131 @@
+info:
+  name: Consulta
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/CteAG/Consulta?IdUser=olds
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Consulta del Catálogo de Clientes de Artes Gráficas
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Consulta del Catálogo de Clientes de Artes Gráficas (HU-29)**
+  Devuelve el listado completo del catálogo `CteAG` para el grid principal, con la Razón Social del cliente y los datos de registro (fecha, hora y usuario del alta). Reemplaza el modo carácter `cxca0470.p`.
+  Programa: `cteag.p` · Procedimiento: `consultaCatalogo`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/CteAG/Consulta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUser`** · STRING · ✅ — Usuario que consulta.
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../CteAG/Consulta?IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  El listado viaja dentro del dataset `dsCatalogo` → arreglo `ttCteAG`.
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Catalogo consultado.",
+    "dsCatalogo": {
+      "ttCteAG": [
+        { "IdCliente": 105, "RazonSocial": "Impresos del Bajio SA", "FecReg": "2024-04-22", "HoraReg": "10:32:15", "IdUser": "alex" },
+        { "IdCliente": 343, "RazonSocial": "Editorial Graficos SA", "FecReg": "2024-05-03", "HoraReg": "09:11:40", "IdUser": "olds" }
+      ]
+    }
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  Dentro de `dsCatalogo.ttCteAG` (una fila por cliente del catálogo):
+
+  **`IdCliente`** · INTEGER — Número de cliente (clave del catálogo).
+  **`RazonSocial`** · CHARACTER — Razón Social del cliente (de `Cliente`); vacío si el cliente ya no existe.
+  **`FecReg`** · DATE — Fecha en que se agregó al catálogo.
+  **`HoraReg`** · CHARACTER — Hora del alta con formato `HH:MM:SS`.
+  **`IdUser`** · CHARACTER — Usuario que dio de alta el registro.
+
+  **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error; `false` si la operación fue correcta.
+  **`Respuesta`** · CHARACTER — Mensaje amigable de resultado.
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - **`IdUser` es obligatorio**; si viene vacío o nulo → `"Se requiere el usuario (IdUser)."`.
+  - Ordenado por número de cliente (`Id-Cliente`).
+  - Devuelve todo el catálogo (la búsqueda para el alta es un servicio aparte: `Buscar`).
+
+  ---
+
+  ## 11. Servicios Relacionados
+
+  - Buscar (modal de alta): `GET /CteAG/Buscar`.
+  - Alta: `POST /CteAG/Alta`.
+  - Elimina: `POST /CteAG/Elimina`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

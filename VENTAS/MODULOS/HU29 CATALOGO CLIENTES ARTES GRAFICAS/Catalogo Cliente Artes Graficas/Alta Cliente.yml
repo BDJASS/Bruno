@@ -1,0 +1,127 @@
+info:
+  name: Alta Cliente
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/CteAG/Alta?IdUser=olds&IdCliente=343
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdCliente
+      value: "343"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Alta de Cliente al Catálogo de Artes Gráficas
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Alta de un cliente existente al catálogo de Artes Gráficas (HU-29)**
+  Agrega al catálogo `CteAG` un cliente **ya existente** del catálogo general (el que se eligió con el servicio `Buscar`). No crea clientes nuevos. Registra fecha, hora y usuario del alta automáticamente.
+  Programa: `cteag.p` · Procedimiento: `creaCliente`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/CteAG/Alta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdCliente`** · INTEGER · ✅ — Número de cliente a agregar. Debe existir y estar activo; la cuenta `3` está reservada y no se admite.
+
+  **`IdUser`** · STRING · ✅ — Usuario que da de alta.
+
+  ---
+
+  ## 5. Body
+
+  No aplica — los parámetros viajan en el **Query String** (ver secciones 4 y 7).
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST .../CteAG/Alta?IdUser=olds&IdCliente=343
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "'Editorial Graficos SA' se agrego al catalogo de Artes Graficas.",
+    "NuevoId": 343
+  }
+  ```
+
+  ---
+
+  ## 9. Campos de la Respuesta
+
+  **`IdError`** · BOOLEAN — `true` si falló una validación o hubo error; `false` si la operación fue correcta.
+  **`Respuesta`** · CHARACTER — Mensaje amigable de resultado.
+  **`NuevoId`** · INTEGER — Número de cliente agregado (mismo `IdCliente`); `0` si no se dio de alta.
+
+  ---
+
+  ## 10. Reglas y Validaciones
+
+  - **`IdUser` es obligatorio**; si viene vacío o nulo → `"Se requiere el usuario (IdUser)."`.
+  - **`IdCliente` es obligatorio** y mayor a cero → `"Se requiere el cliente (Id-Cliente)."`.
+  - **RN-001 · Cuenta reservada:** la cuenta `3` no puede incluirse → `"La cuenta '3' no puede ser incluida como cliente de artes graficas, favor de verificar."`.
+  - **RN-002 · No duplicar:** si el cliente ya está en el catálogo → `"El cliente ya existe en el catalogo de Artes Graficas."`.
+  - **RN-003 · Debe existir y estar activo:** si no existe o está inactivo → `"Cliente inexistente o inactivo, verifique."`.
+  - **RN-004 · Automáticos:** el alta graba `FecReg = TODAY`, `HorReg = TIME` e `Id-User = IdUser`.
+  - Deja auditoría (`programas/auditoria.p`, app `oeVentas`).
+  - Ante cualquier fallo la respuesta es amigable y `IdError = true`; nunca se realiza la operación a medias (transacción con `UNDO`).
+
+  ---
+
+  ## 11. Servicios Relacionados
+
+  - Buscar (obtiene el `IdCliente`): `GET /CteAG/Buscar`.
+  - Consulta (grid): `GET /CteAG/Consulta`.
+  - Elimina: `POST /CteAG/Elimina`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

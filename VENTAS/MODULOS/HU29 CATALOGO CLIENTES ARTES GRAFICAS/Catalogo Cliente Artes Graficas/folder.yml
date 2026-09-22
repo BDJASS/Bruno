@@ -1,0 +1,7 @@
+info:
+  name: Catalogo Cliente Artes Graficas
+  type: folder
+  seq: 1
+
+request:
+  auth: inherit
