@@ -5,16 +5,104 @@ meta {
 }
 
 get {
-  url: http://192.0.1.9:8823/RestADOSATes/rest/RestADOSATes/FichaDeposito?Fecha=2025-08-19&Confirmar=true
+  url: http://192.0.1.14:8823/RestADOSATes/rest/RestADOSATes/FichaDeposito?Fecha=2026-09-24&Confirmar=true
   body: none
   auth: inherit
 }
 
 params:query {
-  Fecha: 2025-08-19
+  Fecha: 2026-09-24
   Confirmar: true
 }
 
 settings {
   encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # HU06 — Ficha de Depósito · GET
+  
+  Devuelve las fichas de depósito de una fecha y los totales del día.
+  
+  - **Endpoint:** `GET /RestADOSATes/rest/RestADOSATes/FichaDeposito`
+  - **Backend:** `teserp010.p` → `GetFichaDepositos` (basado en el caracter `tesa0010.p` / `tesa0013.i`)
+  
+  ## Parámetros de entrada (Query String)
+  
+  > ✅ = Requerido · ❌ = Opcional
+  
+  **`Fecha`** · DATE (YYYY-MM-DD) · ✅ — Fecha del depósito a consultar
+  **`Confirmar`** · BOOLEAN · ❌ — `true` permite ver una fecha con póliza ya cerrada · vacío/`false` = normal
+  
+  ## Campos de response
+  
+  Regresa el dataset `dsFicha` (2 temp-tables) más 2 salidas escalares.
+  
+  ### ttFichaSaldos — totales del día
+  **`Id`** · CHAR — Llave de relación, siempre `"T"`
+  **`DiarioDep`** · DECIMAL — Diario de depósitos del día (pesos)
+  **`DiarioDepME`** · DECIMAL — 🆕 Diario de depósitos en **dólares US** (`l-totME + l-totMNpagoUS`)
+  **`TotalDepCte`** · DECIMAL — Total depósitos de clientes (pesos)
+  **`TotalDepCteME`** · DECIMAL — 🆕 Total dep. clientes en **dólares US** (fichas banco 1 · tipo 6)
+  **`DepOtros`** · DECIMAL — Depósitos de deudores / acreedores
+  **`DepTotal`** · DECIMAL — Total general del día
+  **`Moneda`** · CHAR(3) — 🆕 `"US"` cuando el día trae dólares · vacío si no
+  
+  ### ttFichaDep — detalle por ficha
+  **`Id`** · CHAR — Llave de relación, siempre `"T"`
+  **`IdBanco`** · INTEGER — Id del banco
+  **`Banco`** · CHAR — Nombre corto del banco
+  **`Tipo`** · INTEGER — Tipo de depósito (numérico, depende del banco)
+  **`TipoDes`** · CHAR(4) — 🆕 Mnemónico del tipo, igual que la consulta de caracter (`tesa0013.i`). **Banco 1 · Tipo 6 = `DLLS`** indica depósito en **dólares US**. Vacío en bancos sin mnemónico (11/13/18)
+  **`Clave`** · CHAR — `C` Clientes · `D` Deudores · `A` Acreedores
+  **`IdCta`** · INTEGER — Cuenta de abono
+  **`IdSCta`** · INTEGER — Subcuenta
+  **`IdSSCta`** · INTEGER — Sub-subcuenta
+  **`IdSSSCta`** · INTEGER — Sub-sub-subcuenta
+  **`Descr`** · CHAR — Descripción de la cuenta de abono
+  **`Importe`** · DECIMAL — Importe del depósito
+  **`IdPoliza`** · INTEGER — Póliza contable asociada
+  **`Serie`** · CHAR — Serie de la póliza
+  
+  ### Salidas escalares
+  **`IdError`** · BOOLEAN — `true` si hubo error de validación
+  **`Respuesta`** · CHAR — Mensaje de error / estatus
+  
+  ## Mnemónico `TipoDes` (banco · tipo)
+  
+  | Banco | Tipo | TipoDes |
+  |-------|------|---------|
+  | 1 | 1 | TC |
+  | 1 | 2 | LOC |
+  | 1 | 3 | FOR |
+  | 1 | 4 | TCI |
+  | 1 | 5 | DC |
+  | 1 | 6 | **DLLS** |
+  | 25 | 1 | MTY |
+  | 25 | 2 | CHI |
+  | 25 | 3 | DEP |
+  | 20 | 1 | TC |
+  | 20 | ≠1 | DEP |
+  | 11 / 13 / 18 | — | (vacío) |
+  
+  ## Ejemplo de respuesta (fragmento)
+  
+  ```json
+  {
+    "dsFicha": {
+      "ttFichaSaldos": [
+        { "Id": "T", "DiarioDep": 12000, "DiarioDepME": 500, "TotalDepCte": 8000, "TotalDepCteME": 500, "DepOtros": 4000, "DepTotal": 12000, "Moneda": "US" }
+      ],
+      "ttFichaDep": [
+        { "Id": "T", "IdBanco": 1, "Banco": "BANAMEX", "Tipo": 1, "TipoDes": "TC", "Clave": "C", "IdCta": 1105, "Descr": "CLIENTES NACIONALES MONEDA NACIONAL", "Importe": 2362.33 },
+        { "Id": "T", "IdBanco": 1, "Banco": "BANAMEX", "Tipo": 6, "TipoDes": "DLLS", "Clave": "C", "IdCta": 1108, "Descr": "CLIENTES DLLS", "Importe": 500 }
+      ]
+    },
+    "IdError": false,
+    "Respuesta": ""
+  }
+  ```
+  
+  > **Pendiente de despliegue:** recompilar `teserp010.p` (regenerar `teserp010.r`) y recargar el AppServer para que `TipoDes` aparezca en la respuesta.
 }

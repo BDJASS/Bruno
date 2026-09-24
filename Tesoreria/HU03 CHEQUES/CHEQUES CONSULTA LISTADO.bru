@@ -1,0 +1,22 @@
+meta {
+  name: CHEQUES CONSULTA LISTADO
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.9:8823/RestADOSATes/rest/RestADOSATes/ChequesDevueltosListado?FecIni=01/05/2026&FecFin=25/05/2026
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FecIni: 01/05/2026
+  FecFin: 25/05/2026
+  ~IdCliente: 3
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

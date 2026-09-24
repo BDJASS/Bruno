@@ -1,11 +1,11 @@
 meta {
   name: CHEQUES_1
   type: http
-  seq: 2
+  seq: 3
 }
 
 post {
-  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/ChequesDevueltos
+  url: http://192.0.1.14:8823/RestADOSATes/rest/RestADOSATes/ChequesDevueltos
   body: json
   auth: inherit
 }
@@ -16,4 +16,5 @@ params:query {
 
 settings {
   encodeUrl: true
+  timeout: 0
 }

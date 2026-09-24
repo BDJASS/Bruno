@@ -1,0 +1,20 @@
+meta {
+  name: folpoldep
+  type: http
+  seq: 7
+}
+
+get {
+  url: http://192.0.1.9:8823/RestADOSATes/rest/RestADOSATes/FolPolDep?year=2026
+  body: none
+  auth: inherit
+}
+
+params:query {
+  year: 2026
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

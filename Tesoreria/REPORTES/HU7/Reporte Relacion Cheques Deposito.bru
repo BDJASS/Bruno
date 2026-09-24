@@ -5,16 +5,18 @@ meta {
 }
 
 get {
-  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/RepRelacionCheque?FechaInicio=2025-06-12
+  url: http://192.0.1.14:8823/RestADOSATes/rest/RestADOSATes/RepRelacionCheque?Relacion=000799C&FechaInicio=2026-05-27&FechaFin=2026-05-25
   body: none
   auth: inherit
 }
 
 params:query {
-  FechaInicio: 2025-06-12
-  ~Relacion: 000001C
+  Relacion: 000799C
+  FechaInicio: 2026-05-27
+  FechaFin: 2026-05-25
 }
 
 settings {
   encodeUrl: true
+  timeout: 0
 }

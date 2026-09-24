@@ -1,19 +1,20 @@
 meta {
   name: CHEQUES
   type: http
-  seq: 1
+  seq: 2
 }
 
 get {
-  url: http://192.0.1.14:8826/RestADOSATes/rest/RestADOSATes/ChequesDevueltos?Cheque=C000001
+  url: http://192.0.1.14:8823/RestADOSATes/rest/RestADOSATes/ChequesDevueltos?Cheque=C009914
   body: none
   auth: inherit
 }
 
 params:query {
-  Cheque: C000001
+  Cheque: C009914
 }
 
 settings {
   encodeUrl: true
+  timeout: 0
 }

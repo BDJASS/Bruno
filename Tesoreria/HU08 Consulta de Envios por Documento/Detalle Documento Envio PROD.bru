@@ -1,0 +1,20 @@
+meta {
+  name: Detalle Documento Envio PROD
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://192.0.1.9:8823/RestADOSATes/rest/RestADOSATes/DetalleDocumentoEnvio?IdRelFac=b057642
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdRelFac: b057642
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

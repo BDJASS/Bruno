@@ -1,0 +1,24 @@
+meta {
+  name: Consulta Estatus Devolucion PROD
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.9:8823/RestADOSATes/rest/RestADOSATes/EstatusDevolucion?IdCliente=980&SoloPendientes=false&IdFactura=&FecRegIni=&FecRegFin=
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdCliente: 980
+  SoloPendientes: false
+  IdFactura: 
+  FecRegIni: 
+  FecRegFin: 
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

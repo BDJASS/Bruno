@@ -1,0 +1,21 @@
+meta {
+  name: REPORTE TARJETAS PRODUCCION
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.9:8823/RestADOSATes/rest/RestADOSATes/RepTarjetas?FecIni=2026-01-01&FecFin=2026-01-28
+  body: none
+  auth: inherit
+}
+
+params:query {
+  FecIni: 2026-01-01
+  FecFin: 2026-01-28
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

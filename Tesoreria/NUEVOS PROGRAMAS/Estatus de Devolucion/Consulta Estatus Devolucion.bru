@@ -1,0 +1,24 @@
+meta {
+  name: Consulta Estatus Devolucion
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8823/RestADOSATes/rest/RestADOSATes/EstatusDevolucion?SoloPendientes=false&FecRegIni=27-04-2026&FecRegFin=27-05-2026
+  body: none
+  auth: inherit
+}
+
+params:query {
+  SoloPendientes: false
+  FecRegIni: 27-04-2026
+  FecRegFin: 27-05-2026
+  ~IdCliente: 980
+  ~IdFactura: 
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

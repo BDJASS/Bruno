@@ -1,0 +1,301 @@
+meta {
+  name: Estatus de Devolucion
+  seq: 13
+}
+
+auth {
+  mode: inherit
+}
+
+docs {
+  # Servicio REST — Estatus de Devoluciones
+  
+  ---
+  
+  ## 1. Título del Servicio
+  
+  **Estatus Devolucion — Visor de Devoluciones de Clientes**  
+  Retorna el listado de devoluciones de clientes con su estatus de aplicación, nota de crédito asociada, motivo de devolución, vendedor y usuario que las registró. Soporta filtros por Factura, Cliente, rango de fechas de registro y estado de pendientes.
+  
+  Programa servidor: `devoluciones.p` · Procedure: `GetDevoluciones`  
+  Programas origen: `ausb0023.p` (modo carácter) · `ausdevolucion.p` (motivo y vendedor)
+  
+  > **Nota:** El filtro de Folio Inicial / Folio Final presente en el programa de modo carácter **no está disponible** en este servicio REST.
+  
+  ---
+  
+  ## 2. Método HTTP
+  
+  ```
+  GET
+  ```
+  
+  ---
+  
+  ## 3. URL Completa
+  
+  ```
+  http://192.0.1.14:8823/RestADOSATes/rest/RestADOSATes/EstatusDevolucion
+  ```
+  
+  ---
+  
+  ## 4. Parámetros de Entrada (Query String)
+  
+  > ✅ = Requerido · ❌ = Opcional · Al menos **uno** de los parámetros debe enviarse con valor.
+  
+  **`IdFactura`** · STRING · ❌ — Folio de la factura de devolución
+  - Formato `x(7)` · Vacío u omitido = sin filtro por factura
+  
+  **`IdCliente`** · INTEGER · ❌ — Número de cliente
+  - `0` u omitido = sin filtro por cliente · El cliente debe existir en catálogo si se envía
+  
+  **`pcFecRegIni`** · STRING · ❌ — Fecha inicial del rango de registro
+  - Formato `DD/MM/AAAA` · Vacío u omitido = sin filtro de fecha · Debe enviarse junto con `pcFecRegFin`
+  
+  **`pcFecRegFin`** · STRING · ❌ — Fecha final del rango de registro
+  - Formato `DD/MM/AAAA` · Vacío u omitido = sin filtro de fecha · Debe enviarse junto con `pcFecRegIni`
+  
+  **`SoloPendientes`** · BOOLEAN · ❌ — Muestra únicamente devoluciones pendientes de aplicar
+  - `true` = solo pendientes (sin fecha de aplicación) · `false` u omitido = todas
+  
+  ---
+  
+  ## 5. Body
+  
+  No aplica. Método `GET`.
+  
+  ---
+  
+  ## 6. Headers
+  
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+  
+  ---
+  
+  ## 7. Ejemplos de Request
+  
+  **Por factura:**
+  ```
+  GET .../EstatusDevolucion
+      ?IdFactura=2092407
+  ```
+  
+  **Por cliente:**
+  ```
+  GET .../EstatusDevolucion
+      ?IdCliente=980
+      &SoloPendientes=false
+  ```
+  
+  **Por cliente con rango de fechas:**
+  ```
+  GET .../EstatusDevolucion
+      ?IdCliente=980
+      &pcFecRegIni=01/01/2025
+      &pcFecRegFin=31/12/2025
+  ```
+  
+  **Solo pendientes por rango de fechas:**
+  ```
+  GET .../EstatusDevolucion
+      ?pcFecRegIni=01/01/2025
+      &pcFecRegFin=31/12/2025
+      &SoloPendientes=true
+  ```
+  
+  **Con todos los parámetros (vacíos ignorados):**
+  ```
+  GET .../EstatusDevolucion
+      ?IdCliente=980
+      &SoloPendientes=false
+      &IdFactura=
+      &pcFecRegIni=
+      &pcFecRegFin=
+  ```
+  
+  ---
+  
+  ## 8. Ejemplo de Response
+  
+  **Exitoso:**
+  
+  ```json
+  {
+    "Respuesta": "Consulta realizada con exito.",
+    "IdError": false,
+    "ttDevolucion": {
+      "ttDevolucion": [
+        {
+          "IdDev": 481151,
+          "IdCliente": 980,
+          "RazonSocial": "SISTEMEDIOS",
+          "FecReg": "2025-09-04",
+          "IdFactura": "2092407",
+          "FecApl": "2025-09-04",
+          "Documento": "2092407",
+          "NCR": "",
+          "Tot": 963.96,
+          "Canc": "",
+          "UsuarioReg": "cdd - CARLOS DOMINGUEZ DOMINGUEZ",
+          "VtaCanc": "Si",
+          "IdMotivo": 3,
+          "DescrMotivo": "DEVOLUCION POR DEFECTO",
+          "IdVendedor": "RMG",
+          "NomVendedor": "ROBERTO MARTINEZ GARCIA"
+        }
+      ]
+    }
+  }
+  ```
+  
+  **Error de validación:**
+  
+  ```json
+  {
+    "Respuesta": "El Cliente No Existe.",
+    "IdError": true,
+    "ttDevolucion": { "ttDevolucion": [] }
+  }
+  ```
+  
+  ---
+  
+  ## 9. Parámetros de Salida
+  
+  **`Respuesta`** · STRING — Mensaje descriptivo del resultado; texto de error cuando `IdError = true`
+  **`IdError`** · BOOLEAN — `false` = proceso exitoso · `true` = error de validación
+  
+  ### Campos de `ttDevolucion`
+  
+  **`IdDev`** · INTEGER — Folio de la devolución
+  **`IdCliente`** · INTEGER — Número de cliente
+  **`RazonSocial`** · STRING — Razón social del cliente
+  **`FecReg`** · DATE — Fecha de registro. Formato: `YYYY-MM-DD`
+  **`IdFactura`** · STRING — Folio de la factura origen
+  **`FecApl`** · DATE — Fecha de aplicación; vacío = pendiente de aplicar
+  **`Documento`** · STRING — Documento de aplicación (NC, factura, etc.)
+  **`NCR`** · STRING — Nota de crédito asociada; vacío = sin nota de crédito
+  **`Tot`** · DECIMAL — Importe total de la devolución en MXN
+  **`Canc`** · STRING — `*` = cancelada · vacío = vigente
+  **`UsuarioReg`** · STRING — Usuario en formato `"clave - Nombre completo"`; solo la clave si no existe en catálogo
+  **`VtaCanc`** · STRING — `Si` = cancelación total de la venta · vacío = devolución parcial
+  **`IdMotivo`** · INTEGER — Código del motivo de la devolución
+  **`DescrMotivo`** · STRING — Descripción del motivo (`MotivoDev.Descr`); vacío si el motivo no existe
+  **`IdVendedor`** · STRING — Clave del vendedor asociado a la devolución
+  **`NomVendedor`** · STRING — Nombre del vendedor (`Empleado.Nombre` vía `Vendedor.Iniciales`); vacío si no se encuentra
+  
+  ---
+  
+  ## 10. Mensajes de Error (`IdError = true`)
+  
+  - `"Debe de llevar al menos un filtro: Factura, Cliente o rango de Fechas."`
+  - `"El rango de Fechas debe incluir Fecha Inicial y Fecha Final."`
+  - `"La Fecha Final debe ser mayor o igual a la Fecha Inicial."`
+  - `"El Cliente No Existe."`
+  
+  ---
+  
+  ## 11. Lógica de Negocio
+  
+  ### Prioridad de ramas de consulta
+  
+  La consulta aplica la primera rama que coincida con los filtros recibidos:
+  
+  **Rama 1 — Factura proporcionada**
+  ```
+  Devolucion WHERE Id-Factura = IdFactura
+               AND (Id-Cliente = IdCliente  si > 0)
+  USE-INDEX Idx-Factura
+  ```
+  Filtra adicionalmente por rango de fechas y pendientes en memoria.
+  
+  **Rama 2 — Rango de fechas proporcionado (sin Factura)**
+  ```
+  Devolucion WHERE FecReg >= pcFecRegIni AND FecReg <= pcFecRegFin
+               AND (Id-Cliente = IdCliente  si > 0)
+  USE-INDEX idx-fecdev
+  ```
+  Filtra adicionalmente por pendientes en memoria.
+  
+  **Rama 3 — Solo Cliente (sin Factura ni fechas)**
+  ```
+  Devolucion WHERE Id-Cliente = IdCliente
+  USE-INDEX idx-devc
+  ```
+  Filtra pendientes en memoria.
+  
+  ### Resolución de Nota de Crédito (NCR)
+  
+  | Escenario | Lógica |
+  |-----------|--------|
+  | `Devolucion.Id-NCR <> ""` | Se usa directamente |
+  | `Devolucion.Id-NCR = ""` | Busca en `NCR` por `Id-Cliente` (`idx-ncrcli`) y verifica `DetNCR.Referencia = folio` de 7 dígitos con ceros (`idx-ncr`) |
+  
+  ### Resolución de Motivo
+  
+  ```
+  FIND MotivoDev WHERE MotivoDev.Id-Motivo = Devolucion.Id-Motivo NO-LOCK NO-ERROR.
+  ```
+  Si no se encuentra → `DescrMotivo = ""`. No genera error.
+  
+  ### Resolución de Vendedor
+  
+  ```
+  FIND Vendedor OF Devolucion NO-LOCK NO-ERROR.
+  FIND FIRST Empleado WHERE Empleado.Iniciales = Vendedor.Iniciales
+                        AND Empleado.Activo     NO-LOCK NO-ERROR.
+  ```
+  Si alguno no se encuentra → `NomVendedor = ""`. No genera error. Lógica tomada de `ausdevolucion.p`.
+  
+  ### Conversión de fechas
+  
+  Los parámetros `pcFecRegIni` / `pcFecRegFin` se reciben como `STRING` para tolerar valores vacíos sin error de tipo. La conversión a `DATE` se realiza internamente con `DATE()` solo si el valor no está vacío ni es desconocido.
+  
+  ---
+  
+  ## 12. Observaciones Técnicas
+  
+  1. **Filtro mínimo obligatorio** — Al menos uno de `IdFactura`, `IdCliente > 0` o el par de fechas debe enviarse con valor.
+  2. **Rango de fechas completo** — `pcFecRegIni` y `pcFecRegFin` deben enviarse juntos; enviar solo uno genera error.
+  3. **Coherencia del rango** — `pcFecRegFin` debe ser mayor o igual a `pcFecRegIni`.
+  4. **Existencia del cliente** — Si `IdCliente > 0`, el cliente debe existir en catálogo.
+  5. **UsuarioReg enriquecido** — `FIND LAST Usuario WHERE Id-User = UsuarioReg` para obtener `Nom-Usuario` y presentar `"clave - Nombre"`. Si no se encuentra, se devuelve solo la clave.
+  6. **Índice de temp-table** — `ttDevolucion` tiene índice `idxIdDev DESCENDING`; los registros más recientes aparecen primero.
+  7. **`EMPTY TEMP-TABLE`** — Se ejecuta al inicio del procedure para evitar acumulación de datos entre requests en modo PASOE single-run.
+  
+  ---
+  
+  ## 13. Evidencia de Ejecución
+  
+  ```
+  GET http://192.0.1.14:8823/RestADOSATes/rest/RestADOSATes/EstatusDevolucion
+      ?IdCliente=980&SoloPendientes=false
+  ```
+  
+  Response: `200 OK` · `IdError: false` · Registros retornados correctamente con `UsuarioReg` en formato `"cdd - CARLOS DOMINGUEZ DOMINGUEZ"`.
+  
+  ---
+  
+  ## 14. Fecha de Prueba
+  
+  | Ambiente | Fecha      | Ejecutado por |
+  |----------|------------|---------------|
+  | DEV      | 26/05/2026 | SIS10 - JASS  |
+  
+  ---
+  
+  ## 15. Resultado
+  
+  | Estado | Descripción                                         |
+  |--------|-----------------------------------------------------|
+  | ✅ OK  | Servicio funcional. Probado con cliente 980 en DEV. |
+  
+  ---
+  
+  **Desarrollado por:** SIS10 - JASS
+  
+}
