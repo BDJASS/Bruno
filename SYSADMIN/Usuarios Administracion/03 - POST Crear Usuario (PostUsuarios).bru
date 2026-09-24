@@ -1,0 +1,66 @@
+meta {
+  name: 03 - POST Crear Usuario (PostUsuarios)
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://192.0.1.14:8823/RestADOSASysAdmin/rest/RestADOSASysAdmin/UsuariosAdm
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "ttUsuario": [
+      {
+        "IdUser": "PRUEBA01",
+        "NomUsuario": "USUARIO DE PRUEBA",
+        "IdCaja": "",
+        "IdUbicacion": "01A",
+        "TipoUsuario": "N",
+        "hisPassword": "1234",
+        "IdFuncion": "",
+        "Sistemas": false,
+        "Facultado": false,
+        "Foraneo": false,
+        "Clave": 0,
+        "Nivel": 1,
+        "Firma": "",
+        "Telefono": "",
+        "NumMenu": 0,
+        "IdSup": 0,
+        "IdCajero": 0,
+        "IdUbivta": "",
+        "Email": "prueba01@adosa.com.mx",
+        "Email2": "",
+        "IdSeguro": "",
+        "IdModulo": 1,
+        "IdRol": 0,
+        "IdClaseCte": 0
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 03 · POST /UsuariosAdm — PostUsuarios
+
+  Da de **alta** un usuario nuevo en la tabla `Usuario` con la fila enviada en
+  `ttUsuario`. `FecReg` se asigna a `TODAY` internamente (no se toma del body).
+
+  - Body: `ttUsuario` (1 fila) con los datos del usuario. `IdUser` es la clave.
+  - Usa un `IdUser` nuevo (ej. `PRUEBA01`); duplicar viola el índice único `idx-user-pas`.
+  - Salida: `Mensaje` (CHARACTER).
+
+  📄 Especificación completa: **03 - POST Crear Usuario (PostUsuarios).md**
+}

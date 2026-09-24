@@ -1,0 +1,32 @@
+meta {
+  name: 02 - GET Parametros Vinculados (LlenaParametrosUsuario)
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.14:8813/RestADOSASysAdmin/rest/RestADOSASysAdmin/UsuariosAdm/Parametros?IdUser=olds
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdUser: olds
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # 02 · GET /UsuariosAdm/Parametros — LlenaParametrosUsuario
+  
+  Regresa las parametrizaciones (tabla `URL`) a las que está **ligado** un usuario.
+  Alimenta el tab "Parámetros Vinculados" de la ficha de usuario. Solo lectura.
+  
+  - `IdUser` (query, ✅ requerido) — vacío/`?` no regresa nada (no es error).
+  - Match por `CAN-DO(URL.Valor, IdUser)`: `URL.Valor` es una lista CSV (ej. `"gee,elf,franc"`).
+  
+  📄 Especificación completa: **02 - GET Parametros Vinculados (LlenaParametrosUsuario).md**
+}

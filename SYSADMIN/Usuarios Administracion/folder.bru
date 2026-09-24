@@ -1,0 +1,40 @@
+meta {
+  name: Usuarios Administracion
+  seq: 1
+}
+
+docs {
+  # Usuarios Administración — admusuarios.p
+
+  CRUD de usuarios del sistema (tabla `Usuario`) más la consulta de
+  parametrizaciones vinculadas a un usuario.
+
+  - **Programa:** `RestADOSASysAdmin/AppServer/admusuarios.p`
+  - **Recurso base:** `/UsuariosAdm`
+  - **Pantalla consumidora:** `GestionUsuariosAdministracion.razor`
+  - **Autor:** SIS10 — JASS
+
+  ## Endpoints (5)
+
+  **`01`** · `GET /UsuariosAdm` · `LlenaUsuario` — Lista todos los usuarios o uno por `IdUser`.
+  **`02`** · `GET /UsuariosAdm/Parametros` · `LlenaParametrosUsuario` — Parametrizaciones (tabla `URL`) ligadas a un usuario.
+  **`03`** · `POST /UsuariosAdm` · `PostUsuarios` — Alta de un usuario nuevo.
+  **`04`** · `PUT /UsuariosAdm` · `PutUsuarios` — Actualiza un usuario existente (match por `IdUser`).
+  **`05`** · `DELETE /UsuariosAdm` · `DeleteUsuarios` — Elimina un usuario por `IdUser`.
+
+  ## Envoltorio de la respuesta
+
+  El servicio corre sobre el adaptador REST clásico (`OEAppServerInvoke`): la
+  respuesta llega envuelta en `response`, y las temp-tables se serializan con doble
+  nivel `nombreTT: { nombreTT: [ ... ] }`. Para `POST`/`PUT`, si el servidor rechaza
+  el body plano `{ "ttUsuario": [ ... ] }`, prueba la forma anidada
+  `{ "ttUsuario": { "ttUsuario": [ ... ] } }`.
+
+  > URL base: `http://192.0.1.14:8823/RestADOSASysAdmin/rest/RestADOSASysAdmin`
+  > (puerto 8823, el mismo de RolesAdm/ParametrosAdm en la colección ADOSA).
+
+  ## Mapa de módulos (IdModulo)
+
+  `1` Sistemas · `2` Créditos · `3` Tesorería · `4` Sucursales · `5` Ventas
+  `6` Cuentas por Pagar · `7` Artículos · `8` Mercadotecnia · `9` Contabilidad
+}

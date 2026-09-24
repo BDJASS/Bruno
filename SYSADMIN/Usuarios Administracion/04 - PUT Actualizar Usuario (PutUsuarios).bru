@@ -1,0 +1,75 @@
+meta {
+  name: 04 - PUT Actualizar Usuario (PutUsuarios)
+  type: http
+  seq: 4
+}
+
+put {
+  url: http://192.0.1.14:8813/RestADOSASysAdmin/rest/RestADOSASysAdmin/UsuariosAdm
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "ttUsuario": [
+      {
+        "IdUser": "OLDS",
+        "NomUsuario": "OSCAR LESTER DELGADO SANCHEZZ",
+        "IdCaja": "",
+        "IdUbicacion": "02B",
+        "TipoUsuario": "ADM",
+        "hisPassword": "",
+        "IdFuncion": "GTEVTAS",
+        "Sistemas": false,
+        "Facultado": false,
+        "Foraneo": false,
+        "Clave": 4205,
+        "Nivel": 2,
+        "Firma": "",
+        "Depto": "202",
+        "DeptoDes": "VTAS.TEL.A.GRAF",
+        "Telefono": "8181581500 EXT. 1148",
+        "NumMenu": 0,
+        "IdSup": 0,
+        "IdCajero": 0,
+        "IdUbivta": "MLA",
+        "Email": "odelgado@adosa.com.mx",
+        "Email2": "",
+        "IdSeguro": "03/08/26",
+        "IdVendedor": "4791",
+        "FUG": true,
+        "IdModulo": 5,
+        "ModuloDes": "Ventas",
+        "IdRol": 0,
+        "RolDes": "",
+        "IdClaseCte": 0,
+        "ClaseCteDes": "",
+        "FecReg": "2018-08-07"
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # 04 · PUT /UsuariosAdm — PutUsuarios
+  
+  **Actualiza** un usuario existente. Toma la primera fila de `ttUsuario`, localiza
+  el `Usuario` por `IdUser` (EXCLUSIVE-LOCK) y sobrescribe sus campos. No toca `FecReg`.
+  
+  - Body: `ttUsuario` (1 fila). `IdUser` identifica el registro a actualizar.
+  - El ejemplo reutiliza `PRUEBA01` y cambia Nombre, Facultado, Nivel y Teléfono.
+  - Salida: `Mensaje` (CHARACTER).
+  
+  📄 Especificación completa: **04 - PUT Actualizar Usuario (PutUsuarios).md**
+}

@@ -1,0 +1,32 @@
+meta {
+  name: 05 - DELETE Usuario (DeleteUsuarios)
+  type: http
+  seq: 5
+}
+
+delete {
+  url: http://192.0.1.14:8823/RestADOSASysAdmin/rest/RestADOSASysAdmin/UsuariosAdm?IdUser=PRUEBA01
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdUser: PRUEBA01
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  # 05 · DELETE /UsuariosAdm — DeleteUsuarios
+
+  **Elimina** un usuario de la tabla `Usuario` por su `IdUser` (EXCLUSIVE-LOCK,
+  dentro de DO TRANSACTION). Sin parámetros de salida.
+
+  - `IdUser` (query, ✅ requerido) — usuario a eliminar (ej. `PRUEBA01`).
+  - ⚠️ Operación destructiva e irreversible. Apunta a un usuario de prueba.
+  - Si el `IdUser` no existe, no borra nada (no es error).
+
+  📄 Especificación completa: **05 - DELETE Usuario (DeleteUsuarios).md**
+}

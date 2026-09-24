@@ -1,0 +1,33 @@
+meta {
+  name: 01 - GET Usuarios (LlenaUsuario)
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8813/RestADOSASysAdmin/rest/RestADOSASysAdmin/UsuariosAdm?IdUser=olds
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdUser: olds
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # 01 · GET /UsuariosAdm — LlenaUsuario
+  
+  Consulta usuarios del sistema (tabla `Usuario`). Sin `IdUser` regresa **todos**;
+  con `IdUser` regresa solo ese usuario. Agrega datos ligados de Vendedor,
+  Departamento, Rol, Módulo y Clase de Cliente.
+  
+  - `IdUser` (query, ❌ opcional) — vacío = todos; con valor = ese usuario (ej. `gee`).
+    Va deshabilitado (`~`) para traer el catálogo completo por defecto.
+  
+  📄 Especificación completa: **01 - GET Usuarios (LlenaUsuario).md**
+}
