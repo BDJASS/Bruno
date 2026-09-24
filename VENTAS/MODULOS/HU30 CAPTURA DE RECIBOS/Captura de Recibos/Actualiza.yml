@@ -1,0 +1,190 @@
+info:
+  name: Actualiza
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Recibos/Actualiza
+  body:
+    type: json
+    data: |
+      {
+        "ttCaptura": [
+          {
+            "IdPedido": "2975677", 
+            "Resto": 0,
+            "IRdelCte": "REC-00122", 
+            "Requisicion": "N101163", 
+            "IdUser": "olds"
+          }
+        ]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Recibos: Captura / Actualiza (Guardar)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Captura de Recibos — Actualiza (HU30)**
+  Aplica la captura del **IR / Recibo del cliente** (`IRdelCte`) y la **requisición del cliente** (`Requisicion`) al lote de pedidos que devolvió [Consulta](vtaa0130-ConsultaRecibos.md), ya editado. Sincroniza los renglones descriptivos del pedido (`DetPedido` Tipo 5). Es **atómico**: o se aplica todo el lote o no se aplica nada.
+  Programa servidor: `vtaa0130.p` · Procedimiento: `actualizaRecibos` (POST) | Versión REST de `vtaa0130.p` (modo carácter). Módulo `/Ventas/Pedidos/`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Recibos/Actualiza
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  No aplica. Todo viaja en el **body** (§5).
+
+  ---
+
+  ## 5. Body
+
+  La tabla `ttCaptura` con **uno o varios** pedidos a capturar (los renglones editados que regresó Consulta). `IdUser` se toma del **primer** renglón del lote.
+
+  > ✅ = Requerido en el body · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido a actualizar (se normaliza: primer carácter + resto a 6 dígitos)
+  **`Resto`** · INTEGER · ✅ — Resto del pedido
+  **`IRdelCte`** · STRING · ❌ — IR / Recibo del cliente a guardar. Vacío = limpia el recibo (y elimina el renglón IR si existía)
+  **`Requisicion`** · STRING · ❌ — Requisición del cliente a guardar. Vacío = **no** toca el renglón descriptivo de requisición
+  **`IdUser`** · STRING · ✅ — Usuario que captura (auditoría; se lee del primer renglón)
+
+  > `ttCaptura` es una tabla **de entrada** e **independiente** de la del GET: trae **solo** llave (`IdPedido`, `Resto`) + valores a capturar (`IRdelCte`, `Requisicion`) + `IdUser`. El resultado va en el escalar `Respuesta` (§7), no por renglón.
+
+  ### Ejemplo de body
+
+  ```json
+  {
+    "ttCaptura": [
+      {
+        "IdPedido": "2965291", "Resto": 0,
+        "IRdelCte": "REC-00123", "Requisicion": "OC-8891", "IdUser": "olds"
+      },
+      {
+        "IdPedido": "2965292", "Resto": 0,
+        "IRdelCte": "REC-00124", "Requisicion": "OC-8891", "IdUser": "olds"
+      }
+    ]
+  }
+  ```
+
+  ---
+
+  ## 6. Headers
+
+  ```
+  Content-Type: application/json
+  ```
+
+  ---
+
+  ## 7. Ejemplo de Response
+
+  La respuesta es solo `IdError` + `Respuesta` (mensaje simple).
+
+  ### Éxito
+
+  ```json
+  { "response": { "IdError": false, "Respuesta": "Recibos actualizados correctamente." } }
+  ```
+
+  ### Error (nada se aplicó — el lote es atómico)
+
+  ```json
+  { "response": { "IdError": true, "Respuesta": "El pedido 2976815 esta siendo usado por otro proceso; intente de nuevo." } }
+  ```
+
+  ---
+
+  ## 8. Validaciones del Servicio (mensajes exactos)
+
+  Todos los mensajes van en `Respuesta`. Si algo falla, el lote **no aplica ningún cambio** (`IdError = true`):
+
+  **`"No se recibieron pedidos para actualizar."`** — body vacío
+  **`"Se requiere el usuario (IdUser)."`** — primer renglón sin `IdUser`
+  **`"El pedido <folio> no existe, verifique."`** — un pedido del lote no existe
+  **`"El pedido <folio> esta siendo usado por otro proceso; intente de nuevo."`** — pedido bloqueado (`EXCLUSIVE-LOCK NO-WAIT`)
+  **`"El renglon descriptivo del pedido <folio> esta en uso; intente de nuevo."`** — renglón `DetPedido` Tipo 5 bloqueado
+  **`"Recibos actualizados correctamente."`** — todo el lote se aplicó (`IdError = false`)
+
+  ---
+
+  ## 9. Efectos (por pedido, dentro de la transacción del lote)
+
+  `EXCLUSIVE-LOCK NO-WAIT` sobre el pedido; luego:
+
+  1. **Renglón del IR (`DetPedido` Tipo 5, Id-Seq `9999`):** se localiza **por su Id-Seq** (no por el texto). Si `IRdelCte` no viene vacío → se crea (si no existía) o se actualiza su `Descr` a `"I. R. " + IRdelCte`. Si viene vacío → se **elimina** el renglón (si existía).
+  2. **Renglón de la requisición (`DetPedido` Tipo 5, Id-Seq `9998`):** igual, por su Id-Seq. Si `Requisicion` no viene vacía → se crea/actualiza su `Descr` a `"REQUISICION DEL CLIENTE: " + Requisicion`. Si viene vacía → **no se toca**.
+  3. Se asignan `Pedido.RecCte = IRdelCte` y `Pedido.ReqCte = Requisicion` (campo body → columna BD).
+
+  > **Por qué por Id-Seq y no por texto:** el modo carácter buscaba la línea por el texto anterior y hacía `CREATE` si no la hallaba, lo que reventaba con el índice único de `DetPedido` (**error 132 "DetPedido already exists ... Seq. 9998"**) cuando el valor anterior venía vacío o con otro texto. Ubicar el renglón por su Id-Seq dedicado (9998/9999) hace el *find-or-create* determinista y sin choque.
+  >
+  > **Atómico:** todo el lote va en una sola transacción. Si un pedido falla o está bloqueado, se deshace **todo** el lote y no queda nada aplicado.
+
+  ---
+
+  ## 10. Auditoría (`programas/auditoria.p`)
+
+  **Area** = `oeVentas` · **Modulo** = `Pedidos` · **Programa** = `vtaa0130`
+  **Operacion** = `POST` · **Resource** = `/Ventas/Pedidos/Recibos/Actualiza`
+  **Respuesta** = `"Recibos actualizados correctamente."`
+
+  ---
+
+  ## 11. Reglas importantes del contrato
+
+  1. **`IRdelCte` vacío limpia el recibo** del pedido (`Pedido.RecCte = ""`) y elimina su renglón IR. **`Requisicion` vacía** guarda vacío en `Pedido.ReqCte` pero **no toca** el renglón descriptivo de requisición.
+  2. Solo se deberían enviar **pedidos EnFirme** (los que devuelve Consulta); el servicio localiza el pedido por `IdPedido` + `Resto`.
+  3. El `IdUser` del lote se toma del **primer** renglón; enviarlo en todos es buena práctica.
+  4. La **confirmación** de captura es responsabilidad del front; el servicio no tiene parámetro `Confirmar`.
+
+  ---
+
+  ## 12. Registro en el resourceModel
+
+  Recurso `_Ventas_Pedidos_Recibos_Actualiza`, path `/Ventas/Pedidos/Recibos/Actualiza`, verbo **POST** (operación auto-cerrada, sin `prgs:param`: el cuerpo viaja por body). Operación `vtaa0130..actualizaRecibos`. Binding en `vtaa0130.pidl` (`ttCaptura` como `INPUT`).
+
+  ---
+
+  ## 13. Plan de Pruebas
+
+  | # | Caso | Esperado |
+  |---|------|----------|
+  | P1 | Body vacío | `IdError=true`, `"No se recibieron pedidos para actualizar."` |
+  | P2 | Primer renglón sin `IdUser` | `IdError=true`, `"Se requiere el usuario (IdUser)."` |
+  | P3 | Lote válido | `IdError=false`, `"Recibos actualizados correctamente."` |
+  | P4 | Pedido con IR nuevo, sin renglón previo | Se crea `DetPedido` Tipo 5 `Id-Seq 9999` `"I. R. ..."` + `Pedido.RecCte` |
+  | P5 | Pedido con IR previo (renglón ya existe en 9999) | Se **actualiza** el renglón (no revienta con error 132) |
+  | P6 | Pedido cuya requisición anterior venía vacía y ya tenía renglón 9998 | Se **actualiza** el renglón 9998 (caso que reventaba en carácter) |
+  | P7 | `IRdelCte` vacío | Limpia `Pedido.RecCte` y elimina el renglón IR; `Requisicion` vacía no toca su renglón |
+  | P8 | Un pedido del lote bloqueado / inexistente | `IdError=true` con el mensaje; **nada** del lote se aplica (atómico) |
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

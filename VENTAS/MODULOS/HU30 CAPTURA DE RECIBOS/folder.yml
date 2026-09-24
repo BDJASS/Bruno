@@ -1,7 +1,7 @@
 info:
-  name: CRM
+  name: HU30 CAPTURA DE RECIBOS
   type: folder
-  seq: 18
+  seq: 17
 
 request:
   auth: inherit

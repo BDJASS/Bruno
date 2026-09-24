@@ -1,7 +1,7 @@
 info:
-  name: CRM
+  name: Captura de Recibos
   type: folder
-  seq: 18
+  seq: 1
 
 request:
   auth: inherit

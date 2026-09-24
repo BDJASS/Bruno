@@ -1,0 +1,265 @@
+info:
+  name: Por Vendedor
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/MargenesDinamico?IdUser=olds&FechaInicial=2026-08-01&FechaFinal=2026-08-31&Agrupar=2&Lista=&Lista=77,104
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: FechaInicial
+      value: 2026-08-01
+      type: query
+    - name: FechaFinal
+      value: 2026-08-31
+      type: query
+    - name: Agrupar
+      value: "2"
+      type: query
+    - name: Lista
+      value: ""
+      type: query
+    - name: Lista
+      value: 77,104
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Márgenes Dinámicos por Dimensión (HU31)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Reporte 31 — Márgenes Dinámicos por Dimensión (s/Venta, sin IVA)**
+  Versión **dinámica** del Reporte 04. En lugar de agrupar siempre por **División → Categoría**, agrupa la misma información de márgenes por **una** dimensión elegible y devuelve **un solo nivel plano** (`ttGrupo`). Las columnas de métricas son idénticas a rep004; lo único que cambia son las dos primeras columnas (`IdGrupo` / `DescrGrupo`) según la dimensión.
+
+  Dimensiones disponibles (parámetro `Agrupar`):
+  - `2` **Vendedor** — `IdGrupo` = número de vendedor, `DescrGrupo` = nombre del vendedor
+  - `6` **UbiVta** — `IdGrupo` = ubicación de venta, `DescrGrupo` = descripción de la ubicación
+  - `7` **Segmento** — `IdGrupo` = segmento de distribución, `DescrGrupo` = descripción del segmento
+
+  Programa servidor: `ventas-rep031.p` | Basado en: `ventas-rep004.p`
+
+  > Diseñado para crecer: agregar una dimensión nueva es un `WHEN` en la derivación de llave y descripción, sin tocar la matemática de márgenes.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/MargenesDinamico
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · Fechas en formato `YYYY-MM-DD`.
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta el reporte
+
+  **`FechaInicial`** · DATE · ✅ — Fecha inicial del periodo
+  - Formato: `YYYY-MM-DD` · Default si se omite: `TODAY - 31`
+
+  **`FechaFinal`** · DATE · ✅ — Fecha final del periodo
+  - Formato: `YYYY-MM-DD` · Default si se omite: `TODAY - 1`
+
+  **`Agrupar`** · INT · ❌ — Dimensión por la que se agrupa (default `2`)
+  - `2` Vendedor · `6` UbiVta · `7` Segmento
+  - Valor fuera de `{2,6,7}` regresa `IdError:true`
+
+  **`Lista`** · STRING · ❌ — CSV de códigos de **esa misma** dimensión · Vacío = todos
+  - `Agrupar=2`: CSV de `Id-Vendedor`, ej. `"77,104"` (los numéricos se autocompletan a 4 posiciones → `0077,0104`; una clave no numérica se respeta tal cual)
+  - `Agrupar=6`: CSV de `Id-Ubic`, ej. `"MLO,COM"` (alfanumérico, sin relleno)
+  - `Agrupar=7`: CSV de `Id-Segmento`, ej. `"DIST01,DIST02"` (se pasa a mayúsculas y **cada segmento debe existir** en el catálogo)
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header   | Valor              |
+  |----------|--------------------|
+  | `Accept` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  **Por Vendedor (todos):**
+
+  ```
+  GET .../Ventas/Reporte/MargenesDinamico
+      ?IdUser=olds
+      &FechaInicial=2026-08-01
+      &FechaFinal=2026-08-31
+      &Agrupar=2
+      &Lista=                     ← vacío = todos los vendedores
+  ```
+
+  **Por Vendedor (dos específicos):**
+
+  ```
+  GET .../Ventas/Reporte/MargenesDinamico
+      ?IdUser=olds&FechaInicial=2026-08-01&FechaFinal=2026-08-31
+      &Agrupar=2&Lista=77,104
+  ```
+
+  **Por UbiVta:**
+
+  ```
+  GET .../Ventas/Reporte/MargenesDinamico
+      ?IdUser=olds&FechaInicial=2026-08-01&FechaFinal=2026-08-31
+      &Agrupar=6&Lista=
+  ```
+
+  **Por Segmento:**
+
+  ```
+  GET .../Ventas/Reporte/MargenesDinamico
+      ?IdUser=olds&FechaInicial=2026-08-01&FechaFinal=2026-08-31
+      &Agrupar=7&Lista=DIST01,DIST02
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "3 vendedores encontrados.",
+    "dsOutput": {
+      "ttGrupo": [
+        {
+          "IdGrupo": "0077",
+          "DescrGrupo": "JUAN PEREZ LOPEZ",
+          "Importe": 285430.00,
+          "Descto": 5708.60,
+          "PorDes": -2.00,
+          "Neto": 279721.40,
+          "PctNeto": 35.42,
+          "Costo": 210000.00,
+          "Dif": 69721.40,
+          "Margen": 24.92
+        },
+        {
+          "IdGrupo": "0104",
+          "DescrGrupo": "MARIA GOMEZ RUIZ",
+          "Importe": 511000.00,
+          "Descto": 10220.00,
+          "PorDes": -2.00,
+          "Neto": 500780.00,
+          "PctNeto": 63.42,
+          "Costo": 382000.00,
+          "Dif": 118780.00,
+          "Margen": 23.72
+        }
+      ]
+    }
+  }
+  ```
+
+  > **Estructura:** `dsOutput` contiene un solo arreglo plano `ttGrupo` (un renglón por dimensión, sin detalle anidado). El campo `Respuesta` cambia el sustantivo según `Agrupar` (`"N vendedores…"`, `"N ubicaciones…"`, `"N segmentos…"`).
+
+  ### Campos de `ttGrupo`
+
+  **`IdGrupo`** · STRING — Clave de la dimensión (Id-Vendedor / Id-Ubic / Id-Segmento según `Agrupar`)
+  **`DescrGrupo`** · STRING — Descripción de la dimensión (nombre del vendedor / `UbiVta.Descr` / `Segmento.Descr`); vacía si no se encuentra el catálogo
+  **`Importe`** · DECIMAL — Importe bruto de ventas del grupo
+  **`Descto`** · DECIMAL — Descuento pronto pago prorrateado del grupo
+  **`PorDes`** · DECIMAL — % de descuento promedio del grupo
+  **`Neto`** · DECIMAL — Neto del grupo (Importe − Descto)
+  **`PctNeto`** · DECIMAL — % que representa el neto de este grupo sobre el total general
+  **`Costo`** · DECIMAL — Costo total de artículos vendidos del grupo
+  **`Dif`** · DECIMAL — Diferencia (Neto − Costo)
+  **`Margen`** · DECIMAL — % de margen **sobre venta**: `(1 − (Costo / Neto)) × 100`. Ver observación 4
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Agrupar invalido (3). Use 2=Vendedor, 6=UbiVta, 7=Segmento.",
+    "dsOutput": { "ttGrupo": [] }
+  }
+  ```
+
+  ---
+
+  ## 9. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+  Adjuntar screenshot de la herramienta de prueba (Bruno / Postman / curl) mostrando URL completa, `200 OK` y al menos un registro en `ttGrupo`.
+
+  ---
+
+  ## 10. Fecha de Prueba
+
+  | Ambiente | Fecha       | Ejecutado por |
+  |----------|-------------|---------------|
+  | DEV      | 2026-09-22  | *(pendiente)* |
+
+  ---
+
+  ## 11. Resultado
+
+  | Estado              | Descripción                                                        |
+  |---------------------|--------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Binding cableado a mano en DEV. Pendiente de ejecución formal por QA |
+
+  ---
+
+  ## 12. Observaciones Técnicas
+
+  1. **Un solo nivel plano (`ttGrupo`).** A diferencia de rep004 (dataset anidado `ttDiv → ttCatego`), este reporte no tiene detalle: la dimensión elegida ya es el nivel de agregación. La llave de agrupación es del **comprobante** (no del artículo), por eso no se requiere desglose por categoría.
+
+  2. **Derivación de la llave y descripción por dimensión:**
+
+     | `Agrupar` | `IdGrupo` (origen) | `DescrGrupo` (catálogo) |
+     |-----------|--------------------|-------------------------|
+     | `2` Vendedor | `Remision.Id-Vendedor` / `Factura.Id-Vendedor` | `Empleado.Nombre` vía `Vendedor.Iniciales` |
+     | `6` UbiVta | `Remision.Id-Ubic` / `Factura.Id-Ubic` | `UbiVta.Descr` (`UbiVta.Id-UbiVta`) |
+     | `7` Segmento | `Cliente.Id-Segmento` | `Segmento.Descr` |
+
+  3. **`Lista` filtra y agrupa la misma dimensión.** No hay un filtro y una agrupación separados: `Agrupar` fija ambas cosas. `Lista` vacía = todos los valores de esa dimensión, un renglón por valor.
+
+  4. **Cálculo de `Margen` — SOBRE VENTA** (idéntico a rep004): `(1 − (Costo / Neto)) × 100`, con `Neto = Importe − Descto`. Cuando `Neto = 0` regresa `0`. `PorDes = (((Importe − Descto) / Importe) − 1) × 100` (negativo = descuento).
+
+  5. **Cuadre al centavo contra rep004.** La matemática de importe/costo/descuento pronto-pago por línea es exactamente la de rep004 (acumulación a precisión completa, redondeo único al final). Solo cambia el *bucket*. Por eso:
+     - La **suma** de todos los grupos de HU31 == total general de rep004 en el mismo periodo.
+     - HU31 con `Agrupar=2` + `Lista=<un vendedor>` == gran total de rep004 con `Seleccionar=2` + esa misma `Lista`.
+     - Se conserva el **salto de renglones cuyo `Articulo` no existe** (en rep004 no se pueden categorizar), para que los totales coincidan.
+
+  6. **Segmento (`Agrupar=7`).** Solo entran clientes con `Cliente.Id-Segmento` asignado (los sin segmento quedan fuera, igual que `pSeleccion=7` de rep004). `Cliente.Id-Segmento` **no tiene índice**: se arma la lista de clientes con **un** barrido secuencial de `Cliente` (lectura mínima con `FIELDS`) por request.
+
+  7. **Rendimiento.** Se conservan los `USE-INDEX Idx-FecMC` de rep004 en los dos ciclos de crédito (MovCliente e HistMovCte) para forzar el bracket por fecha. El bucket `ttGrupo` se resuelve una vez por comprobante (reutilizando el buffer si es el mismo grupo), no por renglón, así que no aplica el problema de table-scan del temp-table que rep004 resolvió con `Idx-Cat`.
+
+  8. **`Contado` = Remisiones pagadas** (`Pagada`, `FecCanc = ?`, `TipoVenta <> 0`) del periodo; **`Crédito`** = Facturas totalmente pagadas de `MovCliente` (meses abiertos) e `HistMovCte` (meses cerrados), saltando las que generaron NC/ajuste (`Id-MC = 67`). Mismo criterio que rep004.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

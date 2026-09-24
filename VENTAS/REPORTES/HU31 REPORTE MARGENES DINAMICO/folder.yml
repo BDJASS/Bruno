@@ -1,0 +1,7 @@
+info:
+  name: HU31 REPORTE MARGENES DINAMICO
+  type: folder
+  seq: 12
+
+request:
+  auth: inherit

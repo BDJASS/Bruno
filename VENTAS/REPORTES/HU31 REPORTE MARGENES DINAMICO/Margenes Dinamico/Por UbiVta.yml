@@ -1,0 +1,41 @@
+info:
+  name: Por UbiVta
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/MargenesDinamico?IdUser=olds&FechaInicial=2026-08-01&FechaFinal=2026-08-31&Agrupar=6&Lista=MLO,COM
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: FechaInicial
+      value: 2026-08-01
+      type: query
+    - name: FechaFinal
+      value: 2026-08-31
+      type: query
+    - name: Agrupar
+      value: "6"
+      type: query
+    - name: Lista
+      value: MLO,COM
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Márgenes Dinámicos — Por UbiVta (HU31)
+
+  Mismo endpoint `GET /Ventas/Reporte/MargenesDinamico` con `Agrupar=6`.
+  `IdGrupo` = Id-Ubic del comprobante, `DescrGrupo` = `UbiVta.Descr`.
+  `Lista` vacía = todas las ubicaciones; o CSV ej. `MLO,COM`.
+
+  Documentación completa: request **Por Vendedor** de esta misma carpeta, o `RestADOSAVentas/Docs/ventas-rep031-MargenesDinamico.md`.
