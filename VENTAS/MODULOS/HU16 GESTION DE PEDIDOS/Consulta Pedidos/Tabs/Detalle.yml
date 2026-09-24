@@ -5,13 +5,13 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedido/Detalle?IdUser=olds&IdPedido=0322707&Resto=0
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedido/Detalle?IdUser=olds&IdPedido=2982998&Resto=0
   params:
     - name: IdUser
       value: olds
       type: query
     - name: IdPedido
-      value: "0322707"
+      value: "2982998"
       type: query
     - name: Resto
       value: "0"
@@ -23,6 +23,7 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
 docs: |
   # Servicio REST — Detalle de Pedido (Artículos)

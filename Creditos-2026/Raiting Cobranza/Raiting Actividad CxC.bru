@@ -1,0 +1,244 @@
+meta {
+  name: Raiting Actividad CxC
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/RaitingCxC?IdUser=olds&FechaInicial=2026-08-01&FechaFinal=2026-08-30
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdUser: olds
+  FechaInicial: 2026-08-01
+  FechaFinal: 2026-08-30
+}
+
+headers {
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 200
+  res.body.IdError: eq false
+}
+
+docs {
+  # Servicio REST — Raiting de Actividad de Cobranza (CxC)
+  
+  ---
+  
+  ## 1. Título del Servicio
+  
+  **Raiting de Actividad de Cobranza (CxC)**
+  Tablero de productividad por usuario del área de crédito y cobranza en un periodo. Consolida en **un renglón por usuario** cinco indicadores de actividad, cada uno con su **conteo** y su **importe**:
+  
+  - **Acuses** — recibos de pago registrados por el usuario (importe sumado de sus `PagoAcuse`)
+  - **Pedidos** — pedidos *EnFirme* con condición de crédito autorizados por el usuario
+  - **Contado** — ventas de contado (movimientos de caja `TipoVenta = 2`) capturadas por el usuario
+  - **Cajas** — autorizaciones de caja aprobadas por el usuario
+  - **Clientes** — clientes activos con saldo vigente asignados a la cartera de ese usuario (vía su cobrador)
+  
+  Programa servidor: `raitingcxc.p` | Versión REST del reporte carácter homónimo (que imprimía a `/tmp/raitingcxc.txt` vía `cieimpre.p`). La lógica de acumulación es **idéntica**; sólo cambia la salida: en lugar de imprimir, devuelve la tabla `ttActividad` con el nombre del usuario resuelto en cada renglón.
+  
+  ---
+  
+  ## 2. Método HTTP
+  
+  ```
+  GET
+  ```
+  
+  ---
+  
+  ## 3. URL Completa
+  
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/RaitingCxC
+  ```
+  
+  ---
+  
+  ## 4. Parámetros de Entrada (Query String)
+  
+  > ✅ = Requerido · ❌ = Opcional · Fechas en formato `YYYY-MM-DD`.
+  
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta el reporte
+  
+  **`FechaInicial`** · DATE · ❌ — Fecha inicial del periodo
+  - Formato: `YYYY-MM-DD` · Default si se omite: **día 1 del mes en curso**
+  
+  **`FechaFinal`** · DATE · ❌ — Fecha final del periodo
+  - Formato: `YYYY-MM-DD` · Default si se omite: **HOY**
+  
+  > Si se omiten ambas fechas se reproduce el comportamiento del reporte carácter original (del día 1 del mes en curso a hoy). `FechaInicial` mayor que `FechaFinal` regresa `IdError:true`.
+  
+  ---
+  
+  ## 5. Body
+  
+  No aplica. Método `GET`.
+  
+  ---
+  
+  ## 6. Headers
+  
+  | Header   | Valor              |
+  |----------|--------------------|
+  | `Accept` | `application/json` |
+  
+  ---
+  
+  ## 7. Ejemplo de Request
+  
+  **Mes en curso (default, sólo usuario):**
+  
+  ```
+  GET .../Ventas/Reporte/RaitingCxC?IdUser=olds
+  ```
+  
+  **Periodo explícito:**
+  
+  ```
+  GET .../Ventas/Reporte/RaitingCxC
+      ?IdUser=olds
+      &FechaInicial=2026-09-01
+      &FechaFinal=2026-09-30
+  ```
+  
+  ---
+  
+  ## 8. Ejemplo de Response
+  
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "4 usuarios con actividad en el periodo.",
+    "ttActividad": [
+      {
+        "IdUsuario": "RJCE",
+        "NombreUsuario": "ROSA JIMENEZ CERVANTES",
+        "NAcuses": 128,
+        "TAcuses": 845230.50,
+        "NPed": 0,
+        "TPed": 0.00,
+        "NContado": 0,
+        "TContado": 0.00,
+        "NCajas": 0,
+        "TCajas": 0.00,
+        "NCtes": 37,
+        "TCtes": 1523400.75
+      },
+      {
+        "IdUsuario": "auto",
+        "NombreUsuario": "",
+        "NAcuses": 0,
+        "TAcuses": 0.00,
+        "NPed": 342,
+        "TPed": 5231890.00,
+        "NContado": 0,
+        "TContado": 0.00,
+        "NCajas": 0,
+        "TCajas": 0.00,
+        "NCtes": 0,
+        "TCtes": 0.00
+      },
+      {
+        "IdUsuario": "MLOP",
+        "NombreUsuario": "MARIA LOPEZ PEREZ",
+        "NAcuses": 12,
+        "TAcuses": 45300.00,
+        "NPed": 58,
+        "TPed": 612300.00,
+        "NContado": 205,
+        "TContado": 389540.25,
+        "NCajas": 14,
+        "TCajas": 78200.00,
+        "NCtes": 5,
+        "TCtes": 92100.00
+      }
+    ]
+  }
+  ```
+  
+  ### Campos de `ttActividad`
+  
+  **`IdUsuario`** · STRING — Clave del usuario (`Usuario.Id-User`). Para pedidos automáticos es `"auto"`
+  **`NombreUsuario`** · STRING — Nombre del usuario (`Usuario.Nom-Usuario`); vacío si la clave no existe en el catálogo (p. ej. `"auto"`)
+  **`NAcuses`** · INT — Número de acuses (recibos) registrados en el periodo
+  **`TAcuses`** · DECIMAL — Importe total de esos acuses (suma de `PagoAcuse.Importe`)
+  **`NPed`** · INT — Número de pedidos *EnFirme* con crédito autorizados
+  **`TPed`** · DECIMAL — Importe total (`Pedido.Tot`) de esos pedidos
+  **`NContado`** · INT — Número de movimientos de venta de contado
+  **`TContado`** · DECIMAL — Importe total (`MovCaja.Tot`) de contado
+  **`NCajas`** · INT — Número de autorizaciones de caja
+  **`TCajas`** · DECIMAL — Importe total (`Autorizacion.Importe`) autorizado
+  **`NCtes`** · INT — Número de clientes con saldo vigente asignados al usuario
+  **`TCtes`** · DECIMAL — Saldo total de esos clientes
+  
+  ### Response de error controlado
+  
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "La fecha inicial no puede ser mayor a la final.",
+    "ttActividad": []
+  }
+  ```
+  
+  ---
+  
+  ## 9. Evidencia de Ejecución
+  
+  *Pendiente de captura por parte del equipo de QA.*
+  Adjuntar screenshot de la herramienta de prueba (Bruno / Postman / curl) mostrando URL completa, `200 OK` y al menos un registro en `ttActividad`.
+  
+  ---
+  
+  ## 10. Fecha de Prueba
+  
+  | Ambiente | Fecha       | Ejecutado por |
+  |----------|-------------|---------------|
+  | DEV      | 2026-09-23  | *(pendiente)* |
+  
+  ---
+  
+  ## 11. Resultado
+  
+  | Estado              | Descripción                                                           |
+  |---------------------|-----------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Binding cableado a mano en DEV. Pendiente de compilación y ejecución formal por QA |
+  
+  ---
+  
+  ## 12. Observaciones Técnicas
+  
+  1. **Salida plana (`ttActividad`).** Un renglón por usuario; no hay detalle anidado. La llave (`IdUsuario`) es el `Id-User` del catálogo `Usuario`.
+  
+  2. **Buckets y su origen (idénticos al reporte carácter):**
+  
+     | Indicador | Origen | Agrupación |
+     |-----------|--------|------------|
+     | Acuses  | `Acuse` (`FecOper` en rango, `Id-Cliente > 11`) + `PagoAcuse.Importe` | `Acuse.UsuarioReg` |
+     | Pedidos | `Pedido` *EnFirme* con `Id-Cond > 0` (`FecReg` en rango) | `Pedido.AutPor` |
+     | Contado | `MovCaja` cajas `010/011/055/066/099`, `TipoVenta = 2` (`FecOper` en rango) | `MovCaja.Iniciales` |
+     | Cajas   | `Autorizacion` (`FecReg` en rango) | `Autorizacion.Id-Autoriza` |
+     | Clientes| `Cliente` activo `Id-Cliente > 11` con saldo (`MovCliente.Id-MC <= 3`) mayor a 10 | usuario del cobrador |
+  
+  3. **Usuario "auto" en Pedidos.** Los pedidos autorizados por proceso (`AutPor` = `""`, `"cron"` o `"auto"`) se consolidan en el usuario `"auto"`, que no existe en el catálogo `Usuario` (por eso su `NombreUsuario` sale vacío).
+  
+  4. **Mapeo de cobrador → usuario (Clientes).** El saldo del cliente se asigna al usuario responsable con el mapeo especial del negocio: cobrador `10` → `RJCE`; cobradores `8`, `11`, `12` → `JGGR`; cobrador `25` → `NMRA`; cualquier otro → `Cobrador.Iniciales`.
+  
+  5. **Los Clientes sólo suman sobre actividad existente.** El bucket de Clientes **no crea** renglones nuevos: sólo acumula `NCtes`/`TCtes` sobre usuarios que ya registraron acuses, pedidos, contado o cajas en el periodo (comportamiento preservado del reporte original). Un usuario con cartera pero sin otra actividad en el periodo no aparece.
+  
+  6. **Saldo vigente.** El saldo del cliente se calcula sumando `MovCliente.Saldo` de los movimientos con `Id-MC <= 3` (documentos de cargo vigentes); se incluye sólo si supera `10`.
+  
+  7. **Periodo.** `FechaInicial`/`FechaFinal` son opcionales; el default (día 1 del mes en curso → hoy) reproduce el corte mensual del reporte carácter. Todas las fechas de los cinco barridos usan el mismo rango.
+  
+  8. **Auditoría.** Cada ejecución registra en la bitácora (`auditoria.p`, no crítica) con `Area = "oeVentas"`, `Modulo = "Cobranza"`, `Operacion = "GET"`, `Resource = "/Ventas/Reporte/RaitingCxC"`.
+  
+  ---
+  **Desarrollado por:** SIS10 - JASS
+}

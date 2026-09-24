@@ -5,7 +5,7 @@ info:
 
 http:
   method: PUT
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Backorder?IdUser=olds&IdPedido=2955590&Resto=0&IdArticulo=066406&BckOrd=2&FecBck=2026-07-27
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Backorder?IdUser=olds&IdPedido=2955590&Resto=0&IdArticulo=066406&BckOrd=2&FecBck=2026-09-22
   params:
     - name: IdUser
       value: olds
@@ -23,7 +23,7 @@ http:
       value: "2"
       type: query
     - name: FecBck
-      value: 2026-07-27
+      value: 2026-09-22
       type: query
   auth: inherit
 
@@ -32,6 +32,7 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
 docs: |
   # Servicio REST — Pedidos: Cambia Backorder

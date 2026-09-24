@@ -5,10 +5,10 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/SolicitudCancelacion?IdPedido=1548803&Resto=0
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/SolicitudCancelacion?IdPedido=2980991&Resto=0
   params:
     - name: IdPedido
-      value: "1548803"
+      value: "2980991"
       type: query
     - name: Resto
       value: "0"
@@ -20,6 +20,7 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
 docs: |
   # Servicio REST — Pedidos: Consulta de Solicitud de Cancelación

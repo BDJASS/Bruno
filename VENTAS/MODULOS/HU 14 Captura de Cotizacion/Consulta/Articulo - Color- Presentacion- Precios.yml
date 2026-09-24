@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Cotizacion/Captura/Partidas?IdArticulo=021118&IdColor=2&IdPres=0&IdCliente=575&PrecioTemp=no&TipoPrecio=M&Vigencia=75&PrecCalc=no&PlazoTV=75&IdUbiVta=MLO
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Cotizacion/Captura/Partidas?IdArticulo=021118&IdColor=2&IdPres=4&IdCliente=575&PrecioTemp=no&TipoPrecio=M&Vigencia=75&PrecCalc=NO&PlazoTV=75&IdUbiVta=MLO
   params:
     - name: IdArticulo
       value: "021118"
@@ -14,7 +14,7 @@ http:
       value: "2"
       type: query
     - name: IdPres
-      value: "0"
+      value: "4"
       type: query
     - name: IdCliente
       value: "575"
@@ -29,7 +29,7 @@ http:
       value: "75"
       type: query
     - name: PrecCalc
-      value: no
+      value: NO
       type: query
     - name: PlazoTV
       value: "75"
@@ -44,6 +44,7 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
 docs: |
   # Servicio REST — Captura de Cotización: Partidas (Artículo / Colores / Presentaciones)

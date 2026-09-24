@@ -5,10 +5,10 @@ info:
 
 http:
   method: POST
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/SolicitudCancelacion?IdPedido=1548819&Resto=0&Motivo=Cancelacion Adcorex&IdUser=olds
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/SolicitudCancelacion?IdPedido=2980991&Resto=0&Motivo=Cancelacion Adcorex&IdUser=olds
   params:
     - name: IdPedido
-      value: "1548819"
+      value: "2980991"
       type: query
     - name: Resto
       value: "0"
@@ -26,6 +26,7 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
 docs: |
   # Servicio REST — Pedidos: Solicita Cancelación

@@ -5,10 +5,10 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Bitacora?IdPedido=4122888&Resto=0
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Bitacora?IdPedido=2982998&Resto=0
   params:
     - name: IdPedido
-      value: "4122888"
+      value: "2982998"
       type: query
     - name: Resto
       value: "0"
@@ -20,6 +20,7 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
 docs: |
   # Servicio REST — Pedidos: Consulta de Bitácora de Cambios

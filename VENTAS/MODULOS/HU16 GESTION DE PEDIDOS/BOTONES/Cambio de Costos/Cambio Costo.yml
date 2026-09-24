@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/ActualizaCosto?IdUser=olds&IdPedido=2955590&Resto=0&IdArticulo=066406&Pass=olds&NuevoCosto=7.89
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/ActualizaCosto?IdUser=olds&IdPedido=2955590&Resto=0&IdArticulo=066406&Pass=0180&NuevoCosto=4
   params:
     - name: IdUser
       value: olds
@@ -20,10 +20,10 @@ http:
       value: "066406"
       type: query
     - name: Pass
-      value: olds
+      value: "0180"
       type: query
     - name: NuevoCosto
-      value: "7.89"
+      value: "4"
       type: query
   auth: inherit
 
@@ -32,6 +32,7 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
 docs: |
   # Servicio REST — Pedidos: Actualiza Costo
