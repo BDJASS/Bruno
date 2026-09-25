@@ -1,0 +1,440 @@
+meta {
+  name: Consulta Articulo con Complementarios
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/PrecioArticuloExist?IdArticulo=021118&IdUser=olds
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdArticulo: 021118
+  IdUser: olds
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # Servicio REST — Precio / Existencia de Artículo
+  
+  ## 1. Descripción general
+  
+  Consulta integral de un artículo: datos generales, proveedores, precios por presentación
+  y color con ofertas vigentes, colores, sustitutos, complementarios y existencias por
+  almacén (incluye mercancía en tránsito).
+  
+  > **Cambio de contrato (24/09/2026):** el endpoint pasó de **POST** (body `ttPrecioArticulos`)
+  > a **GET** con query string. Ver sección 14.
+  >
+  > **25/09/2026:** se retiró la medición de tiempos (`ttTiempos` y la línea `PERF` del log);
+  > la respuesta queda en `IdError`, `Respuesta` y `dsExistArt`. La documentación de consumo
+  > del servicio está en la colección Bruno (`Articulo Existencia/preciosartexist.md`); este
+  > documento conserva el análisis técnico.
+  
+  ## 2. Datos del endpoint
+  
+  **`Servidor`** · `http://192.0.1.14:8828`
+  **`Verbo`** · GET
+  **`Ruta`** · `/RestADOSArt/rest/RestADOSArt/PrecioArticuloExist`
+  **`Programa`** · `preciosartexist.p`
+  **`Procedure`** · `GetExistArt`
+  **`Modo`** · `single-run`
+  
+  El mismo programa expone (sin cambios de firma):
+  
+  **`GET /ArtUbicCPM?IdArt=`** · `GetCPM` — existencias por almacén con consumo promedio mensual
+  **`GET /ArtUbicVPM?IdArt=`** · `GetVPM` — existencias por almacén con venta promedio mensual
+  
+  ## 3. URL de ejemplo
+  
+  ```
+  GET http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/PrecioArticuloExist?IdArticulo=000507&IdUser=JPEREZ
+  GET http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/PrecioArticuloExist?IdArticulo=000507&IdUser=JPEREZ&IdProv=1250
+  ```
+  
+  ## 4. Parámetros de entrada (Query String)
+  
+  > ✅ = Requerido · ❌ = Opcional
+  
+  **`IdArticulo`** · STRING · ✅ — Id del artículo (`Articulo.Id-Articulo`)
+  - Vacío u omitido = error de validación
+  
+  **`IdUser`** · STRING · ✅ — Usuario que consulta (`Usuario.Id-User`)
+  - Su `id-ubicacion` define los almacenes que suman existencia en `ttComplementarios`
+  - `02B` = `02B` · `02R` · `FUG` · `02A` · `02C` — otra ubicación = solo ese almacén
+  
+  **`IdProv`** · INTEGER · ❌ — Proveedor a consultar (precio histórico `HPrecio` y relación `ArtProv`)
+  - `0` u omitido = proveedor principal del artículo (`Articulo.Id-Prov`)
+  
+  ## 5. Estructura del response
+  
+  ```
+  IdError, Respuesta
+  dsExistArt            (misma estructura que regresaba el POST)
+   ├── ttArticulo        1 registro
+   ├── ttArtUbic         existencias por almacén-color
+   ├── ttArtProv         proveedores del artículo
+   ├── ttArtPrecios      precios por presentación-color
+   ├── ttColores         colores del artículo
+   ├── ttSustitutos      sustitutos activos
+   └── ttComplementarios complementarios
+  ```
+  
+  Ejemplo (ilustrativo, recortado). Las tablas sin registros no aparecen en el JSON:
+  
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "OK",
+      "dsExistArt": {
+        "dsExistArt": {
+          "ttArticulo": [ { "IdArticulo": "169701", "Descr": "...", "TotExist": 39.0 } ],
+          "ttArtUbic": [ { "IdAlm": "8", "IdColor": 0, "Exist": 0.0, "Transito": "+T" } ],
+          "ttArtPrecios": [ { "IdPres": 3, "PMayoreo": 191.81, "Tienda": 222.5 } ]
+        }
+      }
+    }
+  }
+  ```
+  
+  ## 6. Campos de salida — generales
+  
+  **`IdError`** · BOOLEAN — `true` = validación fallida, sin costo o error; `false` = consulta correcta
+  **`Respuesta`** · STRING — `OK` o descripción del error (ver sección 13)
+  
+  ## 7. Campos de response — `ttArticulo`
+  
+  **`IdArticulo`** · STRING — Id del artículo
+  **`Descr`** · STRING — Descripción
+  **`Modelo`** · STRING — Modelo
+  **`IdClavePS`** · STRING — Clave producto/servicio SAT
+  **`IdTipoArt`** · STRING — Tipo de artículo
+  **`IdProv`** · INTEGER — Proveedor consultado
+  **`Nombre`** · STRING — Nombre del proveedor
+  **`Relevancia`** · INTEGER — Relevancia del artículo
+  **`Iniciales`** · STRING — Iniciales del comprador del proveedor
+  **`Comprador`** · STRING — Nombre del comprador
+  **`DescrUDC`** · STRING — Presentación de compra (`ArtProv.Id-Pres`)
+  **`Equiv`** · DECIMAL — Equivalencia de la presentación de compra
+  **`DescrUMI`** · STRING — Presentación base en que se expresan las existencias
+  **`TotExist`** · DECIMAL — Existencia total (todas las ubicaciones) en la presentación base
+  **`Referencia`** · STRING — Referencia del último precio de proveedor (`HPrecio`)
+  **`IdFamilia`** · INTEGER — Familia
+  **`FamiliaDescr`** · STRING — Descripción de la familia
+  **`Procedencia`** · STRING — Procedencia
+  **`IdGrupo`** · INTEGER — Grupo
+  **`GrupoDescr`** · STRING — Descripción del grupo
+  **`IdMarca`** · INTEGER — Marca
+  **`MarcaDescr`** · STRING — Descripción de la marca
+  **`Actualizacion`** · DATE — Fecha del último precio de proveedor
+  **`IdCategoria`** · STRING — Categoría
+  **`CategoDescr`** · STRING — Descripción de la categoría
+  **`FecReg`** · DATE — Alta del artículo
+  **`MonedaNombre`** · STRING — Moneda del precio de proveedor
+  **`CostoImporte`** · DECIMAL — Importe del último precio de proveedor
+  **`CargoExtra`** · DECIMAL — Cargo extra del proveedor
+  **`PorcDesc`** · DECIMAL — % de descuento (artículo o grupo)
+  **`IncPtoPago`** · BOOLEAN — `true` = incluye descuento por pronto pago
+  
+  ## 8. Campos de response — `ttArtUbic`
+  
+  **`IdArticulo`** · STRING — Id del artículo
+  **`IdColor`** · INTEGER — Color
+  **`IdTipoArt`** · STRING — Tipo del color / artículo; `"/"` = almacén con restricción de traspaso (`RTrasp`)
+  **`ColorDescr`** · STRING — Descripción del color (10 caracteres)
+  **`IdAlm`** · STRING — Almacén
+  **`Minimo`** · DECIMAL — Mínimo en presentación base
+  **`Maximo`** · DECIMAL — Máximo en presentación base
+  **`Exist`** · DECIMAL — Existencia en presentación base
+  **`Transito`** · STRING — `"+T"` = mercancía en tránsito hacia el almacén
+  **`Compro`** · DECIMAL — Comprometido en presentación base
+  **`CPM`** · DECIMAL — Consumo promedio mensual (`0` en este endpoint; ver `ArtUbicCPM`)
+  **`VPM`** · DECIMAL — Venta promedio mensual (`0` en este endpoint; ver `ArtUbicVPM`)
+  
+  ## 9. Campos de response — `ttArtProv`, `ttArtPrecios`, `ttColores`
+  
+  **`ttArtProv.IdProv`** · INTEGER — Proveedor del artículo
+  **`ttArtProv.NomProv`** · STRING — Nombre del proveedor
+  
+  **`ttArtPrecios.IdPres`** · INTEGER — Presentación
+  **`ttArtPrecios.PresDescr`** · STRING — Descripción (`*` = presentación de mayoreo)
+  **`ttArtPrecios.ColorDescr`** · STRING — Abreviatura del color o `Todos`
+  **`ttArtPrecios.PMayoreo`** · DECIMAL — Precio de mayoreo (con oferta de crédito aplicada)
+  **`ttArtPrecios.PMayoreoIVA`** · DECIMAL — Precio de mayoreo con IVA
+  **`ttArtPrecios.Tienda`** · DECIMAL — Precio tienda (captura en `Precios.PTDA` si existe)
+  **`ttArtPrecios.Web`** · DECIMAL — Precio web (captura en `Precios.PWEB` si existe)
+  **`ttArtPrecios.OfeContado`** · DECIMAL — % de oferta de contado
+  **`ttArtPrecios.OfeCredito`** · DECIMAL — % de oferta de crédito
+  
+  **`ttColores.IdColor`** · INTEGER — Color
+  **`ttColores.ColorDescr`** · STRING — Descripción
+  **`ttColores.Abrev`** · STRING — Abreviatura
+  **`ttColores.Tipo`** · STRING — Tipo de artículo del color
+  **`ttColores.Activo`** · BOOLEAN — `true` = color activo
+  **`ttColores.CveHex`** · STRING — Color en hexadecimal
+  
+  Todas las tablas incluyen `IdArticulo` (relación con `ttArticulo`).
+  
+  ## 10. Campos de response — `ttSustitutos`, `ttComplementarios`
+  
+  **`ttSustitutos.IdSust`** · STRING — Artículo sustituto (solo activos)
+  **`ttSustitutos.Descr`** · STRING — Ver hallazgo H1 (sección 16)
+  **`ttSustitutos.PMay`** · DECIMAL — Precio de mayoreo del sustituto (`cnfa0451`)
+  **`ttSustitutos.Pres`** · STRING — Presentación de mayoreo del sustituto
+  
+  **`ttComplementarios.IdComp`** · STRING — Artículo complementario
+  **`ttComplementarios.Descr`** · STRING — Descripción del complementario
+  **`ttComplementarios.PMay`** · DECIMAL — Precio de mayoreo (`Precios`)
+  **`ttComplementarios.Exist`** · DECIMAL — Existencia en los almacenes de la ubicación del usuario
+  **`ttComplementarios.Pres`** · STRING — Presentación de mayoreo
+  
+  ## 11. Medición de tiempos (retirada)
+  
+  Del 24 al 25/09/2026 el servicio regresó `ttTiempos` (milisegundos y registros leídos por
+  sección) y escribía una línea `PERF` en el log del agente, para medir el rendimiento en el
+  servidor (resultados en la sección 15). Una vez medido se retiró: ya no forma parte de la
+  respuesta.
+  
+  ## 12. Reglas de negocio conservadas
+  
+  - Existencias en la **presentación base**: la activa tipo 3 de menor equivalencia o la UMI.
+  - `ttArtUbic` solo incluye ubicaciones con almacén existente y color activo.
+  - `"+T"` por **traspaso**: línea `DetSTrasp` con `CantPres > 0` y `CantUMI <> CancUMI` hacia el
+    almacén, sin `eTrasp` (solicitud sin requisición) o con `EstPedido` `Estatus < 7` y `Tipo = 1`.
+  - Filas `"+T"` por **requisición**: almacén **sin** ubicación del color con `DetReq` cuya
+    `ReqAlm` va a ese almacén y su `EstPedido` tiene `Estatus < 7`.
+  - Sin registro en `HCosto` (proveedor principal) no se calculan precios ni existencias.
+  
+  ## 13. Validaciones y errores
+  
+  **1. IdArticulo requerido** — `IdError: true` · `"ERROR: IdArticulo es obligatorio"`
+  **2. IdUser requerido** — `IdError: true` · `"ERROR: IdUser es obligatorio"`
+  **3. Usuario no existe** — `IdError: true` · `"ERROR: El usuario X no existe"`
+  **4. Artículo no existe** — `IdError: true` · `"ERROR: El articulo X no existe"`
+  **5. Sin costo** — `IdError: true` · `"No existen datos del costo del articulo"`
+  - Regresa `ttArticulo` y `ttArtProv` llenos y el resto vacío (igual que la versión POST)
+  
+  **6. Error inesperado** — `IdError: true` · `"ERROR: <mensaje ABL>"`, `dsExistArt` vacío
+  
+  ## 14. Cambios respecto a la versión anterior (POST)
+  
+  - **Verbo y entrada:** POST con body `ttPrecioArticulos` → GET con `IdArticulo`, `IdUser`
+    (e `IdProv` opcional).
+  - **Salida:** se eliminan `oMensaje` y el eco de `ttPrecioArticulos`; se agregan `IdError`
+    y `Respuesta`. `dsExistArt` conserva estructura y contenido.
+  - **Robustez:** los casos que antes terminaban en **HTTP 500** (usuario o artículo
+    inexistente, proveedor sin `ArtProv`, grupo, marca, color o comprador faltante) ahora
+    regresan `IdError` o dejan el campo vacío.
+  - El front-end debe cambiar la llamada a GET y leer `IdError` / `Respuesta` en lugar de
+    `oMensaje`.
+  
+  ## 15. Análisis de rendimiento
+  
+  ### 15.1 Causas de la lentitud (versión anterior)
+  
+  **1. Tránsito por traspaso — O(almacenes × historial).** Por **cada** ubicación del artículo se
+  recorría **todo** el historial `DetSTrasp` del artículo‑color (índice `Idx-ArtCol`) y por cada
+  línea se leía `sTrasp`. Ejemplo medido, `002741`: 1,296 líneas × 15 ubicaciones ≈ 19,400
+  líneas y 19,400 lecturas de `sTrasp`, para terminar marcando 3 almacenes.
+  
+  **2. Tránsito por requisición — O(almacenes del catálogo × historial).** Al terminar cada
+  color se recorría **todo** `Almacen` (`WHOLE-INDEX`) y, por cada almacén sin ubicación,
+  **todo** el historial `DetReq` del artículo‑color con una lectura de `ReqAlm` por línea
+  (`002741`: 2,608 líneas por cada almacén sin ubicación; solo 30 requisiciones estaban abiertas).
+  
+  **3. `EstPedido` con `USE-INDEX Idx-EsPeSe`.** El índice es `Estatus, Id-Pedido, Id-Seq`; con
+  `Estatus < 7` (rango en el primer componente) el compilador **solo acota por Estatus**: cada
+  búsqueda leía todos los pedidos abiertos de la empresa hasta encontrar el de la requisición.
+  El índice correcto es `idx-sur` (`Id-Pedido, Id-Seq`, único).
+  
+  **4. `IF…THEN…ELSE` dentro del `WHERE`** (`HPrecio`, `ArtProv`, `ArtUbic` de complementarios):
+  no es una igualdad activa, así que el índice solo se acota por artículo.
+  
+  **5. Búsquedas repetidas en ciclos.** `ArtOfer` se consultaba hasta 4 veces por presentación
+  más un `FOR EACH` por presentación; `Kolor`, `ArtCol` y `RTrasp` por cada fila; la
+  equivalencia (`ArtPres`) por cada ubicación en `ArtUbicCPM` / `ArtUbicVPM`.
+  
+  **6. Código muerto.** Cascada de 4 `FIND FIRST ArtOfer` cuyo resultado no se usaba,
+  `FIND Precios` sin uso dentro del ciclo de precios, cálculos de margen que nunca se regresaban
+  y un `FIND FIRST` / `FIND PREV` sobre `ttArtProv` que no reordenaba nada.
+  
+  **7. `ArtUbicVPM` (`inva0006`).** Filtraba `CAN-DO(p-IdAlm, Movim.Id-Alm)`, que no usa índice:
+  leía **todo** el historial de `Movim` del artículo‑color (todos los almacenes, todas las
+  fechas) por cada almacén.
+  
+  ### 15.2 Optimizaciones aplicadas
+  
+  - Tránsito por traspaso: **una vez por color** (antes, una vez por almacén) con tres joins
+    `FOR EACH …, FIRST …`: solicitudes con requisición y pedido abierto; solicitudes sin
+    requisición ya recibidas (`eTrasp`); y el resto. Sin consultas por línea.
+  - Tránsito por requisición: **un solo join por color** `DetReq → ReqAlm → EstPedido` (por
+    `idx-sur`); el filtro "almacén sin ubicación" se aplica en memoria. Ya no se recorre
+    el catálogo `Almacen` por cada color.
+  - Cachés por petición en temp‑tables: ubicaciones (`ttCacheUbic`, se lee `ArtUbic` una vez),
+    colores, `Kolor`, catálogo `Almacen` (una consulta), restricciones `RTrasp`, solicitudes
+    recibidas y ofertas vigentes (`ttCacheOfer`, una consulta en lugar de ~5 por presentación).
+  - Sustitutos: join `ArtSust → Articulo` activo (antes `CAN-FIND` en el `WHERE` + `FIND`).
+  - `HPrecio` / `ArtProv` con el proveedor ya resuelto (igualdad en los dos componentes del índice).
+  - Complementarios: una consulta de `ArtUbic` por complementario y filtro de almacenes en memoria.
+  - `inva0006`: con un solo almacén usa igualdad (`idx3`: artículo, color, almacén, fecha).
+  - `FIELDS` en los recorridos grandes (`ArtUbic`, `DetSTrasp`, `DetReq`, `Movim`, `RTrasp`).
+  - Buffers locales en cada rutina: ya no se depende de buffers por omisión compartidos entre
+    procedimientos internos (`obtener_precio` usaba el `Articulo` / `ArtOfer` de `GetExistArt`).
+  
+  ### 15.3 Índices por tabla (XREF de compilación)
+  
+  **`EstPedido`** (requisición) — antes `Idx-EsPeSe` (solo acota `Estatus`) · ahora `idx-sur` (único)
+  **`Almacen`** — antes `WHOLE-INDEX` ×3 dentro de ciclos · ahora 1 carga completa por petición (catálogo chico, `FIELDS`)
+  **`DetSTrasp`** / **`DetReq`** — antes `Idx-ArtCol` por cada almacén · ahora `Idx-ArtCol` una vez por color
+  **`ArtOfer`** — antes `idx-act` ×11 · ahora `idx-act` ×1
+  **`Kolor`** / **`RTrasp`** — antes 6 búsquedas por fila · ahora caché
+  **`Movim`** (VPM) — antes `Idx-ArCoTiFe` (artículo‑color, sin fecha) · ahora `idx3` (+ almacén + fecha)
+  
+  ### 15.4 Mediciones (24/09/2026)
+  
+  Prueba comparativa con los dos programas contra la BD `adosa`, desde una PC de desarrollo
+  (cliente‑servidor remoto, **~40 ms por viaje de red**). Cada llamada en una instancia nueva
+  (como `single-run`); primero la versión nueva y después la anterior (el caché de BD favorece
+  a la anterior, así que la mejora es conservadora). **La salida `dsExistArt` fue idéntica
+  byte a byte en todos los artículos.**
+  
+  **`002741`** (historial de traspasos) — antes 91.6 s · ahora 29.4 s · ×3.1
+  **`000624`** (historial de traspasos) — antes 26.9 s · ahora 5.8 s · ×4.6
+  **`000506`** (oferta vigente, 200 ubicaciones) — antes 128.0 s · ahora 13.1 s · ×9.8
+  **`000507`** (18 colores, 145 ubicaciones) — antes 146.1 s · ahora 13.2 s · ×11.1
+  **`000408`** (sustitutos) — antes 11.8 s · ahora 2.4 s · ×5.0
+  **`007005`** (complementarios) — antes 15.2 s · ahora 2.8 s · ×5.5
+  **`169701`** (fila `+T` por requisición a almacén sin ubicación) — antes 8.0 s · ahora 3.2 s · ×2.5
+  
+  Total de la muestra: **427.5 s → 69.8 s (×6.1)**. Quedaron cubiertas las marcas `+T` por
+  traspaso y por requisición, las restricciones `"/"`, precios con oferta, sustitutos y
+  complementarios.
+  
+  Notas para interpretar los tiempos:
+  
+  - Desde esta PC el tiempo lo domina la latencia: un `FIND` o una fila de join cuesta ~40 ms,
+    mientras que un `FOR EACH` de una sola tabla con `FIELDS` trae ~1,300 filas en 0.3 s.
+  - En producción PASOE corre en el mismo servidor que la BD: la latencia es mínima y pesa
+    el **total de registros leídos**. Ahí la versión anterior es mucho más lenta de lo que
+    refleja esta prueba (recorre el historial `DetSTrasp` / `DetReq` por almacén y
+    `EstPedido` completo por `Idx-EsPeSe`), y la nueva lee del orden de cientos a pocos miles de
+    registros por consulta.
+  - La medición en el servidor está en la sección 15.5 (tomada con `ttTiempos`, ya retirado).
+  
+  ### 15.5 Medición en servidor (artículo con más historial)
+  
+  **`023602`** — 54 colores, 612 ubicaciones, historial de 37,606 líneas `DetReq` y 7,972 `DetSTrasp`:
+  
+  **`TOTAL`** · 3,389 ms
+  **`Existencias por almacen`** · 3,230 ms — de ellos tránsito por requisición 2,127 ms y por traspaso 990 ms
+  **Resto de secciones** · menos de 0.2 s en conjunto
+  
+  - El tránsito recorre el historial completo del artículo (aquí ~37.6 mil + ~8 mil líneas)
+    con una lectura de `ReqAlm` / `sTrasp` y `EstPedido` / `eTrasp` por línea.
+  - **Dato de BD:** `EstPedido` tiene **más de 360 mil registros con `Estatus < 7`** (355 mil de
+    `Tipo 0`). El filtro "pedido abierto" casi no discrimina: por eso `Idx-EsPeSe` era
+    catastrófico en la versión anterior (cada búsqueda podía recorrer esos 360 mil), y también
+    significa que requisiciones y traspasos antiguos cuyo pedido nunca se cerró siguen
+    contando como "en tránsito".
+  - Para bajar de ~3 s en artículos con este historial hace falta una decisión de negocio:
+    ventana de fechas para el tránsito, caché por sesión con vigencia corta, o depurar los
+    `EstPedido` que quedaron abiertos. Se eligió la caché (sección 15.6).
+  
+  ### 15.6 Caché de tránsito por sesión (configurable)
+  
+  El cálculo del tránsito (lo más caro) se guarda por artículo en la clase estática
+  `CacheTransitoArt.cls`. Los miembros `STATIC` viven lo que vive la sesión ABL del agente
+  PASOE, así que las consultas del mismo artículo dentro de la vigencia no recalculan.
+  
+  **Parámetro** — tabla `URL` (mismo patrón que `UserToken` / `IdToken`), se lee en cada petición:
+  
+  **`Parametro`** · STRING — `PrecioArticuloExist.CacheMin`
+  **`Valor`** · STRING — minutos de vigencia
+  - `5` = 5 minutos · `15` = 15 minutos · `0` = **sin caché** (siempre calcula y libera la memoria)
+  - Sin registro, vacío o no numérico = **5 minutos** (omisión del programa)
+  
+  El cambio aplica desde la siguiente petición; no requiere compilar ni reiniciar.
+  
+  Alta o cambio del parámetro (ABL):
+  
+  ```progress
+  define buffer bUltimo for URL.
+  var integer vId.
+  
+  do transaction:
+      find first URL where URL.Parametro = "PrecioArticuloExist.CacheMin" exclusive-lock no-error.
+      if not available URL then do:
+          for each bUltimo no-lock by bUltimo.Id-URL descending:
+              vId = bUltimo.Id-URL.
+              leave.
+          end.
+          create URL.
+          assign
+              URL.Id-URL    = vId + 1
+              URL.Parametro = "PrecioArticuloExist.CacheMin"
+              URL.Descr     = "Min. cache transito PrecioArt".
+      end.
+      URL.Valor = "5".   /* minutos; "0" = sin cache */
+  end.
+  ```
+  
+  Qué se guarda y qué no:
+  
+  - Se guardan los **hechos de tránsito** del artículo (color, almacén, traspaso / requisición),
+    **sin** filtrar por ubicaciones. Existencias, mínimos, máximos, precios, colores,
+    restricciones y el filtro "almacén con / sin ubicación" **siempre** se leen frescos.
+  - Lo único que puede ir desfasado, hasta la vigencia, es la marca `+T` cuando un traspaso o
+    una requisición cambia de estado.
+  - La caché es **por sesión** del agente: con N sesiones, la primera consulta de un artículo en
+    cada sesión calcula. `GetExistArt`, `ArtUbicCPM` y `ArtUbicVPM` comparten la misma caché.
+  - Se depura sola: al guardar se eliminan los artículos vencidos; tope de 3,000 artículos
+    por sesión.
+  
+  Prueba (misma sesión, PC de desarrollo): `002741` 30.8 s calculado → 3.2 s desde caché;
+  `169701` 3.6 s → 1.7 s. Salida idéntica en ambos casos y también con vigencia 0.
+  
+  ## 16. Hallazgos para revisar (se conservaron para no cambiar la salida)
+  
+  La salida es idéntica a la versión anterior para poder compararlas. Estos puntos parecen
+  errores de negocio; están marcados `REVISAR` en el código:
+  
+  **H1.** `ttSustitutos.Descr` lleva la descripción del **artículo consultado**, no la del sustituto.
+  **H2.** `ttSustitutos.IdArticulo` lleva el **sustituto** (debería ser el artículo consultado,
+  como en las demás tablas del dataset).
+  **H3.** En las filas `"+T"` por requisición, la restricción `RTrasp` (`"/"`) se valida contra el
+  almacén de la **última ubicación** del color y no contra el almacén en tránsito.
+  **H4.** Precios: `v-ofer1` / `v-ofer2` se arrastran entre presentaciones y, si hay oferta de
+  crédito sin oferta de contado, no se recalculan los importes (quedan los anteriores).
+  **H5.** `TotExist` suma todas las ubicaciones (colores inactivos y almacenes inexistentes
+  incluidos), mientras `ttArtUbic` los excluye.
+  **H6.** Con `IdProv`, `HPrecio` y `ArtProv` usan ese proveedor, pero `HCosto` siempre el principal.
+  
+  ## 17. Despliegue
+  
+  > Al retirar `ttTiempos` (25/09/2026) cambió otra vez la firma de `GetExistArt`: hay que
+  > repetir los pasos 1 a 3.
+  
+  1. En PDSOE: clic derecho en `preciosartexist.p` → **Define Service Interface / Update** para
+     regenerar `RestADOSArt/.services/AppServer/preciosartexist.pidl`.
+  2. En el recurso `_PrecioArticuloExist` (`resourceModel.xml`): operación
+     `preciosartexist..GetExistArt` con verbo **GET**, query params `IdArticulo`, `IdUser`,
+     `IdProv`; salida `IdError`, `Respuesta`, `dsExistArt`.
+     No editar `resourceModel.xml` a mano contra un `.pidl` desactualizado (rompe todo el PASOE).
+  3. Compilar y **Publish** a la instancia PASOE, incluyendo la clase nueva
+     `AppServer/CacheTransitoArt.cls` (no es servicio REST: no lleva `.pidl`). Después,
+     reiniciar las sesiones del agente para que carguen el r-code nuevo.
+  4. Verificar con la colección Bruno (`Articulo Existencia/Consulta`) un artículo válido y uno
+     inexistente: ambos deben responder HTTP 200 (el segundo con `IdError: true`).
+  
+  ---
+  
+  **Desarrollado por:** SIS10 - JASS
+  
+}

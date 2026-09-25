@@ -1,0 +1,161 @@
+meta {
+  name: /Transformacion/ListarResumen
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/Transformacion/ListarResumen?IdArticulo=
+  body: none
+  auth: inherit
+}
+
+params:query {
+  IdArticulo: 
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # Servicio REST — Resumen de Transformación
+  
+  ## 1. Descripción general
+  
+  Servicio que devuelve, en un **DataSet jerárquico**, los artículos de transformación.
+  Para cada artículo (nivel padre) se "abren" sus **insumos** y **procesos** ligados
+  (nivel hijo), mostrando el costo base, el costo actual y la fecha de alta de cada uno.
+  
+  ## 2. Datos del endpoint
+  
+  **`Verbo`** · GET
+  **`Ruta`** · `/Transformacion/ListarResumen`
+  **`Consumes`** · `application/json`
+  **`Produces`** · `application/json`
+  **`Programa`** · `art-transf-resumen.p`
+  **`Procedure`** · `ListarResumen`
+  
+  ## 3. URL de ejemplo
+  
+  ```
+  GET /Transformacion/ListarResumen?IdArticulo=ART001
+  GET /Transformacion/ListarResumen
+  ```
+  
+  ## 4. Parámetros de entrada (Query String)
+  
+  > ✅ = Requerido · ❌ = Opcional
+  
+  **`IdArticulo`** · STRING · ❌ — Filtra el resultado a un solo artículo.
+  - Con valor: solo ese artículo (se valida que exista).
+  - Vacío / omitido = todos los artículos que tengan al menos un insumo o un proceso ligado.
+  
+  ## 5. Estructura del response
+  
+  El response es un DataSet `dsTransf` con tres tablas relacionadas (anidadas):
+  
+  ```
+  ttArticulo (padre)
+   ├── ttInsumo  (hijos — insumos ligados)
+   └── ttProceso (hijos — procesos ligados)
+  ```
+  
+  Además se devuelven los parámetros de salida `IdError` y `Respuesta`.
+  
+  ## 6. Campos de salida — generales
+  
+  **`IdError`** · BOOLEAN — `true` = ocurrió un error; `false` = operación correcta.
+  **`Respuesta`** · STRING — Mensaje descriptivo del resultado (p. ej. `"3 articulos de transformacion encontrados"`).
+  
+  ## 7. Campos de response — `ttArticulo` (nivel padre)
+  
+  **`IdArticulo`** · STRING — Id del artículo de transformación.
+  **`NomArticulo`** · STRING — Descripción / nombre del artículo.
+  **`IdGrupo`** · INTEGER — Id del grupo al que pertenece.
+  **`NomGrupo`** · STRING — Descripción del grupo.
+  **`IdProveedor`** · INTEGER — Id del proveedor del artículo.
+  **`NomProveedor`** · STRING — Nombre del proveedor.
+  
+  ## 8. Campos de response — `ttInsumo` (nivel hijo)
+  
+  **`IdArticulo`** · STRING — Id del artículo padre (campo de relación).
+  **`Secuencia`** · INTEGER — Consecutivo del insumo dentro del artículo.
+  **`IdInsumo`** · STRING — Id del artículo usado como insumo.
+  **`NomInsumo`** · STRING — Descripción del insumo.
+  **`Fraccion`** · DECIMAL — Fracción / cantidad del insumo.
+  **`CostoBase`** · DECIMAL — Costo base registrado al darse de alta.
+  **`CostoActual`** · DECIMAL — Costo actual del insumo.
+  **`FechaAlta`** · DATE — Fecha de alta del insumo (`FechaBase`).
+  
+  ## 9. Campos de response — `ttProceso` (nivel hijo)
+  
+  **`IdArticulo`** · STRING — Id del artículo padre (campo de relación).
+  **`Secuencia`** · INTEGER — Consecutivo del proceso dentro del artículo.
+  **`IdProceso`** · STRING — Id del artículo usado como proceso.
+  **`NomProceso`** · STRING — Descripción del proceso.
+  **`Fraccion`** · DECIMAL — Fracción / cantidad del proceso.
+  **`CostoBase`** · DECIMAL — Costo base registrado al darse de alta.
+  **`CostoActual`** · DECIMAL — Costo actual del proceso.
+  **`FechaAlta`** · DATE — Fecha de alta del proceso (`FechaBase`).
+  
+  ## 10. Ejemplo de respuesta JSON
+  
+  ```json
+  {
+    "dsTransf": {
+      "ttArticulo": [
+        {
+          "IdArticulo": "ART001",
+          "NomArticulo": "PLAYERA TRANSFORMADA",
+          "IdGrupo": 12,
+          "NomGrupo": "TEXTIL",
+          "IdProveedor": 305,
+          "NomProveedor": "PROVEEDOR EJEMPLO SA",
+          "ttInsumo": [
+            {
+              "IdArticulo": "ART001",
+              "Secuencia": 1,
+              "IdInsumo": "INS010",
+              "NomInsumo": "TELA ALGODON",
+              "Fraccion": 1.5,
+              "CostoBase": 42.00,
+              "CostoActual": 45.30,
+              "FechaAlta": "2026-01-15"
+            }
+          ],
+          "ttProceso": [
+            {
+              "IdArticulo": "ART001",
+              "Secuencia": 1,
+              "IdProceso": "PRO020",
+              "NomProceso": "ESTAMPADO",
+              "Fraccion": 1.0,
+              "CostoBase": 8.00,
+              "CostoActual": 9.50,
+              "FechaAlta": "2026-01-15"
+            }
+          ]
+        }
+      ]
+    },
+    "IdError": false,
+    "Respuesta": "1 articulos de transformacion encontrados"
+  }
+  ```
+  
+  ## 11. Respuestas de error
+  
+  **Artículo no existe** (cuando se envía `IdArticulo`):
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "Articulo ART999 no existe"
+  }
+  ```
+  
+  ---
+  **Desarrollado por:** SIS10 - JASS
+  
+}

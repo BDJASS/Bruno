@@ -5,13 +5,13 @@ meta {
 }
 
 get {
-  url: http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Presentacion/ConsultarPresentacion?IdArticulo=125926
+  url: http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Presentacion/ConsultarPresentacion?IdArticulo=001673
   body: none
   auth: inherit
 }
 
 params:query {
-  IdArticulo: 125926
+  IdArticulo: 001673
 }
 
 settings {
@@ -21,19 +21,19 @@ settings {
 
 docs {
   ## Consultar Presentaciones de Artículo
-
+  
   **Descripción**: Obtiene las presentaciones disponibles asociadas a un artículo específico, identificado por su ID.
-
+  
   **Método**: GET
-
+  
   **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Presentacion/ConsultarPresentacion`
-
+  
   ### Parámetros
-
+  
   **`IdArticulo`** · INTEGER · Requerido — Identificador único del artículo del cual se desean consultar las presentaciones.
-
+  
   ### Notas
-
+  
   - No requiere body en la solicitud.
   - La autenticación se hereda de la configuración del entorno (auth: inherit).
 }

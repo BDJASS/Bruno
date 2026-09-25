@@ -1,0 +1,20 @@
+meta {
+  name: Canal de Venta
+  type: http
+  seq: 22
+}
+
+get {
+  url: http://192.0.1.14:8813/RestADOSASysAdmin/rest/RestADOSASysAdmin/CanalVenta?Canal=
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Canal: 
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

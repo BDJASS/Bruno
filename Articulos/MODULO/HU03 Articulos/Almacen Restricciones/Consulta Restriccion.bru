@@ -5,13 +5,13 @@ meta {
 }
 
 get {
-  url: http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Almacen/ConsultarRestriccion?IdArticulo=044711&IdColor=2
+  url: http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Almacen/ConsultarRestriccion?IdArticulo=023602&IdColor=2
   body: none
   auth: inherit
 }
 
 params:query {
-  IdArticulo: 044711
+  IdArticulo: 023602
   IdColor: 2
 }
 
@@ -22,29 +22,29 @@ settings {
 
 docs {
   ## Consulta Restriccion
-
+  
   **Descripción**: Consulta las restricciones de almacén asociadas a un artículo y color específicos.
-
+  
   **Módulo**: HU03 Articulos / Almacen Restricciones
-
+  
   **Método**: GET
-
+  
   **URL**: `http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/AltaArticulos/Almacen/ConsultarRestriccion`
-
+  
   ---
-
+  
   ### Parámetros (Query String)
-
+  
   **`IdArticulo`** · STRING · ✅ — Identificador del artículo a consultar.
   - Ej: `"044711"`
-
+  
   **`IdColor`** · INTEGER · ✅ — Identificador del color asociado al artículo.
   - Ej: `2`
-
+  
   ---
-
+  
   ### Notas
-
+  
   - Autenticación: heredada del entorno (`auth: inherit`).
   - La URL se codifica automáticamente (`encodeUrl: true`).
   - Sin tiempo límite de espera configurado (`timeout: 0`).

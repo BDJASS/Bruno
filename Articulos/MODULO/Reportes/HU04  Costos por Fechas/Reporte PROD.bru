@@ -1,0 +1,32 @@
+meta {
+  name: Reporte PROD
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.9:8828/RestADOSArt/rest/RestADOSArt/Reporte/CostosPorFechas?TipoSeleccion=1&IdProv=2033&ListaProv=&ListaGrupos=&ListaFamilias=&ListaMarcas=&Orden=1&Fecha1=2026-03-29&Fecha2=2026-04-29&Fecha3=2026-05-29&Fecha4=2026-06-29&SoloDescontinuados=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  TipoSeleccion: 1
+  IdProv: 2033
+  ListaProv: 
+  ListaGrupos: 
+  ListaFamilias: 
+  ListaMarcas: 
+  Orden: 1
+  Fecha1: 2026-03-29
+  Fecha2: 2026-04-29
+  Fecha3: 2026-05-29
+  Fecha4: 2026-06-29
+  SoloDescontinuados: 1
+  ~IdArticulo: 071222
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
