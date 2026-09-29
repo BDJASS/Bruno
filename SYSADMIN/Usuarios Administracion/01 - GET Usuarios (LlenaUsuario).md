@@ -22,7 +22,7 @@ cargar el listado y la ficha del usuario.
 ## 2. Endpoint
 
 ```
-GET http://192.0.1.14:8823/RestADOSASysAdmin/rest/RestADOSASysAdmin/UsuariosAdm
+GET http://192.0.1.14:8813/RestADOSASysAdmin/rest/RestADOSASysAdmin/UsuariosAdm
 ```
 
 ---

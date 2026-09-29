@@ -20,7 +20,7 @@ el módulo de Catálogos, no desde aquí.
 ## 2. Endpoint
 
 ```
-GET http://192.0.1.14:8823/RestADOSASysAdmin/rest/RestADOSASysAdmin/UsuariosAdm/Parametros
+GET http://192.0.1.14:8813/RestADOSASysAdmin/rest/RestADOSASysAdmin/UsuariosAdm/Parametros
 ```
 
 ---

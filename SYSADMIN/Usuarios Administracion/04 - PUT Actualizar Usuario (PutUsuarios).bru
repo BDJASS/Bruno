@@ -24,7 +24,7 @@ body:json {
         "IdCaja": "",
         "IdUbicacion": "02B",
         "TipoUsuario": "ADM",
-        "hisPassword": "",
+        "hisPassword": "OLDS",
         "IdFuncion": "GTEVTAS",
         "Sistemas": false,
         "Facultado": false,
@@ -64,12 +64,78 @@ settings {
 docs {
   # 04 · PUT /UsuariosAdm — PutUsuarios
   
-  **Actualiza** un usuario existente. Toma la primera fila de `ttUsuario`, localiza
-  el `Usuario` por `IdUser` (EXCLUSIVE-LOCK) y sobrescribe sus campos. No toca `FecReg`.
+  **Programa:** `RestADOSASysAdmin/AppServer/admusuarios.p`
+  **Procedimiento:** `PutUsuarios` · **Verbo:** `PUT` · **Autor:** SIS10 — JASS
   
-  - Body: `ttUsuario` (1 fila). `IdUser` identifica el registro a actualizar.
-  - El ejemplo reutiliza `PRUEBA01` y cambia Nombre, Facultado, Nivel y Teléfono.
-  - Salida: `Mensaje` (CHARACTER).
+  ## 1. Descripción
   
-  📄 Especificación completa: **04 - PUT Actualizar Usuario (PutUsuarios).md**
+  **Actualiza** un usuario existente. Toma la primera fila de `ttUsuario`
+  (`FIND FIRST ttUsuario`), localiza el `Usuario` cuyo `Id-User = ttUsuario.IdUser` con
+  `EXCLUSIVE-LOCK` y sobrescribe sus campos. A diferencia del alta, **no** modifica
+  `FecReg` (conserva la fecha original).
+  
+  ## 2. Endpoint
+  
+  `PUT http://192.0.1.14:8813/RestADOSASysAdmin/rest/RestADOSASysAdmin/UsuariosAdm`
+  Header: `Content-Type: application/json`
+  
+  ## 3. Entrada (body JSON — ttUsuario)
+  
+  > ✅ = Requerido · ❌ = Opcional · Se envía **una** fila en `ttUsuario`.
+  
+  **`IdUser`** · CHARACTER · ✅ — Llave del match; identifica el usuario a actualizar
+  - Resto de campos: los mismos que en el alta (endpoint 03). Se reasignan tal cual llegan.
+  
+  **`NomUsuario`** · CHARACTER · ❌ — Nombre
+  **`IdCaja`** · CHARACTER · ❌ — Id de caja
+  **`IdUbicacion`** · CHARACTER · ❌ — Ubicación
+  **`TipoUsuario`** · CHARACTER · ❌ — Tipo de usuario
+  **`hisPassword`** · CHARACTER · ❌ — Password
+  **`IdFuncion`** · CHARACTER · ❌ — Función (`id_funcion`)
+  **`Sistemas`** / **`Facultado`** / **`Foraneo`** · LOGICAL · ❌
+  **`Clave`** / **`Nivel`** / **`NumMenu`** / **`IdSup`** / **`IdCajero`** · INTEGER · ❌
+  **`Firma`** / **`Telefono`** / **`IdUbivta`** / **`Email`** / **`Email2`** / **`IdSeguro`** · CHARACTER · ❌
+  **`IdModulo`** · INTEGER · ❌ — Módulo (1–9)
+  **`IdRol`** · INTEGER · ❌ — Rol
+  **`IdClaseCte`** · INTEGER · ❌ — Clase de cliente
+  
+  > `FecReg` no se toca en el update. Si el `IdUser` no existe, el `FIND ... EXCLUSIVE-LOCK`
+  > no encuentra registro y no se actualiza nada.
+  
+  ## 4. Campos de response
+  
+  **`Mensaje`** · CHARACTER — Mensaje de resultado devuelto por el servicio.
+  
+  ## 5. Ejemplo de body
+  
+  ```json
+  {
+    "ttUsuario": [
+      {
+        "IdUser": "OLDS",
+        "NomUsuario": "OSCAR LESTER DELGADO SANCHEZ",
+        "IdUbicacion": "02B",
+        "TipoUsuario": "ADM",
+        "IdFuncion": "GTEVTAS",
+        "Nivel": 2,
+        "IdUbivta": "MLA",
+        "Email": "odelgado@adosa.com.mx",
+        "IdVendedor": "4791",
+        "IdModulo": 5
+      }
+    ]
+  }
+  ```
+  
+  > Si el servidor rechaza el body plano, usa la forma anidada del adaptador clásico:
+  > `{ "ttUsuario": { "ttUsuario": [ ... ] } }`.
+  
+  ## 6. Notas técnicas
+  
+  - `BUFFER-COPY ttUsuario TO Usuario` seguido de `ASSIGN` explícito de cada campo.
+  - El servicio no valida existencia previa: si el `IdUser` no está, simplemente no
+    hay actualización (confírmalo del lado del consumidor si lo necesitas).
+  
+  ---
+  **Desarrollado por:** SIS10 - JASS
 }

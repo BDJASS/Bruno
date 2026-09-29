@@ -1,0 +1,384 @@
+meta {
+  name: Consulta Costo Articulo
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/CostoArticuloExist?IdArticulo=023602&IdUser=olds
+  body: json
+  auth: inherit
+}
+
+params:query {
+  IdArticulo: 023602
+  IdUser: olds
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # Servicio REST — Costo y Existencia de Artículo
+  
+  ---
+  
+  ## 1. Título del Servicio
+  
+  **Art — Costo y Existencia de Artículo**
+  Consulta de costo de un artículo: datos generales y del costo vigente del proveedor, costos
+  por presentación, proveedores, precios por presentación y color con margen y ofertas
+  vigentes, y existencias por almacén (incluye mercancía en tránsito).
+  Programa servidor: `costoartexist.p` · Procedure: `GetExistArt` · Modo: `single-run`
+  
+  ---
+  
+  ## 2. Método HTTP
+  
+  ```
+  GET
+  ```
+  
+  ---
+  
+  ## 3. URL Completa
+  
+  ```
+  http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/CostoArticuloExist
+  ```
+  
+  ---
+  
+  ## 4. Parámetros de Entrada (Query String)
+  
+  > ✅ = Requerido · ❌ = Opcional
+  
+  **`IdArticulo`** · STRING · ✅ — Código del artículo (`Articulo.Id-Articulo`, 6 caracteres)
+  
+  **`IdUser`** · STRING · ✅ — Usuario que consulta (`Usuario.Id-User`)
+  - Solo se valida que exista
+  
+  **`IdProv`** · INTEGER · ❌ — Proveedor cuyo costo se consulta
+  - `0` u omitido = proveedor principal del artículo
+  - Los proveedores válidos vienen en `ttArtProv`
+  
+  ---
+  
+  ## 5. Body
+  
+  No aplica. Método `GET`.
+  
+  ---
+  
+  ## 6. Headers
+  
+  | Header   | Valor              |
+  |----------|--------------------|
+  | `Accept` | `application/json` |
+  
+  ---
+  
+  ## 7. Ejemplo de Request
+  
+  ```
+  GET http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/CostoArticuloExist
+      ?IdArticulo=021118
+      &IdUser=olds
+  ```
+  
+  Con otro proveedor del artículo:
+  
+  ```
+  GET http://192.0.1.14:8828/RestADOSArt/rest/RestADOSArt/CostoArticuloExist
+      ?IdArticulo=021118
+      &IdUser=olds
+      &IdProv=74
+  ```
+  
+  ---
+  
+  ## 8. Ejemplo de Response
+  
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "OK",
+      "dsExistArt": {
+        "dsExistArt": {
+          "ttArticulo": [
+            {
+              "IdArticulo": "021118",
+              "Descr": "BOLIGRAFO P/MED. 1.0MM BIC M-250 923995 DURA+",
+              "Modelo": "M-250 923995",
+              "IdClavePS": "44121701",
+              "IdTipoArt": "A",
+              "IdProv": 74,
+              "Nombre": "NO SABE FALLAR,S.A.DE C.V.",
+              "Relevancia": 4,
+              "Iniciales": "ABC",
+              "Comprador": "NOMBRE DEL COMPRADOR",
+              "DescrUDC": "CO/1200",
+              "Equiv": 1200.0,
+              "DescrUMI": "C/12",
+              "TotExist": 24162.0,
+              "Referencia": "",
+              "IdFamilia": 512,
+              "FamiliaDescr": "DURA +",
+              "Procedencia": "",
+              "IdGrupo": 711,
+              "GrupoDescr": "DURA +",
+              "IdMarca": 4,
+              "MarcaDescr": "BIC",
+              "Actualizacion": "2026-02-26",
+              "IdCategoria": "BO",
+              "CategoDescr": "BOLIGRAFOS",
+              "FecReg": "1996-12-03",
+              "FraccAran": "",
+              "MonedaNombre": "PESO",
+              "CostoImporte": 1.0,
+              "PrecioProv": 4548.0,
+              "LMC": 1.0,
+              "ImpuestoAran": 0.0,
+              "CargoExtra": 0.0,
+              "Gastos": 0.0,
+              "Descuentos": "8.5,8,7.5,0,0,0,0,0,0",
+              "PorcDesc": 10.0,
+              "IncPtoPago": false,
+              "PCosto": 3135.708,
+              "CostoMOrig": 3135.708
+            }
+          ],
+          "ttArtUbic": [
+            {
+              "IdArticulo": "021118", "IdColor": 2, "IdTipoArt": "A", "ColorDescr": "AZUL",
+              "IdAlm": "02B", "Minimo": 6658.5, "Maximo": 10863.8333333333, "Exist": 10374.0,
+              "Transito": "", "Compro": 6052.0, "CPM": 0.0, "VPM": 0.0
+            },
+            {
+              "IdArticulo": "021118", "IdColor": 2, "IdTipoArt": "A", "ColorDescr": "AZUL",
+              "IdAlm": "03A", "Minimo": 488.0833333333, "Maximo": 732.0833333333, "Exist": 964.0,
+              "Transito": "", "Compro": 1.0, "CPM": 0.0, "VPM": 0.0
+            }
+          ],
+          "ttArtCosto": [
+            {
+              "IdArticulo": "021118", "Margen": " 37.00%", "Pres": "*C/12   ",
+              "Costo": 35.41368, "CostoSP": 35.41368, "CostoMN": 35.41368, "CostoMNSP": 35.41368
+            },
+            {
+              "IdArticulo": "021118", "Margen": " 35.00%", "Pres": " CO/1200",
+              "Costo": 3541.368, "CostoSP": 3541.368, "CostoMN": 3541.368, "CostoMNSP": 3541.368
+            },
+            {
+              "IdArticulo": "021118", "Margen": "", "Pres": "",
+              "Costo": 0.0, "CostoSP": 0.0, "CostoMN": 0.0, "CostoMNSP": 0.0
+            },
+            {
+              "IdArticulo": "021118", "Margen": "", "Pres": "",
+              "Costo": 0.0, "CostoSP": 0.0, "CostoMN": 0.0, "CostoMNSP": 0.0
+            }
+          ],
+          "ttArtProv": [
+            { "IdArticulo": "021118", "IdProv": 74, "NomProv": "NO SABE FALLAR,S.A.DE C.V." }
+          ],
+          "ttArtPrecios": [
+            {
+              "IdArticulo": "021118", "IdPres": 4, "PresDescr": "*C/12", "ColorDescr": "Todos",
+              "Margen": 37.0, "PMayoreo": 48.71, "PMayoreoIVA": 56.5, "Tienda": 56.5, "Web": 56.5,
+              "OfeContado": 0.0, "OfeCredito": 0.0, "Ubicacion": "", "FecInicio": null, "FecFin": null
+            },
+            {
+              "IdArticulo": "021118", "IdPres": 5, "PresDescr": "CO/1200", "ColorDescr": "Todos",
+              "Margen": 35.0, "PMayoreo": 4781.03, "PMayoreoIVA": 5545.99, "Tienda": 5545.99, "Web": 5545.99,
+              "OfeContado": 0.0, "OfeCredito": 0.0, "Ubicacion": "", "FecInicio": null, "FecFin": null
+            }
+          ]
+        }
+      }
+    }
+  }
+  ```
+  
+  > Ejemplo recortado: `ttArtUbic` trae una fila por almacén‑color (56 en este artículo).
+  > Las tablas sin registros **no aparecen** en el JSON. Fechas en formato `YYYY-MM-DD`;
+  > fecha vacía = `null`. Todas las tablas traen `IdArticulo` para relacionarlas con `ttArticulo`.
+  
+  ### Campos de `ttArticulo` (1 registro)
+  
+  **`IdArticulo`** · STRING — Código del artículo
+  **`Descr`** · STRING — Descripción
+  **`Modelo`** · STRING — Modelo
+  **`IdClavePS`** · STRING — Clave de producto / servicio SAT
+  **`IdTipoArt`** · STRING — Tipo de artículo
+  **`IdProv`** · INTEGER — Proveedor consultado
+  **`Nombre`** · STRING — Nombre del proveedor
+  **`Relevancia`** · INTEGER — Relevancia del artículo
+  **`Iniciales`** · STRING — Iniciales del comprador del proveedor
+  **`Comprador`** · STRING — Nombre del comprador
+  **`DescrUDC`** · STRING — Presentación de compra del proveedor
+  **`Equiv`** · DECIMAL — Equivalencia de la presentación de compra
+  **`DescrUMI`** · STRING — Presentación base en que se expresan las existencias
+  **`TotExist`** · DECIMAL — Existencia total de todas las ubicaciones (presentación base)
+  **`Referencia`** · STRING — Referencia del costo vigente
+  **`IdFamilia`** · INTEGER — Familia
+  **`FamiliaDescr`** · STRING — Descripción de la familia
+  **`Procedencia`** · STRING — Procedencia
+  **`IdGrupo`** · INTEGER — Grupo
+  **`GrupoDescr`** · STRING — Descripción del grupo
+  **`IdMarca`** · INTEGER — Marca
+  **`MarcaDescr`** · STRING — Descripción de la marca
+  **`Actualizacion`** · DATE — Fecha de registro del costo vigente
+  **`IdCategoria`** · STRING — Categoría
+  **`CategoDescr`** · STRING — Descripción de la categoría
+  **`FecReg`** · DATE — Fecha de alta del artículo
+  **`FraccAran`** · STRING — Fracción arancelaria
+  **`MonedaNombre`** · STRING — Moneda del costo
+  **`CostoImporte`** · DECIMAL — Tipo de cambio registrado con el costo (`1` = pesos)
+  **`PrecioProv`** · DECIMAL — Precio del proveedor
+  **`LMC`** · DECIMAL — Lote mínimo de compra con el proveedor
+  **`ImpuestoAran`** · DECIMAL — % de impuesto arancelario
+  **`CargoExtra`** · DECIMAL — Cargo extra del proveedor
+  **`Gastos`** · DECIMAL — % de gastos a incrementar
+  **`Descuentos`** · STRING — Descuentos del proveedor en cascada, separados por coma
+  **`PorcDesc`** · DECIMAL — % de descuento (del artículo o, si no tiene, del grupo)
+  **`IncPtoPago`** · BOOLEAN — `true` = el costo ya incluye el descuento por pronto pago
+  **`PCosto`** · DECIMAL — Costo ponderado en pesos, en la presentación del costo
+  **`CostoMOrig`** · DECIMAL — Costo ponderado en la moneda del costo (en pesos si el costo es en pesos)
+  
+  ### Campos de `ttArtUbic` (existencias por almacén)
+  
+  **`IdColor`** · INTEGER — Color
+  **`IdTipoArt`** · STRING — Tipo del color o del artículo; `"/"` = almacén con restricción de traspaso
+  **`ColorDescr`** · STRING — Descripción del color (10 caracteres)
+  **`IdAlm`** · STRING — Almacén
+  **`Minimo`** · DECIMAL — Mínimo (presentación base)
+  **`Maximo`** · DECIMAL — Máximo (presentación base)
+  **`Exist`** · DECIMAL — Existencia (presentación base)
+  **`Transito`** · STRING — `"+T"` = mercancía en tránsito hacia el almacén; vacío = sin tránsito
+  **`Compro`** · DECIMAL — Comprometido (presentación base)
+  **`CPM`** · DECIMAL — Siempre `0` en este servicio
+  **`VPM`** · DECIMAL — Siempre `0` en este servicio
+  
+  ### Campos de `ttArtCosto` (costos por presentación, siempre 4 registros)
+  
+  **`Margen`** · STRING — Margen de mayoreo con formato, ej. `" 37.00%"`
+  **`Pres`** · STRING — Marca + presentación (7 caracteres); `*` = presentación de mayoreo
+  **`Costo`** · DECIMAL — Costo de la presentación **con** pronto pago, en la moneda del costo
+  **`CostoSP`** · DECIMAL — Costo **sin** pronto pago, en la moneda del costo
+  **`CostoMN`** · DECIMAL — Costo **con** pronto pago, en pesos
+  **`CostoMNSP`** · DECIMAL — Costo **sin** pronto pago, en pesos
+  
+  > Los registros sin presentación llegan con `Pres = ""`, `Margen = ""` y costos en `0`:
+  > el front debe omitirlos.
+  
+  ### Campos de `ttArtProv` (proveedores del artículo)
+  
+  **`IdProv`** · INTEGER — Proveedor (valor válido para el parámetro `IdProv`)
+  **`NomProv`** · STRING — Nombre del proveedor
+  
+  ### Campos de `ttArtPrecios` (precios por presentación y color)
+  
+  **`IdPres`** · INTEGER — Presentación
+  **`PresDescr`** · STRING — Descripción; `*` al inicio = presentación de mayoreo
+  **`ColorDescr`** · STRING — Abreviatura del color con oferta o `Todos`
+  **`Margen`** · DECIMAL — % de margen de mayoreo (ajustado por la oferta de crédito)
+  **`PMayoreo`** · DECIMAL — Precio de mayoreo (con oferta de crédito aplicada)
+  **`PMayoreoIVA`** · DECIMAL — Precio de mayoreo con IVA
+  **`Tienda`** · DECIMAL — Precio de tienda (el capturado en `Precios` si existe)
+  **`Web`** · DECIMAL — Precio web (el capturado en `Precios` si existe)
+  **`OfeContado`** · DECIMAL — % de oferta de contado
+  **`OfeCredito`** · DECIMAL — % de oferta de crédito
+  **`Ubicacion`** · STRING — Ubicación de venta de la oferta; vacío = sin oferta
+  **`FecInicio`** · DATE — Inicio de vigencia de la oferta; `null` = sin oferta
+  **`FecFin`** · DATE — Fin de vigencia de la oferta; `null` = sin oferta
+  
+  ---
+  
+  ## 9. Validaciones y Errores
+  
+  Todas regresan HTTP 200 con `IdError: true`.
+  
+  **1. IdArticulo requerido** — `"ERROR: IdArticulo es obligatorio"`
+  **2. IdUser requerido** — `"ERROR: IdUser es obligatorio"`
+  **3. Usuario no existe** — `"ERROR: El usuario X no existe"`
+  **4. Artículo no existe** — `"ERROR: El articulo X no existe"`
+  **5. Proveedor no relacionado** — `"ERROR: El proveedor N no esta relacionado con el articulo X"`
+  **6. Sin costo** — `"ERROR: No existen datos del costo del articulo X con el proveedor N"`
+  **7. Error inesperado** — `"ERROR: <mensaje ABL>"`
+  
+  - Casos 1 a 4 y 7: `dsExistArt` vacío
+  - Casos 5 y 6: `dsExistArt` trae solo `ttArtProv` para ofrecer otro proveedor
+  
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "ERROR: El proveedor 999999 no esta relacionado con el articulo 021118",
+      "dsExistArt": {
+        "dsExistArt": {
+          "ttArtProv": [
+            { "IdArticulo": "021118", "IdProv": 74, "NomProv": "NO SABE FALLAR,S.A.DE C.V." }
+          ]
+        }
+      }
+    }
+  }
+  ```
+  
+  ---
+  
+  ## 10. Reglas del Servicio
+  
+  - **Costo vigente:** el último costo registrado (`HCosto`) del proveedor consultado.
+  - **Costos por presentación:** presentaciones activas tipo 3 ordenadas por equivalencia,
+    máximo 4. Costo de la presentación = costo vigente × equivalencia.
+  - **Sin presentación de mayoreo:** si ninguna de esas presentaciones es de mayoreo, el último
+    renglón con precio de mayoreo cambia `Pres` y `Margen` por la presentación y el margen de
+    mayoreo registrados en el costo vigente (marcado con `*`); sus costos no cambian.
+  - **Moneda extranjera:** `Costo` y `CostoSP` se dividen entre el tipo de cambio del costo
+    (`CostoImporte`); `CostoMN` y `CostoMNSP` quedan en pesos.
+  - **Pronto pago:** con `IncPtoPago = true` el costo ya trae el descuento y los costos `SP` lo
+    quitan; con `false` los costos `SP` quedan sin descuento y `Costo` / `CostoMN` lo aplican.
+  - **Precios:** las mismas presentaciones de `ttArtCosto` (máximo 4) con las ofertas vigentes
+    (contado / crédito); si `Precios` tiene capturado precio de tienda o web, ese sustituye al
+    calculado.
+  - **Presentación base:** existencias, mínimos, máximos y comprometido se expresan en la
+    presentación activa tipo 3 de menor equivalencia (o en la UMI del artículo).
+  - **Ubicaciones:** solo almacenes existentes en el catálogo y colores activos.
+  - **`"+T"` por traspaso:** hay una solicitud de traspaso pendiente hacia el almacén.
+  - **`"+T"` por requisición:** fila adicional (existencia 0) para un almacén **sin** ubicación
+    del artículo‑color que tiene una requisición pendiente.
+  - **`"/"` en `IdTipoArt`:** el almacén tiene restricción de traspaso para el artículo‑color.
+  
+  ### Caché del tránsito
+  
+  El cálculo del tránsito se guarda por artículo en la sesión del servidor y **se comparte con
+  `PrecioArticuloExist`**; la vigencia se configura en la tabla `URL`:
+  
+  **`Parametro`** · STRING — `PrecioArticuloExist.CacheMin`
+  **`Valor`** · STRING — Minutos de vigencia
+  - `0` = sin caché (siempre calcula) · sin registro o valor inválido = 5 minutos
+  
+  La marca `+T` puede tardar hasta la vigencia en reflejar un cambio de estado de un traspaso o
+  requisición; costos, existencias y precios siempre se leen al momento.
+  
+  ---
+  
+  ## 11. Cambios Respecto a la Versión Anterior
+  
+  - Antes: `POST` con body `ttCostoArticulos` (`IdArt`, `IdProv`, `RecCosto`, `CostoAnterior`,
+    `CostoSiguiente`) y salida `oMensaje` + `dsExistArt`.
+  - Ahora: `GET` con query string y salida `IdError`, `Respuesta` y `dsExistArt` (mismas tablas
+    y campos).
+  - Siempre regresa el costo vigente: se retiró la navegación a costos anteriores / siguientes.
+  - Los datos faltantes (artículo, proveedor, costo) ahora regresan un error controlado en
+    `Respuesta`; antes el servicio terminaba en error.
+  
+  ---
+  
+  **Desarrollado por:** SIS10 - JASS
+  
+}

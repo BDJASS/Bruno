@@ -1,0 +1,25 @@
+meta {
+  name: Catalogos Supervisor Empleado
+  seq: 2
+}
+
+docs {
+  # Catálogos Supervisor y Empleado — catsupervisorempleado.p
+
+  Catálogos de solo consulta para `GestionUsuariosAdministracion.razor`.
+
+  - **Programa:** `RestADOSASysAdmin/AppServer/catsupervisorempleado.p`
+  - **Autor:** SIS10 — JASS
+
+  ## Endpoints (2)
+
+  **`01`** · `GET /SupervisorAdm` · `GetSupervisor` — Supervisores con nombre de usuario.
+  **`02`** · `GET /EmpleadoAdm` · `GetEmpleado` — Empleados (Id-Nomina, Nombre, Iniciales, Activo).
+
+  ## Envoltorio de la respuesta
+
+  `response.IdError` (LOGICAL) y `response.Respuesta` (`"OK"` / `"Error: ..."`), más la
+  temp-table con doble nivel `ttX: { ttX: [ ... ] }`.
+
+  > URL base: `http://192.0.1.14:8813/RestADOSASysAdmin/rest/RestADOSASysAdmin`
+}

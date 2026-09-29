@@ -18,7 +18,7 @@ se toma del body). Corre dentro de `DO TRANSACTION`.
 ## 2. Endpoint
 
 ```
-POST http://192.0.1.14:8823/RestADOSASysAdmin/rest/RestADOSASysAdmin/UsuariosAdm
+POST http://192.0.1.14:8813/RestADOSASysAdmin/rest/RestADOSASysAdmin/UsuariosAdm
 Content-Type: application/json
 ```
 

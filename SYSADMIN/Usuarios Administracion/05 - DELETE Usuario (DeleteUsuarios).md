@@ -17,7 +17,7 @@
 ## 2. Endpoint
 
 ```
-DELETE http://192.0.1.14:8823/RestADOSASysAdmin/rest/RestADOSASysAdmin/UsuariosAdm?IdUser=PRUEBA01
+DELETE http://192.0.1.14:8813/RestADOSASysAdmin/rest/RestADOSASysAdmin/UsuariosAdm?IdUser=PRUEBA01
 ```
 
 ---

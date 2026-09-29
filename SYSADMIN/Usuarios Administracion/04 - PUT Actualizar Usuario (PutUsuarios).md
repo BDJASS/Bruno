@@ -19,7 +19,7 @@
 ## 2. Endpoint
 
 ```
-PUT http://192.0.1.14:8823/RestADOSASysAdmin/rest/RestADOSASysAdmin/UsuariosAdm
+PUT http://192.0.1.14:8813/RestADOSASysAdmin/rest/RestADOSASysAdmin/UsuariosAdm
 Content-Type: application/json
 ```
 
