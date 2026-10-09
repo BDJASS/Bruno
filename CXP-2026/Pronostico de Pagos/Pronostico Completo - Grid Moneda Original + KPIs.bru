@@ -1,0 +1,34 @@
+meta {
+  name: Pronostico Completo - Grid Moneda Original + KPIs
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://192.0.1.9:8857/RestADOSACxp/rest/RestADOSACxp/PronosticoDePagosCompleto?Fecha=2026-10-08&ProntoPago=1&Moneda=2
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Fecha: 2026-10-08
+  ProntoPago: 1
+  Moneda: 2
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # Pronóstico Completo — grid en moneda original
+  
+  Misma llamada que *Grid Pesos + KPIs* pero con `Moneda=2`: el grid `ttDetProv` viene en
+  moneda original (un renglón por proveedor + moneda). Los KPIs `ttKpiPesos` y `ttKpiMoneda`
+  son los mismos en ambos casos.
+  
+  Documentación completa en la petición **Pronostico Completo - Grid Pesos + KPIs**.
+  
+  **Desarrollado por:** SIS10 - JASS
+}

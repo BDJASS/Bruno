@@ -1,0 +1,254 @@
+meta {
+  name: Pronostico Completo - Grid Pesos + KPIs
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.9:8857/RestADOSACxp/rest/RestADOSACxp/PronosticoDePagosCompleto?Fecha=2026-10-08&ProntoPago=1&Moneda=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Fecha: 2026-10-08
+  ProntoPago: 1
+  Moneda: 1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # REST API — Pronóstico de Pagos Completo (grid + KPIs)
+  
+  
+  
+  ---
+  
+  ## 1. Descripción
+  
+  Devuelve en **una sola llamada** el grid del Pronóstico de Pagos y los KPIs del Dashboard.
+  
+  Antes, el front ejecutaba dos veces `/PronosticoDePagos` (`cxp0007.p`):
+  
+  - `Moneda=1` → grid en pesos y KPIs *Vencido / Por vencer / Pagos en tránsito* (en pesos)
+  - `Moneda=2` → para sumar los saldos por moneda original (MXN, USD, EUR)
+  
+  Este servicio calcula el saldo de cada factura **una vez** y lo acumula al mismo tiempo en las
+  dos vistas (pesos y moneda original). Regresa el grid de la `Moneda` solicitada y los dos
+  juegos de KPIs ya sumados.
+  
+  `/PronosticoDePagos` no se modifica funcionalmente y sigue disponible.
+  
+  ---
+  
+  ## 2. Parámetros de entrada (Query String)
+  
+  > ✅ = Requerido · ❌ = Opcional · Mismos parámetros y defaults que `/PronosticoDePagos`
+  
+  **`Fecha`** · DATE · ❌ — Fecha de corte del pronóstico.
+  - Formato: `YYYY-MM-DD` · Omitido = hoy
+  
+  **`ProntoPago`** · INTEGER · ❌ — Aplica descuento y fecha de pronto pago de la factura.
+  - `1` Asume pronto pago · `2` Sin pronto pago · Omitido = `2`
+  
+  **`Moneda`** · INTEGER · ❌ — Moneda del grid `ttDetProv` (los KPIs siempre vienen en ambas).
+  - `1` Pesos (convierte con tipo de cambio) · `2` Moneda original · Omitido = `1`
+  
+  ---
+  
+  ## 3. Ejemplos de llamada
+  
+  ```
+  /* Dashboard: grid en pesos + KPIs, con pronto pago */
+  GET /PronosticoDePagosCompleto?Fecha=2026-10-08&ProntoPago=1&Moneda=1
+  
+  /* Grid en moneda original + KPIs */
+  GET /PronosticoDePagosCompleto?Fecha=2026-10-08&ProntoPago=1&Moneda=2
+  
+  /* Sin parámetros: hoy, sin pronto pago, grid en pesos */
+  GET /PronosticoDePagosCompleto
+  ```
+  
+  ---
+  
+  ## 4. Response — `dsPronostico`
+  
+  Dataset con tres tablas, sin relaciones entre ellas.
+  
+  ### `ttDetProv` — Grid por proveedor (igual que `/PronosticoDePagos`)
+  
+  Un renglón por proveedor (con `Moneda=2`, uno por proveedor + moneda). Ordenado por
+  `Vencido` y `Fecha7` descendente, igual que el servicio actual.
+  
+  **`IdProv`** · INTEGER — Id del proveedor  
+  **`Nombre`** · STRING — Razón social  
+  **`TipoProv`** · STRING — Tipo de proveedor (`Prov.Tipo`)  
+  **`IdMoneda`** · INTEGER — `1` con `Moneda=1`; moneda de la factura con `Moneda=2`  
+  **`ChequeTrans`** · DECIMAL — Cheques en tránsito del proveedor (últimos 45 días)  
+  **`Vencido`** · DECIMAL — Saldo con vencimiento `<=` Fecha  
+  **`PorVencer`** · DECIMAL — Saldo con vencimiento `>` Fecha (suma de los 6 rangos)  
+  **`Fecha7`** · DECIMAL — Vence en los próximos 1 a 7 días  
+  **`Fecha15`** · DECIMAL — Vence en 8 a 15 días  
+  **`Fecha30`** · DECIMAL — Vence en 16 a 30 días  
+  **`Fecha60`** · DECIMAL — Vence en 31 a 60 días  
+  **`Fecha90`** · DECIMAL — Vence en 61 a 90 días  
+  **`Fecha91`** · DECIMAL — Vence en más de 90 días
+  
+  ### `ttKpiPesos` — KPIs en pesos (1 renglón)
+  
+  Equivale a sumar el grid de `/PronosticoDePagos` con `Moneda=1`.
+  
+  **`Vencido`** · DECIMAL — Suma de `Vencido` en pesos  
+  **`PorVencer`** · DECIMAL — Suma de `PorVencer` en pesos  
+  **`SaldoTotal`** · DECIMAL — `Vencido + PorVencer`  
+  **`ChequeTrans`** · DECIMAL — Suma de pagos en tránsito
+  
+  ### `ttKpiMoneda` — KPIs por moneda original (1 renglón por moneda)
+  
+  Equivale a sumar el grid de `/PronosticoDePagos` con `Moneda=2` agrupado por `IdMoneda`.
+  
+  **`IdMoneda`** · INTEGER — Clave de la moneda (`Moneda.Id-Moneda`)  
+  **`Moneda`** · STRING — Nombre (`Moneda.Nombre`)  
+  **`Simbolo`** · STRING — Símbolo (`Moneda.Simbolo`)  
+  **`Vencido`** · DECIMAL — Saldo vencido en esa moneda  
+  **`PorVencer`** · DECIMAL — Saldo por vencer en esa moneda  
+  **`SaldoTotal`** · DECIMAL — `Vencido + PorVencer`  
+  **`ChequeTrans`** · DECIMAL — Pagos en tránsito asignados a esa moneda (ver nota 6.5)
+  
+  ---
+  
+  ## 5. Ejemplo de respuesta JSON
+  
+  > Ilustrativo. El envoltorio exacto (`response` / nombre del dataset) depende del mapeo REST
+  > en Developer Studio.
+  
+  ```json
+  {
+    "response": {
+      "dsPronostico": {
+        "dsPronostico": {
+          "ttDetProv": [
+            {
+              "IdProv": 1705,
+              "Nombre": "PROVEEDOR EJEMPLO SA DE CV",
+              "TipoProv": "E",
+              "IdMoneda": 1,
+              "ChequeTrans": 0,
+              "Vencido": 152340.55,
+              "PorVencer": 48210.10,
+              "Fecha7": 48210.10,
+              "Fecha15": 0,
+              "Fecha30": 0,
+              "Fecha60": 0,
+              "Fecha90": 0,
+              "Fecha91": 0
+            }
+          ],
+          "ttKpiPesos": [
+            {
+              "Vencido": 18452310.22,
+              "PorVencer": 9235120.40,
+              "SaldoTotal": 27687430.62,
+              "ChequeTrans": 1250300.00
+            }
+          ],
+          "ttKpiMoneda": [
+            { "IdMoneda": 1, "Moneda": "PESOS",   "Simbolo": "$",  "Vencido": 12100230.10, "PorVencer": 7012450.33, "SaldoTotal": 19112680.43, "ChequeTrans": 1250300.00 },
+            { "IdMoneda": 3, "Moneda": "DOLARES", "Simbolo": "US", "Vencido": 341250.75,   "PorVencer": 118400.20,  "SaldoTotal": 459650.95,   "ChequeTrans": 0 }
+          ]
+        }
+      }
+    }
+  }
+  ```
+  
+  ---
+  
+  ## 6. Reglas de cálculo
+  
+  Son las mismas de `/PronosticoDePagos` (`cxp0007.p GetReporte`).
+  
+  1. **Saldo de la factura** (MovProv `Tipo=101`, `FecReg <= Fecha`): suma de todos sus
+     movimientos (`Asocia` = FP) con `FecReg <= Fecha`.
+  2. **Pagos con cheque en tránsito no descuentan saldo**: movimiento con `Refer` = `Banco-Cheque`
+     cuyo cheque del proveedor tiene `Estatus < 9`, o `Estatus > 8` con `FecEstatus > Fecha`.
+  3. **Se omiten** facturas con saldo `< 1` y proveedores inactivos (`Prov.Activo = false`).
+  4. **Conversión a pesos** (vista pesos, facturas con moneda distinta a 1): tipo de cambio
+     en este orden: `TCReal` vigente a la Fecha → `FP.TCConta` → `TipoCambio` más reciente.
+  5. **Pronto pago** (`ProntoPago=1`, si la FP tiene `PlazoPP1` y `DctoPP11`): se adelanta el
+     vencimiento `Id-Plazo - PlazoPP1` días y se aplican los 4 descuentos `DctoPP11..14`.
+  6. **`ChequeTrans`**: cheques con `Estatus < 9`, no cancelados, `FecReg` entre `Fecha - 45`
+     y `Fecha + 1`, sumados al proveedor (`Cheque.Id-Prov`).
+     - En la vista moneda original, si el proveedor tiene renglones en más de una moneda el
+       cheque **no** se asigna (mismo comportamiento que `/PronosticoDePagos` con `Moneda=2`).
+  
+  ---
+  
+  ## 7. Rendimiento
+  
+  En lugar de recalcular todo el histórico de los proveedores activos (~187 mil facturas y
+  ~488 mil movimientos), solo se calculan las **facturas candidatas** a tener saldo:
+  
+  - `MovProv.Saldo >= 1` (el campo se actualiza al registrar pagos, `cxp0003.p`)
+  - Pagadas con cheques en tránsito a la Fecha (el campo ya las marca pagadas, pero el
+    pronóstico no descuenta ese pago) — por `Refer` `Banco-Cheque` y por `DetCheque.Refer`
+  - Con movimientos posteriores a la Fecha (consultas a fecha pasada)
+  
+  Validado en producción contra el cálculo completo: **0 facturas abiertas fuera de las
+  candidatas** en `08/10/26`, `30/09/26` y `31/12/25`.
+  
+  | Servicio | Antes | Ahora |
+  |---|---|---|
+  | `/PronosticoDePagos` (PROD) | ~5–6 s × 2 llamadas | < 1 s × 2 llamadas |
+  | `/PronosticoDePagosCompleto` (PROD) | — | 1 llamada (pendiente medir) |
+  
+  ### Log del AppServer
+  
+  Cada llamada escribe un renglón para medir tiempos:
+  
+  ```
+  /PronosticoDePagosCompleto Fecha=08/10/26 PP=1 Moneda=1 Tiempo(ms): N | Carga(ms): N
+    ChqTransito: N Candidatas: N (Saldo/Refer/DetChq/Post: a/b/c/d) Fac101: N Abiertas: N
+  ```
+  
+  **`Carga(ms)`** — tiempo de carga de cheques en tránsito y facturas candidatas  
+  **`Candidatas`** — facturas que se recalculan (desglose por origen entre paréntesis)  
+  **`Abiertas`** — facturas con saldo `>= 1` (debe coincidir con `/PronosticoDePagos` misma Fecha)
+  
+  ---
+  
+  ## 8. Migración en el front
+  
+  - Sustituir las dos llamadas a `/PronosticoDePagos` (`Moneda=1` y `Moneda=2`) por una a
+    `/PronosticoDePagosCompleto` con la `Moneda` que se muestra en el grid.
+  - KPIs en pesos → `ttKpiPesos[0]`
+  - KPI por moneda original → `ttKpiMoneda` (un renglón por moneda)
+  - El grid → `ttDetProv` (misma estructura que hoy)
+  
+  ---
+  
+  ## 9. Exposición del recurso (Developer Studio)
+  
+  1. Compilar `cxp0007b.p` (no requiere includes ni índices nuevos).
+  2. En el servicio `RestADOSACxp` agregar el recurso `/PronosticoDePagosCompleto`, verbo
+     `GET`, operación `cxp0007b..GetPronosticoCompleto`.
+  3. Mapear Query String → parámetros: `Fecha` → `pFecha` · `ProntoPago` → `pProntoPago` ·
+     `Moneda` → `pMoneda`.
+  4. Salida: dataset `dsPronostico`.
+  
+  ---
+  
+  ## 10. Historial de cambios
+  
+  | Fecha | Autor | Descripción |
+  |---|---|---|
+  | 2026-10-08 | JASS | Alta del servicio: grid + KPIs en una llamada, cálculo solo de facturas candidatas. |
+  
+  ---
+  
+  **Desarrollado por:** SIS10 - JASS
+}

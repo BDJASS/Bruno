@@ -1,0 +1,39 @@
+meta {
+  name: Pronostico de Pagos (actual) - comparativo
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://192.0.1.9:8857/RestADOSACxp/rest/RestADOSACxp/PronosticoDePagos?Fecha=2026-10-08&ProntoPago=1&Moneda=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Fecha: 2026-10-08
+  ProntoPago: 1
+  Moneda: 1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # /PronosticoDePagos (cxp0007.p GetReporte) — servicio actual
+  
+  Servicio que hoy usa el front (2 llamadas: `Moneda=1` y `Moneda=2`). Optimizado el
+  2026-10-08: mismo resultado, de ~5–6 s a menos de 1 s en PROD.
+  
+  **Para comparar contra `/PronosticoDePagosCompleto`:**
+  
+  - `ttDetProv` debe ser igual al grid del servicio nuevo con los mismos parámetros.
+  - La suma de `Vencido`, `PorVencer` y `ChequeTrans` con `Moneda=1` = `ttKpiPesos`.
+  - La suma por `IdMoneda` con `Moneda=2` = `ttKpiMoneda`.
+  
+  En el log del AppServer `Abiertas` debe coincidir entre ambos servicios para la misma Fecha.
+  
+  **Desarrollado por:** SIS10 - JASS
+}
