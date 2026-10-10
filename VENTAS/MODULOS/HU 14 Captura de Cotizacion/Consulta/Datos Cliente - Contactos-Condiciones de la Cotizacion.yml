@@ -5,10 +5,10 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Cotizacion/Captura/Consulta?IdCliente=34561
+  url: http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/Cotizacion/Captura/Consulta?IdCliente=compras@bremco.com.mx
   params:
     - name: IdCliente
-      value: "34561"
+      value: compras@bremco.com.mx
       type: query
   auth: inherit
 
@@ -17,6 +17,7 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
 docs: |
   # Servicio REST — Captura de Cotización: Carga de Cliente

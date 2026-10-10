@@ -5,15 +5,15 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Articulos/BusquedaAvanzada?IdArticulo=021118
+  url: http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Articulos/BusquedaAvanzada?sDescr=aire comprimido
   params:
     - name: IdArticulo
       value: "021118"
       type: query
-    - name: sDescr
-      value: TAMAÑ
-      type: query
       disabled: true
+    - name: sDescr
+      value: aire comprimido
+      type: query
     - name: IdMarca
       value: "5"
       type: query

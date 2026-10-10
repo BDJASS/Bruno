@@ -13,7 +13,7 @@ http:
         "dsCotAlta": {
           "ttEnc": [
             {
-              "IdCliente": 35520,
+              "IdCliente": 44787,
               "Iniciales": "GLT",
               "Attn": "LUIS MARRUFO",
               "TipoPrecio": "M",
@@ -54,6 +54,7 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
 docs: |
   # Servicio REST — Alta de Cotización (JSON Limpio)
@@ -109,15 +110,24 @@ docs: |
   🟢 **`IdVendedor`** · STRING — **opcional** (override); si vacío se deriva del usuario
   🟢 **`IdAlm`** · STRING — **opcional** (override); si vacío se deriva del usuario
   🟢 **`IdUbiVta`** · STRING — **opcional** (override); si vacío se deriva del usuario
+  🟢 **`PendienteMargenD1`** · BOOLEAN — **opcional (opt-in, HU-F-14 / ticket 3279)**. Si va `true`, al terminar el alta la cotización se fuerza a **pendiente por autorizar** (`Autorizada = false`) aunque el motor la autorizara por margen. `false`, ausente o `null` → comportamiento actual. Default `false`
 
   🔵 `IdVendedor` `IdUbiVta` `IdAlm` — **derivados del usuario** (`Iniciales`) si no se envían
   ⚙️ `Firma` — el servidor la fija = vendedor (no enviar)
   🔵 `RazonSocial` `Propietario` `RFC` `Tel` `CalleNo` `Colonia` `IdCiudad` `Estado` `CP` `Pais` — **derivados del cliente** (no enviar). **Excepción:** para `IdCliente = 3` la `RazonSocial` se toma del JSON (ver arriba)
   ⚙️ `IdCot` (folio) · `FecReg` · `Hora` · `SubTotal` · `IVA` · `Tot` · `Autorizada` — **los pone el servidor**
 
-  ### Partidas (`ttPart[]`) — **siempre artículos** (`Tipo = 1`, lo fija el servidor)
+  ### Partidas (`ttPart[]`) — artículos, conceptos sin código, cortes y comentarios
 
-  🟢 **`IdArticulo`** · STRING — **obligatorio**; debe existir y estar activo
+  🔵 **`Tipo`** · INT · ❌ — tipo de renglón (= `DetCot.Tipo`). **Si no se manda o va `0` = `1`** (comportamiento anterior).
+  - `1` Artículo · `2` Artículo sin código (concepto libre **con** importe: flete, servicio…) · `3`/`4` Corte · `5` Comentario
+
+  > **Tipo 1 (artículo):** aplican todos los campos de abajo.
+  > **Tipo 2 (sin código):** solo **`Descr`** (✅), **`Cant`** (✅ > 0), **`PUnit`**, `Descto`, `PorcIVA` (si `0` → IVA general de la empresa `SysGeneral.Porc-IVA`), `IndicaPre`. `IdArticulo`/color/presentación/moneda se ignoran. Suma a `SubTotal`/`IVA` pero **no se costea** (no entra al margen M1).
+  > **Tipo 3, 4, 5 (corte/comentario):** solo **`Descr`** (✅, el texto). Todo lo demás se ignora; el servidor graba `IdArticulo = ""`, `Cant`/`PUnit`/`Importe`/`IVA = 0`. Si mandas un `IdArticulo` en estos tipos, **se descarta** (no se vuelve partida).
+  > Debe venir **al menos un renglón Tipo 1 o 2**; una cotización de puros comentarios se rechaza.
+
+  🟢 **`IdArticulo`** · STRING — **obligatorio en Tipo 1**; debe existir y estar activo
   🟢 **`Descr`** · STRING — **obligatorio** (descripción de la partida)
   🟢 **`Cant`** · DECIMAL — **obligatorio**, > 0
   🟢 **`PUnit`** · DECIMAL — precio unitario (lo calcula el front con el GET de precio)
@@ -129,8 +139,7 @@ docs: |
   🟢 **`Factor` / `TipoFactor`** · — factor aplicado a la partida (opcional)
 
   🔵 **`PorcIVA`** · DECIMAL — opcional; si va `0` el servidor lo toma del artículo
-  ⚙️ **`Tipo`** — el servidor lo fija en `1` (no enviar)
-  ⚙️ **`IdSeq`** — el servidor lo autogenera 10, 20, 30… (no enviar)
+  ⚙️ **`IdSeq`** — el servidor lo autogenera 10, 20, 30… en el orden recibido (no enviar). El comentario sale **en la posición donde lo mandes** en el arreglo.
   ⚙️ **`Importe`** — `PUnit × (1 − Descto/100) × Cant` (lo calcula el servidor)
   ⚙️ **`Iva`** — `Importe × PorcIVA/100` (lo calcula el servidor)
   ⚙️ **`Costo` / `PCosto`** — los calcula el motor de grabado
@@ -174,15 +183,29 @@ docs: |
           "PorcIVA": 16,
           "IndicaPre": "",
           "IdMoneda": 0
+        },
+        {
+          "Tipo": 5,
+          "Descr": "PRECIOS SUJETOS A CAMBIO SIN PREVIO AVISO"
+        },
+        {
+          "Tipo": 2,
+          "Descr": "FLETE A DOMICILIO",
+          "Cant": 1,
+          "PUnit": 350
         }
       ]
     }
   }
   ```
 
+  > Renglones sin artículo: el `Tipo 5` (comentario) solo lleva `Descr`; el `Tipo 2` (concepto sin código) lleva `Descr` + `Cant` + `PUnit` y **sí** suma al total. Secuencias resultantes: 10 artículo, 20 comentario, 30 flete.
+
   > Comparado con el POST original, **ya no se mandan**: `IdVendedor`/`IdUbiVta`/`IdAlm` (se derivan del usuario), `RazonSocial`, `Propietario`, `RFC`, `Tel`, dirección (`CalleNo`/`Colonia`/`IdCiudad`/`Estado`/`CP`/`Pais`), `SubTotal`/`IVA`/`Tot`, `Importe`/`Iva` por partida, ni los campos con/sin guion duplicados.
   >
   > Si necesitas **forzar** un vendedor/almacén/ubicación distintos al del usuario, mándalos explícitamente y el servidor respeta ese valor.
+  >
+  > **Pendiente por autorizar (HU-F-14 / ticket 3279):** para forzar que la cotización quede **pendiente por autorizar**, agrega `"PendienteMargenD1": true` dentro de `ttEnc`. Es opt-in: si no lo mandas (o va `false`/`null`) el alta corre igual que hoy y la autorización la decide el motor por margen.
 
   ### Caso especial — Cliente 3 (mostrador)
 
@@ -241,6 +264,8 @@ docs: |
   }
   ```
 
+  > Cuando el front envía `PendienteMargenD1 = true`, la respuesta regresa **`"Autorizada": false`** (la cotización quedó pendiente por autorizar), aunque el motor la hubiera autorizado por margen.
+
   ### Error controlado
 
   ```json
@@ -267,8 +292,12 @@ docs: |
   | `TipoFactor` | ∈ {`""`, `FI`, `FD`, `FC`} | *"TipoFactor invalido (FI, FD o FC): …"* |
   | `Vigencia` | 1 a 180 | *"Vigencia invalida (1 a 180): …"* |
   | `DescPP`+`DescPP2` | combinado ≤ 18% | *"Descuentos de pronto pago no pueden exceder 18%."* |
-  | `IdArticulo` (partida) | no vacío, existe y activo | *"Hay una partida sin IdArticulo."* / *"Articulo inexistente o inactivo: …"* |
-  | `Descr` (partida) | no vacío | *"Falta la descripcion en el articulo …"* |
+  | `Tipo` (partida) | ausente/0 = 1; si viene ∈ {1,2,3,4,5} | *"Tipo de partida invalido (N). Use 1 Articulo, 2 Articulo sin codigo, 3/4 Corte o 5 Comentario."* |
+  | `IdArticulo` (partida **Tipo 1**) | no vacío, existe y activo | *"Hay una partida sin IdArticulo."* / *"Articulo inexistente o inactivo: …"* |
+  | `Descr` (partida Tipo 1) | no vacío | *"Falta la descripcion en el articulo …"* |
+  | `Descr` (renglón Tipo 2-5) | no vacío (es el texto) | *"Falta el texto (Descr) en el renglon N (…)."* |
+  | `Cant` (renglón Tipo 2) | > 0 | *"Cantidad invalida en el renglon N (articulo sin codigo)."* |
+  | Renglones con importe | ≥ 1 renglón Tipo 1 o 2 | *"La cotizacion no tiene partidas (articulos)."* |
   | `Cant` (partida) | > 0 | *"Cantidad invalida en articulo …"* |
   | Partidas | al menos 1 | *"La cotizacion no tiene partidas."* |
 
@@ -311,7 +340,8 @@ docs: |
   9. **Respuesta compacta:** el servicio regresa solo `IdError`, `Respuesta`, `Folio` y `Autorizada` (no eco del dataset completo).
   10. **Auditoría (al crear con éxito):** se registra en `AuditLog` vía `programas/auditoria.p` con `Area="VENTAS"`, `Modulo="Cotizacion"`, `Programa="cotaltacot"`, `Operacion="ALTA"`, `Respuesta="Folio: <folio>"`, `Resource=<folio>`, `IdUser=Iniciales`.
   11. **Correo de auditoría (al crear con éxito):** se arma un HTML con el resumen de la cotización (folio, cliente, vendedor, total, partidas) y se envía con el mecanismo estándar **`programas/correo01_rest.p`** (recibe la ruta del HTML en disco) a `desarrollo10@adosa.com.mx`. **Ya no usa `inva0007.i`.** Tanto la auditoría como el correo son **no críticos**: si fallan, la cotización ya quedó grabada y no se marca error (se loguea).
-  8. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+  12. **`PendienteMargenD1` (HU-F-14 / ticket 3279):** campo **opt-in** del encabezado (`ttEnc`, `LOGICAL`). Si llega en `true`, tras grabar con éxito el alta fuerza `Cot.Autorizada = false` (queda **pendiente por autorizar**) aunque el motor la haya autorizado por margen (M1 ≥ 15%), y la respuesta regresa `Autorizada = false`. El servidor **nunca opera con nulo**: ausencia o `?` se normaliza a `false`, por lo que el flujo actual no cambia si el front no lo envía. El grabado del motor no se toca; solo se reescribe `Cot.Autorizada` en una transacción posterior por folio.
+  13. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
 
   ---
   **Desarrollado por:** SIS10 - JASS

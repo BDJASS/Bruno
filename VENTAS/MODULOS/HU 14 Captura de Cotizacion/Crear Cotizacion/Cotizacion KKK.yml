@@ -1,0 +1,365 @@
+info:
+  name: Cotizacion KKK
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/Cotizacion/Captura/Alta
+  body:
+    type: json
+    data: |-
+      {
+        "dsCotAlta": {
+          "ttEnc": [
+            {
+              "IdCliente": 35015,
+              "Iniciales": "MLLR",
+              "Attn": "ERNESTO GUTIERREZ",
+              "TipoPrecio": "M",
+              "LAB": "M",
+              "Plazo": 45,
+              "DiasEnt": 0,
+              "Vigencia": 3,
+              "PrecioTemp": false,
+              "Nota1": "",
+              "Nota2": "",
+              "DescPP": 0,
+              "DescPP2": 0,
+              "PlazoPP": 0,
+              "Factor": 0,
+              "TipoFactor": "",
+              "IdUbiVta":"MLA",
+               "IdAlm":"02B"
+            }
+          ],
+          "ttPart": [
+            {
+              "IdArticulo": "106668",
+              "IdColor": 0,
+              "IdPres": 3,
+              "Descr": "PEL. 24 MIC. BRILL POLYPLEX BOPP 45 X 3000 MTS. 300133",
+              "Cant": 8,
+              "PUnit": 2959.67,
+              "Descto": 0,
+              "PorcIVA": 16,
+              "IndicaPre": "Z",
+              "IdMoneda": 0,
+              "IdMonedaCE":0,
+              "Tipo":1
+            },
+              {
+              "IdArticulo": "106669",
+              "IdColor": 0,
+              "IdPres": 3,
+              "Descr": "PEL. 24 MIC. BRILL POLYPLEX BOPP 47 X 3000 MTS. 300965",
+              "Cant": 8,
+              "PUnit": 3091.21,
+              "Descto": 0,
+              "PorcIVA": 16,
+              "IndicaPre": "Z",
+              "IdMoneda": 0,
+              "IdMonedaCE":0,
+              "Tipo":1
+            }
+          ]
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Alta de Cotización (JSON Limpio)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Alta de Cotización - JSON Limpio (Alta)**
+  Endpoint de alta para el flujo de captura nuevo. El front envía **solo lo que el usuario decide**; el servidor **deriva** del cliente los datos fijos, **calcula** Importe/IVA por partida, **valida tipos** y delega el grabado al motor probado `cotizacion2.p` / `creaCotizaciones`.
+  Programa servidor: `cotaltacot.p` · Procedimiento: `creaCotizacionLimpia`.
+
+  > Objetivo: JSON de entrada más limpio (no mandar la tabla cliente completa ni totales) + validaciones de tipo en el servidor (no depender solo del front).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Cotizacion/Captura/Alta
+  ```
+
+  ---
+
+  ## 4. Clasificación de campos (qué manda el front)
+
+  > 🟢 = El front **debe** enviarlo · 🔵 = Lo **deriva el servidor** (NO enviar) · ⚙️ = Lo **calcula el servidor**
+
+  ### Encabezado
+
+  🟢 **`IdCliente`** · INT — Cliente (de aquí el servidor deriva razón social, RFC, tel, dirección…)
+  🟢 **`RazonSocial`** · STRING — **obligatoria SOLO cuando `IdCliente = 3`** (cliente mostrador). Para ese cliente el servidor **no** deriva la razón social del catálogo, usa la que se envía (no nula ni vacía). Para cualquier otro cliente se **ignora** (se deriva del catálogo)
+  🟢 **`Iniciales`** · STRING — Usuario (`Id-User`). **Llave**: de aquí el servidor deriva vendedor, ubicación de venta y almacén origen
+  🟢 **`TipoPrecio`** · STRING — `M` o `MX` (el `TC` se convierte a `M` en el front)
+  🟢 **`LAB`** · STRING — `M` o `E`
+  🟢 **`Vigencia`** · INT — 1 a 180 días
+  🟢 **`Plazo`** · INT — días de crédito (0 = contado)
+  🟢 **`DiasEnt`** · INT — días de entrega
+  🟢 **`PrecioTemp`** · BOOLEAN — precios de temporada
+  🟢 **`Attn`** · STRING — contacto (opcional, puede ir vacío)
+  🟢 **`Nota1` / `Nota2`** · STRING — observaciones (opcionales)
+  🟢 **`DescPP` / `DescPP2`** · DECIMAL — pronto pago (combinado ≤ 18%)
+  🟢 **`PlazoPP`** · INT — plazo pronto pago
+  🟢 **`Factor` / `TipoFactor`** · DECIMAL / STRING — factor global (`""`, `FI`, `FD`, `FC`); opcionales
+  🟢 **`IdVendedor`** · STRING — **opcional** (override); si vacío se deriva del usuario
+  🟢 **`IdAlm`** · STRING — **opcional** (override); si vacío se deriva del usuario
+  🟢 **`IdUbiVta`** · STRING — **opcional** (override); si vacío se deriva del usuario
+  🟢 **`PendienteMargenD1`** · BOOLEAN — **opcional (opt-in, HU-F-14 / ticket 3279)**. Si va `true`, al terminar el alta la cotización se fuerza a **pendiente por autorizar** (`Autorizada = false`) aunque el motor la autorizara por margen. `false`, ausente o `null` → comportamiento actual. Default `false`
+
+  🔵 `IdVendedor` `IdUbiVta` `IdAlm` — **derivados del usuario** (`Iniciales`) si no se envían
+  ⚙️ `Firma` — el servidor la fija = vendedor (no enviar)
+  🔵 `RazonSocial` `Propietario` `RFC` `Tel` `CalleNo` `Colonia` `IdCiudad` `Estado` `CP` `Pais` — **derivados del cliente** (no enviar). **Excepción:** para `IdCliente = 3` la `RazonSocial` se toma del JSON (ver arriba)
+  ⚙️ `IdCot` (folio) · `FecReg` · `Hora` · `SubTotal` · `IVA` · `Tot` · `Autorizada` — **los pone el servidor**
+
+  ### Partidas (`ttPart[]`) — artículos, conceptos sin código, cortes y comentarios
+
+  🔵 **`Tipo`** · INT · ❌ — tipo de renglón (= `DetCot.Tipo`). **Si no se manda o va `0` = `1`** (comportamiento anterior).
+  - `1` Artículo · `2` Artículo sin código (concepto libre **con** importe: flete, servicio…) · `3`/`4` Corte · `5` Comentario
+
+  > **Tipo 1 (artículo):** aplican todos los campos de abajo.
+  > **Tipo 2 (sin código):** solo **`Descr`** (✅), **`Cant`** (✅ > 0), **`PUnit`**, `Descto`, `PorcIVA` (si `0` → IVA general de la empresa `SysGeneral.Porc-IVA`), `IndicaPre`. `IdArticulo`/color/presentación/moneda se ignoran. Suma a `SubTotal`/`IVA` pero **no se costea** (no entra al margen M1).
+  > **Tipo 3, 4, 5 (corte/comentario):** solo **`Descr`** (✅, el texto). Todo lo demás se ignora; el servidor graba `IdArticulo = ""`, `Cant`/`PUnit`/`Importe`/`IVA = 0`. Si mandas un `IdArticulo` en estos tipos, **se descarta** (no se vuelve partida).
+  > Debe venir **al menos un renglón Tipo 1 o 2**; una cotización de puros comentarios se rechaza.
+
+  🟢 **`IdArticulo`** · STRING — **obligatorio en Tipo 1**; debe existir y estar activo
+  🟢 **`Descr`** · STRING — **obligatorio** (descripción de la partida)
+  🟢 **`Cant`** · DECIMAL — **obligatorio**, > 0
+  🟢 **`PUnit`** · DECIMAL — precio unitario (lo calcula el front con el GET de precio)
+  🟢 **`IdColor`** · INT — color (0 si no aplica)
+  🟢 **`IdPres`** · INT — presentación
+  🟢 **`Descto`** · INT — % descuento de la partida
+  🟢 **`IndicaPre`** · STRING — indicador de precio (de `artprecios2`)
+  🟢 **`IdMoneda` / `PUnitExt` / `CostoEsp` / `IdMonedaCE`** · — solo si maneja moneda extranjera (ver nota IdMonedaCE en Observaciones)
+  🟢 **`Factor` / `TipoFactor`** · — factor aplicado a la partida (opcional)
+
+  🔵 **`PorcIVA`** · DECIMAL — opcional; si va `0` el servidor lo toma del artículo
+  ⚙️ **`IdSeq`** — el servidor lo autogenera 10, 20, 30… en el orden recibido (no enviar). El comentario sale **en la posición donde lo mandes** en el arreglo.
+  ⚙️ **`Importe`** — `PUnit × (1 − Descto/100) × Cant` (lo calcula el servidor)
+  ⚙️ **`Iva`** — `Importe × PorcIVA/100` (lo calcula el servidor)
+  ⚙️ **`Costo` / `PCosto`** — los calcula el motor de grabado
+
+  ---
+
+  ## 5. Body (JSON limpio de ejemplo)
+
+  ```json
+  {
+    "dsCotAlta": {
+      "ttEnc": [
+        {
+          "IdCliente": 35520,
+          "Iniciales": "GLT",
+          "Attn": "LUIS MARRUFO",
+          "TipoPrecio": "M",
+          "LAB": "M",
+          "Plazo": 0,
+          "DiasEnt": 0,
+          "Vigencia": 10,
+          "PrecioTemp": false,
+          "Nota1": "EJEMPLO DE OBSERVACION",
+          "Nota2": "",
+          "DescPP": 0,
+          "DescPP2": 0,
+          "PlazoPP": 0,
+          "Factor": 0,
+          "TipoFactor": ""
+        }
+      ],
+      "ttPart": [
+        {
+          "IdArticulo": "021118",
+          "IdColor": 2,
+          "IdPres": 4,
+          "Descr": "BOLIGRAFO P/MED. 1.0MM BIC M-250 923995 DURA+",
+          "Cant": 2,
+          "PUnit": 48.71,
+          "Descto": 0,
+          "PorcIVA": 16,
+          "IndicaPre": "",
+          "IdMoneda": 0
+        },
+        {
+          "Tipo": 5,
+          "Descr": "PRECIOS SUJETOS A CAMBIO SIN PREVIO AVISO"
+        },
+        {
+          "Tipo": 2,
+          "Descr": "FLETE A DOMICILIO",
+          "Cant": 1,
+          "PUnit": 350
+        }
+      ]
+    }
+  }
+  ```
+
+  > Renglones sin artículo: el `Tipo 5` (comentario) solo lleva `Descr`; el `Tipo 2` (concepto sin código) lleva `Descr` + `Cant` + `PUnit` y **sí** suma al total. Secuencias resultantes: 10 artículo, 20 comentario, 30 flete.
+
+  > Comparado con el POST original, **ya no se mandan**: `IdVendedor`/`IdUbiVta`/`IdAlm` (se derivan del usuario), `RazonSocial`, `Propietario`, `RFC`, `Tel`, dirección (`CalleNo`/`Colonia`/`IdCiudad`/`Estado`/`CP`/`Pais`), `SubTotal`/`IVA`/`Tot`, `Importe`/`Iva` por partida, ni los campos con/sin guion duplicados.
+  >
+  > Si necesitas **forzar** un vendedor/almacén/ubicación distintos al del usuario, mándalos explícitamente y el servidor respeta ese valor.
+  >
+  > **Pendiente por autorizar (HU-F-14 / ticket 3279):** para forzar que la cotización quede **pendiente por autorizar**, agrega `"PendienteMargenD1": true` dentro de `ttEnc`. Es opt-in: si no lo mandas (o va `false`/`null`) el alta corre igual que hoy y la autorización la decide el motor por margen.
+
+  ### Caso especial — Cliente 3 (mostrador)
+
+  Cuando `IdCliente = 3` **debes** enviar `RazonSocial` (no nula ni vacía). Para ese cliente la razón social del catálogo es genérica, por lo que el servidor la reemplaza por la que capture el usuario:
+
+  ```json
+  {
+    "dsCotAlta": {
+      "ttEnc": [
+        {
+          "IdCliente": 3,
+          "RazonSocial": "PUBLICO EN GENERAL S.A. DE C.V.",
+          "Iniciales": "GLT",
+          "Attn": "LUIS MARRUFO",
+          "TipoPrecio": "M",
+          "LAB": "M",
+          "Plazo": 0,
+          "DiasEnt": 0,
+          "Vigencia": 10,
+          "PrecioTemp": false,
+          "Nota1": "",
+          "Nota2": "",
+          "DescPP": 0,
+          "DescPP2": 0,
+          "PlazoPP": 0,
+          "Factor": 0,
+          "TipoFactor": ""
+        }
+      ],
+      "ttPart": [ /* … igual que el ejemplo anterior … */ ]
+    }
+  }
+  ```
+
+  > Para cualquier `IdCliente` distinto de 3, el campo `RazonSocial` que se envíe es **ignorado**: se sigue derivando del catálogo de clientes.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                |
+  |----------------|----------------------|
+  | `Accept`       | `application/json`   |
+  | `Content-Type` | `application/json`   |
+
+  ---
+
+  ## 7. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Cotizacion creada: B000123456",
+    "Folio": "B000123456",
+    "Autorizada": true
+  }
+  ```
+
+  > Cuando el front envía `PendienteMargenD1 = true`, la respuesta regresa **`"Autorizada": false`** (la cotización quedó pendiente por autorizar), aunque el motor la hubiera autorizado por margen.
+
+  ### Error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "TipoPrecio invalido (M o MX): XX.",
+    "Folio": "",
+    "Autorizada": false
+  }
+  ```
+
+  ---
+
+  ## 8. Validaciones del Servidor (checks de tipo y negocio)
+
+  | Campo / Condición | Regla | Mensaje si falla |
+  |---|---|---|
+  | `IdCliente` | > 0 y debe existir | *"Se requiere IdCliente."* / *"No existe el cliente N."* |
+  | `RazonSocial` | obligatoria (no nula ni vacía) **solo si `IdCliente = 3`** | *"Se requiere la Razon Social para el cliente 3."* |
+  | `Iniciales` | no vacío y debe existir en `Usuario` | *"Se requiere Iniciales (usuario)."* / *"Usuario no encontrado: X."* |
+  | Vendedor derivado | debe resolverse del usuario (o override válido) | *"No se pudo determinar un vendedor valido para el usuario X."* |
+  | `TipoPrecio` | ∈ {`M`, `MX`} | *"TipoPrecio invalido (M o MX): …"* |
+  | `LAB` | ∈ {`M`, `E`} | *"LAB invalido (M o E): …"* |
+  | `TipoFactor` | ∈ {`""`, `FI`, `FD`, `FC`} | *"TipoFactor invalido (FI, FD o FC): …"* |
+  | `Vigencia` | 1 a 180 | *"Vigencia invalida (1 a 180): …"* |
+  | `DescPP`+`DescPP2` | combinado ≤ 18% | *"Descuentos de pronto pago no pueden exceder 18%."* |
+  | `Tipo` (partida) | ausente/0 = 1; si viene ∈ {1,2,3,4,5} | *"Tipo de partida invalido (N). Use 1 Articulo, 2 Articulo sin codigo, 3/4 Corte o 5 Comentario."* |
+  | `IdArticulo` (partida **Tipo 1**) | no vacío, existe y activo | *"Hay una partida sin IdArticulo."* / *"Articulo inexistente o inactivo: …"* |
+  | `Descr` (partida Tipo 1) | no vacío | *"Falta la descripcion en el articulo …"* |
+  | `Descr` (renglón Tipo 2-5) | no vacío (es el texto) | *"Falta el texto (Descr) en el renglon N (…)."* |
+  | `Cant` (renglón Tipo 2) | > 0 | *"Cantidad invalida en el renglon N (articulo sin codigo)."* |
+  | Renglones con importe | ≥ 1 renglón Tipo 1 o 2 | *"La cotizacion no tiene partidas (articulos)."* |
+  | `Cant` (partida) | > 0 | *"Cantidad invalida en articulo …"* |
+  | Partidas | al menos 1 | *"La cotizacion no tiene partidas."* |
+
+  > Estos checks corren **antes** de delegar; además, `creaCotizaciones` aplica sus propias validaciones de negocio (existencias, factores, decimales por presentación, etc.).
+
+  ---
+
+  ## 9. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 10. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 11. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio nuevo. Pendiente de compilar y probar por QA. |
+
+  ---
+
+  ## 12. Observaciones Técnicas
+
+  1. **Reuso del motor:** `cotaltacot.p` NO reimplementa el grabado; arma el dataset completo (`dsCot2`) y llama `cotizacion2.p` / `creaCotizaciones` (folio, costos, autorización, transacción).
+  2. **Derivación del cliente:** razón social, propietario, RFC, teléfono, dirección, ciudad, estado y país se leen de `Cliente` (y `Ciudad`/`Estado`/`Pais`) usando `IdCliente`. El front ya no los envía. **Excepción — cliente 3 (mostrador):** la `RazonSocial` **no** se deriva; es obligatoria en `ttEnc` (no nula ni vacía) y el servidor la usa tal cual (`TRIM`). El resto de los datos (RFC, dirección, etc.) sí se siguen derivando del cliente 3.
+  3. **Cálculo en servidor:** `Importe` = `PUnit × (1 − Descto/100) × Cant`; `Iva` = `Importe × PorcIVA/100`. `PorcIVA` se toma del artículo si no viene. Para `Tipo ≥ 3` (separador) el `Importe` es 0.
+  4. **Vendedor/ubicación/almacén desde el usuario:** a partir de `Iniciales` (= `Usuario.Id-User`) se obtiene, igual que `usuario.p`: el **vendedor** (`Vendedor.iniciales = Id-User`, o default `"0104"` si el usuario es interno `<= "99999"`), la **ubicación de venta** (`Usuario.id-ubivta`) y el **almacén origen** (`Usuario.Id-Ubicacion`). El front puede enviar `IdVendedor`/`IdUbiVta`/`IdAlm` para forzar otros valores; si no, se derivan. Como respaldo, la ubicación cae a `Vendedor.Id-UbiVta` y el almacén a `AlmPrior` (tipo 1).
+  5. **Folio:** el front envía `IdCot` vacío; el motor asigna el folio y se devuelve en `Folio`.
+  6. **Partidas siempre artículos:** esta alta es exclusivamente de artículos, por lo que `Tipo` lo fija el servidor en `1` y `IdSeq` se autogenera (10, 20, 30…) en el orden recibido — ninguno de los dos se solicita al front.
+  7. **`Firma` = vendedor:** el servidor asigna `Firma` con el vendedor derivado; no se envía.
+  8. **`IdMonedaCE`** (moneda del costo especial): **no proviene de ningún GET de artículo**. Es `0`/`1` por defecto y solo se asigna cuando el usuario hace un *cambio de precio manual* con costo especial en moneda extranjera, eligiendo la moneda del catálogo `monedas`. El GET de partida (`cotpartida`) ya devuelve `IdMoneda` (moneda del precio); `IdMonedaCE` es distinto y manual.
+  9. **Respuesta compacta:** el servicio regresa solo `IdError`, `Respuesta`, `Folio` y `Autorizada` (no eco del dataset completo).
+  10. **Auditoría (al crear con éxito):** se registra en `AuditLog` vía `programas/auditoria.p` con `Area="VENTAS"`, `Modulo="Cotizacion"`, `Programa="cotaltacot"`, `Operacion="ALTA"`, `Respuesta="Folio: <folio>"`, `Resource=<folio>`, `IdUser=Iniciales`.
+  11. **Correo de auditoría (al crear con éxito):** se arma un HTML con el resumen de la cotización (folio, cliente, vendedor, total, partidas) y se envía con el mecanismo estándar **`programas/correo01_rest.p`** (recibe la ruta del HTML en disco) a `desarrollo10@adosa.com.mx`. **Ya no usa `inva0007.i`.** Tanto la auditoría como el correo son **no críticos**: si fallan, la cotización ya quedó grabada y no se marca error (se loguea).
+  12. **`PendienteMargenD1` (HU-F-14 / ticket 3279):** campo **opt-in** del encabezado (`ttEnc`, `LOGICAL`). Si llega en `true`, tras grabar con éxito el alta fuerza `Cot.Autorizada = false` (queda **pendiente por autorizar**) aunque el motor la haya autorizado por margen (M1 ≥ 15%), y la respuesta regresa `Autorizada = false`. El servidor **nunca opera con nulo**: ausencia o `?` se normaliza a `false`, por lo que el flujo actual no cambia si el front no lo envía. El grabado del motor no se toca; solo se reescribe `Cot.Autorizada` en una transacción posterior por folio.
+  13. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

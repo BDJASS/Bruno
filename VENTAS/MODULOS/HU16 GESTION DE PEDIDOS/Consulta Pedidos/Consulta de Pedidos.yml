@@ -45,10 +45,10 @@ docs: |
   ## 1. Título del Servicio
 
   **Consulta de Pedidos (Gestión / Consulta)**
-  Listado de pedidos filtrable por fecha, pedido, cliente, vendedor o RFC. Devuelve **solo las columnas del listado** (9 campos); el encabezado y el detalle completos se consultan aparte en `/Ventas/Pedido/Resumen` y `/Ventas/Pedido/Detalle`.
+  Listado de pedidos filtrable por fecha, pedido, cliente, vendedor o RFC. Devuelve **solo las columnas del listado** (grid); el encabezado y el detalle completos se consultan aparte en `/Ventas/Pedido/Resumen` y `/Ventas/Pedido/Detalle`.
   Programa servidor: `pedconsulta.p` · Procedimiento: `leePedidos`.
 
-  > Ajuste 2026-08-18: se creó el programa dedicado y ligero `pedconsulta.p` para este listado, en lugar de reutilizar `pedido2.p` / `leePedidos` (que armaba un registro completo con múltiples `FIND` y luego lo volcaba a una tabla limpia). `pedconsulta.p` construye directamente las 9 columnas. Los parámetros de entrada no cambiaron.
+  > Ajuste 2026-08-18: se creó el programa dedicado y ligero `pedconsulta.p` para este listado, en lugar de reutilizar `pedido2.p` / `leePedidos` (que armaba un registro completo con múltiples `FIND` y luego lo volcaba a una tabla limpia). `pedconsulta.p` construye directamente las columnas del grid. Los parámetros de entrada no cambiaron.
 
   ---
 
@@ -139,7 +139,11 @@ docs: |
         "Pagado": false,
         "PagAnt": false,
         "PausaReja": false,
-        "IdLiga": ""
+        "IdLiga": "",
+        "Ubi": "MLA",
+        "Plazo": 0,
+        "TieneSeguimiento": true,
+        "FacturaSI": true
       }
     ]
   }
@@ -166,6 +170,10 @@ docs: |
   **`PagAnt`** · BOOLEAN — `true` = pago anticipado
   **`PausaReja`** · BOOLEAN — `true` = el pedido tiene pausa en reja (`Pedido.PausaReja`)
   **`IdLiga`** · STRING — Ligas del pedido (`Pedido.Id-Liga`); **vacío = no ligado**, con valor = ligado (prefijo `F` = liga de facturación, `E` = liga de embarque)
+  **`Ubi`** · STRING — Ubicación de venta del pedido (`Pedido.Id-UbiVta`)
+  **`Plazo`** · INT — Plazo del pedido (`Pedido.Plazo`)
+  **`TieneSeguimiento`** · BOOLEAN — `true` = existe renglón en `EstPedido` para este pedido-resto; `false` = no hay seguimiento. El front debe llamar a `/Ventas/Pedidos/Seguimiento` **solo cuando es `true`** (evita el `IdError` "No existe informacion de seguimiento…"). Se resuelve con un sondeo sobre el índice UNIQUE primario `idx-sur` (`Id-Pedido` + `Id-Seq`), el mismo `WHERE` que usa ese servicio
+  **`FacturaSI`** · BOOLEAN — `true` = el pedido es **posible a facturar** con la misma regla de los listados `/Pedido/listaPedidosPorFacturar` (clientes normales) y `/Pedido/listaPedidosEspeciales` (clientes de embarque especial); `false` = no facturable. Se evalúa sobre su registro de empaque `EstPedido` (ver sección 13)
 
   ---
 
@@ -205,13 +213,19 @@ docs: |
 
   ## 13. Observaciones Técnicas
 
-  1. **Programa dedicado y ligero:** `pedconsulta.p` construye directamente las 9 columnas mientras recorre los pedidos, sin armar el registro completo ni volcar una tabla al final. Reemplaza el uso de `pedido2.p` / `leePedidos` (que se removió de `pedido2.p`; ese programa conserva `creaPedidos`/`actPedidos`).
+  1. **Programa dedicado y ligero:** `pedconsulta.p` construye directamente las columnas del grid mientras recorre los pedidos, sin armar el registro completo ni volcar una tabla al final. Reemplaza el uso de `pedido2.p` / `leePedidos` (que se removió de `pedido2.p`; ese programa conserva `creaPedidos`/`actPedidos`).
   2. **`Pago`:** si `Id-Cond <> 0` → `CREDITO`. Si es contado (`Id-Cond = 0`): `PAGADO` si está pagado; si no, `PDTE. PAGO` (pago anticipado) o `CONTRA ENTREGA`; y `PDTE. CHEQUE` si `FEFormaPago = "02"` sin número de cheque.
   3. **`Estatus`:** clasificación calculada (homologada con `vtac1300.p`): No-Aut, Mcia-Pdte, Mcia-P/Surt, P/Facturar, Cte-Recoge, Emb-Local, Emb-Estafeta, Emb-Foraneo, o la descripción de `EstVta`. La categoría "Mcia-Pdte" usa el conteo de renglones `Tipo = 1` con `CantEnt < CantPed`.
   4. **Filtro de pendientes:** si `IdEstatus = -99`, solo se devuelven los pedidos cuya clasificación resultó "pendiente".
   5. **Rango de fechas obligatorio sin pedido:** ver sección 9.
-  6. **Eficiencia:** por cada pedido se hace un solo recorrido del detalle (`DetPedido`) y un `FIND EstVta`; no se consultan ruta, condición, entrega, transporte, vendedor, etc. (esos datos viven en `/Ventas/Pedido/Resumen`).
-  7. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+  6. **Eficiencia:** por cada pedido se hace un solo recorrido del detalle (`DetPedido`) y un `FIND EstVta`; no se consultan ruta, condición, entrega, transporte, vendedor, etc. (esos datos viven en `/Ventas/Pedido/Resumen`). El sondeo de `EstPedido` es único y alimenta a la vez `TieneSeguimiento` y `FacturaSI`.
+  7. **`FacturaSI` (ticket 3291):** replica la **unión** de los dos listados de facturación de `pedfactura.p`, ambos gobernados por el registro de empaque `EstPedido` (1:1 con el pedido-resto vía `Id-Pedido` + `Id-Seq` = `Resto`):
+     - `EstPedido.Estatus = 4` (empacado) → `true` para cualquier cliente (cubre normales y especiales).
+     - `EstPedido.Estatus` 0, 1 o 2 con `Pedido.Adelantado = true` → `true` (facturación adelantada).
+     - `EstPedido.Estatus = -2` (remisionado) sin `Id-Factura` y `Cliente.EmbEsp = true` → `true` (solo clientes de embarque especial).
+
+     Se **omite a propósito** el filtro por almacén/prefijo del `Id-Pedido` que traen esos listados (solo segmenta la cola de facturación de cada CEDIS); aquí la bandera indica si el pedido es facturable en sí, sin importar la ubicación del usuario. Es una bandera de **membresía en el listado por facturar**, no la validación profunda por pedido (`/Pedido/validaPedidoFacturable` sigue aplicando bloqueos como RFC incompleto, ya facturado, solicitud de cancelación, corte del día, etc. al momento de facturar).
+  8. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
 
   ---
   **Desarrollado por:** SIS10 - JASS

@@ -5,13 +5,13 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8810/RestADOSA3/rest/RestADOSA/articulos2?IdArticulo=021118
+  url: http://192.0.1.9:8810/RestADOSA3/rest/RestADOSA/articulos2?sDescr=MARCATEXTOS
   params:
+    - name: sDescr
+      value: MARCATEXTOS
+      type: query
     - name: IdArticulo
       value: "021118"
-      type: query
-    - name: sDescr
-      value: TAMAÑ
       type: query
       disabled: true
     - name: IdMarca

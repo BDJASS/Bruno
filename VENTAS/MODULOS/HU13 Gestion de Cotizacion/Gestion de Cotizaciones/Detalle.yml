@@ -5,13 +5,13 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Detalle?IdCot=2144410&IdCliente=56665&IdUser=olds
+  url: http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Detalle?IdCot=2157300&IdCliente=32619&IdUser=olds
   params:
     - name: IdCot
-      value: "2144410"
+      value: "2157300"
       type: query
     - name: IdCliente
-      value: "56665"
+      value: "32619"
       type: query
     - name: IdUser
       value: olds
@@ -130,9 +130,12 @@ docs: |
         {
           "IdCot": "2084315",
           "Clave": "ART001",
+          "Tipo": 1,
           "Descr": "PAPEL BOND CARTA 75GR",
           "Cant": 10.00,
+          "IdColor": 2,
           "sColor": "BLANCO",
+          "IdPres": 4,
           "Pres": "CAJA",
           "PUnit": 1045.875,
           "Descto": 5,
@@ -179,9 +182,12 @@ docs: |
 
   **`IdCot`** · STRING — Folio de la cotización
   **`Clave`** · STRING — Clave del artículo (`DetCot.Id-Articulo`)
+  **`Tipo`** · INT — Tipo de renglón (`DetCot.Tipo`): `1` artículo · `2` sin código · `3`/`4` cortes · `5` comentario
   **`Descr`** · STRING — Descripción de la partida
   **`Cant`** · DECIMAL — Cantidad
+  **`IdColor`** · INT — Id del color (`DetCot.Id-Color`); `0` si no tiene color
   **`sColor`** · STRING — Descripción del color (tabla `Kolor`); vacío si no tiene color
+  **`IdPres`** · INT — Id de la presentación (`DetCot.Id-Pres`)
   **`Pres`** · STRING — Descripción de la presentación (`ArtPres`); vacío si no se localizó
   **`PUnit`** · DECIMAL — Precio unitario
   **`Descto`** · INT — Porcentaje de descuento de la partida

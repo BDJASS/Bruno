@@ -1,0 +1,231 @@
+info:
+  name: Por Razon Social
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Clientes/Busqueda?Filtro=CORPOR&MaxReg=10&IdUser=JASS
+  params:
+    - name: Filtro
+      value: CORPOR
+      type: query
+    - name: MaxReg
+      value: "10"
+      type: query
+    - name: IdUser
+      value: JASS
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Catálogo de Clientes: Búsqueda (Autocompletar)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Catálogo de Clientes — Búsqueda para autocompletar**
+  Busca clientes **activos** por **número de cliente** (o el inicio del número) , por **razón social** (`Cliente.RazonSocial`, el inicio del nombre) o por **correo** (`Cliente.e-mail`, el inicio del correo) y regresa solo los primeros `MaxReg` resultados. Pensado para el *input filter* del front que autocompleta mientras el usuario teclea.
+  Programa servidor: `clientebusca.p` · Procedimiento: `buscaClientes` | Consulta directa por índice en `Cliente` (+ `Ciudad`, `Estado`, `Pais`, `Zona`).
+
+  > **Reemplaza** el uso de `cliente.cls` (`Readcliente`, BusinessEntity) desde el front: allá el front mandaba el filtro `for each cliente where activo no-lock` y recibía **todos** los clientes activos con todos sus campos (incluido `PassInternet`) para filtrar en .NET. Aquí el filtro se resuelve en el back y la salida conserva el **mismo `dsCliente` / `ttCliente`** de `cliente.i`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Clientes/Busqueda
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · Solo dígitos = número · Con `@` = correo · Texto sin `@` = razón social o correo
+
+  **`Filtro`** · STRING · ✅ — Lo que el usuario va tecleando
+  - Solo dígitos → número por prefijo: `12` → `12`, `120`–`129`, `1200`–`1299`, …
+  - Con `@` → solo correo que **empieza con** el texto (mínimo 3 caracteres)
+  - Texto sin `@` → razón social que **empieza con** el texto; si no se llena `MaxReg`, se completa con correos que empiezan con el texto (mínimo 3 caracteres)
+
+  **`MaxReg`** · INT · ❌ — Máximo de clientes a regresar
+  - Vacío o inválido = `20` · Tope = `100`
+
+  **`IdUser`** · STRING · ✅ — Usuario que consulta
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  Por número:
+
+  ```
+  GET .../Catalogo/Clientes/Busqueda?Filtro=339&MaxReg=10&IdUser=JASS
+  ```
+
+  Por razón social (o correo):
+
+  ```
+  GET .../Catalogo/Clientes/Busqueda?Filtro=DISTRIBUIDORA DEL&IdUser=JASS
+  ```
+
+  Por correo:
+
+  ```
+  GET .../Catalogo/Clientes/Busqueda?Filtro=compras@delv&IdUser=JASS
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Se encontraron 10 clientes. Se muestran los primeros 10; escriba mas para afinar la busqueda.",
+    "dsCliente": {
+      "ttCliente": [
+        {
+          "Id-Cliente": 3390,
+          "RazonSocial": "DISTRIBUIDORA DEL VALLE SA DE CV",
+          "RFC": "DVA160218AB3",
+          "e-mail": "compras@delvalle.com",
+          "Activo": true,
+          "IdCliente": 3390,
+          "Email": "compras@delvalle.com",
+          "IdCiudad": 39,
+          "Ciudad": "MONTERREY",
+          "Estado": "NUEVO LEON",
+          "Pais": "MEXICO",
+          "IdVendedor": "0123",
+          "PorcIVA": 16,
+          "CteSoriana": false,
+          "PassInternet": ""
+        }
+      ]
+    }
+  }
+  ```
+
+  > El ejemplo se recorta: cada registro trae **todos** los campos de `ttCliente` de `cliente.i`, igual que `cliente.cls`.
+
+  ### Campos de `ttCliente` (0..MaxReg registros)
+
+  Los campos de la tabla `Cliente` se copian tal cual (`Id-Cliente`, `RazonSocial`, `RFC`, `e-mail`, `Plazo`, `Limite`, …). Campos calculados (los mismos que `Readcliente` de `cliente.cls`):
+
+  **`IdCliente`** · INT — Clave del cliente (copia de `Id-Cliente`)
+  **`Email`** · STRING — Correo del cliente (copia de `e-mail`)
+  **`IdCiudad`** · INT — Clave de la ciudad
+  **`IdVendedor`** · STRING — Clave del vendedor
+  **`IdRutaEmb`** · INT — Ruta de embarque
+  **`IdCalidad`** / **`IdResp`** / **`IdZona`** / **`IdGiro`** / **`IdRamo`** / **`IdCobrador`** — Copias sin guion (como `cliente_p.p`)
+  **`Ciudad`** · STRING — Nombre de la ciudad del cliente
+  **`Estado`** · STRING — Nombre del estado
+  **`Pais`** · STRING — Nombre del país
+  **`PorcIVA`** · INT — % de IVA de la zona del cliente (`Zona.Porc-IVA`)
+  **`CteSoriana`** · BOOLEAN — `true` = cliente 1186 o 32851; `false` = otro
+  **`PassInternet`** · STRING — **Siempre vacío** (no se expone el password)
+
+  ### Response sin coincidencias (no es error)
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "No se encontraron clientes activos con el numero 999999.",
+    "dsCliente": { "ttCliente": [] }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `Filtro` vacío | `IdError: true` — `"Se requiere el numero o el correo del cliente."` |
+  | Número `0` o de más de 9 dígitos | `IdError: true` — `"Numero de cliente invalido."` |
+  | Texto con menos de 3 caracteres | `IdError: false`, sin registros — `"Escriba al menos 3 caracteres del correo."` (con `@`) o `"... de la razon social o del correo."` (sin `@`) |
+  | Mismo cliente por razón social y por correo | Sale una sola vez |
+  | Sin coincidencias | `IdError: false`, sin registros — `"No se encontraron clientes activos con ..."` |
+  | Más coincidencias que `MaxReg` | Regresa `MaxReg` registros y lo indica en `Respuesta` |
+  | Cliente inactivo | Nunca se regresa |
+
+  ---
+
+  ## 10. Reglas para el Front
+
+  - Llamar al servicio con **debounce** (ej. 300 ms después de la última tecla), no en cada tecla.
+  - Para número, empezar a buscar desde el primer dígito; para razón social o correo, desde el 3er carácter.
+  - La lista llega ordenada por número de cliente; si se quiere alfabética, ordenarla en el front por `RazonSocial`.
+  - `IdError: false` con `ttCliente` vacía = "sin resultados" (no mostrar como error).
+  - Si se necesita el cliente completo después de elegirlo, el registro ya trae todos los campos de `ttCliente`.
+
+  ---
+
+  ## 11. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 12. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 13. Resultado
+
+  | Estado              | Descripción                                    |
+  |---------------------|------------------------------------------------|
+  | ⏳ Pendiente prueba | Pendiente de compilar, publicar y probar en DEV |
+
+  ---
+
+  ## 14. Observaciones Técnicas
+
+  1. **Por número (prefijo):** se recorren los rangos `[n, n]`, `[n·10, n·10+9]`, `[n·100, n·100+99]`, … hasta el último cliente, con `USE-INDEX idx-abcvendmail` (`Activo` + `Id-Cliente`): solo se leen clientes activos dentro del rango y se corta al llegar a `MaxReg`.
+  2. **Por razón social:** `Cliente.RazonSocial BEGINS Filtro AND Activo` con `USE-INDEX Idx-RazonClie` (`RazonSocial`, `Id-Cliente`; índice normal porque un word-index solo puede tener un campo). Solo empata desde el inicio del nombre. Primero se llena con razón social y lo que falte hasta `MaxReg` se completa con correos, sin repetir clientes.
+  3. **Por correo:** `idx-email` es un **word-index** (no admite `USE-INDEX` ni `BEGINS`, error 3594). Los candidatos se obtienen con `Cliente.e-mail CONTAINS "<primera palabra>*"` (letras/dígitos del filtro hasta el primer `@`, `.`, `_`, etc.: `juan.pe` → `juan*`) y dentro del ciclo se valida `Activo` y `e-mail BEGINS Filtro`. Sin distinguir mayúsculas. Si el filtro no empieza con letra o dígito: `"Escriba el correo desde el inicio."`
+  4. **Orden de salida:** por `Id-Cliente` (índice primario de `ttCliente`).
+  5. **Misma salida que `cliente.cls`:** usa `{cliente.i}` (`dsCliente` / `ttCliente`). Diferencias a propósito: `PassInternet` no se copia, y `Ciudad`/`Estado`/`Pais` salen de la ciudad de **cada** cliente (en `cliente.cls` el `FIND Ciudad` usaba el buffer `Cliente` de la BD en vez de `ttCliente`).
+  6. **Sin auditoría** (`programas/auditoria.p`) a propósito: el front lo llama mientras se teclea.
+  7. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS
