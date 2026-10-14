@@ -5,16 +5,16 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/EnviaCorreo?idCotiza=2153662&Mail=desarrollo10@adosa.com.mx&Contenido=PRUEBA DE CORREOS
+  url: http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/EnviaCorreo?idCotiza=2160719&Mail=compras.multipap@outlook.com&Contenido=Estimado cliente, le compartimos la cotización 2160719
   params:
     - name: idCotiza
-      value: "2153662"
+      value: "2160719"
       type: query
     - name: Mail
-      value: desarrollo10@adosa.com.mx
+      value: compras.multipap@outlook.com
       type: query
     - name: Contenido
-      value: PRUEBA DE CORREOS
+      value: Estimado cliente, le compartimos la cotización 2160719
       type: query
   body:
     type: json

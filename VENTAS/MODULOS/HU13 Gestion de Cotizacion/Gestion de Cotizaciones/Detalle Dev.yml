@@ -1,17 +1,17 @@
 info:
-  name: Detalle
+  name: Detalle Dev
   type: http
   seq: 2
 
 http:
   method: GET
-  url: http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Detalle?IdCot=2157300&IdCliente=32619&IdUser=olds
+  url: http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Detalle?IdCot=2160747&IdCliente=39953&IdUser=olds
   params:
     - name: IdCot
-      value: "2157300"
+      value: "2160747"
       type: query
     - name: IdCliente
-      value: "32619"
+      value: "39953"
       type: query
     - name: IdUser
       value: olds

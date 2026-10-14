@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/EnviaCorreo?idCotiza=2153662&Mail=desarrollo10@adosa.com.mx,desarrollo8@adosa.com.mx&Contenido=PRUEBA DE CORREOS DOBLE CC
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/EnviaCorreo?idCotiza=2153662&Mail=desarrollo10@adosa.com.mx,desarrollo8@adosa.com.mx&Contenido=PRUEBA DE CORREOS DOBLE CC
   params:
     - name: idCotiza
       value: "2153662"
