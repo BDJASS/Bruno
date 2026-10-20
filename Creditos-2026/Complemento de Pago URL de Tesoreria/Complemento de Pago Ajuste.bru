@@ -1,0 +1,171 @@
+meta {
+  name: Complemento de Pago Ajuste
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://192.0.1.14:8823/RestADOSATes/rest/RestADOSATes/CompPago?Acuse=039586N&FormaPago=03&FechaPago=2026-08-07&IdUser=jggr
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Acuse: 039586N
+  FormaPago: 03
+  FechaPago: 2026-08-07
+  IdUser: jggr
+}
+
+headers {
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 200
+  res.body.IdError: eq false
+}
+
+docs {
+  # Servicio REST — Ajuste de Complemento de Pago (Tesorería)
+  
+  ---
+  
+  ## 1. Título del Servicio
+  
+  **Ajuste de Complemento de Pago de un Acuse**
+  Corrige la **forma de pago** y la **fecha de pago** de un acuse depositado: genera un **nuevo** complemento de pago copiando el vigente, lo **timbra** (`tesd0019.p`), **cancela** el anterior (`tesd0012.p`) y envía correo de notificación.
+  
+  Programa servidor: `complepago.p` · Procedimiento: `PostPagoAcuse`
+  
+  ---
+  
+  ## 2. Método HTTP
+  
+  ```
+  POST
+  ```
+  
+  ---
+  
+  ## 3. URL Completa
+  
+  ```
+  http://192.0.1.14:8823/RestADOSATes/rest/RestADOSATes/CompPago
+  ```
+  
+  ---
+  
+  ## 4. Parámetros de Entrada (Query String)
+  
+  > ✅ = Requerido · ❌ = Opcional · Fecha en formato `YYYY-MM-DD`.
+  
+  **`Acuse`** · STRING · ✅ — Folio del acuse
+  - Ej: `"039818N"`
+  
+  **`FormaPago`** · STRING · ✅ — Nueva forma de pago del complemento (clave SAT)
+  - Ej: `"03"` · `"01"` · `"04"`
+  
+  **`FechaPago`** · DATE · ✅ — Nueva fecha de pago del complemento
+  - Ej: `"2026-10-05"`
+  
+  **`IdUser`** · STRING · ✅ — Usuario que realiza el ajuste (queda en `UsuarioCanc` del complemento cancelado)
+  - Ej: `"jggr"`
+  
+  ---
+  
+  ## 5. Body
+  
+  No aplica. Todos los datos viajan en Query String.
+  
+  ---
+  
+  ## 6. Headers
+  
+  | Header   | Valor              |
+  |----------|--------------------|
+  | `Accept` | `application/json` |
+  
+  ---
+  
+  ## 7. Ejemplo de Request
+  
+  ```
+  POST .../CompPago
+      ?Acuse=039818N
+      &FormaPago=03
+      &FechaPago=2026-10-05
+      &IdUser=jggr
+  ```
+  
+  ---
+  
+  ## 8. Ejemplo de Response
+  
+  ### Respuesta exitosa
+  
+  ```json
+  {
+    "Respuesta": "Ajuste Realizado con Exito ",
+    "IdError": false
+  }
+  ```
+  
+  ### Campos de response
+  
+  **`Respuesta`** · STRING — Mensaje de resultado (éxito o descripción del error)
+  **`IdError`** · BOOLEAN — `true` = no se realizó el ajuste o falló el timbrado; `false` = ajuste realizado
+  
+  ### Response de error controlado
+  
+  ```json
+  {
+    "Respuesta": "El Acuse no tiene complemento de pago ...",
+    "IdError": true
+  }
+  ```
+  
+  ---
+  
+  ## 9. Evidencia de Ejecución
+  
+  *Pendiente de captura por parte del equipo de QA.*
+  Adjuntar screenshot de la herramienta de prueba (Bruno / Postman / curl) mostrando URL completa, `200 OK` e `IdError: false`.
+  
+  ---
+  
+  ## 10. Fecha de Prueba
+  
+  | Ambiente | Fecha       | Ejecutado por |
+  |----------|-------------|---------------|
+  | DEV      | 2026-10-05  | *(pendiente)* |
+  
+  ---
+  
+  ## 11. Resultado
+  
+  | Estado              | Descripción                                                    |
+  |---------------------|----------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Cambio de contrato de salida; pendiente compilar y validar con el front |
+  
+  ---
+  
+  ## 12. Observaciones Técnicas
+  
+  1. **Ticket 3425.** Estandarización de la salida con `Respuesta` / `IdError`.
+  
+  2. **Cambio de contrato.** Antes regresaba un único parámetro `Mensaje` (STRING). Ahora regresa `Respuesta` e `IdError`; los errores se manejan con esas variables.
+  
+  3. **Errores controlados** (`IdError: true`): forma de pago o fecha vacías · `El Acuse no existe.` · `El Acuse no tiene complemento de pago ...` · `No se encontro el complemento de pago original para copiar.` · `No existe el folio CPAGO.` · `Ocurrio un error al generar cfdi de comprobante de pago` (timbrado sin UUID).
+  
+  4. **Bloqueos.** Acuse, complemento original y folio `CPAGO` se bloquean con `NO-WAIT`; si otro usuario los tiene en uso se regresa `IdError: true` con el mensaje `... esta en uso por otro usuario, intente de nuevo mas tarde.` sin modificar datos.
+  
+  5. **Flujo.** (1) Toma folio `CPAGO` · (2) copia el complemento vigente con la nueva forma y fecha de pago · (3) marca el anterior como cancelado (`FecCanc`, `UsuarioCanc`) y liga el nuevo al acuse · (4) timbra con `tesd0019.p` · (5) si hay UUID: correo y cancelación del anterior con `tesd0012.p`.
+  
+  6. **Errores inesperados** (`CATCH`) se regresan como `IdError: true` con el mensaje del error en `Respuesta`.
+  
+  7. **Binding.** Al cambiar la firma del procedimiento hay que regenerar el binding (`complepago.pidl` / `adapters.pamf`) en Developer Studio y republicar el servicio.
+  
+  ---
+  **Desarrollado por:** SIS10 - JASS
+}

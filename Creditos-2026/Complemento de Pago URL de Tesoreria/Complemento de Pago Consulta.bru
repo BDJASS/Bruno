@@ -1,0 +1,252 @@
+meta {
+  name: Complemento de Pago Consulta
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://192.0.1.14:8823/RestADOSATes/rest/RestADOSATes/CompPago?Acuse=039586N&IdUser=jggr
+  body: none
+  auth: inherit
+}
+
+params:query {
+  Acuse: 039586N
+  IdUser: jggr
+}
+
+headers {
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 200
+  res.body.IdError: eq false
+}
+
+docs {
+  # Servicio REST — Consulta de Complemento de Pago (Tesorería)
+  
+  ---
+  
+  ## 1. Título del Servicio
+  
+  **Consulta de Complemento de Pago de un Acuse**
+  Regresa los datos del acuse y de su complemento de pago vigente (documentos pagados, formas de pago y totales) para que el front pueda corregir la **forma de pago** y la **fecha de pago** del complemento. Solo usuarios autorizados (parámetro `CompPagoCyC` de la tabla `URL`).
+  
+  Programa servidor: `complepago.p` · Procedimiento: `GetComplePago`
+  
+  ---
+  
+  ## 2. Método HTTP
+  
+  ```
+  GET
+  ```
+  
+  ---
+  
+  ## 3. URL Completa
+  
+  ```
+  http://192.0.1.14:8823/RestADOSATes/rest/RestADOSATes/CompPago
+  ```
+  
+  ---
+  
+  ## 4. Parámetros de Entrada (Query String)
+  
+  > ✅ = Requerido · ❌ = Opcional
+  
+  **`Acuse`** · STRING · ✅ — Folio del acuse
+  - Ej: `"039818N"`
+  
+  **`IdUser`** · STRING · ✅ — Usuario que consulta (debe estar en la lista `CompPagoCyC`)
+  - Ej: `"jggr"`
+  
+  ---
+  
+  ## 5. Body
+  
+  No aplica. Método `GET`.
+  
+  ---
+  
+  ## 6. Headers
+  
+  | Header   | Valor              |
+  |----------|--------------------|
+  | `Accept` | `application/json` |
+  
+  ---
+  
+  ## 7. Ejemplo de Request
+  
+  ```
+  GET .../CompPago?Acuse=039818N&IdUser=jggr
+  ```
+  
+  ---
+  
+  ## 8. Ejemplo de Response
+  
+  ### Respuesta exitosa
+  
+  ```json
+  {
+    "Respuesta": "Consulta realizada con exito.",
+    "IdError": false,
+    "dsAcuse": {
+      "ttAcuse": [
+        {
+          "IdAcuse": "039818N",
+          "FecReg": "2026-09-10",
+          "FecDep": "2026-09-11",
+          "FecPago": "2026-09-10",
+          "IdCliente": 1234,
+          "RazonSocial": "CLIENTE DE PRUEBA SA DE CV",
+          "Estatus": 4,
+          "Observ": "COMENTARIO 1 COMENTARIO 2 COMENTARIO 3",
+          "FormaPago": "03",
+          "ttDocAcuse": [
+            {
+              "IdAcuse": "039818N",
+              "FecDoc": "2026-08-20",
+              "Documento": "A00012345",
+              "Descr": "FACTURA",
+              "ImpPago": 1500.00,
+              "ImpDescPP": 0.00,
+              "DescEsp": 0.00,
+              "ImpDevol": 0.00,
+              "Dias": 22
+            }
+          ],
+          "ttTotPagoAcuse": [
+            {
+              "IdAcuse": "039818N",
+              "TotPago": 1500.00,
+              "TotCambio": 0.00,
+              "TotCred": 0.00,
+              "ttPagoAcuse": [
+                {
+                  "IdAcuse": "039818N",
+                  "IdTP": 2,
+                  "Descr": "TRANSFERENCIA",
+                  "ImpRecibido": 1500.00,
+                  "FecCheque": null,
+                  "Cheque": "",
+                  "IdBanco": 0,
+                  "NomBanco": ""
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+  ```
+  
+  ### Campos de response
+  
+  **`Respuesta`** · STRING — Mensaje de resultado (éxito, advertencia o error)
+  **`IdError`** · BOOLEAN — `true` = error, la consulta no regresó datos; `false` = consulta correcta
+  
+  ### Campos de `ttAcuse`
+  
+  **`IdAcuse`** · STRING — Folio del acuse
+  **`FecReg`** · DATE — Fecha de registro del acuse
+  **`FecDep`** · DATE — Fecha de depósito
+  **`FecPago`** · DATE — Fecha de pago del complemento vigente (`CPago.FecPag`)
+  **`IdCliente`** · INTEGER — Clave del cliente
+  **`RazonSocial`** · STRING — Razón social del complemento vigente
+  **`Estatus`** · INTEGER — Estatus del acuse (siempre `4` = depositado)
+  **`Observ`** · STRING — Comentarios del acuse concatenados
+  **`FormaPago`** · STRING — Forma de pago del complemento vigente (`CPago.FormaDePago`)
+  
+  ### Campos de `ttDocAcuse` (anidada en `ttAcuse`)
+  
+  **`IdAcuse`** · STRING — Folio del acuse
+  **`FecDoc`** · DATE — Fecha del documento
+  **`Documento`** · STRING — Folio del documento pagado
+  **`Descr`** · STRING — Descripción del tipo de movimiento
+  **`ImpPago`** · DECIMAL — Importe pagado
+  **`ImpDescPP`** · DECIMAL — Descuento por pronto pago
+  **`DescEsp`** · DECIMAL — Descuento especial + adicional
+  **`ImpDevol`** · DECIMAL — Importe de devolución
+  **`Dias`** · INTEGER — Días entre el documento y el depósito
+  
+  ### Campos de `ttTotPagoAcuse` (anidada en `ttAcuse`)
+  
+  **`IdAcuse`** · STRING — Folio del acuse
+  **`TotPago`** · DECIMAL — Total recibido en moneda nacional
+  **`TotCambio`** · DECIMAL — Cambio
+  **`TotCred`** · DECIMAL — Tipo de cambio (`0` si todo es moneda nacional)
+  
+  ### Campos de `ttPagoAcuse` (anidada en `ttTotPagoAcuse`)
+  
+  **`IdAcuse`** · STRING — Folio del acuse
+  **`IdTP`** · INTEGER — Clave del tipo de pago
+  **`Descr`** · STRING — Descripción del tipo de pago (`DEV. n` si proviene de devolución)
+  **`ImpRecibido`** · DECIMAL — Importe recibido
+  **`FecCheque`** · DATE — Fecha del cheque
+  **`Cheque`** · STRING — Número de cheque
+  **`IdBanco`** · INTEGER — Clave de banco / tarjeta
+  **`NomBanco`** · STRING — Nombre del banco o tarjeta
+  
+  ### Response de error controlado
+  
+  Los errores **no** vienen dentro de la tabla; se manejan con `IdError` y `Respuesta`, y el dataset va vacío.
+  
+  ```json
+  {
+    "Respuesta": "El Acuse no tiene complemento de pago ...",
+    "IdError": true,
+    "dsAcuse": {}
+  }
+  ```
+  
+  ---
+  
+  ## 9. Evidencia de Ejecución
+  
+  *Pendiente de captura por parte del equipo de QA.*
+  Adjuntar screenshot de la herramienta de prueba (Bruno / Postman / curl) mostrando URL completa, `200 OK` e `IdError: false` con `ttAcuse`.
+  
+  ---
+  
+  ## 10. Fecha de Prueba
+  
+  | Ambiente | Fecha       | Ejecutado por |
+  |----------|-------------|---------------|
+  | DEV      | 2026-10-05  | *(pendiente)* |
+  
+  ---
+  
+  ## 11. Resultado
+  
+  | Estado              | Descripción                                                    |
+  |---------------------|----------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Cambio de contrato de salida; pendiente compilar y validar con el front |
+  
+  ---
+  
+  ## 12. Observaciones Técnicas
+  
+  1. **Ticket 3425.** Estandarización de la salida con `Respuesta` / `IdError`.
+  
+  2. **Cambio de contrato.** Antes el servicio regresaba un único parámetro `opcJson` (LONGCHAR) y los errores iban en el campo `ttAcuse.oError`, lo que rompía el front cuando no había complemento de pago. Ahora regresa `Respuesta`, `IdError` y el dataset `dsAcuse`; el campo `oError` **ya no existe**.
+  
+  3. **Errores controlados** (`IdError: true`, dataset vacío): `Usuario No Permitido` · `El Acuse no existe.` · `El Acuse no esta depositado...` · `Solo se pueden corregir acuses NORMALES, no ANTICIPOS...` · `El Acuse no tiene complemento de pago ...` · `El complemento de pago es muy antiguo ...` (más de 90 días).
+  
+  4. **Excepción de antigüedad.** Para los usuarios `NCR` y `RGP` un complemento de más de 90 días **sí** regresa datos, con `IdError: false` y `Respuesta` = `"El complemento de pago es muy antiguo ..."` como advertencia.
+  
+  5. **Errores inesperados** (`CATCH`) también se regresan como `IdError: true` con el mensaje del error en `Respuesta`.
+  
+  6. **Permisos.** El usuario debe estar en la lista separada por comas del parámetro `CompPagoCyC` (tabla `URL`).
+  
+  7. **Binding.** Al cambiar la firma del procedimiento hay que regenerar el binding (`complepago.pidl` / `adapters.pamf`) en Developer Studio y republicar el servicio.
+  
+  ---
+  **Desarrollado por:** SIS10 - JASS
+}
