@@ -1,0 +1,250 @@
+info:
+  name: "Catalogo Cliente Autocompletar "
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Clientes/Busqueda?IdUser=olds&Filtro=23JJ0&MaxReg=20&TipoBusqueda=4
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+    - name: Filtro
+      value: 23JJ0
+      type: query
+    - name: MaxReg
+      value: "20"
+      type: query
+    - name: TipoBusqueda
+      value: "4"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Catálogo de Clientes: Búsqueda (Autocompletar)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Catálogo de Clientes — Búsqueda para autocompletar**
+  Busca clientes **activos** en el campo que indica `TipoBusqueda`: **razón social o número de cliente**, **correo**, **teléfono** o **RFC**, por **coincidencia** (primero los que empiezan con el texto y después los que lo contienen), y regresa solo los primeros `MaxReg` resultados. Pensado para el *input filter* del front que autocompleta mientras el usuario teclea.
+  Programa servidor: `clientebusca.p` · Procedimiento: `buscaClientes` | Consulta directa en `Cliente`.
+
+  > **Reemplaza** el uso de `cliente.cls` (`Readcliente`, BusinessEntity) desde el front: allá el front mandaba el filtro `for each cliente where activo no-lock` y recibía **todos** los clientes activos con todos sus campos (incluido `PassInternet`) para filtrar en .NET. Aquí el filtro se resuelve en el back y la salida es una tabla **ligera** con solo los 6 campos de búsqueda.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Clientes/Busqueda
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · El `Filtro` se busca **solo** en el campo de `TipoBusqueda`
+
+  **`TipoBusqueda`** · INT · ✅ — Campo donde se busca
+  - `1` Razón social o número · `2` Correo · `3` Teléfono · `4` RFC
+  - Vacío o fuera de `1`–`4` = error
+
+  **`Filtro`** · STRING · ✅ — Lo que el usuario va tecleando
+  - `1` con **solo dígitos** → número de cliente por prefijo: `12` → `12`, `120`–`129`, `1200`–`1299`, … (desde 1 dígito)
+  - `1` con **cualquier otro carácter** → `Cliente.RazonSocial`: primero las que **empiezan** con el texto (`ABAC` → `ABACUS SIS`), luego las que **contienen todas** las palabras en cualquier orden (`valle distrib` → `DISTRIBUIDORA DEL VALLE`)
+  - `2` → `Cliente.e-mail` que **contiene** el texto (`abac` → `abacomonclova@prodigy.net.mx`, `juan@abac.com`)
+  - `3` → `Cliente.Tel1` que **contiene** los dígitos tecleados; ignora espacios, guiones y paréntesis (`8112` → `(81) 12-34-5678`)
+  - `4` → `Cliente.RFC` que **contiene** el texto; ignora espacios y guiones (`VAPA63` → `VAPA630221MS5`)
+  - Mínimo 3 caracteres (3 dígitos en teléfono), salvo número
+
+  **`MaxReg`** · INT · ❌ — Máximo de clientes a regresar
+  - Vacío o inválido = `20` · Tope = `100`
+
+  **`IdUser`** · STRING · ✅ — Usuario que consulta
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  Por número (tipo 1, solo dígitos):
+
+  ```
+  GET .../Catalogo/Clientes/Busqueda?Filtro=339&TipoBusqueda=1&MaxReg=10&IdUser=JASS
+  ```
+
+  Por razón social (tipo 1, texto):
+
+  ```
+  GET .../Catalogo/Clientes/Busqueda?Filtro=DISTRIBUIDORA DEL&TipoBusqueda=1&IdUser=JASS
+  ```
+
+  Por correo (tipo 2):
+
+  ```
+  GET .../Catalogo/Clientes/Busqueda?Filtro=abac&TipoBusqueda=2&IdUser=JASS
+  ```
+
+  Por teléfono (tipo 3):
+
+  ```
+  GET .../Catalogo/Clientes/Busqueda?Filtro=8112&TipoBusqueda=3&IdUser=JASS
+  ```
+
+  Por RFC (tipo 4):
+
+  ```
+  GET .../Catalogo/Clientes/Busqueda?Filtro=VAPA63&TipoBusqueda=4&IdUser=JASS
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Se encontraron 3 clientes.",
+    "dsCliente": {
+      "ttCliente": [
+        {
+          "Id-Cliente": 575,
+          "RazonSocial": "ARTURO VALDES PEREZ",
+          "e-mail": "abacomonclova@prodigy.net.mx",
+          "Tel1": "8666331234",
+          "RFC": "VAPA630221MS5",
+          "Activo": true
+        },
+        {
+          "Id-Cliente": 46883,
+          "RazonSocial": "ABACUS SIS",
+          "e-mail": "gcastro@gateguard.mx",
+          "Tel1": "8181234567",
+          "RFC": "ASI1009305V8",
+          "Activo": true
+        }
+      ]
+    }
+  }
+  ```
+
+  > Teléfonos del ejemplo ilustrativos.
+
+  ### Campos de `ttCliente` (0..MaxReg registros)
+
+  > Mismos nombres que en la tabla `Cliente`.
+
+  **`Id-Cliente`** · INT — Número de cliente
+  **`RazonSocial`** · STRING — Razón social
+  **`e-mail`** · STRING — Correo del cliente
+  **`Tel1`** · STRING — Teléfono principal
+  **`RFC`** · STRING — RFC
+  **`Activo`** · BOOLEAN — `true` = activo (el servicio solo regresa activos)
+
+  ### Response sin coincidencias (no es error)
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "No se encontraron clientes activos con el numero 999999.",
+    "dsCliente": { "ttCliente": [] }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `TipoBusqueda` vacío o fuera de 1–4 | `IdError: true` — `"Se requiere el tipo de busqueda: 1 Razon social o numero, 2 Correo, 3 Telefono o 4 RFC."` |
+  | `Filtro` vacío | `IdError: true` — `"Se requiere <campo> del cliente."` |
+  | Tipo 1 número `0` o de más de 9 dígitos | `IdError: true` — `"Numero de cliente invalido."` |
+  | Menos de 3 caracteres (3 dígitos en teléfono) | `IdError: false`, sin registros — `"Escriba al menos 3 caracteres de la razon social."` / `"... del correo."` / `"... 3 digitos del telefono."` / `"... del RFC."` |
+  | Mismo cliente en los dos pasos (empieza / contiene) | Sale una sola vez |
+  | Sin coincidencias | `IdError: false`, sin registros — `"No se encontraron clientes activos con <campo> <filtro>."` |
+  | Más coincidencias que `MaxReg` | Regresa `MaxReg` registros y lo indica en `Respuesta` |
+  | Cliente inactivo | Nunca se regresa |
+
+  ---
+
+  ## 10. Reglas para el Front
+
+  - Llamar al servicio con **debounce** (ej. 300 ms después de la última tecla), no en cada tecla.
+  - Mandar siempre `TipoBusqueda` según lo que el usuario eligió (1 Razón social o número, 2 Correo, 3 Teléfono, 4 RFC). Es **obligatorio**: sin él el servicio responde error.
+  - Para número, empezar a buscar desde el primer dígito; para los demás, desde el 3er carácter.
+  - El back ya regresa solo coincidencias del campo elegido: el front **no** debe volver a filtrar con "empieza con" (quitaría los que contienen el texto).
+  - La lista llega ordenada por número de cliente; si se quiere alfabética, ordenarla en el front por `RazonSocial`.
+  - `IdError: false` con `ttCliente` vacía = "sin resultados" (no mostrar como error).
+  - Si se necesita el cliente completo después de elegirlo, consultarlo aparte con su `Id-Cliente`.
+
+  ---
+
+  ## 11. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 12. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 13. Resultado
+
+  | Estado              | Descripción                                    |
+  |---------------------|------------------------------------------------|
+  | ⏳ Pendiente prueba | Pendiente de compilar, publicar y probar en DEV |
+
+  ---
+
+  ## 14. Observaciones Técnicas
+
+  1. **Tipo 1, número (prefijo):** se recorren los rangos `[n, n]`, `[n·10, n·10+9]`, `[n·100, n·100+99]`, … hasta el último cliente, con `USE-INDEX idx-abcvendmail` (`Activo` + `Id-Cliente`): solo se leen clientes activos dentro del rango y se corta al llegar a `MaxReg`.
+  2. **Paso 1 — empiezan con el texto (por índice):** razón social con `USE-INDEX Idx-RazonClie` (`RazonSocial`, `Id-Cliente`); teléfono con `USE-INDEX Idx-Tel1` (`Tel1`, `Id-Cliente`); RFC con `BEGINS` **sin** `USE-INDEX` (`idx-RFC` e `idx-abrvrfc` son de un campo y no se sabe si alguno es word-index), validando `Activo` en el ciclo; correo con el **word-index** `idx-email` (`CONTAINS "<primera palabra>*"` + `INDEX`), porque no admite `USE-INDEX` ni `BEGINS` (error 3594).
+  3. **Paso 2 — contienen el texto (recorrido):** `RazonSocial`, `Tel1` y `RFC` no tienen word-index (en `RazonSocial` `CONTAINS` da error 3398), así que se recorren los clientes activos (`USE-INDEX idx-abcvendmail`) con `FIELDS (Id-Cliente Activo RazonSocial e-mail Tel1 RFC)` y se compara con `INDEX` solo el campo del tipo: razón social = todas las palabras; correo = texto completo; teléfono = solo dígitos en ambos lados; RFC = sin espacios ni guiones en ambos lados. Al coincidir se relee el registro completo por `ROWID`. Se corta al llenar `MaxReg`; el peor caso (pocas o ninguna coincidencia) lee todos los activos.
+  4. **Sin repetir clientes:** `CAN-FIND` en `ttCliente` antes de agregar. Sin distinguir mayúsculas.
+  5. **Orden de salida:** por `Id-Cliente` (índice primario de `ttCliente`).
+  6. **Salida ligera:** `ttCliente` propio de 6 campos (ya no usa `{cliente.i}`); no se consultan `Ciudad`/`Estado`/`Pais`/`Zona` ni se relee el registro: el recorrido con `FIELDS` ya trae los 6 campos. `PassInternet` nunca sale.
+  7. **Sin auditoría** (`programas/auditoria.p`) a propósito: el front lo llama mientras se teclea.
+  8. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS
