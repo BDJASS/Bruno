@@ -14,6 +14,7 @@ http:
           "ttEnc": [
             {
               "IdCliente": 3,
+              "RFC":"AXCDCDCDCDCDCD",
               "RazonSocial":"MANUEL",
               "Iniciales": "GLT",
               "Attn": "LUIS MARRUFO",
@@ -30,7 +31,7 @@ http:
               "PlazoPP": 0,
               "Factor": 15,
               "TipoFactor": "FC",
-              "PendienteMargenD1":true // LAS PONE EN PDTE
+              "PendienteMargenD1":false // LAS PONE EN PDTE
             }
           ],
           "ttPart": [
@@ -98,6 +99,7 @@ docs: |
 
   🟢 **`IdCliente`** · INT — Cliente (de aquí el servidor deriva razón social, RFC, tel, dirección…)
   🟢 **`RazonSocial`** · STRING — **obligatoria SOLO cuando `IdCliente = 3`** (cliente mostrador). Para ese cliente el servidor **no** deriva la razón social del catálogo, usa la que se envía (no nula ni vacía). Para cualquier otro cliente se **ignora** (se deriva del catálogo)
+  🟢 **`RFC`** · STRING · ❌ — **opcional, SOLO cuando `IdCliente = 3`**. Si viene, se graba en la cotización en mayúsculas y sin espacios en las orillas; `null`, ausente o `""` → la cotización queda con RFC vacío (nunca nulo). Para cualquier otro cliente se **ignora** (se deriva del catálogo)
   🟢 **`Iniciales`** · STRING — Usuario (`Id-User`). **Llave**: de aquí el servidor deriva vendedor, ubicación de venta y almacén origen
   🟢 **`TipoPrecio`** · STRING — `M` o `MX` (el `TC` se convierte a `M` en el front)
   🟢 **`LAB`** · STRING — `M` o `E`
@@ -117,7 +119,7 @@ docs: |
 
   🔵 `IdVendedor` `IdUbiVta` `IdAlm` — **derivados del usuario** (`Iniciales`) si no se envían
   ⚙️ `Firma` — el servidor la fija = vendedor (no enviar)
-  🔵 `RazonSocial` `Propietario` `RFC` `Tel` `CalleNo` `Colonia` `IdCiudad` `Estado` `CP` `Pais` — **derivados del cliente** (no enviar). **Excepción:** para `IdCliente = 3` la `RazonSocial` se toma del JSON (ver arriba)
+  🔵 `RazonSocial` `Propietario` `RFC` `Tel` `CalleNo` `Colonia` `IdCiudad` `Estado` `CP` `Pais` — **derivados del cliente** (no enviar). **Excepción:** para `IdCliente = 3` la `RazonSocial` (obligatoria) y el `RFC` (opcional) se toman del JSON (ver arriba)
   ⚙️ `IdCot` (folio) · `FecReg` · `Hora` · `SubTotal` · `IVA` · `Tot` · `Autorizada` — **los pone el servidor**
 
   ### Partidas (`ttPart[]`) — artículos, conceptos sin código, cortes y comentarios
@@ -140,12 +142,13 @@ docs: |
   🟢 **`IndicaPre`** · STRING — indicador de precio (de `artprecios2`)
   🟢 **`IdMoneda` / `PUnitExt` / `CostoEsp` / `IdMonedaCE`** · — solo si maneja moneda extranjera (ver nota IdMonedaCE en Observaciones)
   🟢 **`Factor` / `TipoFactor`** · — factor aplicado a la partida (opcional)
+  🔵 **`Costo`** · DECIMAL — costo de la partida (el `Costo` del GET de Partidas, como lo manda el legado). **Si viene > 0 se respeta** y es el que usan el margen y la autorización *(Ticket 3528)*; `0`/ausente = lo calcula el servidor
 
   🔵 **`PorcIVA`** · DECIMAL — opcional; si va `0` el servidor lo toma del artículo
   ⚙️ **`IdSeq`** — el servidor lo autogenera 10, 20, 30… en el orden recibido (no enviar). El comentario sale **en la posición donde lo mandes** en el arreglo.
   ⚙️ **`Importe`** — `PUnit × (1 − Descto/100) × Cant` (lo calcula el servidor)
   ⚙️ **`Iva`** — `Importe × PorcIVA/100` (lo calcula el servidor)
-  ⚙️ **`Costo` / `PCosto`** — los calcula el motor de grabado
+  ⚙️ **`PCosto`** — lo calcula el motor de grabado. **`Costo`** solo si no se manda (motor de precios y, si falla, motor de grabado)
 
   ---
 
@@ -212,7 +215,7 @@ docs: |
 
   ### Caso especial — Cliente 3 (mostrador)
 
-  Cuando `IdCliente = 3` **debes** enviar `RazonSocial` (no nula ni vacía). Para ese cliente la razón social del catálogo es genérica, por lo que el servidor la reemplaza por la que capture el usuario:
+  Cuando `IdCliente = 3` **debes** enviar `RazonSocial` (no nula ni vacía) y **puedes** enviar `RFC` (opcional). Para ese cliente la razón social y el RFC del catálogo son genéricos (el RFC viene vacío), por lo que el servidor usa los que capture el usuario:
 
   ```json
   {
@@ -221,6 +224,7 @@ docs: |
         {
           "IdCliente": 3,
           "RazonSocial": "PUBLICO EN GENERAL S.A. DE C.V.",
+          "RFC": "XAXX010101000",
           "Iniciales": "GLT",
           "Attn": "LUIS MARRUFO",
           "TipoPrecio": "M",
@@ -243,7 +247,9 @@ docs: |
   }
   ```
 
-  > Para cualquier `IdCliente` distinto de 3, el campo `RazonSocial` que se envíe es **ignorado**: se sigue derivando del catálogo de clientes.
+  > `RFC` es opcional: si el usuario no lo captura, no lo mandes (o mándalo `""`/`null`) y la cotización queda con RFC vacío.
+  >
+  > Para cualquier `IdCliente` distinto de 3, los campos `RazonSocial` y `RFC` que se envíen son **ignorados**: se siguen derivando del catálogo de clientes.
 
   ---
 
@@ -305,6 +311,9 @@ docs: |
   | Partidas | al menos 1 | *"La cotizacion no tiene partidas."* |
 
   > Estos checks corren **antes** de delegar; además, `creaCotizaciones` aplica sus propias validaciones de negocio (existencias, factores, decimales por presentación, etc.).
+  >
+  > **Ticket 3526:** cuando el motor rechaza la cotización, `Respuesta` ahora incluye el **motivo** (antes llegaba solo *"Error al crear cotizacion: "*). Ejemplo: *"Error al crear cotizacion: El articulo esta descontinuado y no hay existencias en almacenes. "*. Aplica a todos los rechazos del motor (descontinuado sin existencias, decimales en la presentación, múltiplo, factor, vigencia, folio, origen del usuario). No cambia qué se rechaza ni cómo se graba.
+  > El alta **rechazada** también queda en `AuditLog` (`IdError = true`, Operación `POST`, Resource `/Cotizacion/Captura/Alta`) con el motivo en `Respuesta`, sin el prefijo *"Error al crear cotizacion:"*. El correo de auditoría sigue enviándose solo cuando la cotización se crea.
 
   ---
 
@@ -333,7 +342,7 @@ docs: |
   ## 12. Observaciones Técnicas
 
   1. **Reuso del motor:** `cotaltacot.p` NO reimplementa el grabado; arma el dataset completo (`dsCot2`) y llama `cotizacion2.p` / `creaCotizaciones` (folio, costos, autorización, transacción).
-  2. **Derivación del cliente:** razón social, propietario, RFC, teléfono, dirección, ciudad, estado y país se leen de `Cliente` (y `Ciudad`/`Estado`/`Pais`) usando `IdCliente`. El front ya no los envía. **Excepción — cliente 3 (mostrador):** la `RazonSocial` **no** se deriva; es obligatoria en `ttEnc` (no nula ni vacía) y el servidor la usa tal cual (`TRIM`). El resto de los datos (RFC, dirección, etc.) sí se siguen derivando del cliente 3.
+  2. **Derivación del cliente:** razón social, propietario, RFC, teléfono, dirección, ciudad, estado y país se leen de `Cliente` (y `Ciudad`/`Estado`/`Pais`) usando `IdCliente`. El front ya no los envía. **Excepción — cliente 3 (mostrador):** la `RazonSocial` **no** se deriva; es obligatoria en `ttEnc` (no nula ni vacía) y el servidor la usa tal cual (`TRIM`). El **`RFC`** tampoco se deriva (2026-10-26): es **opcional** en `ttEnc`; si viene se graba con `CAPS(TRIM())`, y nulo/ausente/vacío se graba `""`. El resto de los datos (dirección, teléfono, etc.) sí se siguen derivando del cliente 3.
   3. **Cálculo en servidor:** `Importe` = `PUnit × (1 − Descto/100) × Cant`; `Iva` = `Importe × PorcIVA/100`. `PorcIVA` se toma del artículo si no viene. Para `Tipo ≥ 3` (separador) el `Importe` es 0.
   4. **Vendedor/ubicación/almacén desde el usuario:** a partir de `Iniciales` (= `Usuario.Id-User`) se obtiene, igual que `usuario.p`: el **vendedor** (`Vendedor.iniciales = Id-User`, o default `"0104"` si el usuario es interno `<= "99999"`), la **ubicación de venta** (`Usuario.id-ubivta`) y el **almacén origen** (`Usuario.Id-Ubicacion`). El front puede enviar `IdVendedor`/`IdUbiVta`/`IdAlm` para forzar otros valores; si no, se derivan. Como respaldo, la ubicación cae a `Vendedor.Id-UbiVta` y el almacén a `AlmPrior` (tipo 1).
   5. **Folio:** el front envía `IdCot` vacío; el motor asigna el folio y se devuelve en `Folio`.
@@ -344,7 +353,10 @@ docs: |
   10. **Auditoría (al crear con éxito):** se registra en `AuditLog` vía `programas/auditoria.p` con `Area="VENTAS"`, `Modulo="Cotizacion"`, `Programa="cotaltacot"`, `Operacion="ALTA"`, `Respuesta="Folio: <folio>"`, `Resource=<folio>`, `IdUser=Iniciales`.
   11. **Correo de auditoría (al crear con éxito):** se arma un HTML con el resumen de la cotización (folio, cliente, vendedor, total, partidas) y se envía con el mecanismo estándar **`programas/correo01_rest.p`** (recibe la ruta del HTML en disco) a `desarrollo10@adosa.com.mx`. **Ya no usa `inva0007.i`.** Tanto la auditoría como el correo son **no críticos**: si fallan, la cotización ya quedó grabada y no se marca error (se loguea).
   12. **`PendienteMargenD1` (HU-F-14 / ticket 3279):** campo **opt-in** del encabezado (`ttEnc`, `LOGICAL`). Si llega en `true`, tras grabar con éxito el alta fuerza `Cot.Autorizada = false` (queda **pendiente por autorizar**) aunque el motor la haya autorizado por margen (M1 ≥ 15%), y la respuesta regresa `Autorizada = false`. El servidor **nunca opera con nulo**: ausencia o `?` se normaliza a `false`, por lo que el flujo actual no cambia si el front no lo envía. El grabado del motor no se toca; solo se reescribe `Cot.Autorizada` en una transacción posterior por folio.
-  13. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+  13. **Autorización automática por margen (Ticket 3560 — cambio 2026-10-14, solicitud del Ing. Francisco):** cuando la cotización no queda autorizada directo (precio especial `*`, precio MX, pronto pago entre 5 % y 18 %, vigencia > 15 o factor), el motor revisa el margen y la autoriza si es **≥ 15 %**. Desde esta fecha ese margen se calcula con el **costo grabado en cada partida** (`DetCot.Costo`, el `Costo` que manda el front en `ttPart`) y **ya no con el costo del día** (`HCosto`), que antes recalculaba `vtad0100.p`. Fórmula: `((Σ precio neto × Cant / Σ costo × Cant) − 1) × 100`, con precio neto = `PUnit × (1 − Descto) × (1 − DescPP) × (1 − DescPP2)` y costo especial (`CostoEsp`) cuando existe. Así el margen que ve el armado es el mismo con el que se autoriza. Si el margen es < 15 %, sigue la regla de siempre: solo se autoriza si todas las partidas son `D` o `Z`.
+  14. **Márgenes grabados en `Cot` (2026-10-20):** al crear la cotización el motor (`cotizacion2.p / creaCotizaciones`) guarda, con las partidas `Tipo = 1` ya costeadas: **`Cot.TotCosto`** = `Σ costo × Cant` (costo = `CostoEsp` si > 0, si no `Costo`); **`Cot.MargenC`** = margen **sobre costo** `((Σ Importe / TotCosto) − 1) × 100`; **`Cot.MargenV`** = margen **sobre venta** `(1 − TotCosto / Σ Importe) × 100`, ambos a 2 decimales. Son el mismo M1 que muestra `GestionCotizacion/Detalle` (`ttCondVenta.MargenBruto` / `MargenV`) y el grid `GestionCotizacion/Consulta`. `TotCosto > 0` marca que la cotización trae márgenes grabados; las anteriores quedan en `0` y los servicios de consulta los calculan al vuelo. No cambia la entrada ni la respuesta de este servicio.
+  15. **Correo por precio debajo de D1 (2026-10-21):** cuando el front manda `PendienteMargenD1 = true` y el alta queda grabada, se envía un correo (`programas/cotcorreod1.p`) con los datos de la cotización (folio con liga a `VerCotizacion`, cliente, vendedor, quién capturó, subtotal sin IVA, márgenes sobre costo y sobre venta, condiciones) y el **motivo**: las partidas con precio especial (`IndicaPre = "*"`) con su precio cotizado (`PUnit × (1 − Descto/100)`), su `PrecioD1` y la diferencia; las que quedan debajo de D1 van en rojo. El `PrecioD1` se obtiene de `cotdetalle.p` (el mismo que marca en rojo `GestionCotizacion/Detalle`). Destinatarios: **desarrollo10 y desarrollo8** en DEV y en producción (en DEV el asunto lleva `DESARROLLO`). No crítico: un error en el correo no afecta el alta.
+  16. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
 
   ---
   **Desarrollado por:** SIS10 - JASS
