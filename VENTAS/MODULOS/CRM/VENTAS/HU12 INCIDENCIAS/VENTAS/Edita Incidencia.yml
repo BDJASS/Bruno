@@ -1,0 +1,260 @@
+info:
+  name: Edita Incidencia
+  type: http
+  seq: 10
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Actualiza
+  body:
+    type: json
+    data: |
+      {
+        "dsIncEdita": {
+          "ttEdEnc": [
+            {
+              "Folio": "INC-2026-0001",
+              "IdUser": "OLDS",
+              "Observaciones": "Material llegó dañado. Se agrega segundo artículo afectado.",
+              "IdVendedor": "5197"
+            }
+          ],
+          "ttEdArt": [
+            {
+              "Renglon": 1,
+              "IdArticulo": "044868",
+              "Articulo": "PAPEL BOND CARTA",
+              "Cantidad": 10,
+              "IdPres": 0,
+              "Presentacion": "PIEZA",
+              "IdProblema": 11,
+              "IdSolucion": 20,
+              "CostoMerma": 1200.00,
+              "Comentario": ""
+            },
+            {
+              "Renglon": 0,
+              "IdArticulo": "044870",
+              "Articulo": "PAPEL BOND OFICIO",
+              "Cantidad": 4,
+              "IdPres": 0,
+              "Presentacion": "PIEZA",
+              "IdProblema": 11,
+              "IdSolucion": 20,
+              "CostoMerma": 480.00,
+              "Comentario": ""
+            }
+          ],
+          "ttEdDoc": []
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Edición de Incidencia (Ventas)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Edición de Incidencia (HU-12-1 · botón ✏️ Editar)**
+  Guarda los cambios que **Ventas** hace a una incidencia ya registrada, aplicando las **Reglas de Edición** del SRS (hoja `Diagramas_HU.-12`): qué se puede cambiar depende del **estatus** de la incidencia.
+  - **Abierta:** edición completa de la captura original.
+  - **En Proceso:** solo observaciones y agregar documentos.
+  - **Resuelta** o **dada de baja:** no se edita.
+
+  Los campos de CEDIS (diagnóstico, costos, guía, responsable, causas raíz, checklist) **no** se editan aquí: son del módulo **Atender** (`/Incidencia/Cedis/Atiende`).
+  Programa: `incactualiza.p` · Procedimiento: `actualizaIncidencia`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Actualiza
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Body JSON)
+
+  Los datos viajan en el **body** como dataset `dsIncEdita`: encabezado `ttEdEnc` + `ttEdArt` (opcional) + `ttEdDoc` (opcional).
+
+  > ✅ = Requerido · ❌ = Opcional · En el encabezado, un campo **nulo o no enviado = no se cambia**
+
+  ### Encabezado (`ttEdEnc`) — un solo registro
+
+  **`Folio`** · STRING · ✅ — Folio de la incidencia (`INC-AAAA-NNNN`).
+  **`IdUser`** · STRING · ✅ — Usuario que edita. Debe tener permiso (ver reglas).
+  **`Observaciones`** · STRING · ❌ — Texto completo que debe quedar (reemplaza al anterior). `""` lo deja vacío. Editable en **Abierta** y **En Proceso**.
+  **`EnviaCorreoCte`** · BOOLEAN · ❌ — Solo en **Abierta**.
+  **`SoloInterno`** · BOOLEAN · ❌ — Solo en **Abierta**.
+  **`IdVendedor`** · STRING · ❌ — Reasignar el vendedor. Solo en **Abierta**. Debe existir y estar activo. Vacío = no cambia.
+
+  ### Artículos (`ttEdArt`) — opcional
+
+  Si **no** se manda, los artículos no se tocan. Si se manda, es la **lista completa** que debe quedar:
+  - `Renglon` > 0 → actualiza ese renglón.
+  - `Renglon` = 0 → agrega un renglón nuevo.
+  - Los renglones grabados que **no** vengan → se borran.
+
+  **`Renglon`** · INTEGER · ✅ — Renglón existente (de `/Incidencia/Detalle`) o `0` para nuevo.
+  **`IdArticulo`** · STRING · ❌ — Clave del artículo.
+  **`Articulo`** · STRING · ❌ — Descripción.
+  **`Cantidad`** · DECIMAL · ✅ — Mayor a cero.
+  **`IdPres`** · INTEGER · ❌ — Presentación.
+  **`Presentacion`** · STRING · ❌ — Descripción de la presentación.
+  **`IdProblema`** · INTEGER · ✅ — Debe existir y estar activo.
+  **`IdSolucion`** · INTEGER · ✅ — Debe existir, estar activa y estar ligada al problema (`ProblemaSolucion`).
+  **`CostoMerma`** · DECIMAL · ❌ — Solo se guarda si la solución genera merma; si no, queda en 0.
+  **`Comentario`** · STRING · ❌ — Comentario del renglón.
+
+  > Flete y Merma **no** se envían: se toman de la Solución, igual que en el alta.
+
+  ### Documentos a agregar (`ttEdDoc`) — opcional
+
+  Agrega archivos de soporte (Etapa `A`). Los que ya estaban cargados no se tocan. Editable en **Abierta** y **En Proceso**.
+
+  **`Nombre`** · STRING · ✅ — Nombre del archivo.
+  **`Extension`** · STRING · ✅ — Ej: `pdf`, `jpg`.
+  **`TipoMime`** · STRING · ❌ — Vacío = `application/octet-stream`.
+  **`Contenido`** · STRING (base64) · ✅ — Máximo 10 MB por archivo.
+
+  ---
+
+  ## 5. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Accept`       | `application/json` |
+  | `Content-Type` | `application/json` |
+
+  ---
+
+  ## 6. Ejemplos de Request (body)
+
+  **Abierta — reasignar vendedor, corregir un artículo y agregar otro:**
+
+  ```json
+  {
+    "dsIncEdita": {
+      "ttEdEnc": [{
+        "Folio": "INC-2026-0012", "IdUser": "jjlg",
+        "Observaciones": "Material llegó dañado. Se agrega segundo artículo afectado.",
+        "IdVendedor": "5197"
+      }],
+      "ttEdArt": [
+        { "Renglon": 1, "IdArticulo": "044868", "Articulo": "PAPEL BOND CARTA", "Cantidad": 10,
+          "IdPres": 0, "Presentacion": "PIEZA", "IdProblema": 11, "IdSolucion": 20,
+          "CostoMerma": 1200.00, "Comentario": "" },
+        { "Renglon": 0, "IdArticulo": "044870", "Articulo": "PAPEL BOND OFICIO", "Cantidad": 4,
+          "IdPres": 0, "Presentacion": "PIEZA", "IdProblema": 11, "IdSolucion": 20,
+          "CostoMerma": 480.00, "Comentario": "" }
+      ],
+      "ttEdDoc": []
+    }
+  }
+  ```
+
+  **En Proceso — solo observaciones y un documento:**
+
+  ```json
+  {
+    "dsIncEdita": {
+      "ttEdEnc": [{
+        "Folio": "INC-2026-0012", "IdUser": "jjlg",
+        "Observaciones": "El cliente envía fotos adicionales del daño."
+      }],
+      "ttEdArt": [],
+      "ttEdDoc": [{ "Nombre": "fotos.pdf", "Extension": "pdf", "TipoMime": "application/pdf",
+                    "Contenido": "JVBERi0xLjQKJc..." }]
+    }
+  }
+  ```
+
+  ---
+
+  ## 7. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Incidencia INC-2026-0012 actualizada (observaciones, vendedor, 2 articulo(s)).",
+    "dsIncEdita": { }
+  }
+  ```
+
+  ---
+
+  ## 8. Campos de Response
+
+  **`IdError`** · BOOLEAN — `true` = no se guardó nada; `false` = se guardó (o no había cambios).
+  **`Respuesta`** · STRING — Mensaje amigable con la lista de lo que cambió.
+
+  ---
+
+  ## 9. Reglas y Validaciones
+
+  **Qué se puede editar en cada estatus:**
+
+  | Estatus | Se puede editar |
+  |---|---|
+  | Abierta (1) | Todo lo capturado en el alta |
+  | En Proceso (2) | Solo observaciones y agregar documentos |
+  | Resuelta (3) | Nada (solo lectura) |
+
+  **Qué se puede editar en cada campo:**
+
+  | Campo | Cuándo |
+  |---|---|
+  | Folio, fecha de registro | Nunca |
+  | Pedido, factura, cliente | Nunca (si están mal, se da de alta otra incidencia) |
+  | Vendedor | Solo en Abierta |
+  | Envío de correo, solo interno | Solo en Abierta |
+  | Artículos, problema y solución | Solo en Abierta |
+  | Observaciones, documentos | Abierta y En Proceso |
+
+  - `Folio` e `IdUser` obligatorios.
+  - **Permiso:** puede editar quien registró la incidencia, el vendedor asignado (`Vendedor.Iniciales = IdUser`) o un usuario del parámetro URL **`Inc-Editores`** (IdUser separados por coma).
+  - **En Proceso:** si el front manda vendedor, banderas o artículos **iguales** a lo grabado no hay error (puede mandar el modal precargado completo). Si vienen **distintos**, se rechaza todo y el mensaje dice qué no se puede cambiar.
+  - **Artículos:** al borrar un renglón o cambiarle problema/solución se borran sus causas raíz y campos adicionales, y del checklist se quitan las soluciones que ya no estén en la incidencia. Se recalculan `CostoMerma` y `CostoTotal = CostoMerma + CostoFlete`.
+  - Si no hay nada distinto a lo grabado responde `IdError = false` con "No se detectaron cambios".
+  - Valida **todo antes de grabar**: si algo falla no se cambia nada.
+  - Toma la incidencia con bloqueo exclusivo sin espera: si otro usuario la tiene, responde de inmediato.
+  - Guarda `Id-UserMod` / `FecMod` y deja registro en auditoría.
+
+  **Mensajes de error frecuentes:**
+  - `"La incidencia INC-2026-0012 ya esta Resuelta; queda solo de lectura."`
+  - `"La incidencia INC-2026-0012 esta dada de baja; ya no se puede editar."`
+  - `"La incidencia INC-2026-0012 ya esta En Proceso (CEDIS la esta atendiendo): solo se pueden cambiar las observaciones y agregar documentos. No se permite cambiar: vendedor, articulos / problema / solucion."`
+  - `"No tienes permiso para editar la incidencia INC-2026-0012. Solo la puede editar quien la registro, el vendedor asignado o un usuario autorizado."`
+  - `"El renglon 3 no pertenece a la incidencia INC-2026-0012."`
+  - `"La solucion 20 no corresponde al problema 11."`
+  - `"La incidencia esta siendo modificada por otro usuario. Intente de nuevo."`
+
+  ---
+
+  ## 10. Relacionados
+
+  - `/Incidencia/Detalle` — trae los datos y los `Renglon` para precargar el modal.
+  - `/Incidencia/Cedis/Atiende` — edición de CEDIS (En Proceso).
+  - `/Incidencia/Elimina` — baja lógica (solo Abierta).
+  - Parámetro URL `Inc-Editores` — se crea vacío con `crmcargacatalogos.p`; capturar los IdUser a mano.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS
