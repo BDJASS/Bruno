@@ -5,17 +5,18 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Ventas/Consulta?IdUser=jjlg&Vista=M&IdVendedor=5197&Estatus=&FechaIni=&FechaFin=
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Ventas/Consulta?IdUser=jjlg&Vista=T&Estatus=&FechaIni=&FechaFin=
   params:
     - name: IdUser
       value: jjlg
       type: query
     - name: Vista
-      value: M
+      value: T
       type: query
     - name: IdVendedor
       value: "5197"
       type: query
+      disabled: true
     - name: Estatus
       value: ""
       type: query

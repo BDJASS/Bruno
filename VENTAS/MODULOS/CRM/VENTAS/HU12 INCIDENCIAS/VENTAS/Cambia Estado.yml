@@ -1,17 +1,17 @@
 info:
   name: Cambia Estado
   type: http
-  seq: 7
+  seq: 8
 
 http:
-  method: POST
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Estado?Folio=INC-2026-0034&IdUser=jvhernandez&NuevoEstatus=2
+  method: PUT
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Estado?Folio=INC-2026-0005&IdUser=OLDS&NuevoEstatus=2
   params:
     - name: Folio
-      value: INC-2026-0034
+      value: INC-2026-0005
       type: query
     - name: IdUser
-      value: jvhernandez
+      value: OLDS
       type: query
     - name: NuevoEstatus
       value: "2"
@@ -41,7 +41,7 @@ docs: |
   ## 2. Método HTTP
 
   ```
-  POST
+  PUT
   ```
 
   ---
@@ -67,7 +67,7 @@ docs: |
   ## 5. Ejemplo de Request
 
   ```
-  POST http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Estado?Folio=INC-2026-0034&IdUser=jvhernandez&NuevoEstatus=2
+  PUT http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Estado?Folio=INC-2026-0034&IdUser=jvhernandez&NuevoEstatus=2
   ```
 
   ---

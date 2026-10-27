@@ -1,17 +1,17 @@
 info:
   name: Elimina Incidencia
   type: http
-  seq: 8
+  seq: 9
 
 http:
-  method: POST
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Elimina?Folio=INC-2026-0034&IdUser=jjlg&IdMotivoBaja=3&Comentario=Ticket de prueba
+  method: DELETE
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Elimina?Folio=INC-2026-0006&IdUser=OLDS&IdMotivoBaja=3&Comentario=Ticket de prueba
   params:
     - name: Folio
-      value: INC-2026-0034
+      value: INC-2026-0006
       type: query
     - name: IdUser
-      value: jjlg
+      value: OLDS
       type: query
     - name: IdMotivoBaja
       value: "3"
@@ -44,7 +44,7 @@ docs: |
   ## 2. Método HTTP
 
   ```
-  POST
+  DELETE
   ```
 
   ---
@@ -71,7 +71,7 @@ docs: |
   ## 5. Ejemplo de Request
 
   ```
-  POST http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Elimina?Folio=INC-2026-0034&IdUser=jjlg&IdMotivoBaja=3&Comentario=Ticket de prueba
+  DELETE http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Elimina?Folio=INC-2026-0034&IdUser=jjlg&IdMotivoBaja=3&Comentario=Ticket de prueba
   ```
 
   ---

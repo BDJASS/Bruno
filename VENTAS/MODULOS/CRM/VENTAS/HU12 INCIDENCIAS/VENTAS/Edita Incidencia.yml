@@ -4,7 +4,7 @@ info:
   seq: 10
 
 http:
-  method: POST
+  method: PUT
   url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Incidencia/Actualiza
   body:
     type: json
@@ -78,7 +78,7 @@ docs: |
   ## 2. Método HTTP
 
   ```
-  POST
+  PUT
   ```
 
   ---
