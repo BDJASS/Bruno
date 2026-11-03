@@ -1,0 +1,266 @@
+info:
+  name: Consulta Cliente Sin Registro por RFC
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Cliente/SinRegistro/Consulta?RFC=XAXX010101000
+  params:
+    - name: RFC
+      value: XAXX010101000
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Cliente Sin Registro (Cliente 3): Consulta por RFC
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Cliente Sin Registro — Consulta por RFC**
+  Cuando en la captura de **cotización** o de **pedido** se usa el **cliente 3** (mostrador / sin registro), con el **RFC** capturado regresa en una sola llamada:
+  - Los **clientes registrados** activos con ese RFC (para que el usuario pueda usar uno de ellos).
+  - El registro de **cliente sin registro** (`CteSReg`) si existe, con población, estado, país, régimen fiscal, IVA y plazo del cliente 3.
+  - La **acción** que sigue en el front (`Accion`): alta, modificación, público en general o bloqueado.
+
+  Se basó en el proceso de captura de cliente sin registro del call center legado (búsqueda de clientes por RFC + consulta de cliente sin registro).
+
+  > **RFC vacío = RFC genérico** `XAXX010101000` (público en general), igual que el legado.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Cliente/SinRegistro/Consulta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · El RFC se normaliza: sin espacios ni guiones y en mayúsculas
+
+  **`RFC`** · STRING · ❌ — RFC capturado por el usuario
+  - Vacío = `XAXX010101000` (público en general)
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header   | Valor              |
+  |----------|--------------------|
+  | `Accept` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Cliente/SinRegistro/Consulta?RFC=GOMJ800101AB1
+  GET .../Cliente/SinRegistro/Consulta?RFC=            (público en general)
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ### RFC ya registrado como cliente sin registro (`Accion = MODIFICACION`)
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Cliente sin registro encontrado.",
+    "Accion": "MODIFICACION",
+    "dsCteSinReg": {
+      "ttClienteRFC": [],
+      "ttCteSinReg": [
+        {
+          "RFC": "GOMJ800101AB1",
+          "RazonSocial": "JUAN GOMEZ MARTINEZ",
+          "Propietario": "JUAN GOMEZ",
+          "CalleNo": "AV. JUAREZ 120",
+          "Colonia": "CENTRO",
+          "IdCiudad": 1,
+          "Ciudad": "HERMOSILLO",
+          "IdEstado": "SON",
+          "Estado": "SONORA",
+          "Pais": "MEXICO",
+          "CP": "83000",
+          "Tel": "6621234567",
+          "Fax": "",
+          "Email": "JUAN@CORREO.COM",
+          "BuzonFiscal": "JUAN@CORREO.COM",
+          "IdUsoCFDI": "G03",
+          "IdRFiscal": "612",
+          "DescrRFiscal": "PERSONAS FISICAS CON ACTIVIDADES EMPRESARIALES",
+          "FEFormaPago": "01",
+          "FEDigitosCuenta": "",
+          "NomEmpresa": "",
+          "BlqDev": false,
+          "PorcIVA": 16,
+          "Plazo": 0
+        }
+      ]
+    }
+  }
+  ```
+
+  ### RFC nuevo con clientes registrados del mismo RFC (`Accion = ALTA`)
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Se encontraron 1 cliente(s) registrados con este RFC. Seleccione uno o continue como cliente sin registro.",
+    "Accion": "ALTA",
+    "dsCteSinReg": {
+      "ttClienteRFC": [
+        { "IdCliente": 33147, "RFC": "VIIM700101AB1", "RazonSocial": "MARIA VILLAGRAN ITUARTE" }
+      ],
+      "ttCteSinReg": []
+    }
+  }
+  ```
+
+  ### RFC vacío o genérico (`Accion = PUBLICO`)
+
+  **No regresa datos.** El front abre el modal para capturar los datos obligatorios y los pasa **solo** al encabezado de la cotización o del pedido con el RFC genérico. Nunca se consulta ni se guarda como cliente sin registro.
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "RFC generico: no se consulta ni se guarda; capture los datos para la cotizacion o el pedido.",
+    "Accion": "PUBLICO",
+    "dsCteSinReg": { "ttClienteRFC": [], "ttCteSinReg": [] }
+  }
+  ```
+
+  ### Campos de respuesta
+
+  **`IdError`** · BOOLEAN — `true` = RFC inválido, bloqueado o error
+  **`Respuesta`** · STRING — Mensaje para el usuario
+  **`Accion`** · STRING — Qué sigue en el front
+  - `ALTA` abrir modal vacío y guardar con **POST** · `MODIFICACION` abrir modal con datos y guardar con **PUT** · `PUBLICO` capturar datos solo para el documento · `BLOQUEADO` detener
+
+  ### Campos de `ttClienteRFC` (0..N — clientes registrados con el mismo RFC)
+
+  **`IdCliente`** · INT — Número de cliente
+  **`RFC`** · STRING — RFC
+  **`RazonSocial`** · STRING — Razón social
+
+  ### Campos de `ttCteSinReg` (0..1 — solo con `Accion = MODIFICACION`)
+
+  **`RFC`** · STRING — RFC normalizado
+  **`RazonSocial`** · STRING — Razón social
+  **`Propietario`** · STRING — Propietario / atención
+  **`CalleNo`** · STRING — Calle y número
+  **`Colonia`** · STRING — Colonia
+  **`IdCiudad`** · INT — Población
+  **`Ciudad`** · STRING — Nombre de la población
+  **`IdEstado`** · STRING — Estado (de la población)
+  **`Estado`** · STRING — Nombre del estado
+  **`Pais`** · STRING — País
+  **`CP`** · STRING — Código postal
+  **`Tel`** · STRING — Teléfono
+  **`Fax`** · STRING — Fax
+  **`Email`** · STRING — Correo
+  **`BuzonFiscal`** · STRING — Buzón fiscal (correo para el CFDI)
+  **`IdUsoCFDI`** · STRING — Uso de CFDI
+  **`IdRFiscal`** · STRING — Régimen fiscal
+  **`DescrRFiscal`** · STRING — Descripción del régimen fiscal
+  **`FEFormaPago`** · STRING — Forma de pago registrada
+  **`FEDigitosCuenta`** · STRING — Dígitos de cuenta
+  **`NomEmpresa`** · STRING — Nombre de la empresa
+  **`BlqDev`** · BOOLEAN — Bloqueado
+  **`PorcIVA`** · DECIMAL — % IVA (de la zona del cliente 3)
+  **`Plazo`** · INT — Plazo (del cliente 3)
+
+  ### Response de error controlado
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "RFC Bloqueado, comunicar al cliente con el departamento de creditos.",
+    "Accion": "BLOQUEADO",
+    "dsCteSinReg": { "ttClienteRFC": [], "ttCteSinReg": [] }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Mensaje |
+  |-----------|---------|
+  | RFC con menos de 12 o más de 13 caracteres | `El RFC debe tener 12 o 13 caracteres.` |
+  | Formato inválido (3-4 letras + AAMMDD + homoclave) | `El formato del RFC es incorrecto.` |
+  | RFC bloqueado por créditos | `RFC Bloqueado, comunicar al cliente con el departamento de creditos.` |
+
+  ---
+
+  ## 10. Reglas de Negocio para el Front
+
+  1. **`ttClienteRFC` con registros:** mostrar combo para elegir un cliente registrado (se carga como cliente normal) o **continuar sin seleccionar** y seguir con `Accion`.
+  2. **`Accion = PUBLICO`** (RFC vacío o `XAXX010101000`): no viene información. Abrir el modal con el RFC genérico bloqueado, validar en el front lo obligatorio y mandar los datos **solo** en el encabezado de la cotización o del pedido. **No llamar a Guardar** (si se llama con el genérico, no hace nada).
+  3. **`Accion = ALTA`:** abrir el modal vacío con el RFC y guardar con `POST /Cliente/SinRegistro/Guardar`.
+  4. **`Accion = MODIFICACION`:** abrir el modal con los datos de `ttCteSinReg` y guardar con `PUT /Cliente/SinRegistro/Guardar`.
+  5. **`IdError = true`:** mostrar `Respuesta` y no continuar.
+  6. Después de guardar, mandar los datos en el encabezado del alta de **cotización** o de **pedido** (`RFC`, `RazonSocial`, `Propietario`, `CalleNo`, `Colonia`, `Tel`, `CP`, `IdCiudad`).
+
+  ---
+
+  ## 11. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 12. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 13. Resultado
+
+  | Estado              | Descripción                                    |
+  |---------------------|------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio nuevo, pendiente de despliegue en DEV. |
+
+  ---
+
+  ## 14. Observaciones Técnicas
+
+  1. Los clientes registrados se buscan por **RFC exacto**, igual que el legado.
+  2. El RFC genérico (o vacío) **no consulta nada ni regresa datos** (criterio del Ing. Francisco: solo se guarda un RFC real para reusarlo o modificarlo). En el legado ese registro se sobrescribía con cada venta a público en general.
+  3. La búsqueda de **clientes registrados** con el mismo RFC (`ttClienteRFC`) está desactivada por ahora; el buscador se hará en otro ticket.
+  3. Registros antiguos guardados con espacios o guiones en el RFC también se encuentran.
+  4. `PorcIVA` y `Plazo` se toman del cliente 3, igual que el legado.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

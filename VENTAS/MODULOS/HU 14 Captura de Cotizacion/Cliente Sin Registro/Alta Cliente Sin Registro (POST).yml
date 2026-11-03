@@ -1,0 +1,235 @@
+info:
+  name: Alta Cliente Sin Registro (POST)
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Cliente/SinRegistro/Guardar
+  body:
+    type: json
+    data: |-
+      {
+        "dsCteSinRegAlta": {
+          "ttCteSinRegAlta": [
+            {
+              "RFC": "XAXX010101000",
+              "RazonSocial": "Juan Gomez Martinez",
+              "Propietario": "Juan Gomez",
+              "CalleNo": "Av. Juarez 120",
+              "Colonia": "Centro",
+              "IdCiudad": 1,
+              "CP": "83000",
+              "Tel": "6621234567",
+              "Fax": "",
+              "Email": "juan@correo.com",
+              "IdUsoCFDI": "G03",
+              "IdRFiscal": "",
+              "Iniciales": "OLDS"
+            }
+          ]
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Cliente Sin Registro (Cliente 3): Alta
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Cliente Sin Registro — Alta (POST)**
+  Da de alta un **cliente sin registro** (cliente 3) con los datos del modal "Alta de dirección de Cliente sin Registro". Solo procede si el RFC **no existe**; si ya existe se rechaza y se debe usar la **modificación (PUT)** en la misma URL.
+
+  Se basó en el proceso de alta de cliente sin registro del call center legado, con las mismas validaciones del modal.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Cliente/SinRegistro/Guardar
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  No aplica.
+
+  ---
+
+  ## 5. Body — `dsCteSinRegAlta.ttCteSinRegAlta` (1 registro)
+
+  > ✅ = Requerido · ❌ = Opcional · Los textos se guardan en MAYÚSCULAS
+
+  **`RFC`** · STRING · ✅ — 12 o 13 caracteres, formato válido; sin espacios ni guiones (el servidor los quita)
+  - Vacío o `XAXX010101000` = **público en general**: **no hace nada** (no valida, no graba); responde `IdError = false`, `Accion = PUBLICO`
+
+  **`RazonSocial`** · STRING · ✅ — Razón social
+  **`Propietario`** · STRING · ❌ — Propietario / atención
+  **`CalleNo`** · STRING · ✅ — Calle y número
+  **`Colonia`** · STRING · ❌ — Colonia
+
+  **`IdCiudad`** · INT · ✅ — Población (catálogo de ciudades)
+  - El **estado** se toma de la población; no se envía
+
+  **`CP`** · STRING · ✅ — 5 dígitos
+  **`Tel`** · STRING · ❌ — Teléfono
+  **`Fax`** · STRING · ❌ — Fax
+
+  **`Email`** · STRING · ❌ — Correo(s) separados por `;`
+  - Se guarda como **correo** y como **buzón fiscal** (igual que el legado)
+
+  **`IdUsoCFDI`** · STRING · ❌ — Uso de CFDI
+  **`IdRFiscal`** · STRING · ❌ — Régimen fiscal; si viene debe existir
+  **`Iniciales`** · STRING · ❌ — Usuario que captura
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor              |
+  |----------------|--------------------|
+  | `Content-Type` | `application/json` |
+  | `Accept`       | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  Ver el body de este request.
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Cliente sin registro dado de alta.",
+    "Accion": "ALTA",
+    "dsCteSinReg": {
+      "ttCteSinReg": [
+        {
+          "RFC": "GOMJ800101AB1",
+          "RazonSocial": "JUAN GOMEZ MARTINEZ",
+          "Propietario": "JUAN GOMEZ",
+          "CalleNo": "AV. JUAREZ 120",
+          "Colonia": "CENTRO",
+          "IdCiudad": 1,
+          "Ciudad": "HERMOSILLO",
+          "IdEstado": "SON",
+          "Estado": "SONORA",
+          "Pais": "MEXICO",
+          "CP": "83000",
+          "Tel": "6621234567",
+          "Fax": "",
+          "Email": "JUAN@CORREO.COM",
+          "BuzonFiscal": "JUAN@CORREO.COM",
+          "IdUsoCFDI": "G03",
+          "IdRFiscal": "",
+          "DescrRFiscal": "",
+          "FEFormaPago": "",
+          "FEDigitosCuenta": "",
+          "NomEmpresa": "",
+          "BlqDev": false,
+          "PorcIVA": 16,
+          "Plazo": 0
+        }
+      ]
+    }
+  }
+  ```
+
+  **`IdError`** · BOOLEAN — `true` = no se guardó
+  **`Respuesta`** · STRING — Mensaje del resultado
+  **`Accion`** · STRING — `ALTA` · `MODIFICACION` (el RFC ya existe → usar PUT) · `BLOQUEADO`
+  **`ttCteSinReg`** — Registro guardado (mismos campos que la consulta por RFC)
+
+  ### Response de error controlado (RFC ya existe)
+
+  ```json
+  {
+    "IdError": true,
+    "Respuesta": "El RFC GOMJ800101AB1 ya esta registrado como cliente sin registro; para editarlo use la modificacion (PUT).",
+    "Accion": "MODIFICACION",
+    "dsCteSinReg": { "ttCteSinReg": [] }
+  }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Mensaje |
+  |-----------|---------|
+  | RFC ya registrado | `El RFC X ya esta registrado como cliente sin registro; para editarlo use la modificacion (PUT).` |
+  | Longitud del RFC | `El RFC debe tener 12 o 13 caracteres.` |
+  | Formato del RFC | `El formato del RFC es incorrecto.` |
+  | RFC bloqueado | `RFC Bloqueado, comunicar al cliente con el departamento de creditos.` |
+  | Sin razón social | `Teclee la Razon Social del cliente.` |
+  | Sin calle y número | `Teclee el domicilio del cliente.` |
+  | CP distinto de 5 dígitos | `El CP debe contener cinco digitos.` |
+  | Sin población | `Debe seleccionar una poblacion.` |
+  | Población inexistente | `No existe la ciudad en catalogo.` |
+  | Correo inválido | `Correo electronico invalido, debe corregirlo o borrarlo.` |
+  | Régimen fiscal inexistente | `No existe el regimen fiscal X.` |
+
+  ---
+
+  ## 10. Reglas de Negocio para el Front
+
+  1. Usar este servicio cuando la consulta por RFC regresó `Accion = ALTA`.
+  1a. Con `Accion = PUBLICO` (RFC vacío o genérico) **no llamar** a este servicio: los datos del modal van solo en la cotización o el pedido. Si se llama, no hace nada y responde `IdError = false`, `Accion = PUBLICO`, `Respuesta = "RFC generico: no se guarda ni se modifica; los datos van solo en la cotizacion o el pedido."`.
+  2. Si responde `IdError = true` con `Accion = MODIFICACION`, el RFC ya existe: volver a consultar y guardar con **PUT**.
+  3. Con `IdError = false`, mandar los datos de `ttCteSinReg` en el encabezado del alta de cotización o de pedido.
+
+  ---
+
+  ## 11. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 12. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 13. Resultado
+
+  | Estado              | Descripción                                    |
+  |---------------------|------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio nuevo, pendiente de despliegue en DEV. |
+
+  ---
+
+  ## 14. Observaciones Técnicas
+
+  1. El correo se valida con la misma regla que el alta de pedido (una `@`, al menos un punto, sin espacios, terminación válida).
+  2. El estado se toma de la población para evitar estado y población inconsistentes.
+  3. `IdUsoCFDI` e `IdRFiscal` solo se graban si vienen con valor.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS
