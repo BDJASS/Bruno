@@ -14,8 +14,8 @@ http:
           "ttEnc": [
             {
               "IdCliente": 3,
-              "RFC":"AXCDCDCDCDCDCD",
-              "RazonSocial":"MANUEL",
+              "RFC": "AXCDCDCDCDCDCD",
+              "RazonSocial": "MANUEL",
               "Iniciales": "GLT",
               "Attn": "LUIS MARRUFO",
               "TipoPrecio": "M",
@@ -31,7 +31,7 @@ http:
               "PlazoPP": 0,
               "Factor": 15,
               "TipoFactor": "FC",
-              "PendienteMargenD1":false // LAS PONE EN PDTE
+              "PendienteMargenD1": false // LAS PONE EN PDTE
             }
           ],
           "ttPart": [
@@ -46,7 +46,7 @@ http:
               "PorcIVA": 16,
               "IndicaPre": "",
               "IdMoneda": 0,
-              "Tipo": 1 
+              "Tipo": 1
             }
           ]
         }
@@ -100,6 +100,16 @@ docs: |
   🟢 **`IdCliente`** · INT — Cliente (de aquí el servidor deriva razón social, RFC, tel, dirección…)
   🟢 **`RazonSocial`** · STRING — **obligatoria SOLO cuando `IdCliente = 3`** (cliente mostrador). Para ese cliente el servidor **no** deriva la razón social del catálogo, usa la que se envía (no nula ni vacía). Para cualquier otro cliente se **ignora** (se deriva del catálogo)
   🟢 **`RFC`** · STRING · ❌ — **opcional, SOLO cuando `IdCliente = 3`**. Si viene, se graba en la cotización en mayúsculas y sin espacios en las orillas; `null`, ausente o `""` → la cotización queda con RFC vacío (nunca nulo). Para cualquier otro cliente se **ignora** (se deriva del catálogo)
+
+  **Datos del cliente 3** — todos ❌ opcionales y **solo cuando `IdCliente = 3`**; para cualquier otro cliente se **ignoran** (se derivan del catálogo). `null` o ausente → se graba `""` (`IdCiudad` → `0`).
+
+  **`Propietario`** · STRING · ❌ — Propietario / contacto fiscal (se graba en mayúsculas)
+  **`CalleNo`** · STRING · ❌ — Calle y número (mayúsculas)
+  **`Colonia`** · STRING · ❌ — Colonia (mayúsculas)
+  **`Tel`** · STRING · ❌ — Teléfono
+  **`Fax`** · STRING · ❌ — Fax
+  **`CP`** · STRING · ❌ — Código postal
+  **`IdCiudad`** · INT · ❌ — Ciudad del catálogo. **De aquí el servidor saca `Estado` y `Pais`** (no se envían). Si va `> 0` debe existir
   🟢 **`Iniciales`** · STRING — Usuario (`Id-User`). **Llave**: de aquí el servidor deriva vendedor, ubicación de venta y almacén origen
   🟢 **`TipoPrecio`** · STRING — `M` o `MX` (el `TC` se convierte a `M` en el front)
   🟢 **`LAB`** · STRING — `M` o `E`
@@ -119,7 +129,7 @@ docs: |
 
   🔵 `IdVendedor` `IdUbiVta` `IdAlm` — **derivados del usuario** (`Iniciales`) si no se envían
   ⚙️ `Firma` — el servidor la fija = vendedor (no enviar)
-  🔵 `RazonSocial` `Propietario` `RFC` `Tel` `CalleNo` `Colonia` `IdCiudad` `Estado` `CP` `Pais` — **derivados del cliente** (no enviar). **Excepción:** para `IdCliente = 3` la `RazonSocial` (obligatoria) y el `RFC` (opcional) se toman del JSON (ver arriba)
+  🔵 `RazonSocial` `Propietario` `RFC` `Tel` `CalleNo` `Colonia` `IdCiudad` `Estado` `CP` `Pais` — **derivados del cliente** (no enviar). **Excepción:** para `IdCliente = 3` la `RazonSocial` (obligatoria) y `RFC`, `Propietario`, `CalleNo`, `Colonia`, `Tel`, `Fax`, `CP`, `IdCiudad` (opcionales) se toman del JSON; `Estado` y `Pais` salen de esa `IdCiudad` (ver arriba)
   ⚙️ `IdCot` (folio) · `FecReg` · `Hora` · `SubTotal` · `IVA` · `Tot` · `Autorizada` — **los pone el servidor**
 
   ### Partidas (`ttPart[]`) — artículos, conceptos sin código, cortes y comentarios
@@ -215,7 +225,7 @@ docs: |
 
   ### Caso especial — Cliente 3 (mostrador)
 
-  Cuando `IdCliente = 3` **debes** enviar `RazonSocial` (no nula ni vacía) y **puedes** enviar `RFC` (opcional). Para ese cliente la razón social y el RFC del catálogo son genéricos (el RFC viene vacío), por lo que el servidor usa los que capture el usuario:
+  Cuando `IdCliente = 3` **debes** enviar `RazonSocial` (no nula ni vacía) y **puedes** enviar `RFC`, `Propietario`, `CalleNo`, `Colonia`, `Tel`, `Fax`, `CP` e `IdCiudad` (opcionales). Para ese cliente los datos del catálogo son genéricos, por lo que el servidor usa los que capture el usuario; `Estado` y `Pais` los deriva de `IdCiudad`:
 
   ```json
   {
@@ -225,6 +235,13 @@ docs: |
           "IdCliente": 3,
           "RazonSocial": "PUBLICO EN GENERAL S.A. DE C.V.",
           "RFC": "XAXX010101000",
+          "Propietario": "JUAN PEREZ LOPEZ",
+          "CalleNo": "AV. JUAREZ 123",
+          "Colonia": "CENTRO",
+          "Tel": "6141234567",
+          "Fax": "",
+          "CP": "31000",
+          "IdCiudad": 1,
           "Iniciales": "GLT",
           "Attn": "LUIS MARRUFO",
           "TipoPrecio": "M",
@@ -247,9 +264,9 @@ docs: |
   }
   ```
 
-  > `RFC` es opcional: si el usuario no lo captura, no lo mandes (o mándalo `""`/`null`) y la cotización queda con RFC vacío.
+  > `RFC`, `Propietario`, `CalleNo`, `Colonia`, `Tel`, `Fax`, `CP` e `IdCiudad` son opcionales: si el usuario no los captura, no los mandes (o mándalos `""`/`null`) y la cotización los graba vacíos (`IdCiudad = 0`, sin estado ni país).
   >
-  > Para cualquier `IdCliente` distinto de 3, los campos `RazonSocial` y `RFC` que se envíen son **ignorados**: se siguen derivando del catálogo de clientes.
+  > Para cualquier `IdCliente` distinto de 3, todos estos campos (incluida `RazonSocial`) son **ignorados**: se siguen derivando del catálogo de clientes.
 
   ---
 
@@ -294,6 +311,7 @@ docs: |
   |---|---|---|
   | `IdCliente` | > 0 y debe existir | *"Se requiere IdCliente."* / *"No existe el cliente N."* |
   | `RazonSocial` | obligatoria (no nula ni vacía) **solo si `IdCliente = 3`** | *"Se requiere la Razon Social para el cliente 3."* |
+  | `IdCiudad` | **solo si `IdCliente = 3`** y va `> 0`: debe existir en el catálogo de ciudades | *"No existe la ciudad N."* |
   | `Iniciales` | no vacío y debe existir en `Usuario` | *"Se requiere Iniciales (usuario)."* / *"Usuario no encontrado: X."* |
   | Vendedor derivado | debe resolverse del usuario (o override válido) | *"No se pudo determinar un vendedor valido para el usuario X."* |
   | `TipoPrecio` | ∈ {`M`, `MX`} | *"TipoPrecio invalido (M o MX): …"* |
@@ -342,7 +360,7 @@ docs: |
   ## 12. Observaciones Técnicas
 
   1. **Reuso del motor:** `cotaltacot.p` NO reimplementa el grabado; arma el dataset completo (`dsCot2`) y llama `cotizacion2.p` / `creaCotizaciones` (folio, costos, autorización, transacción).
-  2. **Derivación del cliente:** razón social, propietario, RFC, teléfono, dirección, ciudad, estado y país se leen de `Cliente` (y `Ciudad`/`Estado`/`Pais`) usando `IdCliente`. El front ya no los envía. **Excepción — cliente 3 (mostrador):** la `RazonSocial` **no** se deriva; es obligatoria en `ttEnc` (no nula ni vacía) y el servidor la usa tal cual (`TRIM`). El **`RFC`** tampoco se deriva (2026-10-26): es **opcional** en `ttEnc`; si viene se graba con `CAPS(TRIM())`, y nulo/ausente/vacío se graba `""`. El resto de los datos (dirección, teléfono, etc.) sí se siguen derivando del cliente 3.
+  2. **Derivación del cliente:** razón social, propietario, RFC, teléfono, dirección, ciudad, estado y país se leen de `Cliente` (y `Ciudad`/`Estado`/`Pais`) usando `IdCliente`. El front ya no los envía. **Excepción — cliente 3 (mostrador):** la `RazonSocial` **no** se deriva; es obligatoria en `ttEnc` (no nula ni vacía) y el servidor la usa tal cual (`TRIM`). Desde 2026-10-26 tampoco se derivan **`RFC`, `Propietario`, `CalleNo`, `Colonia`, `Tel`, `Fax`, `CP` ni `IdCiudad`**: son **opcionales** en `ttEnc`; nulo/ausente se graba `""` (`IdCiudad = 0`). `RFC`, `Propietario`, `CalleNo` y `Colonia` se graban con `CAPS(TRIM())`; `Tel`, `Fax` y `CP` con `TRIM()`. `Estado` y `Pais` se obtienen de `IdCiudad` (`Ciudad` → `Estado` → `Pais`), igual que para los demás clientes; si `IdCiudad > 0` y no existe, el alta se rechaza. Es el mismo criterio que el POST original de `cotizacion2.p`, donde el front mandaba estos datos del cliente 3 a mano.
   3. **Cálculo en servidor:** `Importe` = `PUnit × (1 − Descto/100) × Cant`; `Iva` = `Importe × PorcIVA/100`. `PorcIVA` se toma del artículo si no viene. Para `Tipo ≥ 3` (separador) el `Importe` es 0.
   4. **Vendedor/ubicación/almacén desde el usuario:** a partir de `Iniciales` (= `Usuario.Id-User`) se obtiene, igual que `usuario.p`: el **vendedor** (`Vendedor.iniciales = Id-User`, o default `"0104"` si el usuario es interno `<= "99999"`), la **ubicación de venta** (`Usuario.id-ubivta`) y el **almacén origen** (`Usuario.Id-Ubicacion`). El front puede enviar `IdVendedor`/`IdUbiVta`/`IdAlm` para forzar otros valores; si no, se derivan. Como respaldo, la ubicación cae a `Vendedor.Id-UbiVta` y el almacén a `AlmPrior` (tipo 1).
   5. **Folio:** el front envía `IdCot` vacío; el motor asigna el folio y se devuelve en `Folio`.

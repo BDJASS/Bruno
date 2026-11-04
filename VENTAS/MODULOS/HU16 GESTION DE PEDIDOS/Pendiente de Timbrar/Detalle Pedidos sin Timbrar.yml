@@ -1,0 +1,181 @@
+info:
+  name: Detalle Pedidos sin Timbrar
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Gestion/PorTimbrarDetalle?IdUser=jpom
+  params:
+    - name: IdUser
+      value: jpom
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Detalle de Pedidos con Facturas sin Timbrar
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Detalle de Pedidos sin Timbrar (PorTimbrarDetalle)**
+  Retorna los pedidos del vendedor del usuario cuya factura (o remisión de contado) está **sin timbrar**, con las columnas **Error** y **Sugerencia**. Alimenta el modal "Pedidos - Con facturas sin timbrar" (grid "Detalle Pedidos").
+  Programa servidor: `pedtimbrar.p` · Procedimiento: `leePorTimbrarDet`.
+  Ticket 3782. Reemplaza el detalle de indicadores del Call Center (opción 10).
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Gestion/PorTimbrarDetalle
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · El vendedor se obtiene internamente del usuario
+
+  **`IdUser`** · STRING · ✅ — Usuario (iniciales) que consulta
+  - Se resuelve `Usuario.Id-User` → `Vendedor.Iniciales` → `Vendedor.Id-Vendedor`
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Pedidos/Gestion/PorTimbrarDetalle?IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  *Ejemplo ilustrativo (datos de la captura del ticket; Error/Sugerencia de ejemplo).*
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Consulta ejecutada correctamente.",
+    "ttPorTimbrar": [
+      {
+        "IdPedido": "2002677",
+        "Resto": 0,
+        "IdFactura": "35606CB",
+        "FecReg": "2026-10-20",
+        "IdCliente": 49451,
+        "RazonSocial": "GRUPO INDUSTRIAL DAVASA",
+        "RFC": "GID060109JA9",
+        "CP": "67110",
+        "DescrRFiscal": "601-General de Ley Personas Morales",
+        "UsoCFDI": "G03",
+        "ErrorTimbre": "DOMICILIO FISCAL (CODIGO POSTAL)",
+        "Sugerencia": "31808CB"
+      }
+    ]
+  }
+  ```
+
+  ### Campos de `ttPorTimbrar` (1 registro por pedido-resto)
+
+  **`IdPedido`** · STRING — Folio del pedido (columna Pedido)
+  **`Resto`** · INTEGER — Resto del pedido (columna R)
+  **`IdFactura`** · STRING — Folio de la factura o remisión sin timbrar (columna Factura)
+  **`FecReg`** · DATE — Fecha de registro del pedido (columna Fecha)
+  **`IdCliente`** · INTEGER — Número de cliente (columna No.)
+  **`RazonSocial`** · STRING — Razón social del pedido (columna Cliente)
+  **`RFC`** · STRING — RFC del pedido
+  **`CP`** · STRING — Código postal fiscal del pedido
+  **`DescrRFiscal`** · STRING — Régimen fiscal `clave-descripción` (columna R. Fiscal)
+  **`UsoCFDI`** · STRING — Uso de CFDI (columna U)
+  **`ErrorTimbre`** · STRING — Motivo del rechazo del timbrado (columna **Error**)
+  **`Sugerencia`** · STRING — Último folio ya timbrado del mismo RFC, de referencia (columna **Sugerencia**)
+
+  ### Valores de `ErrorTimbre`
+
+  - `DOMICILIO FISCAL (CODIGO POSTAL)`
+  - `NOMBRE O RAZON SOCIAL DEL CLIENTE`
+  - `RFC DEL CLIENTE`
+  - `REGIMEN FISCAL DEL CLIENTE`
+  - `USOCFDI NO CORRESPONDE A CLIENTE`
+  - `REDONDEOS (HABLAR A SISTEMAS)`
+  - `DESCONOCIDO` — sin respuesta de timbrado o sin coincidencia
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | Usuario inexistente | `IdError: true` — `"El usuario XXX no existe."` |
+  | Usuario sin vendedor | `IdError: true` — `"El usuario XXX no tiene un vendedor asignado."` |
+  | Sin pedidos por timbrar | `IdError: false` — `ttPorTimbrar` vacío, `"No hay pedidos pendientes de timbrar."` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                          |
+  |---------------------|----------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Pendiente compilar y publicar en DEV; ejecución formal por QA.       |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Misma regla que la Card** (`/Ventas/Pedidos/Gestion/PorTimbrar`): el número de renglones coincide con `PorTimbrar`.
+  2. **Error:** se lee la respuesta que dejó el intento de timbrado (`/usr2/compartido/request/<FOLIO>.err`) y se traduce a un texto corto; misma lógica del reporte de facturas sin timbre en SAT.
+  3. **Sugerencia:** último folio con `UUID` del mismo RFC del documento, buscado en Remisión → Factura → Nota de Crédito → Complemento de Pago (desde 05/07/2022). RFC genérico (`XAXX010101000` / `XEXX010101000`) = el propio RFC. Se busca una sola vez por RFC en cada llamada.
+  4. **Diferencia vs Call Center:** se excluyen documentos cancelados.
+  5. **Nombre del campo:** la columna Error viaja como `ErrorTimbre` (ERROR es palabra reservada de ABL).
+  6. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

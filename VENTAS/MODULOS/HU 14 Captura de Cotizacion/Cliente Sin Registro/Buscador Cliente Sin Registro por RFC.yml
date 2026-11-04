@@ -1,0 +1,213 @@
+info:
+  name: Buscador Cliente Sin Registro por RFC
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Cliente/SinRegistro/Buscar?RFC=GOM
+  params:
+    - name: RFC
+      value: GOM
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Cliente Sin Registro (Cliente 3): Buscador por RFC
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Cliente Sin Registro — Buscador / Autocompletado por RFC** *(ticket 3572)*
+  En la captura de **cotización** o de **pedido** con el **cliente 3**, mientras el usuario teclea el **RFC**, regresa los **clientes sin registro** cuyo RFC **empieza** con lo capturado. El usuario elige uno y se cargan sus datos sin capturarlos de nuevo.
+
+  > No aplica para el **RFC genérico** (`XAXX010101000`): nunca aparece en los resultados.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Cliente/SinRegistro/Buscar
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · Se quitan espacios y guiones y se pasa a mayúsculas
+
+  **`RFC`** · STRING · ✅ — Texto parcial del RFC
+  - Mínimo **3 caracteres**; con menos no busca (lista vacía)
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header   | Valor              |
+  |----------|--------------------|
+  | `Accept` | `application/json` |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Cliente/SinRegistro/Buscar?RFC=GOM
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Se encontraron 2 cliente(s) sin registro.",
+    "dsCteSinReg": {
+      "ttClienteRFC": [],
+      "ttCteSinReg": [
+        {
+          "RFC": "GOMJ800101AB1",
+          "RazonSocial": "JUAN GOMEZ MARTINEZ",
+          "Propietario": "JUAN GOMEZ",
+          "CalleNo": "AV. JUAREZ 120",
+          "Colonia": "CENTRO",
+          "IdCiudad": 1,
+          "Ciudad": "HERMOSILLO",
+          "IdEstado": "SON",
+          "Estado": "SONORA",
+          "Pais": "MEXICO",
+          "CP": "83000",
+          "Tel": "6621234567",
+          "Fax": "",
+          "Email": "JUAN@CORREO.COM",
+          "BuzonFiscal": "JUAN@CORREO.COM",
+          "IdUsoCFDI": "G03",
+          "IdRFiscal": "612",
+          "DescrRFiscal": "PERSONAS FISICAS CON ACTIVIDADES EMPRESARIALES",
+          "FEFormaPago": "01",
+          "FEDigitosCuenta": "",
+          "NomEmpresa": "",
+          "BlqDev": false,
+          "PorcIVA": 16,
+          "Plazo": 0
+        },
+        {
+          "RFC": "GOMR750505H21",
+          "RazonSocial": "ROSA GOMEZ LUNA",
+          "Propietario": "",
+          "CalleNo": "CALLE 5 No. 30",
+          "Colonia": "MIRAMAR",
+          "IdCiudad": 2,
+          "Ciudad": "GUAYMAS",
+          "IdEstado": "SON",
+          "Estado": "SONORA",
+          "Pais": "MEXICO",
+          "CP": "85400",
+          "Tel": "",
+          "Fax": "",
+          "Email": "",
+          "BuzonFiscal": "",
+          "IdUsoCFDI": "G03",
+          "IdRFiscal": "",
+          "DescrRFiscal": "",
+          "FEFormaPago": "",
+          "FEDigitosCuenta": "",
+          "NomEmpresa": "",
+          "BlqDev": false,
+          "PorcIVA": 16,
+          "Plazo": 0
+        }
+      ]
+    }
+  }
+  ```
+
+  **`IdError`** · BOOLEAN — `true` solo si ocurrió un error
+  **`Respuesta`** · STRING — Resultado de la búsqueda
+  **`ttCteSinReg`** (0..20) — Coincidencias; mismos campos que la consulta por RFC
+  **`BlqDev`** · BOOLEAN — `true` = RFC bloqueado por créditos (no se debe usar)
+
+  ### Sin coincidencias / pocos caracteres
+
+  ```json
+  { "IdError": false, "Respuesta": "No se encontraron clientes sin registro con RFC que inicie con ZZZ.", "dsCteSinReg": { "ttClienteRFC": [], "ttCteSinReg": [] } }
+  { "IdError": false, "Respuesta": "Capture al menos 3 caracteres del RFC.", "dsCteSinReg": { "ttClienteRFC": [], "ttCteSinReg": [] } }
+  ```
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | Menos de 3 caracteres o vacío | Lista vacía — `Capture al menos 3 caracteres del RFC.` |
+  | Sin coincidencias | Lista vacía — `No se encontraron clientes sin registro con RFC que inicie con X.` |
+  | Más de 20 coincidencias | Regresa las primeras 20 y pide capturar más caracteres |
+  | RFC genérico | Nunca se incluye en los resultados |
+
+  ---
+
+  ## 10. Reglas de Negocio para el Front
+
+  1. Llamar con **cliente 3** a partir de **3 caracteres** de RFC, con una espera breve entre teclas.
+  2. Mostrar cada coincidencia como **RFC — Razón social — Población**.
+  3. Al elegir una: si `BlqDev = true`, mostrar "RFC Bloqueado, comunicar al cliente con el departamento de créditos." y no continuar; si no, cargar sus datos y tratarlo como cliente sin registro **existente** (si se modifica, guardar con **PUT**).
+  4. Sin coincidencias o sin elegir: seguir con la consulta por RFC y el alta (**POST**).
+  5. Con el RFC genérico (o Enter sin capturar) **no buscar**.
+
+  ---
+
+  ## 11. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 12. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 13. Resultado
+
+  | Estado              | Descripción                                    |
+  |---------------------|------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio nuevo, pendiente de despliegue en DEV. |
+
+  ---
+
+  ## 14. Observaciones Técnicas
+
+  1. La búsqueda usa el inicio del RFC, por lo que es rápida aunque la tabla sea grande; nunca regresa el catálogo completo.
+  2. Registros antiguos guardados con espacios o guiones dentro del RFC pueden no aparecer en el autocompletado; la consulta por RFC completo sí los encuentra.
+  3. La búsqueda por razón social es otro requerimiento (ticket 3725).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

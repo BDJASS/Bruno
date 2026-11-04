@@ -1,0 +1,155 @@
+info:
+  name: Card Pendiente de Timbrar
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Gestion/PorTimbrar?IdUser=jpom
+  params:
+    - name: IdUser
+      value: jpom
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Pedidos Pendientes de Timbrar (Card)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedidos Pendientes de Timbrar (PorTimbrar)**
+  Retorna cuántos pedidos del vendedor del usuario tienen su factura (o remisión de contado) **sin timbrar**. Alimenta la Card "Pendiente de Timbrar" de Gestión de Pedidos.
+  Programa servidor: `pedtimbrar.p` · Procedimiento: `leePorTimbrar`.
+  Ticket 3782. Reemplaza el indicador `PedXTimbrar` de los servicios de indicadores del Call Center.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Gestion/PorTimbrar
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · El vendedor se obtiene internamente del usuario
+
+  **`IdUser`** · STRING · ✅ — Usuario (iniciales) que consulta
+  - Se resuelve `Usuario.Id-User` → `Vendedor.Iniciales` → `Vendedor.Id-Vendedor`
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Pedidos/Gestion/PorTimbrar?IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  *Ejemplo ilustrativo.*
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Consulta ejecutada correctamente.",
+    "PorTimbrar": 1
+  }
+  ```
+
+  Sin pedidos pendientes:
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "No hay pedidos pendientes de timbrar.",
+    "PorTimbrar": 0
+  }
+  ```
+
+  ### Campos del response
+
+  **`IdError`** · BOOLEAN — `true` = error de validación o de ejecución
+  **`Respuesta`** · STRING — Mensaje para el usuario
+  **`PorTimbrar`** · INTEGER — Número de pedidos con factura sin timbrar (valor de la Card)
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | Usuario inexistente | `IdError: true` — `"El usuario XXX no existe."` |
+  | Usuario sin vendedor | `IdError: true` — `"El usuario XXX no tiene un vendedor asignado."` |
+  | Sin pedidos por timbrar | `IdError: false` — `PorTimbrar: 0` |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                          |
+  |---------------------|----------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Pendiente compilar y publicar en DEV; ejecución formal por QA.       |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Regla "por timbrar"** (la misma del indicador del Call Center): pedidos del vendedor de los últimos 365 días, ubicaciones de venta propias, en firme, ya facturados y en etapa de facturado/embarque sin mercancía pendiente, cuya remisión de contado (`TipoVenta = 2`) o factura de crédito no tiene `UUID`.
+  2. **Diferencia vs Call Center:** se excluyen documentos cancelados (no se pueden timbrar); el conteo puede ser menor.
+  3. **Ligero:** solo cuenta; no lee errores de timbrado ni busca sugerencias. Si `PorTimbrar > 0`, el front abre el detalle con `/Ventas/Pedidos/Gestion/PorTimbrarDetalle`.
+  4. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

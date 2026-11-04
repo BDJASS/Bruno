@@ -5,10 +5,10 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/Cotizacion/Captura/Consulta?IdCliente=compras@bremco.com.mx
+  url: http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/Cotizacion/Captura/Consulta?IdCliente=4668
   params:
     - name: IdCliente
-      value: compras@bremco.com.mx
+      value: "4668"
       type: query
   auth: inherit
 

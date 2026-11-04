@@ -1,0 +1,232 @@
+info:
+  name: Consulta de Pedidos PROD
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Gestion/Consulta?IdUser=olds&IdPedido=2005311
+  params:
+    - name: ctFecRegIni
+      value: 01/08/2026
+      type: query
+      disabled: true
+    - name: ctFecRegFin
+      value: 07/09/2026
+      type: query
+      disabled: true
+    - name: IdUser
+      value: olds
+      type: query
+    - name: IdEstatus
+      value: "99"
+      type: query
+      disabled: true
+    - name: IdPedido
+      value: "2005311"
+      type: query
+    - name: Ubicaciones
+      value: 11T
+      type: query
+      disabled: true
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Consulta de Pedidos (Gestión)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Consulta de Pedidos (Gestión / Consulta)**
+  Listado de pedidos filtrable por fecha, pedido, cliente, vendedor o RFC. Devuelve **solo las columnas del listado** (grid); el encabezado y el detalle completos se consultan aparte en `/Ventas/Pedido/Resumen` y `/Ventas/Pedido/Detalle`.
+  Programa servidor: `pedconsulta.p` · Procedimiento: `leePedidos`.
+
+  > Ajuste 2026-08-18: se creó el programa dedicado y ligero `pedconsulta.p` para este listado, en lugar de reutilizar `pedido2.p` / `leePedidos` (que armaba un registro completo con múltiples `FIND` y luego lo volcaba a una tabla limpia). `pedconsulta.p` construye directamente las columnas del grid. Los parámetros de entrada no cambiaron.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Gestion/Consulta
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · Se combinan entre sí (AND)
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta
+  **`IdPedido`** · STRING · ❌ — Folio del pedido · Vacío = todos
+  **`Resto`** · STRING · ❌ — Resto del pedido
+  **`IdVendedor`** · STRING · ❌ — Clave del vendedor
+  **`IdCliente`** · STRING · ❌ — Clave del cliente
+  **`RFC`** · STRING · ❌ — RFC (coincidencia parcial `MATCHES`)
+  **`ctFecRegIni`** · STRING · ⚠️ — Fecha inicial de registro (`MM/DD/YYYY`) · **Obligatoria si NO se envía `IdPedido`**
+  **`ctFecRegFin`** · STRING · ⚠️ — Fecha final de registro (`MM/DD/YYYY`) · **Obligatoria si NO se envía `IdPedido`**
+
+  > ⚠️ = Condicional. Si no se especifica `IdPedido`, el rango de fechas (`ctFecRegIni` **y** `ctFecRegFin`) es obligatorio.
+  **`IdEstatus`** · STRING · ❌ — Estatus del pedido
+  **`ReqCte`** · STRING · ❌ — Requisición del cliente
+  **`Ubicaciones`** · STRING · ❌ — Ubicaciones de venta (`Id-UbiVta`) permitidas en el listado por rango de fechas. Lista separada por comas
+  - Vacío = `11T,12F,12T,COM,ESP,GER,MFR,MLA,MLO` (ubicaciones de operación propia)
+  - **No aplica** cuando se busca por `IdPedido`: el folio puede pertenecer a cualquier otra ubicación y es válido consultarlo
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Pedidos/Gestion/Consulta?ctFecRegIni=07/08/2026&ctFecRegFin=07/08/2026&IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "IdError": false,
+    "Respuesta": "Consulta ejecutada correctamente.",
+    "ttPedidoLee": [
+      {
+        "IdPedido": "0322707",
+        "Resto": 0,
+        "FecReg": "2026-08-07",
+        "IdCliente": 55921,
+        "RazonSocial": "DISTRIBUIDORA DEL VALLE SA DE CV",
+        "IdVendedor": "0013",
+        "VendNombre": "ELADIO ARIAS SANCHEZ",
+        "SubTotal": 10810.78,
+        "PartDetPed": 5,
+        "Pago": "CONTRA ENTREGA",
+        "Estatus": "P/Facturar",
+        "IdEstatus": 4,
+        "IdCond": 0,
+        "EnFirme": true,
+        "BckOrd": 1,
+        "Pagado": false,
+        "PagAnt": false,
+        "PausaReja": false,
+        "IdLiga": "",
+        "Ubi": "MLA",
+        "Plazo": 0,
+        "TieneSeguimiento": true,
+        "FacturaSI": true
+      }
+    ]
+  }
+  ```
+
+  ### Campos de `ttPedidoLee` (1 registro por pedido)
+
+  **`IdPedido`** · STRING — Folio del pedido
+  **`Resto`** · INT — Resto del pedido
+  **`FecReg`** · DATE — Fecha de registro
+  **`IdCliente`** · INT — Clave del cliente
+  **`RazonSocial`** · STRING — Razón social del pedido
+  **`IdVendedor`** · STRING — Clave del vendedor
+  **`VendNombre`** · STRING — Nombre del empleado vendedor; vacío si no se localizó
+  **`SubTotal`** · DECIMAL — Subtotal del pedido
+  **`PartDetPed`** · INT — Número de partidas (renglones `Tipo` 1-2)
+  **`Pago`** · STRING — Estado de pago: si es crédito → `CREDITO`; si es contado → `PAGADO`, `PDTE. PAGO`, `CONTRA ENTREGA` o `PDTE. CHEQUE` según corresponda
+  **`Estatus`** · STRING — Estatus legible del pedido
+  **`IdEstatus`** · INT — Estatus numérico del pedido (`Pedido.Id-Estatus`)
+  **`IdCond`** · INT — Condición de venta (`Pedido.Id-Cond`); `0` = contado
+  **`EnFirme`** · BOOLEAN — `true` = pedido autorizado / en firme
+  **`BckOrd`** · INT — Política de backorder (`Pedido.bckOrd`)
+  **`Pagado`** · BOOLEAN — `true` = pedido pagado
+  **`PagAnt`** · BOOLEAN — `true` = pago anticipado
+  **`PausaReja`** · BOOLEAN — `true` = el pedido tiene pausa en reja (`Pedido.PausaReja`)
+  **`IdLiga`** · STRING — Ligas del pedido (`Pedido.Id-Liga`); **vacío = no ligado**, con valor = ligado (prefijo `F` = liga de facturación, `E` = liga de embarque)
+  **`Ubi`** · STRING — Ubicación de venta del pedido (`Pedido.Id-UbiVta`)
+  **`Plazo`** · INT — Plazo del pedido (`Pedido.Plazo`)
+  **`TieneSeguimiento`** · BOOLEAN — `true` = existe renglón en `EstPedido` para este pedido-resto; `false` = no hay seguimiento. El front debe llamar a `/Ventas/Pedidos/Seguimiento` **solo cuando es `true`** (evita el `IdError` "No existe informacion de seguimiento…"). Se resuelve con un sondeo sobre el índice UNIQUE primario `idx-sur` (`Id-Pedido` + `Id-Seq`), el mismo `WHERE` que usa ese servicio
+  **`FacturaSI`** · BOOLEAN — `true` = el pedido es **posible a facturar** con la misma regla de los listados `/Pedido/listaPedidosPorFacturar` (clientes normales) y `/Pedido/listaPedidosEspeciales` (clientes de embarque especial); `false` = no facturable. Se evalúa sobre su registro de empaque `EstPedido` (ver sección 13)
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | Pedido/Resto/Vendedor/Cliente/Estatus no numéricos | `IdError: true` — mensaje correspondiente |
+  | Fechas inválidas | `IdError: true` — `"Fecha inicial invalida."` / `"Fecha final invalida."` |
+  | Sin `IdPedido` y sin rango de fechas completo | `IdError: true` — `"Si no se especifica el pedido, el rango de fechas (ctFecRegIni y ctFecRegFin) es obligatorio."` |
+  | Folio (7 dígitos) inexistente | `IdError: true` — `"No existe pedido con ese folio."` o motivo de cancelación (`LogBaja`) |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desplegado en DEV. Pendiente de ejecución formal por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Programa dedicado y ligero:** `pedconsulta.p` construye directamente las columnas del grid mientras recorre los pedidos, sin armar el registro completo ni volcar una tabla al final. Reemplaza el uso de `pedido2.p` / `leePedidos` (que se removió de `pedido2.p`; ese programa conserva `creaPedidos`/`actPedidos`).
+  2. **`Pago`:** si `Id-Cond <> 0` → `CREDITO`. Si es contado (`Id-Cond = 0`): `PAGADO` si está pagado; si no, `PDTE. PAGO` (pago anticipado) o `CONTRA ENTREGA`; y `PDTE. CHEQUE` si `FEFormaPago = "02"` sin número de cheque.
+  3. **`Estatus`:** clasificación calculada (homologada con `vtac1300.p`): No-Aut, Mcia-Pdte, Mcia-P/Surt, P/Facturar, Cte-Recoge, Emb-Local, Emb-Estafeta, Emb-Foraneo, o la descripción de `EstVta`. La categoría "Mcia-Pdte" usa el conteo de renglones `Tipo = 1` con `CantEnt < CantPed`.
+  4. **Filtro de pendientes:** si `IdEstatus = -99`, solo se devuelven los pedidos cuya clasificación resultó "pendiente".
+  5. **Rango de fechas obligatorio sin pedido:** ver sección 9.
+  6. **Eficiencia:** por cada pedido se hace un solo recorrido del detalle (`DetPedido`) y un `FIND EstVta`; no se consultan ruta, condición, entrega, transporte, vendedor, etc. (esos datos viven en `/Ventas/Pedido/Resumen`). El sondeo de `EstPedido` es único y alimenta a la vez `TieneSeguimiento` y `FacturaSI`.
+  7. **`FacturaSI` (ticket 3291):** replica la **unión** de los dos listados de facturación de `pedfactura.p`, ambos gobernados por el registro de empaque `EstPedido` (1:1 con el pedido-resto vía `Id-Pedido` + `Id-Seq` = `Resto`):
+     - `EstPedido.Estatus = 4` (empacado) → `true` para cualquier cliente (cubre normales y especiales).
+     - `EstPedido.Estatus` 0, 1 o 2 con `Pedido.Adelantado = true` → `true` (facturación adelantada).
+     - `EstPedido.Estatus = -2` (remisionado) sin `Id-Factura` y `Cliente.EmbEsp = true` → `true` (solo clientes de embarque especial).
+
+     Se **omite a propósito** el filtro por almacén/prefijo del `Id-Pedido` que traen esos listados (solo segmenta la cola de facturación de cada CEDIS); aquí la bandera indica si el pedido es facturable en sí, sin importar la ubicación del usuario. Es una bandera de **membresía en el listado por facturar**, no la validación profunda por pedido (`/Pedido/validaPedidoFacturable` sigue aplicando bloqueos como RFC incompleto, ya facturado, solicitud de cancelación, corte del día, etc. al momento de facturar).
+  8. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

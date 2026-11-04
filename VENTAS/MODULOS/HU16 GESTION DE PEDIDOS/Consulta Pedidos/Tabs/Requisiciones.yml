@@ -1,7 +1,7 @@
 info:
   name: Requisiciones
   type: http
-  seq: 6
+  seq: 8
 
 http:
   method: GET
@@ -23,6 +23,7 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
 docs: |
   # Servicio REST — Requisiciones de un Pedido

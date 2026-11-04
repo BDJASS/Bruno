@@ -5,19 +5,19 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/Cotizacion/Captura/Partidas?IdArticulo=194717&IdColor=0&IdPres=4&IdCliente=7248&PrecioTemp=NO&TipoPrecio=M&Vigencia=75&PrecCalc=NO&PlazoTV=0&IdUbiVta=GER
+  url: http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/Cotizacion/Captura/Partidas?IdArticulo=159516&IdColor=0&IdPres=3&IdCliente=575&PrecioTemp=NO&TipoPrecio=M&Vigencia=10&PrecCalc=SI&PlazoTV=45&IdUbiVta=MLA
   params:
     - name: IdArticulo
-      value: "194717"
+      value: "159516"
       type: query
     - name: IdColor
       value: "0"
       type: query
     - name: IdPres
-      value: "4"
+      value: "3"
       type: query
     - name: IdCliente
-      value: "7248"
+      value: "575"
       type: query
     - name: PrecioTemp
       value: NO
@@ -26,16 +26,16 @@ http:
       value: M
       type: query
     - name: Vigencia
-      value: "75"
+      value: "10"
       type: query
     - name: PrecCalc
-      value: NO
+      value: SI
       type: query
     - name: PlazoTV
-      value: "0"
+      value: "45"
       type: query
     - name: IdUbiVta
-      value: GER
+      value: MLA
       type: query
   auth: inherit
 
