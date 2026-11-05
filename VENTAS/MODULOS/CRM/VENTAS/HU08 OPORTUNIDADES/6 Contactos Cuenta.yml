@@ -1,7 +1,7 @@
 info:
   name: 6 Contactos Cuenta
   type: http
-  seq: 6
+  seq: 7
 
 http:
   method: GET

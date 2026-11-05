@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Simple/Consulta?IdUser=jjlg&Catalogo=Competencia
+  url: http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/Catalogo/Simple/Consulta?IdUser=jjlg&Catalogo=Competencia
   params:
     - name: IdUser
       value: jjlg

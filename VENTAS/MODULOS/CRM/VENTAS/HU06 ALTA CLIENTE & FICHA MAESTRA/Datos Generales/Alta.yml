@@ -16,6 +16,7 @@ http:
       {
         "ttDatosGral": [
           {
+            "Lead":"LD-2026-0005",
             "IdCliente": 0,
             "CP": "25298",
             "Colonia": "LEANDRO VALLE",
@@ -26,7 +27,7 @@ http:
             "IdGiro": 75,
             "Propietario": "",
             "CURP": "",
-            "Correo": "nuevo.cliente@dominio.com",
+            "Correo": "nuevo.cliCente@dominio.com",
             "Telefono": "8444154910",
             "Fijo": "8441234567",
             "Ext": "",
@@ -37,7 +38,7 @@ http:
         ],
         "ttInfoFiscal": [
           {
-            "RFCFiscal": "RDE1111142R9",
+            "RFCFiscal": "RDE1111142C9",
             "RazonSocial": "REALCE DESARROLLOS SA DE CV",
             "NomEmpresa": "REALCE DESARROLLOS",
             "RegimenCapital": "SA DE CV",

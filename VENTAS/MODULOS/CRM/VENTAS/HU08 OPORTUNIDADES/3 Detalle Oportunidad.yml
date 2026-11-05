@@ -1,14 +1,14 @@
 info:
   name: 3 Detalle Oportunidad
   type: http
-  seq: 3
+  seq: 4
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/Detalle?IdOportunidad=1&IdUser=jjlg
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Oportunidad/Detalle?IdOportunidad=8&IdUser=jjlg
   params:
     - name: IdOportunidad
-      value: 1
+      value: "8"
       type: query
     - name: IdUser
       value: jjlg

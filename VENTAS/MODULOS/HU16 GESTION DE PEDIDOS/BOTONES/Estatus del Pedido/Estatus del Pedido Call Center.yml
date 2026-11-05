@@ -23,6 +23,7 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
 docs: |
   # Servicio REST — Seguimiento de Pedido (Estatus)
@@ -128,6 +129,9 @@ docs: |
         "Tarimas": 2,
         "IdTran": 3,
         "TranNom": "PAQUETEXPRESS",
+        "IdEntrega": 18,
+        "DescrEntrega": "PAQUETERIA",
+        "MuestraGuia": true,
         "IdChofer": "RGM",
         "ChoferNom": "ROBERTO GOMEZ MARTINEZ",
         "GuiaImporte": 850.00,
@@ -262,7 +266,11 @@ docs: |
   **`BultosEmp`** · INT — Bultos de empaque
   **`BultosCorte`** · INT — Bultos de cortes
   **`Tarimas`** · INT — Tarimas
-  **`IdTran`** · INT — Clave del transporte
+  **`IdTran`** · INT — Clave de la línea transportista (`EstPedido.Id-Tran` → `Transporte`); no es el tipo de entrega
+  **`IdEntrega`** · INT — Tipo de entrega del pedido (`Pedido.Id-Entrega`)
+  - `11` Nuestra Camioneta · `16` Cliente recoge en CEDIS · otros = paquetería / foráneo
+  **`DescrEntrega`** · STRING — Descripción del tipo de entrega (`Entrega.Descr`); vacío si no existe en el catálogo
+  **`MuestraGuia`** · BOOLEAN — `true` = la línea de tiempo lleva la etapa GUÍA; `false` = termina en EMBARQUE (entrega `11` o `16`)
   **`IdChofer`** · STRING — Clave del chofer
   **`IdEmbarque`** · STRING — Clave del embarque
   **`IdSubEmbarque`** · STRING — Clave del subembarque
@@ -390,6 +398,8 @@ docs: |
   **16. El `.pidl` debe existir antes de publicar.** El recurso quedó agregado a `resourceModel.xml` **comentado**, con la nota del motivo. Registrar una operación cuyo `.pidl` no existe impide que PASOE publique el **servicio completo** — no solo ese recurso — y tira los demás endpoints que ya funcionan. El orden es: compilar, verificar que aparezca `estpedido_p.pidl` en `.services/AppServer`, quitar las marcas de comentario, republicar.
 
   **17. `writeDataSetBeforeImage="false"`.** El temp-table se define con `BEFORE-TABLE bttEstPedido` en el include, pero la anotación del archivo desactiva la imagen previa, así que el JSON no la incluye. Es lo correcto para una consulta de solo lectura.
+
+  **18. Etapa GUÍA según el tipo de entrega (ticket 3809, 2026-11-04).** El modal *Estatus del Pedido* no debe mostrar la etapa GUÍA cuando el pedido se entrega con **Nuestra Camioneta** (`Id-Entrega = 11`) o el **cliente recoge en CEDIS** (`Id-Entrega = 16`). `EstPedido` no tiene el tipo de entrega, así que `Llenado` lo toma del `Pedido` que ya buscaba y llena `IdEntrega`, `DescrEntrega` y `MuestraGuia`. La regla vive en el back: el front solo oculta la etapa cuando `MuestraGuia = false`. Si no se encuentra el `Pedido`, `MuestraGuia` se queda en `true` (como antes). La lista de entregas está en el preprocesador `EntregaSinGuia` del programa. **Ojo:** el `IdTran`/`TranNom` que ya existían son la línea transportista (`Transporte`), no el tipo de entrega. `pedconsulta.p` también trata `Id-Entrega = 3` como *Cte-Recoge*; no se incluyó porque el ticket solo pide 11 y 16.
 
   ---
   **Desarrollado por:** SIS10 - JASS

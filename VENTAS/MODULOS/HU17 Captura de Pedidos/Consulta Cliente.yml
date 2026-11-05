@@ -5,10 +5,10 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/Captura/Consulta?IdCliente=575&IdUser=olds
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/Captura/Consulta?IdCliente=31630&IdUser=olds
   params:
     - name: IdCliente
-      value: "575"
+      value: "31630"
       type: query
     - name: IdUser
       value: olds
@@ -20,6 +20,7 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
 docs: |
   # Pedido / Captura / Consulta — Carga inicial del cliente
@@ -106,6 +107,8 @@ docs: |
   **`MontoCorte`** · DECIMAL — Monto devuelto.
   **`FechaCorte`** · DATE — Fecha de última devolución.
   **`HayDstArt`** · BOOLEAN — `true` = el cliente tiene descuentos por artículo activos.
+  **`Proveedor`** · STRING — Num. Proveedor del cliente (`Cliente.Proveedor`); vacío si no tiene. *(Ticket 3806)*
+  **`DUNS`** · STRING — Folio DUNS del cliente (`Cliente.DUNS`); vacío si no tiene. *(Ticket 3806)*
 
   ## 9. Campos de `ttContactoPed` (contactos — CteEmp)
 
@@ -160,6 +163,7 @@ docs: |
   - Las condiciones son **sugerencias**; el front puede modificarlas y el alta (`/Pedido/Captura/Alta`) las revalida.
   - `Bloqueado` / `RFCBloqueado` son informativos: aunque el front los ignore, el alta forzará `EnFirme=false`.
   - El servidor no guarda estado entre llamadas; el front acumula el pedido.
+  - `Proveedor` y `DUNS` los usa el front para armar los renglones comentario tipo 5 (`PEDIDO {ReqCte}` / `DUNS …` / `PROVEEDOR …`) al capturar la O.C. *(Ticket 3806)*
 
   ---
   **Desarrollado por:** SIS10 - JASS

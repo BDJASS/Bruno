@@ -5,14 +5,16 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Gestion/Consulta?ctFecRegIni=01/08/2026&ctFecRegFin=07/09/2026&IdUser=olds
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Gestion/Consulta?IdUser=olds&IdPedido=2002555
   params:
     - name: ctFecRegIni
       value: 01/08/2026
       type: query
+      disabled: true
     - name: ctFecRegFin
       value: 07/09/2026
       type: query
+      disabled: true
     - name: IdEstatus
       value: "99"
       type: query
@@ -21,9 +23,8 @@ http:
       value: olds
       type: query
     - name: IdPedido
-      value: "6190274"
+      value: "2002555"
       type: query
-      disabled: true
     - name: Ubicaciones
       value: 11T
       type: query

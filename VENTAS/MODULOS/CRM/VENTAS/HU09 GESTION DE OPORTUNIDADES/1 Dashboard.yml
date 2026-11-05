@@ -39,6 +39,7 @@ docs: |
 
   **Dashboard de Oportunidades (HU-09)**
   Devuelve los indicadores del tablero de gestión del pipeline: Total de Oportunidades, Valor del Pipeline, Ciclo de Venta Promedio, Cierre del Mes, Win Rate y la Tasa de Conversión por Etapa. Filtra por vendedor y por periodo (sobre la Fecha de Cierre).
+  Programa servidor: `oportgestion.p` · Procedimiento: `dashboardOportunidades`.
 
   ---
 
@@ -102,7 +103,8 @@ docs: |
       "ttKpi": [
         { "TotalOportunidades": 128, "ValorPipeline": 4230000.00,
           "CicloVentaProm": 34, "CerradasCiclo": 41, "CierreEsteMes": 12,
-          "WinRate": 61.0, "Ganadas": 25, "Perdidas": 16 }
+          "WinRate": 61.0, "Ganadas": 25, "Perdidas": 16,
+          "MontoGanadas": 1875400.00, "MontoPerdidas": 960000.00 }
       ],
       "ttConv": [
         { "IdEtapa": 1, "Etapa": "Receptividad", "Alcanzaron": 128, "PctAvance": 82.0 },
@@ -127,6 +129,8 @@ docs: |
   - **`CierreEsteMes`** · INTEGER — Oportunidades con Fecha Tentativa de Cierre en el mes/año en curso.
   - **`WinRate`** · DECIMAL — `Ganadas ÷ (Ganadas + Perdidas) × 100` del periodo.
   - **`Ganadas`** / **`Perdidas`** · INTEGER — Conteos del periodo.
+  - **`MontoGanadas`** · DECIMAL — Leyenda «MONTO FINAL REAL» bajo Ganadas: Σ Monto Final Real capturado en el Tab Cierre (Evaluación & Cierre) de las Ganadas del periodo. Una ganada sin evaluación registrada no suma.
+  - **`MontoPerdidas`** · DECIMAL — Leyenda «PRESUPUESTO ESTIMADO» bajo Perdidas: Σ Presupuesto (valor de la oportunidad) de las Perdidas del periodo.
 
   **`ttConv`** — Tasa de Conversión por Etapa (5 filas):
   - **`IdEtapa`** / **`Etapa`** · INTEGER/STRING — Etapa del pipeline (1..5).
@@ -140,6 +144,7 @@ docs: |
   - `IdUser` obligatorio.
   - Total y Valor Pipeline son foto actual (solo activas); Win Rate y Ciclo de Venta consideran únicamente cerradas (Ganada/Perdida) dentro del periodo si se envía.
   - El filtro de vendedor aplica a todos los indicadores.
+  - `MontoGanadas` y `MontoPerdidas` usan exactamente las mismas oportunidades que los conteos de Ganadas y Perdidas (Ticket 3810).
 
   ---
   **Desarrollado por:** SIS10 - JASS

@@ -18,7 +18,7 @@ http:
              "IdTipoProy": 3, 
              "Presupuesto": 250000.00, 
              "IdFrecProy": 5, 
-              "FecTentCierre": "2026-10-15",
+              "FecTentCierre": "2026-10-28",
               "IdVendedor": "5197", 
              "DecisorNombre": "ESTEFANIA HERNANDEZ", 
               "IdProcAutoriz": 2,
@@ -29,7 +29,10 @@ http:
               "DescValorAgregado": "Instalacion y capacitacion incluidas", 
              "SolicitarApoyo": false,
               "MontoCotizado": 248500.00, 
-              "FecPresentacion": "2026-09-20" }
+              "FecPresentacion": "2026-10-29",
+              "ContratoNombre": "EjemploDocumento.pdf",
+              "ContratoMime": "application/pdf",
+              "ContratoB64": ""}
           ],
           "ttCfs": [ {
                      "IdPrioridad": 1 }, 
@@ -46,10 +49,7 @@ http:
                        "Validacion": "Le interesa reducir el ausentismo?" } 
                     ],
           "ttCorreo": []
-        },
-        "ContratoNombre": "",
-        "ContratoMime": "",
-        "ContratoB64": ""
+        }
       }
   auth: inherit
 

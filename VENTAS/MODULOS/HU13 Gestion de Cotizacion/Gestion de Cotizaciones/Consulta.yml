@@ -5,13 +5,13 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Consulta?FecRegIni=2026-10-07&FecRegFin=2026-10-07
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Consulta?FecRegIni=2026-10-14&FecRegFin=2026-10-20
   params:
     - name: FecRegIni
-      value: 2026-10-07
+      value: 2026-10-14
       type: query
     - name: FecRegFin
-      value: 2026-10-07
+      value: 2026-10-20
       type: query
     - name: Estatus
       value: PendAut
