@@ -5,13 +5,15 @@ meta {
 }
 
 get {
-  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Vendedor?Agenda=true
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Vendedor?Modulo=3
   body: none
   auth: inherit
 }
 
 params:query {
-  Agenda: true
+  Modulo: 3
+  ~Iniciales: GRGM
+  ~Agenda: true
   ~TipoVen: 3
 }
 
@@ -21,128 +23,190 @@ settings {
 }
 
 docs {
-  # Servicio REST — Catálogo de Vendedores (DEV)
-
+  # Catálogo de Vendedores — `GET /Vendedor`
+  
+  ## 1. Endpoint
+  
+  **Método:** `GET`
+  **Ruta:** `/Vendedor`
+  **URL:** `http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Vendedor`
+  **Body:** No aplica
+  **Content-Type de respuesta:** `application/json`
+  
   ---
-
-  ## 1. Título del Servicio
-
-  **CyC — Catálogo de Vendedores**
-  Servicio de **solo consulta** que expone vendedores de la tabla `Vendedor` junto con el nombre del empleado relacionado (ligado por `Iniciales`). Sirve para poblar combos y listados de vendedor. Tiene **dos modos** de operación según el parámetro `Agenda`.
-
-  > Lectura con `NO-LOCK` (sin bloqueos). Resultado ordenado alfabéticamente por `Nombre`.
-
+  
+  ## 2. Parámetros de entrada (Query String)
+  
+  > ✅ = Requerido · ❌ = Opcional · Todos los parámetros son opcionales y se pueden combinar
+  
+  **`Modulo`** · INTEGER · ❌ — Id del módulo de AdCorex (`Modulo.Id-Modulo`)
+  - Ej: `5` Ventas · Vacío o `0` = sin filtro de módulo
+  
+  **`Nombre`** · STRING · ❌ — Texto para autocomplete (ver sección 4)
+  - Ej: `"juan"` · `"perez lo"` · `"V01"` · Vacío = sin filtro
+  
+  **`TipoVen`** · INTEGER · ❌ — Tipo de vendedor (`Vendedor.TipoVen`)
+  - Ej: `1` · Vacío = todos los tipos
+  
+  **`Iniciales`** · STRING · ❌ — Iniciales exactas del vendedor (`Vendedor.Iniciales`)
+  - Ej: `"GRGM"` · Vacío = todos
+  
+  **`Agenda`** · STRING · ❌ — Activa el catálogo de Agenda
+  - Cualquier valor (`1`, `true`, `si`) = modo Agenda · Vacío, `0`, `no`, `n`, `false`, `f` = modo normal
+  - En modo Agenda solo aplica además `Iniciales`; `Modulo`, `Nombre` y `TipoVen` se ignoran
+  
   ---
-
-  ## 2. Método HTTP
-
-  ```
-  GET
-  ```
-
+  
+  ## 3. Tipos de datos
+  
+  | Tipo    | Formato en query string | Ejemplo          |
+  |---------|-------------------------|------------------|
+  | INTEGER | Número entero           | `Modulo=5`       |
+  | STRING  | Texto URL-encoded       | `Nombre=juan%20p`|
+  | BOOLEAN | `true` / `false` (JSON) | `"Activo": true` |
+  
+  - Los parámetros INTEGER deben ser numéricos; un valor no numérico provoca error.
+  - Los espacios en `Nombre` se envían como `%20` o `+`; la `Ñ` como `%C3%91`.
+  
   ---
-
-  ## 3. URL Completa
-
+  
+  ## 4. Autocomplete (`Nombre`)
+  
+  **Reglas de coincidencia**
+  
+  - No distingue mayúsculas/minúsculas.
+  - El texto se separa por espacios; **cada palabra** debe estar contenida en el nombre, en cualquier orden y posición.
+  - Los espacios repetidos y los espacios al inicio/fin se ignoran.
+  - También coincide si el texto es el **inicio** de `IdVendedor` o de `Iniciales`.
+  - Se puede combinar con `Modulo`, `TipoVen` e `Iniciales`; el autocomplete filtra sobre el resultado de esos filtros.
+  
+  **Ejemplos** (nombre de referencia: `PEREZ LOPEZ JUAN`, IdVendedor `V01`, Iniciales `JPL`)
+  
+  | Texto enviado  | ¿Coincide? | Motivo                               |
+  |----------------|------------|--------------------------------------|
+  | `juan`         | ✅         | Contenido en el nombre               |
+  | `lop`          | ✅         | Contenido en el nombre               |
+  | `juan perez`   | ✅         | Ambas palabras, en cualquier orden   |
+  | `pe jua`       | ✅         | Fragmentos de ambas palabras         |
+  | `juan garcia`  | ❌         | `garcia` no está en el nombre        |
+  | `V0`           | ✅         | Inicio de `IdVendedor`               |
+  | `JP`           | ✅         | Inicio de `Iniciales`                |
+  
+  **Uso recomendado en el front (combo autocomplete)**
+  
+  - Disparar la búsqueda a partir de **2–3 caracteres** con *debounce* de ~300 ms.
+  - Enviar siempre el mismo `Modulo` que se usó para cargar el combo, para buscar sobre la misma lista.
+  - Mostrar `Nombre` como texto y usar `IdVendedor` como valor seleccionado.
+  
+  **Peticiones de ejemplo**
+  
+  ```http
+  GET /Vendedor?Nombre=juan
+  GET /Vendedor?Modulo=5&Nombre=juan
+  GET /Vendedor?Modulo=5&Nombre=perez%20lo
+  GET /Vendedor?Modulo=5&Nombre=V0
+  GET /Vendedor?Modulo=5&TipoVen=1&Nombre=lopez
   ```
-  DEV : 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Vendedor
-  PROD: 192.0.1.9:8816/RestADOSACyc/rest/RestADOSACyc/Vendedor
-  ```
-
+  
   ---
-
-  ## 4. Parámetros de Entrada (Query String)
-
-  > ✅ = Requerido · ❌ = Opcional · Ambos son opcionales
-
-  **`Agenda`** · STRING · ❌ — Activa el **modo Agenda**. Si se envía con cualquier valor (excepto vacío / `0` / `no` / `false`) regresa **solo** los vendedores activos del módulo Agenda: una lista fija de `Iniciales` parametrizada en la tabla `URL` (Parámetro `VendedoresAgenda`).
-  - Ej: `true` · `1` · `si` · Vacío o sin enviar = **modo normal**
-
-  **`TipoVen`** · INTEGER · ❌ — Filtra por tipo de vendedor. Solo aplica en **modo normal** (se ignora si se envía `Agenda`).
-  - `1` Directo · `2` Captura · `3` Agente de Ventas · Vacío = todos los tipos
-
+  
+  ## 5. Otros ejemplos de petición
+  
+  ```http
+  GET /Vendedor
+  GET /Vendedor?Modulo=5
+  GET /Vendedor?Iniciales=JPL
+  GET /Vendedor?Modulo=5&TipoVen=1
+  GET /Vendedor?Agenda=1
+  GET /Vendedor?Agenda=1&Iniciales=GRGM
+  ```
+  
   ---
-
-  ## 5. Body
-
-  No aplica. Método `GET`.
-
+  
+  ## 6. Respuestas
+  
+  | Código | Caso                              | Body                              |
+  |--------|-----------------------------------|-----------------------------------|
+  | `200`  | Hay coincidencias                 | `{"ttVendedor": [ ... ]}`         |
+  | `200`  | Sin coincidencias                 | `{"ttVendedor": []}`              |
+  | `500`  | Error de servidor / parámetro inválido | Objeto de error de OpenEdge |
+  
+  - El arreglo viene ordenado por `Nombre` y luego `IdVendedor`.
+  - Un vendedor no se repite dentro de la misma respuesta.
+  
   ---
-
-  ## 6. Headers
-
-  | Header         | Valor                                  |
-  |----------------|----------------------------------------|
-  | `Accept`       | `application/json`                     |
-  | `Content-Type` | `application/json` *(opcional en GET)* |
-
+  
+  ## 7. Estructura de la respuesta
+  
+  ```json
+  {
+    "ttVendedor": [ { ...campos... } ]
+  }
+  ```
+  
   ---
-
-  ## 7. Ejemplos de Request
-
-  ### Modo normal — todos los vendedores activos
-
-  ```
-  GET 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Vendedor
-  ```
-
-  ### Modo normal — solo Agentes de Ventas
-
-  ```
-  GET 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Vendedor?TipoVen=3
-  ```
-
-  ### Modo Agenda — vendedores del módulo Agenda
-
-  ```
-  GET 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Vendedor?Agenda=true
-  ```
-
+  
+  ## 8. Campos de response (ttVendedor)
+  
+  **`IdVendedor`** · STRING — Clave del vendedor (`Vendedor.Id-Vendedor`)
+  **`Nombre`** · STRING — Nombre del vendedor; `Sin asignar` si no tiene nombre registrado
+  **`TipoVen`** · INTEGER — Tipo de vendedor (`Vendedor.TipoVen`)
+  **`IdUbivta`** · STRING — Ubicación de venta (`Vendedor.id-ubivta`)
+  **`Iniciales`** · STRING — Iniciales del vendedor (`Vendedor.Iniciales`)
+  **`Activo`** · BOOLEAN — `true` = vendedor activo; `false` = inactivo
+  **`IdInconcert`** · STRING — Id del vendedor en Inconcert; vacío si no tiene
+  
   ---
-
-  ## 8. Ejemplo de Response
-
+  
+  ## 9. Ejemplos de response
+  
+  **`GET /Vendedor?Modulo=5&Nombre=juan`**
+  
   ```json
   {
     "ttVendedor": [
       {
-        "IdVendedor": "0034",
-        "Nombre": "ADAN CESAR LOPEZ TORRES",
-        "TipoVen": 3,
-        "IdUbivta": "COM",
-        "Iniciales": "ACLT",
+        "IdVendedor": "V01",
+        "Nombre": "PEREZ LOPEZ JUAN",
+        "TipoVen": 1,
+        "IdUbivta": "02B",
+        "Iniciales": "JPL",
         "Activo": true,
-        "IdInconcert": ""
+        "IdInconcert": "1045"
       },
       {
-        "IdVendedor": "1235",
-        "Nombre": "GERARDO RAMIRO GONZALEZ MARTIN",
+        "IdVendedor": "V14",
+        "Nombre": "MUÑOZ GARCIA JUANA",
         "TipoVen": 1,
-        "IdUbivta": "MLA",
-        "Iniciales": "GRGM",
+        "IdUbivta": "02B",
+        "Iniciales": "JMG",
         "Activo": true,
         "IdInconcert": ""
       }
     ]
   }
   ```
-
-  ### Campos de `ttVendedor`
-
-  **`IdVendedor`** · STRING — Clave del vendedor (`Vendedor.Id-Vendedor`, 4 caracteres)
-  **`Nombre`** · STRING — Nombre del empleado ligado por `Iniciales`; `"Sin asignar"` si no hay empleado
-  **`TipoVen`** · INTEGER — Tipo de vendedor: `1` Directo · `2` Captura · `3` Agente de Ventas
-  **`IdUbivta`** · STRING — Clave del área/ubicación de venta (`Vendedor.id-ubivta`, 3 caracteres; ej. `COM`, `GER`, `ESP`, `WEB`)
-  **`Iniciales`** · STRING — Iniciales del vendedor/empleado (`Vendedor.Iniciales`, 4 caracteres)
-  **`Activo`** · BOOLEAN — `true` = vigente; `false` = dado de baja
-  **`IdInconcert`** · STRING — Id del vendedor en inConcert. **Reservado**: actualmente regresa vacío (`""`), pendiente de integración.
-
+  
+  **`GET /Vendedor?Modulo=5&Nombre=zzz`**
+  
+  ```json
+  {
+    "ttVendedor": []
+  }
+  ```
+  
   ---
-
-  ## 9. Notas de Comportamiento
-
-  - **Modo normal** (sin `Agenda`): regresa vendedores **activos** que tengan al menos un **cliente activo** con `Id-Cliente > 11`; opcionalmente acotado por `TipoVen`.
-  - **Modo Agenda** (`Agenda` con valor): regresa **solo** los vendedores **activos** cuyas `Iniciales` están en la lista del módulo Agenda; `TipoVen` no aplica.
-  - La lista del módulo Agenda se administra en la tabla `URL` (Parámetro `VendedoresAgenda`, valores separados por coma) y se puede modificar **sin recompilar** el servicio.
-  - El resultado siempre viene ordenado por `Nombre`.
+  
+  ## 10. Tablas relacionadas
+  
+  | Tabla      | Campo        | Uso en el servicio                |
+  |------------|--------------|-----------------------------------|
+  | `Modulo`   | `Id-Modulo`  | Valores válidos del parámetro `Modulo` |
+  | `Vendedor` | `TipoVen`    | Valores del parámetro `TipoVen`   |
+  | `Vendedor` | `Iniciales`  | Valor del parámetro `Iniciales`   |
+  
+  ---
+  
+  **Desarrollado por:** SIS10 - JASS
+  
 }
