@@ -5,7 +5,18 @@ info:
 
 http:
   method: GET
-  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Vendedor
+  url: 192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Vendedor?Nombre=GONZAL&Modulo=5
+  params:
+    - name: Nombre
+      value: GONZAL
+      type: query
+    - name: Modulo
+      value: "5"
+      type: query
+    - name: Agenda
+      value: "TRUE"
+      type: query
+      disabled: true
   auth: inherit
 
 settings:
@@ -13,171 +24,190 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
 docs: |
-  # catcliente — Catálogo de Clientes (Id, Razón Social y Activo)
+  # Catálogo de Vendedores — `GET /Vendedor`
 
-  **Módulo:** SysAdmin / RestADOSASysAdmin
-  **Proyecto:** RestADOSASysAdmin
-  **Autor:** SIS10 — JASS
-  **Fecha implementación:** 2026-07-06
-  **Estatus:** Pendiente de publicar ⏳
+  ## 1. Endpoint
 
-  ---
-
-  ## 1. Descripción
-
-  Servicio REST de **solo consulta** que expone el catálogo de clientes de la tabla `Cliente`
-  con únicamente tres campos: identificador, razón social y el lógico de activo.
-
-  Su propósito es servir como **catálogo genérico** para poblar combos, listados y
-  búsquedas de cliente en aplicaciones front-end, sin exponer información sensible
-  del cliente (crédito, saldos, datos fiscales, etc.).
-
-  Solo expone un endpoint:
-
-  - `GET` → Consulta de todos los clientes o de uno en particular. **No modifica datos.**
+  **Método:** `GET`
+  **Ruta:** `/Vendedor`
+  **URL:** `http://192.0.1.14:8817/RestADOSACyc/rest/RestADOSACyc/Vendedor`
+  **Body:** No aplica
+  **Content-Type de respuesta:** `application/json`
 
   ---
 
-  ## 2. Alcance
+  ## 2. Parámetros de entrada (Query String)
 
-  - Regresa **todos los clientes** registrados en la tabla `Cliente`, activos e inactivos.
-  - El campo `Activo` se incluye en la respuesta para que el consumidor decida si
-    filtra o muestra los inactivos (p. ej. deshabilitados en un combo).
-  - Lectura con `NO-LOCK`: no genera bloqueos sobre la tabla `Cliente`.
-  - Resultado ordenado alfabéticamente por `RazonSocial` (aprovecha el índice `idx-Razon`).
+  > ✅ = Requerido · ❌ = Opcional · Todos los parámetros son opcionales y se pueden combinar
 
-  ---
+  **`Modulo`** · INTEGER · ❌ — Id del módulo de AdCorex (`Modulo.Id-Modulo`)
+  - Ej: `5` Ventas · Vacío o `0` = sin filtro de módulo
 
-  ## 3. Programa implementado
+  **`Nombre`** · STRING · ❌ — Texto para autocomplete (ver sección 4)
+  - Ej: `"juan"` · `"perez lo"` · `"V01"` · Vacío = sin filtro
 
-  **Archivo:** `RestADOSASysAdmin/AppServer/catcliente.p`
-  **URL base REST:** `/RestADOSASysAdmin/catcliente`
+  **`TipoVen`** · INTEGER · ❌ — Tipo de vendedor (`Vendedor.TipoVen`)
+  - Ej: `1` · Vacío = todos los tipos
 
-  ---
+  **`Iniciales`** · STRING · ❌ — Iniciales exactas del vendedor (`Vendedor.Iniciales`)
+  - Ej: `"GRGM"` · Vacío = todos
 
-  ### 3.1 GET — Consulta del catálogo
-
-  **Endpoint:** `GET /catcliente/GetCliente`
-
-  > ✅ = Requerido · ❌ = Opcional
-
-  **Parámetros de entrada (Query String)**
-
-  **`IdCliente`** · INTEGER · ❌ — Filtra a un cliente específico
-  - `0` o sin valor = regresa **todos** los clientes (modo catálogo)
-  - `> 0` = regresa solo el cliente con ese `Id-Cliente`
-
-  **Parámetros de salida**
-
-  **`IdError`** · LOGICAL — `false` = consulta exitosa; `true` = ocurrió un error o el cliente no existe
-  **`Respuesta`** · CHARACTER — `"OK"` en éxito; descripción del error en caso contrario
-  **`ttCliente`** · TABLE — Un registro por cliente
+  **`Agenda`** · STRING · ❌ — Activa el catálogo de Agenda
+  - Cualquier valor (`1`, `true`, `si`) = modo Agenda · Vacío, `0`, `no`, `n`, `false`, `f` = modo normal
+  - En modo Agenda solo aplica además `Iniciales`; `Modulo`, `Nombre` y `TipoVen` se ignoran
 
   ---
 
-  ## 4. Campos del response (ttCliente)
+  ## 3. Tipos de datos
 
-  **`IdCliente`** · INTEGER — Id del cliente (`Cliente.Id-Cliente`)
-  **`RazonSocial`** · CHARACTER — Razón social del cliente
-  **`Activo`** · LOGICAL — `true` = cliente activo; `false` = cliente dado de baja
+  | Tipo    | Formato en query string | Ejemplo          |
+  |---------|-------------------------|------------------|
+  | INTEGER | Número entero           | `Modulo=5`       |
+  | STRING  | Texto URL-encoded       | `Nombre=juan%20p`|
+  | BOOLEAN | `true` / `false` (JSON) | `"Activo": true` |
 
-  ### Valores de `Respuesta`
-
-  - `"OK"` — Consulta exitosa (con o sin registros)
-  - `"Cliente no existe: <id>"` — Se pidió un `IdCliente` específico y no está en la tabla (`IdError = true`)
-  - `"Error: <mensaje>"` — Error de ejecución capturado por `CATCH` (`IdError = true`)
+  - Los parámetros INTEGER deben ser numéricos; un valor no numérico provoca error.
+  - Los espacios en `Nombre` se envían como `%20` o `+`; la `Ñ` como `%C3%91`.
 
   ---
 
-  ## 5. Ejemplos de uso
+  ## 4. Autocomplete (`Nombre`)
 
-  ### Catálogo completo
+  **Reglas de coincidencia**
 
+  - No distingue mayúsculas/minúsculas.
+  - El texto se separa por espacios; **cada palabra** debe estar contenida en el nombre, en cualquier orden y posición.
+  - Los espacios repetidos y los espacios al inicio/fin se ignoran.
+  - También coincide si el texto es el **inicio** de `IdVendedor` o de `Iniciales`.
+  - Se puede combinar con `Modulo`, `TipoVen` e `Iniciales`; el autocomplete filtra sobre el resultado de esos filtros.
+
+  **Ejemplos** (nombre de referencia: `PEREZ LOPEZ JUAN`, IdVendedor `V01`, Iniciales `JPL`)
+
+  | Texto enviado  | ¿Coincide? | Motivo                               |
+  |----------------|------------|--------------------------------------|
+  | `juan`         | ✅         | Contenido en el nombre               |
+  | `lop`          | ✅         | Contenido en el nombre               |
+  | `juan perez`   | ✅         | Ambas palabras, en cualquier orden   |
+  | `pe jua`       | ✅         | Fragmentos de ambas palabras         |
+  | `juan garcia`  | ❌         | `garcia` no está en el nombre        |
+  | `V0`           | ✅         | Inicio de `IdVendedor`               |
+  | `JP`           | ✅         | Inicio de `Iniciales`                |
+
+  **Uso recomendado en el front (combo autocomplete)**
+
+  - Disparar la búsqueda a partir de **2–3 caracteres** con *debounce* de ~300 ms.
+  - Enviar siempre el mismo `Modulo` que se usó para cargar el combo, para buscar sobre la misma lista.
+  - Mostrar `Nombre` como texto y usar `IdVendedor` como valor seleccionado.
+
+  **Peticiones de ejemplo**
+
+  ```http
+  GET /Vendedor?Nombre=juan
+  GET /Vendedor?Modulo=5&Nombre=juan
+  GET /Vendedor?Modulo=5&Nombre=perez%20lo
+  GET /Vendedor?Modulo=5&Nombre=V0
+  GET /Vendedor?Modulo=5&TipoVen=1&Nombre=lopez
   ```
-  GET /RestADOSASysAdmin/catcliente/GetCliente?IdCliente=0
+
+  ---
+
+  ## 5. Otros ejemplos de petición
+
+  ```http
+  GET /Vendedor
+  GET /Vendedor?Modulo=5
+  GET /Vendedor?Iniciales=JPL
+  GET /Vendedor?Modulo=5&TipoVen=1
+  GET /Vendedor?Agenda=1
+  GET /Vendedor?Agenda=1&Iniciales=GRGM
   ```
 
-  Respuesta (ejemplo):
+  ---
+
+  ## 6. Respuestas
+
+  | Código | Caso                              | Body                              |
+  |--------|-----------------------------------|-----------------------------------|
+  | `200`  | Hay coincidencias                 | `{"ttVendedor": [ ... ]}`         |
+  | `200`  | Sin coincidencias                 | `{"ttVendedor": []}`              |
+  | `500`  | Error de servidor / parámetro inválido | Objeto de error de OpenEdge |
+
+  - El arreglo viene ordenado por `Nombre` y luego `IdVendedor`.
+  - Un vendedor no se repite dentro de la misma respuesta.
+
+  ---
+
+  ## 7. Estructura de la respuesta
 
   ```json
   {
-    "response": {
-      "IdError": false,
-      "Respuesta": "OK",
-      "ttCliente": {
-        "ttCliente": [
-          { "IdCliente": 1053, "RazonSocial": "ABARROTES EL SOL SA DE CV", "Activo": true },
-          { "IdCliente": 2071, "RazonSocial": "COMERCIAL DEL NORTE SA", "Activo": false },
-          { "IdCliente": 30,   "RazonSocial": "PUBLICO EN GENERAL", "Activo": true }
-        ]
+    "ttVendedor": [ { ...campos... } ]
+  }
+  ```
+
+  ---
+
+  ## 8. Campos de response (ttVendedor)
+
+  **`IdVendedor`** · STRING — Clave del vendedor (`Vendedor.Id-Vendedor`)
+  **`Nombre`** · STRING — Nombre del vendedor; `Sin asignar` si no tiene nombre registrado
+  **`TipoVen`** · INTEGER — Tipo de vendedor (`Vendedor.TipoVen`)
+  **`IdUbivta`** · STRING — Ubicación de venta (`Vendedor.id-ubivta`)
+  **`Iniciales`** · STRING — Iniciales del vendedor (`Vendedor.Iniciales`)
+  **`Activo`** · BOOLEAN — `true` = vendedor activo; `false` = inactivo
+  **`IdInconcert`** · STRING — Id del vendedor en Inconcert; vacío si no tiene
+
+  ---
+
+  ## 9. Ejemplos de response
+
+  **`GET /Vendedor?Modulo=5&Nombre=juan`**
+
+  ```json
+  {
+    "ttVendedor": [
+      {
+        "IdVendedor": "V01",
+        "Nombre": "PEREZ LOPEZ JUAN",
+        "TipoVen": 1,
+        "IdUbivta": "02B",
+        "Iniciales": "JPL",
+        "Activo": true,
+        "IdInconcert": "1045"
+      },
+      {
+        "IdVendedor": "V14",
+        "Nombre": "MUÑOZ GARCIA JUANA",
+        "TipoVen": 1,
+        "IdUbivta": "02B",
+        "Iniciales": "JMG",
+        "Activo": true,
+        "IdInconcert": ""
       }
-    }
+    ]
   }
   ```
 
-  ### Un cliente específico
-
-  ```
-  GET /RestADOSASysAdmin/catcliente/GetCliente?IdCliente=1053
-  ```
-
-  Regresa un solo registro en `ttCliente` con `IdError = false` y `Respuesta = "OK"`.
-
-  ### Cliente inexistente
-
-  ```
-  GET /RestADOSASysAdmin/catcliente/GetCliente?IdCliente=999999
-  ```
+  **`GET /Vendedor?Modulo=5&Nombre=zzz`**
 
   ```json
   {
-    "response": {
-      "IdError": true,
-      "Respuesta": "Cliente no existe: 999999",
-      "ttCliente": { "ttCliente": [] }
-    }
+    "ttVendedor": []
   }
   ```
 
   ---
 
-  ## 6. Pasos para publicar el servicio (PDSOE)
+  ## 10. Tablas relacionadas
 
-  1. Abrir el proyecto `RestADOSASysAdmin` en Progress Developer Studio.
-  2. Verificar que `catcliente.p` compile sin errores (genera `catcliente.r`).
-  3. En **Servers → Servicios REST**, agregar `catcliente.p` al servicio
-     `RestADOSASysAdminService` (se genera el `.pidl` y se actualiza `resourceModel.xml`).
-  4. Mapear el procedimiento `GetCliente` con verbo **GET**:
-     - `IdCliente` → Query String.
-     - `IdError`, `Respuesta` y `ttCliente` → Response body.
-  5. Publicar el servicio en el servidor de aplicaciones (PAS) y probar con los
-     ejemplos de la sección 5.
-
-  ---
-
-  ## 7. Notas técnicas
-
-  - **Solo lectura** — el programa no contiene POST/PUT/DELETE; no hay riesgo de
-    modificación de datos por este servicio.
-
-  - **Manejo de errores estándar del módulo** — `IdError` / `Respuesta` siguen el mismo
-    patrón que `canalventa.p` y `usuariosmodulo.p`: cualquier excepción de ejecución se
-    captura con `CATCH Progress.Lang.Error` y se devuelve en `Respuesta` con
-    `IdError = true`, sin tirar el servicio.
-
-  - **Temp-table reducida** — la temp-table `ttCliente` define únicamente los 3 campos
-    expuestos. Se usa `ASSIGN` explícito (no `BUFFER-COPY`) para evitar arrastrar
-    cualquier otro campo de la tabla `Cliente` si en el futuro se agregan campos
-    a la temp-table por nombre coincidente.
-
-  - **Volumen** — el modo catálogo regresa la tabla completa de clientes. Si el
-    consumidor solo requiere clientes activos, debe filtrar por `Activo = true`
-    en el front-end, o bien solicitar una variante del servicio con ese filtro.
-
-  - **Orden del resultado** — `BY Cliente.RazonSocial`; los registros llegan listos
-    para mostrarse en un combo/lista alfabética sin reordenar en el cliente.
+  | Tabla      | Campo        | Uso en el servicio                |
+  |------------|--------------|-----------------------------------|
+  | `Modulo`   | `Id-Modulo`  | Valores válidos del parámetro `Modulo` |
+  | `Vendedor` | `TipoVen`    | Valores del parámetro `TipoVen`   |
+  | `Vendedor` | `Iniciales`  | Valor del parámetro `Iniciales`   |
 
   ---
 

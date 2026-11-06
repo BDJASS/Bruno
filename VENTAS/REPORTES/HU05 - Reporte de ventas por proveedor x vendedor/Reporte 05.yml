@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/VentasPorProvPorVend?IdUser=olds&Seleccion=3&Lista=002033&FechaInicial=2026-01-01&FechaFinal=2026-01-31&Reporte=1&Desglose=2&CantMin=0
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Reporte/VentasPorProvPorVend?IdUser=olds&Seleccion=3&Lista=002033&ListVend=0008&FechaInicial=2026-01-28&FechaFinal=2026-01-31&Reporte=1&Desglose=2&CantMin=0
   params:
     - name: IdUser
       value: olds
@@ -19,9 +19,8 @@ http:
     - name: ListVend
       value: "0008"
       type: query
-      disabled: true
     - name: FechaInicial
-      value: 2026-01-01
+      value: 2026-01-28
       type: query
     - name: FechaFinal
       value: 2026-01-31
@@ -135,7 +134,11 @@ docs: |
         "Importe2": 38210.00,
         "TotImp": 163610.50,
         "PLista": 171200.00,
-        "CantArt": 1840.0
+        "CantArt": 1840.0,
+        "Importe1Ant": 110250.00,
+        "Importe2Ant": 30100.00,
+        "TotImpAnt": 140350.00,
+        "PListaAnt": 149800.00
       }
     ],
     "ttDet": [
@@ -143,6 +146,8 @@ docs: |
         "IdVendedor": "0077",
         "IdUbic": "01",
         "IdArticulo": "021118",
+        "IdColor": 12,
+        "Kolor": "NEGRO",
         "Descr": "PLUMA GEL NEGRA 0.5MM",
         "Importe": 4200.00,
         "PLista": 4500.00,
@@ -155,13 +160,49 @@ docs: |
         "IdVendedor": "0077",
         "IdUbic": "01",
         "IdArticulo": "021118",
+        "IdColor": 12,
+        "Kolor": "NEGRO",
         "IdFactura": "0123456",
         "FecReg": "2026-02-10",
         "IdCliente": 55921,
         "RazonSocial": "DISTRIBUIDORA DEL VALLE SA DE CV",
+        "PrecUnit": 6.00,
         "Importe": 1200.00,
         "CantArt": 200.0,
+        "UMI": "PZA",
+        "TieneCorte": true
+      }
+    ],
+    "ttDetAnt": [
+      {
+        "IdVendedor": "0077",
+        "IdUbic": "01",
+        "IdArticulo": "021118",
+        "IdColor": 12,
+        "Kolor": "NEGRO",
+        "Descr": "PLUMA GEL NEGRA 0.5MM",
+        "Importe": 3650.00,
+        "PLista": 3900.00,
+        "CantArt": 540.0,
         "UMI": "PZA"
+      }
+    ],
+    "ttDesAnt": [
+      {
+        "IdVendedor": "0077",
+        "IdUbic": "01",
+        "IdArticulo": "021118",
+        "IdColor": 12,
+        "Kolor": "NEGRO",
+        "IdFactura": "0119873",
+        "FecReg": "2025-02-11",
+        "IdCliente": 55921,
+        "RazonSocial": "DISTRIBUIDORA DEL VALLE SA DE CV",
+        "PrecUnit": 5.80,
+        "Importe": 1160.00,
+        "CantArt": 200.0,
+        "UMI": "PZA",
+        "TieneCorte": false
       }
     ]
   }
@@ -177,30 +218,70 @@ docs: |
   **`TotImp`** · DECIMAL — Total (`Importe1 + Importe2`)
   **`PLista`** · DECIMAL — Importe a precio de lista (para comparar margen)
   **`CantArt`** · DECIMAL — Cantidad de artículos en UMI
+  **`Importe1Ant`** · DECIMAL — Crédito del **mismo rango un año antes**
+  **`Importe2Ant`** · DECIMAL — Contado del mismo rango un año antes
+  **`TotImpAnt`** · DECIMAL — `Importe1Ant + Importe2Ant`
+  **`PListaAnt`** · DECIMAL — Precio de lista del mismo rango un año antes
 
-  ### Campos de `ttDet` (detalle por artículo — solo si `Reporte = 1`)
+  ### Campos de `ttDet` (detalle por artículo y color — solo si `Reporte = 1`)
+
+  > Un registro por **vendedor + artículo + color**. Ver observación sobre el color más abajo.
 
   **`IdVendedor`** · STRING — Vendedor
   **`IdUbic`** · STRING — Ubicación
   **`IdArticulo`** · STRING — Artículo
+  **`IdColor`** · INT — Clave de color del renglón; `0` si el artículo no maneja color
+  **`Kolor`** · STRING — Abreviatura del color (`Kolor.Abrev`); vacío si no maneja color o el color no está en el catálogo
   **`Descr`** · STRING — Descripción del artículo
   **`Importe`** · DECIMAL — Importe vendido del artículo
   **`PLista`** · DECIMAL — Importe a precio de lista
   **`CantArt`** · DECIMAL — Cantidad en UMI
   **`UMI`** · STRING — Unidad mínima de inventario (presentación Tipo 1)
 
-  ### Campos de `ttDes` (desglose por documento — solo si `Desglose = 2`)
+  ### Campos de `ttDetAnt` (detalle por artículo y color del año anterior — solo si `Reporte = 1`)
+
+  > **Mismas columnas y misma llave que `ttDet`** (`IdVendedor + IdArticulo + IdColor`), calculadas sobre el **mismo rango de fechas un año antes** (`FechaInicial`/`FechaFinal` − 1 año; 29-feb pasa a 28-feb). El front liga cada renglón de `ttDet` con su par en `ttDetAnt` por esa llave.
+  > - Solo trae vendedores que **salen en `ttVend`** (ya filtrados por `ListVend` y `CantMin`).
+  > - Puede traer artículos que el vendedor vendió el año pasado y **no** en el periodo actual (no tienen par en `ttDet`), y viceversa.
+  > - Mismo filtro `Seleccion`/`Lista` y mismas reglas de `CantArt`/`PLista` que `ttDet`; `PLista` usa la fecha inicial del periodo anterior en la regla de `Precio.FecReg`.
+  > - Por vendedor, la suma de `ttDetAnt.Importe` = `ttVend.TotImpAnt` y la de `ttDetAnt.PLista` = `ttVend.PListaAnt`.
 
   **`IdVendedor`** · STRING — Vendedor
   **`IdUbic`** · STRING — Ubicación
   **`IdArticulo`** · STRING — Artículo
+  **`IdColor`** · INT — Clave de color del renglón; `0` si no maneja color
+  **`Kolor`** · STRING — Abreviatura del color (`Kolor.Abrev`)
+  **`Descr`** · STRING — Descripción del artículo
+  **`Importe`** · DECIMAL — Importe vendido del artículo en el periodo anterior
+  **`PLista`** · DECIMAL — Importe a precio de lista en el periodo anterior
+  **`CantArt`** · DECIMAL — Cantidad en UMI en el periodo anterior
+  **`UMI`** · STRING — Unidad mínima de inventario (presentación Tipo 1)
+
+  ### Campos de `ttDes` (desglose por documento — solo si `Desglose = 2`)
+
+  > **Un registro por partida del documento.** `ttDes` no agrega nada, así que un mismo artículo puede repetirse en el mismo documento con distinto color, precio unitario e importe — eso es correcto, son partidas distintas.
+
+  **`IdVendedor`** · STRING — Vendedor
+  **`IdUbic`** · STRING — Ubicación
+  **`IdArticulo`** · STRING — Artículo
+  **`IdColor`** · INT — Clave de color del renglón; `0` si el artículo no maneja color
+  **`Kolor`** · STRING — Abreviatura del color (`Kolor.Abrev`); vacío si no maneja color o el color no está en el catálogo
   **`IdFactura`** · STRING — Folio del documento (Factura o Remisión, según el origen)
   **`FecReg`** · DATE — Fecha del documento
   **`IdCliente`** · INT — Cliente
   **`RazonSocial`** · STRING — Razón social (directo del documento)
+  **`PrecUnit`** · DECIMAL — Precio unitario de la partida (`DetFactura.PrecUnit` / `DetRemis.PrecUnit`), mismo valor que muestra `DetalleDocumento`
   **`Importe`** · DECIMAL — Importe del renglón
   **`CantArt`** · DECIMAL — Cantidad (de la partida)
   **`UMI`** · STRING — Unidad mínima de inventario
+  **`TieneCorte`** · BOOLEAN — `true` = **este documento trae corte para este artículo** (renglones `Tipo 3/4` capturados después de su renglón); `false` = sin corte en el documento — incluso si el artículo es de tipo corte (`Articulo.TpoCorte <> 0`) pero al facturar no lo pidieron. Los comentarios **no** viajan en este response: cuando es `true`, el front consulta `GET .../VentasPorProvPorVend/DetalleDocumento` mandando `Folio` (= `IdFactura`), `Fecha` (= `FecReg`), `IdCliente` e `IdArticulo`
+
+
+  ### Campos de `ttDesAnt` (desglose por documento del año anterior — solo si `Desglose = 2`)
+
+  > **Mismas columnas y mismo criterio que `ttDes`** (un registro por partida, sin acumular), sobre el **mismo rango un año antes**, solo para vendedores que salen en `ttVend`. `IdFactura` y `FecReg` son los del documento del año anterior, así que con `TieneCorte = true` el front pide `DetalleDocumento` igual que con `ttDes`. Por vendedor, la suma de `ttDesAnt.Importe` = `ttVend.TotImpAnt`.
+
+  Campos: los mismos de `ttDes` (`IdVendedor`, `IdUbic`, `IdArticulo`, `IdColor`, `Kolor`, `IdFactura`, `FecReg`, `IdCliente`, `RazonSocial`, `PrecUnit`, `Importe`, `CantArt`, `UMI`, `TieneCorte`).
 
   ---
 
@@ -211,7 +292,7 @@ docs: |
   | Parámetros nulos | Se normalizan (fechas → `TODAY`, `Reporte` → `2`, `Desglose` → `1`, resto vacío/`0`) |
   | `Seleccion = 0` o `Lista` vacío | No filtra por artículo (entra todo) |
   | `ListVend` vacío | Todos los vendedores |
-  | `TotImp < CantMin` | El vendedor (y su `ttDet`/`ttDes`) se eliminan del resultado |
+  | `TotImp < CantMin` | El vendedor (y su `ttDet`/`ttDes`) se eliminan del resultado; tampoco se calcula su año anterior (`*Ant` / `ttDetAnt` / `ttDesAnt`) |
   | Error en proceso | `IdError: true` — `"Error: <mensaje>"` |
 
   > Nota: este servicio **no** valida que `FechaFinal >= FechaInicial` (a diferencia de otros REP). Si se invierten, el rango queda vacío y devuelve 0 vendedores.
@@ -225,13 +306,30 @@ docs: |
   **Filtro `Seleccion`** sobre cada partida: `1` artículo, `2` `Articulo.Id-Grupo`, `3` `Det*.Id-Prov`, `4` `Articulo.Id-Marca`, `5` `Grupo.Id-Familia` (vía `FIND Grupo`), `6` `detlistaart.Id-ListaArt` (todos con formato `999999`).
   **`CantArt`** se convierte a UMI: `ArtPres.Equiv × Cant` (presentación del renglón).
   **`PLista`** — si `Precio.FecReg < FechaInicial` → `Precio.PMay × Cant`; si no → `HCosto.Costo × ArtPres.Equiv × (1 + ArtPres.MarMay/100) × Cant`.
+  **Año anterior (`ttVend.*Ant`, `ttDetAnt`, `ttDesAnt`)** — después del filtro `CantMin`, por cada vendedor de `ttVend` se leen `Factura`/`Remision` por `idx-rep1` (`Id-Vendedor + FecReg`) en el mismo rango un año antes, con las mismas condiciones y filtro. `ttDetAnt` solo con `Reporte = 1`; `ttDesAnt` solo con `Desglose = 2`.
 
   ---
 
   ## 11. Estructura / Implementación
 
-  - **Salida: 3 `OUTPUT TABLE`** (`ttVend`, `ttDet`, `ttDes`) — no es DATASET; el `.pidl` declara tres tablas de salida independientes.
-  - `ttDet` solo se llena con `Reporte = 1`; `ttDes` solo con `Desglose = 2`. En modo resumido ambas salen vacías.
+  - **Color y precio unitario (03/08/2026).** Se agregó `Kolor` (abreviatura de `Kolor.Abrev`) e `IdColor` a `ttDet` y a `ttDes`, y `PrecUnit` a `ttDes`. Los nombres son los mismos que ya usaba `ttDocDet` de `ventas-rep006det.p`, para que el front no maneje dos convenciones.
+
+    **`ttDes` no cambió de granularidad.** Nunca agregó nada: hace un `CREATE` por partida, sin `FIND` ni acumulación, así que los colores ya salían en renglones separados y solo faltaba mostrarlos. `PrecUnit` sale directo del renglón, igual que en `DetalleDocumento`.
+
+    **`ttDet` sí cambió de granularidad.** Ahí sí había agregación, por vendedor + artículo, así que un artículo vendido en varios colores colapsaba en un renglón. Se agregó `IdColor` a la llave (`idx-det: IdVendedor + IdArticulo + IdColor`) para que la columna diga la verdad. **Consecuencia para el front:** `ttDet` puede traer más renglones que antes —uno por color— y los importes se reparten entre ellos. **Los totales de `ttVend` no cambian**, y el filtro `CantMin` tampoco, porque opera a nivel vendedor (`ttVend.TotImp`). Si el front agrupaba por `IdArticulo` asumiendo un renglón por artículo, ahora debe sumar los colores.
+
+    `Id-Color` y `PrecUnit` se agregaron al `FIELDS()` de `DetFactura` y `DetRemis`: leerlos sin declararlos forzaba un fetch extra por registro y anulaba la optimización de 2026-06-29. El `FIND` a `Kolor` está encapsulado en la función `colorAbrev` y en `ttDet` corre solo al **crear** el renglón.
+  - **Detalle por artículo del año anterior (05/11/2026, ticket 3692).** Nueva salida `ttDetAnt` (`LIKE ttDet`: mismas columnas e índice). Se acumula en `acumulaAnioAnterior` junto con `ttVend.*Ant`; `Id-Color` se agregó al `FIELDS()` de `DetFactura`/`DetRemis` de ese bloque.
+  - **Desglose por documento del año anterior (05/11/2026, ticket 3692).** Nueva salida `ttDesAnt` (`LIKE ttDes`). Un registro por partida, igual que `ttDes`; `TieneCorte` usa la misma pasada por documento (`Reng` / `Sec`). Se agregaron `PrecUnit` al `FIELDS()` del detalle y `RazonSocial` al de `Factura`/`Remision` en ese bloque.
+  - **Caches por llamada (05/11/2026).** Temp-tables que se vacían al inicio de cada llamada; cada dato de catálogo se lee de la BD **una vez** en vez de por documento/partida:
+    - `ttCacheVend` (`datosVendedor`): `Vendedor` + nombre de `Empleado` por `Iniciales` (antes un `FIND FIRST Empleado` **por documento**).
+    - `ttCacheArt` (`datosArticulo`): existe, resultado del filtro `Seleccion`/`Lista`, `Descr` (con `FixEnie`) y UMI. `Seleccion = 3` se resuelve aparte porque depende del proveedor de la partida.
+    - `ttCachePres` (`calcPartida`): `Equiv` y regla de precio lista por artículo + presentación + proveedor + fecha inicial (la fecha entra en la llave porque año actual y anterior usan distinta).
+    - `ttCacheColor` (`colorAbrev`): `Kolor.Abrev`.
+
+    Los tres bloques (Facturas, Remisiones y año anterior) usan los **mismos** procedimientos, así el año actual y el anterior aplican exactamente la misma regla. Corrige además que con `Seleccion = 0` o `6` `ttDet.Descr` podía salir con la descripción de otro artículo (el buffer `Articulo` se quedaba con el primer `FIND`).
+  - **Salida: 5 `OUTPUT TABLE`** (`ttVend`, `ttDet`, `ttDes`, `ttDetAnt`, `ttDesAnt`) — no es DATASET; el `.pidl` declara cinco tablas de salida independientes y `adapters.pamf` mapea cada una a `response.<tabla>`.
+  - `ttDet` y `ttDetAnt` solo se llenan con `Reporte = 1`; `ttDes` y `ttDesAnt` solo con `Desglose = 2`. En modo resumido las cuatro salen vacías.
   - **Endpoint registrado:** `resourceModel.xml` → `/Ventas/Reporte/VentasPorProvPorVend` → `ventas-rep006..GetVentasVendedor` (`GET`), con los 9 query params de la sección 4.
   - **Despliegue:** compilar `ventas-rep006.p`, asegurar el `.pidl` y la entrada en `resourceModel.xml`, publicar y reciclar el AppServer.
 
@@ -239,7 +337,7 @@ docs: |
 
   ## 12. Rendimiento
 
-  Recorre **toda** la `Factura` y la `Remision` del rango de fechas (usan `Factura.Idx-FecReg` / `Remision.Idx-FecRem`) y, por cada partida, hace varios `FIND` (`Articulo`, `ArtPres` ×2, `Precio`, `HCosto`, y `detlistaart` en `Seleccion=6`). Para **rangos amplios** puede ser pesado.
+  Recorre **toda** la `Factura` y la `Remision` del rango de fechas (usan `Factura.Idx-FecReg` / `Remision.Idx-FecRem`). Desde el 05/11/2026 los catálogos (`Vendedor`, `Empleado`, `Articulo`, `Grupo`, `detlistaart`, `ArtPres`, `Precio`, `HCosto`, `Kolor`) se leen **una vez por llave** gracias a los caches de la sección 11; el costo por partida queda en la lectura del detalle más un `FIND` en temp-table. El año anterior lee solo los documentos de los vendedores que salen (`idx-rep1`). Para **rangos amplios** sigue dominando la lectura de documentos.
 
   Palancas si se requiere acelerar:
   - Acotar el periodo.
@@ -276,7 +374,8 @@ docs: |
   2. **Nombre del vendedor** se resuelve por `Vendedor.Iniciales` → `Empleado.Iniciales` → `Empleado.Nombre`.
   3. **`PLista`** usa `Precio.PMay` solo si el precio es anterior al periodo; si no, lo estima con costo + margen de mayoreo.
   4. **Filtro `CantMin`** se aplica al final sobre `TotImp` y limpia los detalles/desgloses huérfanos.
-  5. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+  5. **Corte (`TieneCorte` en `ttDes`):** indica que el documento **realmente trae corte para ese artículo**, no solo que el artículo sea de tipo corte: hay artículos con `Articulo.TpoCorte <> 0` que al facturar no piden corte, y esos salen `false`. Se detecta con una **pasada chica por documento** (solo en `Desglose = 2`): se recorre el detalle en orden de captura (`Reng` en factura, `Sec` en remisión) y cada renglón de corte (`Tipo 3/4`, sin artículo) se atribuye al artículo cuyo renglón lo precede. El costo es marginal (una lectura extra del detalle del documento, que suele tener pocos renglones) y solo se paga en modo desglose. Los comentarios son textos grandes y **no** viajan aquí: con `true`, el front pide el detalle al servicio hermano `ventas-rep006det.p` (`GET .../VentasPorProvPorVend/DetalleDocumento?Folio=...&Fecha=...&IdCliente=...&IdArticulo=...&IdUser=...`), documentado en `ventas-rep006det-DetalleDocumento.md`. Aplica igual para facturas y remisiones.
+  6. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
 
   ---
   **Desarrollado por:** SIS10 - JASS

@@ -51,6 +51,10 @@ docs: |
 
   > Ajuste 2026-08-18: se creó el programa dedicado y ligero `pedconsulta.p` para este listado, en lugar de reutilizar `pedido2.p` / `leePedidos` (que armaba un registro completo con múltiples `FIND` y luego lo volcaba a una tabla limpia). `pedconsulta.p` construye directamente las columnas del grid. Los parámetros de entrada no cambiaron.
 
+  > Ajuste 2026-11-03 (ticket 3796): se agrega `Adelantado` (factura por adelantado) para el indicador "FA" del grid.
+
+  > Ajuste 2026-11-05 (ticket 3819): se agregan los datos de **Solicitud de Cancelación** (`SolCanc`, `SolCancUsu`, `SolCancNom`, `SolCancFec`, `SolCancHora`, `SolCancMotivo`), de **Cancelación del pedido por CEDIS** (`PedCanc`, `CancUsu`, `CancNom`, `CancFec`, `CancHora`) y del **documento de venta** (`IdFactura`, `FecFactura`, `IdFuente`). Los parámetros de entrada y el formato de respuesta (`IdError`, `Respuesta`, `ttPedidoLee`) no cambian.
+
   ---
 
   ## 2. Método HTTP
@@ -144,11 +148,68 @@ docs: |
         "Ubi": "MLA",
         "Plazo": 0,
         "TieneSeguimiento": true,
-        "FacturaSI": true
+        "FacturaSI": true,
+        "Adelantado": false,
+        "SolCanc": true,
+        "SolCancUsu": "ABC",
+        "SolCancNom": "NOMBRE DEL EMPLEADO",
+        "SolCancFec": "2026-08-08",
+        "SolCancHora": "10:42:15",
+        "SolCancMotivo": "CLIENTE YA NO REQUIERE LA MERCANCIA",
+        "PedCanc": false,
+        "CancUsu": "",
+        "CancNom": "",
+        "CancFec": null,
+        "CancHora": "",
+        "IdFactura": "",
+        "FecFactura": null,
+        "IdFuente": 0
+      },
+      {
+        "IdPedido": "0322715",
+        "Resto": 0,
+        "FecReg": "2026-08-07",
+        "IdCliente": 31877,
+        "RazonSocial": "CLIENTE DE EJEMPLO SA DE CV",
+        "IdVendedor": "0021",
+        "VendNombre": "NOMBRE DEL VENDEDOR",
+        "SubTotal": 4520.00,
+        "PartDetPed": 2,
+        "Pago": "CREDITO",
+        "Estatus": "EMBARCADO",
+        "IdEstatus": 6,
+        "IdCond": 1,
+        "EnFirme": true,
+        "BckOrd": 1,
+        "Pagado": false,
+        "PagAnt": false,
+        "PausaReja": false,
+        "IdLiga": "",
+        "Ubi": "MLA",
+        "Plazo": 30,
+        "TieneSeguimiento": true,
+        "FacturaSI": false,
+        "Adelantado": false,
+        "SolCanc": true,
+        "SolCancUsu": "ABC",
+        "SolCancNom": "NOMBRE DEL EMPLEADO",
+        "SolCancFec": "2026-08-08",
+        "SolCancHora": "09:15:02",
+        "SolCancMotivo": "ERROR EN CAPTURA",
+        "PedCanc": true,
+        "CancUsu": "XYZ",
+        "CancNom": "NOMBRE DEL EMPLEADO CEDIS",
+        "CancFec": "2026-08-09",
+        "CancHora": "",
+        "IdFactura": "A123456",
+        "FecFactura": "2026-08-08",
+        "IdFuente": 0
       }
     ]
   }
   ```
+
+  > El primer renglón tiene solo solicitud de cancelación; el segundo tiene solicitud **y** cancelación por CEDIS, y conserva `IdEstatus = 6` (Embarcado): la bandera `PedCanc` es la que indica que está cancelado.
 
   ### Campos de `ttPedidoLee` (1 registro por pedido)
 
@@ -175,6 +236,29 @@ docs: |
   **`Plazo`** · INT — Plazo del pedido (`Pedido.Plazo`)
   **`TieneSeguimiento`** · BOOLEAN — `true` = existe renglón en `EstPedido` para este pedido-resto; `false` = no hay seguimiento. El front debe llamar a `/Ventas/Pedidos/Seguimiento` **solo cuando es `true`** (evita el `IdError` "No existe informacion de seguimiento…"). Se resuelve con un sondeo sobre el índice UNIQUE primario `idx-sur` (`Id-Pedido` + `Id-Seq`), el mismo `WHERE` que usa ese servicio
   **`FacturaSI`** · BOOLEAN — `true` = el pedido es **posible a facturar** con la misma regla de los listados `/Pedido/listaPedidosPorFacturar` (clientes normales) y `/Pedido/listaPedidosEspeciales` (clientes de embarque especial); `false` = no facturable. Se evalúa sobre su registro de empaque `EstPedido` (ver sección 13)
+  **`Adelantado`** · BOOLEAN — `true` = factura por adelantado (`Pedido.Adelantado`); el grid muestra el indicador "FA" y deshabilita el botón Editar (ticket 3796)
+
+  #### Solicitud de Cancelación y Cancelación por CEDIS (ticket 3819)
+
+  > Solicitud de Cancelación y Cancelación del pedido son **independientes**: un pedido puede tener ambas, solo una o ninguna. Sin solicitud/cancelación las banderas llegan en `false`, los textos vacíos y las fechas en `null`. `IdEstatus`/`Estatus` **no cambian** (un pedido cancelado puede seguir en `6` Embarcado; la bandera `PedCanc` es la que lo identifica).
+
+  **`SolCanc`** · BOOLEAN — `true` = el pedido tiene solicitud de cancelación (`Pedido.SolCancPed`)
+  **`SolCancUsu`** · STRING — Usuario que generó la solicitud (`Pedido.UsuSolCancPed`)
+  **`SolCancNom`** · STRING — Nombre del usuario que generó la solicitud (`Empleado.Nombre` por iniciales); vacío si no se localizó
+  **`SolCancFec`** · DATE — Fecha de la solicitud (`Pedido.FecSolCancPed`)
+  **`SolCancHora`** · STRING — Hora de la solicitud `HH:MM:SS` (`Pedido.HorSolCancPed`)
+  **`SolCancMotivo`** · STRING — Motivo de la solicitud (`Pedido.MotivoSolCancPed`)
+  **`PedCanc`** · BOOLEAN — `true` = el pedido está cancelado por CEDIS (`Pedido.Cancelado`)
+  **`CancUsu`** · STRING — Usuario que canceló (`Pedido.UsuarioCanc`)
+  **`CancNom`** · STRING — Nombre del usuario que canceló (`Empleado.Nombre` por iniciales); vacío si no se localizó
+  **`CancFec`** · DATE — Fecha de cancelación (`Pedido.FecCancel`)
+  **`CancHora`** · STRING — Hora de cancelación `HH:MM:SS`; hoy **siempre vacío**: el esquema `Pedido` no guarda la hora de cancelación (ver sección 13)
+
+  #### Documento de venta (ticket 3819)
+
+  **`IdFactura`** · STRING — Folio del documento de venta del pedido (`Pedido.Id-Factura`); puede ser factura o remisión; vacío si no se ha facturado
+  **`FecFactura`** · DATE — Fecha (`FecReg`) del documento de `IdFactura`: se busca en `Factura` y, si no existe, en `Remision`, ambos con el `Id-Cliente` del pedido; `null` si no hay folio o no se localizó
+  **`IdFuente`** · INT — Fuente del pedido (`Pedido.Id-Fuente`)
 
   ---
 
@@ -219,14 +303,16 @@ docs: |
   3. **`Estatus`:** clasificación calculada (homologada con `vtac1300.p`): No-Aut, Mcia-Pdte, Mcia-P/Surt, P/Facturar, Cte-Recoge, Emb-Local, Emb-Estafeta, Emb-Foraneo, o la descripción de `EstVta`. La categoría "Mcia-Pdte" usa el conteo de renglones `Tipo = 1` con `CantEnt < CantPed`.
   4. **Filtro de pendientes:** si `IdEstatus = -99`, solo se devuelven los pedidos cuya clasificación resultó "pendiente".
   5. **Rango de fechas obligatorio sin pedido:** ver sección 9.
-  6. **Eficiencia:** por cada pedido se hace un solo recorrido del detalle (`DetPedido`) y un `FIND EstVta`; no se consultan ruta, condición, entrega, transporte, vendedor, etc. (esos datos viven en `/Ventas/Pedido/Resumen`). El sondeo de `EstPedido` es único y alimenta a la vez `TieneSeguimiento` y `FacturaSI`.
+  6. **Eficiencia:** por cada pedido se hace un solo recorrido del detalle (`DetPedido`), un `FIND EstVta`, el nombre del vendedor (`Vendedor` → `Empleado`) y un sondeo único de `EstPedido` que alimenta a la vez `TieneSeguimiento` y `FacturaSI`. Las lecturas adicionales son condicionales: `Empleado` solo si hay solicitud/cancelación con usuario, y `Factura`/`Remision` solo si el pedido tiene folio. No se consultan ruta, condición, entrega, transporte, etc. (esos datos viven en `/Ventas/Pedido/Resumen`).
   7. **`FacturaSI` (ticket 3291):** replica la **unión** de los dos listados de facturación de `pedfactura.p`, ambos gobernados por el registro de empaque `EstPedido` (1:1 con el pedido-resto vía `Id-Pedido` + `Id-Seq` = `Resto`):
      - `EstPedido.Estatus = 4` (empacado) → `true` para cualquier cliente (cubre normales y especiales).
      - `EstPedido.Estatus` 0, 1 o 2 con `Pedido.Adelantado = true` → `true` (facturación adelantada).
      - `EstPedido.Estatus = -2` (remisionado) sin `Id-Factura` y `Cliente.EmbEsp = true` → `true` (solo clientes de embarque especial).
 
      Se **omite a propósito** el filtro por almacén/prefijo del `Id-Pedido` que traen esos listados (solo segmenta la cola de facturación de cada CEDIS); aquí la bandera indica si el pedido es facturable en sí, sin importar la ubicación del usuario. Es una bandera de **membresía en el listado por facturar**, no la validación profunda por pedido (`/Pedido/validaPedidoFacturable` sigue aplicando bloqueos como RFC incompleto, ya facturado, solicitud de cancelación, corte del día, etc. al momento de facturar).
-  8. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+  8. **Solicitud de Cancelación / Cancelación (ticket 3819):** se leen del mismo registro `Pedido` que ya recorre la consulta, así que no hay consulta extra por renglón; solo se busca el nombre en `Empleado` (por `Iniciales`, mismo criterio que `/Ventas/Pedidos/SolicitudCancelacion`) cuando la bandera está activa y hay usuario. Los datos de cada bloque se envían únicamente si su bandera es `true`. `CancHora` queda vacío porque `Pedido` solo tiene `Cancelado`, `FecCancel` y `UsuarioCanc`; para llenarlo haría falta agregar un campo de hora de cancelación a la tabla y grabarlo en el proceso de cancelación de CEDIS.
+  9. **`FecFactura` (ticket 3819):** `Pedido.Id-Factura` puede ser folio de factura o de remisión y el pedido no indica cuál. Se busca primero en `Factura` (`Id-Factura` + `Id-Cliente` del pedido) y, si no existe, en `Remision` (`Id-Remision` + `Id-Cliente`); se toma su `FecReg`. El `Id-Cliente` evita tomar un folio igual de otro cliente. Se devuelve la fecha aunque el documento esté cancelado. Sin folio o sin documento → `null`.
+  10. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
 
   ---
   **Desarrollado por:** SIS10 - JASS

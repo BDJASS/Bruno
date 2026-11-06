@@ -5,10 +5,10 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/SolicitudCancelacion?IdPedido=2980991&Resto=0
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/SolicitudCancelacion?IdPedido=3082962&Resto=0
   params:
     - name: IdPedido
-      value: "2980991"
+      value: "3082962"
       type: query
     - name: Resto
       value: "0"
@@ -33,7 +33,10 @@ docs: |
   Regresa los datos del pedido para la pantalla de solicitud de cancelación (cliente, RFC, estatus en texto, dirección, importe, factura, cortes) y la solicitud existente si ya hay una.
   Programa servidor: `pedsolcanc.p` · Procedimiento: `leeSolicitudCancelacion` (GET) | Versión REST de `vtaa0060.p` (modo carácter). Módulo `/Ventas/Pedidos/`.
 
-  > El registro de la solicitud (y la cancelación inmediata si aplica) se hace con `POST /Ventas/Pedidos/SolicitudCancelacion` (ver `pedsolcanc-SolicitaCancelacion.md`).
+  > Mismo recurso `/Ventas/Pedidos/SolicitudCancelacion`:
+  > - `GET` — esta consulta.
+  > - `POST` — registra la solicitud (y la cancelación inmediata si aplica). Ver `pedsolcanc-SolicitaCancelacion.md`.
+  > - `DELETE` — **retira** la solicitud (Ticket 3833). Ver `pedsolcanc-RetiraSolicitudCancelacion.md`.
 
   ---
 
@@ -57,19 +60,90 @@ docs: |
   ## 4. Ejemplo de Request
 
   ```
-  GET .../Ventas/Pedidos/SolicitudCancelacion?IdPedido=1123456&Resto=0
+  GET .../Ventas/Pedidos/SolicitudCancelacion?IdPedido=3082962&Resto=0
   ```
 
   ---
 
-  ## 5. Campos del Response (`ttSolCanc`)
+  ## 5. Response
 
-  Datos del pedido más la solicitud existente:
+  ### Ejemplo real (pedido con factura y con solicitud)
 
-  - **Pedido:** cliente, RFC, **estatus en texto** (PAUSA EN EMBARQUE/SURTIDO, ORIGINAL, SURTIENDOSE, POR EMPACAR, EMPACANDOSE, POR FACTURAR, FACTURADO, EMBARCADO), dirección, importe, factura, bandera **`TieneCortes`**.
-  - **Solicitud existente:** `SolCancPed`, usuario + nombre, fecha, hora, motivo (vacíos si aún no hay solicitud).
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "El pedido ya cuenta con folio de factura 00853FA; favor de verificar que el documento ya haya sido cancelado. El pedido ya tiene solicitud de cancelacion.",
+      "ttSolCanc": {
+        "ttSolCanc": [
+          {
+            "IdPedido": "3082962",
+            "Resto": 0,
+            "IdCliente": 1475,
+            "RazonSocial": "ROLANDO ISRAEL GARZA SIMENTAL",
+            "RFC": "GASR730429QNA",
+            "FecReg": "2026-10-12",
+            "IdEstatus": 5,
+            "Estatus": "FACTURADO",
+            "Direccion": "PERAL 2130",
+            "Colonia": "MODERNA",
+            "Ciudad": "MONTERREY",
+            "Estado": "NUEVO LEON",
+            "CP": "64530",
+            "Importe": 45987.04,
+            "IdFactura": "00853FA",
+            "TieneCortes": false,
+            "SolCancPed": true,
+            "UsuSolCancPed": "mllr",
+            "NombreUsuSol": "MARIA DE LA LUZ LUNA RODRIGUEZ",
+            "FecSolCancPed": "2026-10-20",
+            "HorSolCancPed": "12:10:51",
+            "MotivoSolCancPed": "SE HIZO EN DOS PEDIDOS"
+          }
+        ]
+      }
+    }
+  }
+  ```
 
-  **`Respuesta`** — confirma la consulta; puede anteponer los avisos (factura / cortes). En error trae el motivo del bloqueo.
+  > Nombres de campo confirmados con response poblado (2026-11-05). En el front solo estaban confirmados `SolCancPed` y `TieneCortes`.
+
+  ### Campos de nivel `response`
+
+  **`IdError`** · BOOLEAN — `true` = el pedido no pasa las reglas (ver `Respuesta`); `false` = consulta correcta
+  **`Respuesta`** · STRING — Avisos no bloqueantes (factura / cortes) + `"El pedido ya tiene solicitud de cancelacion."` o `"Pedido <folio>-<resto> valido para solicitar cancelacion."`. En error trae el motivo del bloqueo.
+
+  ### Campos de `ttSolCanc` (un renglón)
+
+  **Pedido**
+
+  **`IdPedido`** · STRING — Folio normalizado
+  **`Resto`** · INTEGER — Resto del pedido
+  **`IdCliente`** · INTEGER — Cuenta del cliente
+  **`RazonSocial`** · STRING — Razón social del pedido
+  **`RFC`** · STRING — RFC del pedido
+  **`FecReg`** · DATE — Fecha de registro del pedido (`yyyy-MM-dd`)
+  **`IdEstatus`** · INTEGER — Estatus numérico del pedido
+  **`Estatus`** · STRING — Estatus en texto: `-2` PAUSA EN EMBARQUE · `-1` PAUSA EN SURTIDO · `0` ORIGINAL · `1` SURTIENDOSE · `2` POR EMPACAR · `3` EMPACANDOSE · `4` POR FACTURAR · `5` FACTURADO · otro EMBARCADO
+  **`Direccion`** · STRING — Calle y número
+  **`Colonia`** · STRING — Colonia
+  **`Ciudad`** · STRING — Nombre de la ciudad (vacío si no existe)
+  **`Estado`** · STRING — Nombre del estado (vacío si no existe)
+  **`CP`** · STRING — Código postal
+  **`Importe`** · DECIMAL — Total del pedido
+  **`IdFactura`** · STRING — Folio de factura (vacío si no tiene)
+  **`TieneCortes`** · BOOLEAN — `true` = algún renglón de artículo tiene corte
+
+  **Solicitud de cancelación** (vacíos / `null` si no hay solicitud)
+
+  **`SolCancPed`** · BOOLEAN — `true` = tiene solicitud de cancelación
+  **`UsuSolCancPed`** · STRING — Usuario que solicitó
+  **`NombreUsuSol`** · STRING — Nombre del usuario que solicitó (Empleado por iniciales)
+  **`FecSolCancPed`** · DATE — Fecha de la solicitud (`yyyy-MM-dd`)
+  **`HorSolCancPed`** · STRING — Hora de la solicitud (`HH:MM:SS`; vacío si no hay)
+  **`MotivoSolCancPed`** · STRING — Motivo de la solicitud
+
+  > Tras un **retiro** (`DELETE`), el mismo GET regresa `SolCancPed = false` y los campos de la solicitud vacíos.
 
   ---
 
@@ -94,7 +168,8 @@ docs: |
   |---|------|----------|
   | C1 | GET pedido inexistente / ligado / embarcado / sin EnFirme | Mensajes de bloqueo exactos |
   | C2 | GET pedido con factura o cortes | `IdError: false` + avisos en `Respuesta` |
-  | C3 | GET pedido con solicitud previa | Datos de la solicitud (usuario, fecha, motivo) en `ttSolCanc` |
+  | C3 | GET pedido con solicitud previa | Datos de la solicitud (usuario, fecha, motivo) en `ttSolCanc` ✅ verificado con 3082962-0 |
+  | C4 | GET después de retirar la solicitud (`DELETE`) | `SolCancPed = false`, campos de la solicitud vacíos y `Respuesta` "valido para solicitar cancelacion" |
 
   ---
 
@@ -103,6 +178,13 @@ docs: |
   | Estado              | Descripción                                                  |
   |---------------------|--------------------------------------------------------------|
   | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 9. Observaciones Técnicas
+
+  1. **Las reglas de `ValidaPedido` aplican también al GET:** un pedido embarcado (estatus > 5 o `EstPedido.FecEmb`), ligado en facturación o sin `EnFirme` regresa `IdError = true` **sin** `ttSolCanc`, aunque tenga solicitud. Para mostrar quién solicitó en el modal de retiro, el front debe usar los datos de la solicitud que ya trae el grid (`SolCanc*` de la consulta de Gestión de Pedidos) o el seguimiento del pedido, no este GET.
+  2. **El GET no informa si CEDIS canceló el pedido** (`Pedido.Cancelado`); esa bandera viaja como `PedCanc` en la consulta del grid y en el seguimiento.
 
   ---
   **Desarrollado por:** SIS10 - JASS

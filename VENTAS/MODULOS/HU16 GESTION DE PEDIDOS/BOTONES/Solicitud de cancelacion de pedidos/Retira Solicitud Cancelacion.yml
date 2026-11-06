@@ -1,0 +1,141 @@
+info:
+  name: Retira Solicitud Cancelacion
+  type: http
+  seq: 4
+
+http:
+  method: DELETE
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/SolicitudCancelacion?IdPedido=3082962&Resto=0&IdUser=olds
+  params:
+    - name: IdPedido
+      value: "3082962"
+      type: query
+    - name: Resto
+      value: "0"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Pedidos: Retira Solicitud de Cancelación
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedidos — Retira Solicitud de Cancelación**
+  Retira (cancela) la solicitud de cancelación de un pedido: apaga `SolCancPed` y limpia usuario/fecha/hora/motivo de la solicitud. El pedido vuelve a su comportamiento normal (en el grid de Gestión de Pedidos `SolCanc = false`; se levantan los bloqueos que la solicitud imponía, p.ej. en facturación). Deja el rastro en la bitácora `CambioPed` y avisa por correo a los mismos responsables que recibieron la solicitud.
+  Programa servidor: `pedsolcanc.p` · Procedimiento: `retiraSolicitudCancelacion` (DELETE) | Ticket 3833. Módulo `/Ventas/Pedidos/`.
+
+  > Alta de la solicitud: `POST /Ventas/Pedidos/SolicitudCancelacion` (ver `pedsolcanc-SolicitaCancelacion.md`). Consulta: `GET` del mismo recurso (ver `pedsolcanc-ConsultaSolicitudCancelacion.md`).
+
+  ---
+
+  ## 2. Método HTTP y URL
+
+  ```
+  DELETE http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/SolicitudCancelacion
+  ```
+
+  ---
+
+  ## 3. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido (se normaliza: primer carácter + resto a 6 dígitos)
+  **`Resto`** · STRING · ❌ — Resto; vacío = `0`
+  **`IdUser`** · STRING · ✅ — Usuario que retira la solicitud (bitácora, auditoría y correo)
+
+  ---
+
+  ## 4. Ejemplo de Request
+
+  ```
+  DELETE .../Ventas/Pedidos/SolicitudCancelacion?IdPedido=1123456&Resto=0&IdUser=sis10
+  ```
+
+  ---
+
+  ## 5. Campos del Response
+
+  ```json
+  { "response": { "IdError": false, "Respuesta": "La solicitud de cancelacion se retiro correctamente." } }
+  ```
+
+  **`IdError`** · BOOLEAN — `true` = no se retiró (ver `Respuesta`); `false` = solicitud retirada
+  **`Respuesta`** · STRING — Mensaje del resultado o del rechazo
+
+  ---
+
+  ## 6. Validaciones (mensajes exactos)
+
+  No aplica las reglas de la solicitud (liga en facturación, embarcado, EnFirme): retirar se permite mientras el pedido exista, tenga solicitud y no esté cancelado. Las reglas se revisan con el pedido ya bloqueado.
+
+  | Caso | Respuesta (`IdError = true`) |
+  |------|------------------------------|
+  | `IdUser` vacío | `"Se requiere el usuario (IdUser)."` |
+  | `IdPedido` vacío | `"Se requiere el IdPedido."` |
+  | Pedido en uso por otro proceso | `"El pedido esta siendo usado por otro proceso; intente de nuevo."` |
+  | Pedido eliminado con respaldo en `CancPed` | `"El pedido ya fue cancelado, no es posible retirar la solicitud."` |
+  | Pedido/resto inexistente | `"Folio de pedido-resto inexistente, verifique..."` |
+  | `Pedido.Cancelado = true` (CEDIS) | `"El pedido ya fue cancelado por CEDIS, no es posible retirar la solicitud."` |
+  | Sin solicitud (`SolCancPed = false`) | `"El pedido no tiene solicitud de cancelacion."` |
+
+  > Si el pedido tiene solicitud **y** está cancelado, prevalece la cancelación (no se ofrece retirar).
+
+  ---
+
+  ## 7. Efectos del DELETE
+
+  1. `Pedido.SolCancPed = false`, `UsuSolCancPed = ""`, `FecSolCancPed = ?`, `HorSolCancPed = 0`, `MotivoSolCancPed = ""` (una transacción, `EXCLUSIVE-LOCK NO-WAIT`).
+  2. **Bitácora `CambioPed`** (quién y cuándo retiró = `Id-User`/`FecReg`/`Hora` del renglón):
+     - Campo `1300` `SolCancPed`: `SI` → `NO`
+     - Campo `1340` `MotivoSolCancPed`: motivo anterior → vacío
+
+     Se ve en `GET /Ventas/Pedidos/Bitacora` junto con la solicitud original (que grabó los mismos campos al revés).
+  3. **Correo** "Retiro de solicitud de cancelación" (tarjeta estándar) a los mismos destinatarios que la solicitud (por estatus, almacén 11/12, ubicación y `cortes@` si tiene cortes): pedido, cliente, vendedor, estatus, quién solicitó/fecha/motivo, quién retira y fecha/hora del retiro. No crítico: se envía después de la transacción; si falla se registra en el log.
+  4. Auditoría: `pOperacion = "DELETE"`, `pResource = "/Ventas/Pedidos/SolicitudCancelacion"`, `pArea = "oeVentas"`, módulo `Pedidos`.
+
+  ---
+
+  ## 8. Plan de Pruebas
+
+  | # | Caso | Esperado |
+  |---|------|----------|
+  | P1 | DELETE sin `IdUser` | `"Se requiere el usuario (IdUser)."` |
+  | P2 | DELETE a pedido sin solicitud | `"El pedido no tiene solicitud de cancelacion."` |
+  | P3 | DELETE a pedido con solicitud (estatus 1-4) | `IdError=false`; en BD `SolCancPed=no` y campos limpios; 2 renglones en `CambioPed` (1300/1340) con el `IdUser`; correo de retiro |
+  | P4 | GET del grid / `GET SolicitudCancelacion` tras P3 | `SolCanc=false` / `SolCancPed=false` |
+  | P5 | DELETE a pedido con `Cancelado = true` | `"El pedido ya fue cancelado por CEDIS..."`, sin cambios en BD |
+  | P6 | DELETE a pedido eliminado por la cancelación inmediata (estatus 0) | `"El pedido ya fue cancelado, no es posible retirar la solicitud."` |
+  | P7 | DELETE repetido | Segunda llamada: `"El pedido no tiene solicitud de cancelacion."` |
+  | P8 | Facturar pedido tras P3 | Ya no lo bloquea la solicitud |
+
+  ---
+
+  ## 9. Resultado
+
+  | Estado              | Descripción                                                  |
+  |---------------------|--------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 10. Observaciones Técnicas
+
+  1. **Cancelado vs solicitud:** son cosas distintas. `Pedido.Cancelado` lo marca CEDIS y el pedido puede seguir en estatus 6; si el pedido ya no existe pero hay `CancPed` del mismo pedido-resto, también se considera cancelado.
+  2. **Wiring:** operación `DELETE` agregada al recurso `/Ventas/Pedidos/SolicitudCancelacion` en `resourceModel.xml`, `adapters.pamf` y `pedsolcanc.pidl` (cableado a mano; si PDSOE lo regenera, verificar que conserve la operación).
+  3. **Front (AdCorex):** `PedidosCancelacionService.RetirarAsync` → `api/PedidosCancelacion/Retira` (ticket 3819).
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

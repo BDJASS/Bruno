@@ -5,10 +5,10 @@ info:
 
 http:
   method: POST
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/SolicitudCancelacion?IdPedido=2980991&Resto=0&Motivo=Cancelacion Adcorex&IdUser=olds
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/SolicitudCancelacion?IdPedido=3082962&Resto=0&Motivo=Cancelacion Adcorex&IdUser=olds
   params:
     - name: IdPedido
-      value: "2980991"
+      value: "3082962"
       type: query
     - name: Resto
       value: "0"
