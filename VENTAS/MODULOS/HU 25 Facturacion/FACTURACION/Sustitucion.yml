@@ -16,8 +16,8 @@ http:
       {
             "ttFactura": [
               {
-               "IdRemision": "10798CB",
-                "FecReg": "2026-07-27",
+               "IdRemision": "35672CB",
+                "FecReg": "2026-11-12",
                 "IdVendedor": "5220",
                 "NombreVendedor": "MARIA HERMINIA RODRIGUEZ BRAVO",
                 "IdCliente": 26,
@@ -52,9 +52,12 @@ http:
                 "FEFormaPago": "01",
                 "DescrFormaPago": "EFECTIVO",
                 "IdUsoCFDI": "S01",
-                "TieneUUID": false,
-                "UUID": "",
-                "SustIdRemision": "63233AK"
+                "TieneUUID": true,
+                "UUID": "7C10D05A-4B37-4D23-966F-159CD03EC793",
+                "SustIdRemision": "10798CB",
+                "Monto": 0.0,
+                "Editable": false,
+                "ForzarFiscal": false
               }
             ]
           }
@@ -65,6 +68,7 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
 docs: |
   # Servicio REST — Factura de Contado (Sustitución / Cambio de Información)
@@ -109,7 +113,12 @@ docs: |
 
   ## 5. Body
 
-  JSON con el **mismo registro que regresa el GET** `/Ventas/FacturaContado/Consulta`, ya editado. **No lleva ningún campo extra**: `ttFactura` es idéntico en ambos endpoints y el usuario viaja en el query string (ver sección 4).
+  JSON con el **mismo registro que regresa el GET** `/Ventas/FacturaContado/Consulta`, ya editado. `ttFactura` es idéntico en ambos endpoints y el usuario viaja en el query string (ver sección 4).
+
+  **`ForzarFiscal`** · BOOLEAN · ❌ — *(Ticket 3836)* Fuerza el proceso de **datos fiscales** sin revisar si hubo cambios
+  - `true` → no se valida *"sin cambios"* ni se toma la rama de *solo embarque*. **Con UUID:** folio nuevo + timbra la nueva + cancela la original (sustitución completa). **Sin UUID:** actualiza la misma factura y solicita el folio electrónico
+  - `false` / omitido / `null` → comportamiento normal: se clasifica por lo que cambió (fiscal → sustitución/re-timbrado; solo embarque → mismo folio; nada → error *"sin cambios"*)
+  - El GET lo regresa en `false`. Todas las validaciones (RFC/SAT, régimen, CP, catálogos, ventana de fechas, bloqueos) aplican igual
 
   ```json
   {
@@ -144,7 +153,8 @@ docs: |
             "Observaciones2": "",
             "Requisicion": "",
             "FEFormaPago": "03",
-            "IdUsoCFDI": "G03"
+            "IdUsoCFDI": "G03",
+            "ForzarFiscal": false
           }
         ]
       }
@@ -212,12 +222,84 @@ docs: |
 
   ---
 
-  ## 8. Validaciones del Servicio
+  ## 9. Campos capturables vs. no capturables
+
+  Tomado del `SET` del frame `f-Remision` de `vtaa0190.p` (modo carácter): lo que está en el `SET` es lo que el usuario captura; lo que solo se `DISPLAY` es de lectura.
+
+  ### ✏️ Capturables por el usuario (27 campos)
+
+  **Vendedor y cliente** (tienen catálogo)
+  **`IdVendedor`** · STRING — Catálogo `Vendedor`. Se completa con ceros a 4 posiciones
+  **`IdCliente`** · INT — Catálogo `Cliente`. **Al cambiarlo se disparan 9 autollenados** → llamar `GET /Ventas/FacturaContado/DatosCliente` (ver sección 10)
+
+  **Datos fiscales del receptor** — capturables **solo** en venta mostrador (`IdCliente = 3`); con cualquier otro cliente se autollenan y van de solo lectura
+  **`RFC`** · STRING — Se valida estructura + inscripción ante el SAT. **Al cambiarlo la pantalla autollena desde `CteSReg`** (ver sección 10)
+  **`RazonSocial`** · STRING
+  **`NomEmpresa`** · STRING
+  **`RSocietario`** · STRING
+  **`IdRFiscal`** · STRING — Catálogo `RFiscal`; se valida compatibilidad con el tipo de contribuyente
+  **`CalleNo`** · STRING
+  **`Colonia`** · STRING
+  **`IdCiudad`** · INT — Catálogo `Ciudad`
+  **`CP`** · STRING — 5 dígitos numéricos
+
+  **Datos de embarque** — siempre capturables (no dependen del cliente)
+  **`RazonSocial1`** · STRING — "Embarcar a"
+  **`CalleNo1`** · STRING
+  **`Colonia1`** · STRING
+  **`Ciudad1`** · STRING — Texto libre, **no** es catálogo
+  **`Estado1`** · STRING — Texto libre, **no** es catálogo
+  **`CP1`** · STRING — Sin validación de 5 dígitos (esa solo aplica al CP fiscal)
+
+  **Contacto y logística** — siempre capturables
+  **`Email`** · STRING
+  **`Attn`** · STRING — Contacto
+  **`Referencia`** · STRING
+  **`IdEntrega`** · INT — Catálogo `Entrega` (debe estar activo). Si es `≤ 11` o `= 16` (entrega local), el servicio **fuerza `IdTran = 0`**
+  **`IdTran`** · INT — Catálogo `Transporte`; solo se exige en entregas foráneas
+  **`Observaciones1`** · STRING
+  **`Observaciones2`** · STRING
+  **`Requisicion`** · STRING — Requisición del cliente
+  **`FEFormaPago`** · STRING — Solo `01,02,03,04,28,99`
+  **`IdUsoCFDI`** · STRING — Catálogo `UsoCFDI`. **No** se autollena del cliente (ver sección 10)
+
+  ### 🔒 No capturables
+
+  **`IdRemision`** — Identifica la factura; en la sustitución el servicio genera el folio nuevo
+  **`FecReg`** — Solo `DISPLAY` en la pantalla; en la sustitución queda `TODAY`
+  **`TieneUUID`, `UUID`, `SustIdRemision`** — Los administra el servicio (timbrado y relación de sustitución)
+  **`NombreVendedor`, `DescrRFiscal`, `NombreCiudad`, `NombreEstado`, `DescrEntrega`, `NombreTransporte`, `DescrFormaPago`** — Descripciones de catálogo, informativas. Pueden viajar en el body: el servicio **las ignora** como entrada y las recalcula
+
+  ---
+
+  ## 10. Autollenados al cambiar cliente o RFC
+
+  ### Al cambiar `IdCliente` (≠ 3)
+
+  La pantalla copia **9 campos** del catálogo `Cliente` y **brinca el cursor** a `RazonSocial1`, es decir el usuario no los edita:
+
+  `RazonSocial` · `RFC` · `NomEmpresa` · `RSocietario` · `IdRFiscal` · `CalleNo` · `Colonia` · `IdCiudad` · `CP`
+
+  👉 Usar **`GET /Ventas/FacturaContado/DatosCliente?IdCliente=&IdUser=`** para obtenerlos y dejarlos de solo lectura. Ver `facturasust-FacturaContadoDatosCliente.md`.
+
+  Con `IdCliente = 3` (venta mostrador) **no** hay autollenado: esos 9 campos se capturan a mano.
+
+  ### Al cambiar `RFC`
+
+  La pantalla busca `FIND LAST CteSReg WHERE CteSReg.RFC = <nuevo>`; si existe copia `RazonSocial`, `NomEmpresa`, `RSocietario`, `RFC`, `CalleNo`, `Colonia`, `IdCiudad` y **deja el `CP` en blanco** para que se capture. Hoy este autollenado **no** tiene endpoint; queda del lado del front o se puede exponer como servicio gemelo.
+
+  ### `IdUsoCFDI` — ojo
+
+  El catálogo `Cliente` **sí** tiene `Id-UsoCFDI` (campo 1140), pero la pantalla **no lo copia** al cambiar cliente: la factura conserva el que traía y el usuario lo captura. El servicio replica ese comportamiento.
+
+  ---
+
+  ## 11. Validaciones del Servicio
 
   | Caso | Comportamiento |
   |------|----------------|
+  | `IdUser` vacío (query string) | `"Se requiere el usuario (IdUser)."` — se valida **antes** del body |
   | Body vacío | `"No se recibieron datos de la factura."` |
-  | `IdUser` vacío | `"Se requiere el usuario (IdUser)."` |
   | `IdUser` no existe en `Usuario` | `"Usuario inexistente (IdUser)."` |
   | Factura inexistente / no contado / cancelada | `"Factura de contado inexistente, verifique..."` |
   | Factura fuera de ventana de fechas | `"Solo se pueden modificar facturas de un anio anterior hasta el 31 de Marzo del anio actual..."` |
@@ -234,7 +316,8 @@ docs: |
   | Transporte inexistente (entregas foráneas) | `"Folio de transporte inexistente, verifique..."` |
   | Forma de pago fuera de `01,02,03,04,28,99` | `"Forma de pago invalida, verifique valores..."` |
   | Uso CFDI inexistente | `"Uso de CFDI incorrecto, favor de verificar..."` |
-  | Sin ningún cambio y con UUID | `"No se ha generado ningun cambio en la factura, no se generara ningun folio nuevo."` |
+  | Sin ningún cambio y con UUID (`ForzarFiscal` ≠ `true`) | `"No se ha generado ningun cambio en la factura, no se generara ningun folio nuevo."` |
+  | Sin ningún cambio y `ForzarFiscal: true` | **Pasa**: entra al proceso fiscal (sustitución con UUID / re-timbrado sin UUID) |
   | PAC regresa error al timbrar (rama sin UUID) | `IdError: true`, pero **el cambio queda grabado** — `"...el PAC regreso error al timbrar; revise el archivo ... y reintente."` |
 
   Reglas automáticas (igual que la pantalla):
@@ -245,13 +328,13 @@ docs: |
 
   ---
 
-  ## 9. Evidencia de Ejecución
+  ## 12. Evidencia de Ejecución
 
   *Pendiente de captura por parte del equipo de QA.*
 
   ---
 
-  ## 10. Fecha de Prueba
+  ## 13. Fecha de Prueba
 
   | Ambiente | Fecha      | Ejecutado por |
   |----------|------------|---------------|
@@ -259,7 +342,7 @@ docs: |
 
   ---
 
-  ## 11. Resultado
+  ## 14. Resultado
 
   | Estado              | Descripción                                                       |
   |---------------------|-------------------------------------------------------------------|
@@ -267,18 +350,20 @@ docs: |
 
   ---
 
-  ## 12. Observaciones Técnicas
+  ## 15. Observaciones Técnicas
 
   1. **Origen:** versión REST completa de `vtaa0190.p` (procedimientos `Generales` + `Actualiza`). Los mensajes de error son los mismos de la pantalla.
   2. **Serie de folios:** con `Id-Ubicacion = "02B"` se usa `Folio` `REMCEDIS`; con cualquier otra ubicación se usa `VFolio` `REMISION` del almacén (para `"03A"` con `Id-Alm` vacío). Se conserva la lógica de rotación de prefijos (la letra `Z` se reserva para contingencias). Los folios se toman con `NO-WAIT` y reintentos para no dejar la sesión PASOE bloqueada.
   3. **Transacción:** toda la sustitución (folio, factura nueva, detalle, reapuntes, timbrado y cancelación de la original) corre en una sola transacción: si algo truena, no queda nada a medias.
   4. **Timbrado:** `vtac2070.p` (genera CFDI de la nueva) y `vtac2072.p` (cancela CFDI de la original) corren en la sesión PASOE; el PROPATH del agente debe incluir los programas de `/usr2/adosa`.
-  5. **Confirmaciones de la pantalla** (*"¿Desea continuar?"* y *"¿Desea realizar los cambios?"*): son responsabilidad del front (usar `TieneUUID` del GET); el POST ejecuta directo.
+  5. **Confirmaciones de la pantalla:** la de *"ya cuenta con folio electrónico… ¿Desea continuar?"* la impone el **GET** (parámetro `Confirmar`); la de *"¿Desea realizar los cambios?"* es responsabilidad del front: el POST ejecuta directo.
   6. **Bitácora y auditoría:** la rama sin UUID escribe en `/usr2/adosa/logs/bitacoracfdi.txt` (igual que la pantalla; con `IdUser` en lugar del usuario de sesión) y ambas ramas registran en `programas/auditoria.p` (operación `SUSTITUYE` o `RETIMBRA`).
   7. **Usuario de cancelación:** `UsuarioCanc` de la factura original se llena con el `IdUser` recibido (la pantalla usaba `USERID('dictdb')`, que en PASOE sería el usuario técnico de conexión).
-  8. **Consulta previa:** ver documento `facturasust-FacturaContadoConsulta.md` (`GET /Ventas/FacturaContado/Consulta`).
-  9. **Plan de pruebas:** ver documento `facturasust-Pruebas.md`.
-  10. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+  8. **`ttFactura` es la misma tabla en los dos endpoints:** el `IdUser` viaja como parámetro de query (no como campo del registro), así que lo que devuelve el GET se puede reenviar al POST **sin agregarle ni quitarle nada**. El front solo edita los campos que el usuario cambió.
+  9. **Consulta previa:** ver documento `facturasust-FacturaContadoConsulta.md` (`GET /Ventas/FacturaContado/Consulta`).
+  10. **Autollenado al cambiar cliente:** ver documento `facturasust-FacturaContadoDatosCliente.md` (`GET /Ventas/FacturaContado/DatosCliente`).
+  11. **Plan de pruebas:** ver documento `facturasust-Pruebas.md`.
+  12. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
 
   ---
   **Desarrollado por:** SIS10 - JASS
