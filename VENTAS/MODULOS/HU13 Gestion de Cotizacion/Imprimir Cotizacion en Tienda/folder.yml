@@ -1,0 +1,7 @@
+info:
+  name: Imprimir Cotizacion en Tienda
+  type: folder
+  seq: 6
+
+request:
+  auth: inherit

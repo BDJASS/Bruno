@@ -1,0 +1,125 @@
+info:
+  name: Tiendas para Impresion
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/ImpresionTiendas?IdUser=olds
+  params:
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Cotizaciones: Tiendas para Impresión
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Gestión de Cotizaciones — Catálogo de tiendas para imprimir una cotización**
+  Regresa las tiendas donde se puede mandar a imprimir una cotización para recoger en tienda. El front muestra la lista y manda el `IdTienda` elegido a [Imprime](cotimprime-ImprimeCotizacion.md).
+  Programa servidor: `cotimprime.p` · Procedimiento: `listaTiendasImpresion`. Módulo `/Ventas/Cotizaciones/`.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/ImpresionTiendas
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUser`** · STRING · ✅ — Usuario que consulta. Vacío → *"Se requiere el usuario (IdUser)."*
+
+  ---
+
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
+
+  ```
+  Content-Type: application/json
+  ```
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../GestionCotizacion/ImpresionTiendas?IdUser=olds
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "",
+      "ttTiendaImp": {
+        "ttTiendaImp": [
+          { "IdTienda": 1, "Tienda": "Matriz" },
+          { "IdTienda": 2, "Tienda": "Pablo Livas" },
+          { "IdTienda": 3, "Tienda": "Ruiz Cortines" },
+          { "IdTienda": 4, "Tienda": "Cumbres" },
+          { "IdTienda": 5, "Tienda": "Diego Diaz" },
+          { "IdTienda": 6, "Tienda": "Cerradas de Anahuac" },
+          { "IdTienda": 7, "Tienda": "Saltillo" },
+          { "IdTienda": 8, "Tienda": "Chihuahua" }
+        ]
+      }
+    }
+  }
+  ```
+
+  ### Campos de `ttTiendaImp`
+
+  **`IdTienda`** · INTEGER — Id de la tienda; es el que se manda a Imprime
+  **`Tienda`** · CHARACTER — Nombre de la tienda
+
+  ---
+
+  ## 9. Validaciones
+
+  | Condición | Respuesta |
+  |-----------|-----------|
+  | `IdUser` vacío | Se requiere el usuario (IdUser). |
+
+  ---
+
+  ## 10. Observaciones Técnicas
+
+  - El catálogo es fijo y vive en el programa (`CargaTiendas`); no hay tabla en la base de datos.
+  - La impresora y el correo de cada tienda **no** se regresan: los usa el servidor al imprimir.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

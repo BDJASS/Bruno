@@ -1,0 +1,188 @@
+info:
+  name: Imprime Cotizacion
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Imprime?IdCot=0123456&IdTienda=1&IdUser=olds
+  params:
+    - name: IdCot
+      value: "0123456"
+      type: query
+    - name: IdTienda
+      value: "1"
+      type: query
+    - name: IdUser
+      value: olds
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Cotizaciones: Imprime Cotización
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Gestión de Cotizaciones — Impresión directa en tienda y envío por correo**
+  **Imprime** la cotización en la impresora de la tienda donde se va a recoger y manda **el mismo reporte adjunto** (`.txt`) al correo de esa tienda, con copia al usuario que la mandó imprimir y copia oculta a desarrollo. Proceso *Pedidos para recoger en tienda / WhatsApp*.
+  Port de la impresión de la consulta de cotizaciones del modo carácter (`vtab0050.p` → `vtab0061.i` → opción 1 → `vtac0500.p` → `cieimpre.p`), sin pantalla: no pregunta a dónde se manda.
+  Programa servidor: `cotimprime.p` · Procedimiento: `imprimeCotizacion`. Módulo `/Ventas/Cotizaciones/`.
+
+  > El `IdTienda` sale del catálogo [ImpresionTiendas](cotimprime-ImpresionTiendas.md). El front solo manda el Id; la impresora y el correo de la tienda los resuelve el servidor.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  POST
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/GestionCotizacion/Imprime
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdUser`** · STRING · ✅ — Usuario que manda imprimir; recibe copia del correo. Vacío → *"Se requiere el usuario (IdUser)."*
+  **`IdCot`** · STRING · ✅ — Folio de la cotización
+  **`IdTienda`** · STRING · ✅ — Tienda donde se imprime y a la que se manda el correo
+  - `1` Matriz · `2` Pablo Livas · `3` Ruiz Cortines · `4` Cumbres · `5` Diego Diaz · `6` Cerradas de Anahuac · `7` Saltillo · `8` Chihuahua
+
+  ---
+
+  ## 5. Body
+
+  No aplica (todo por query string).
+
+  ---
+
+  ## 6. Headers
+
+  ```
+  Content-Type: application/json
+  ```
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  POST .../GestionCotizacion/Imprime?IdUser=olds&IdCot=0123456&IdTienda=1
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ### Éxito
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Cotizacion 0123456 enviada a la impresora 3 (Matriz) y por correo a auxt@adosa.com.mx."
+    }
+  }
+  ```
+
+  ### Error
+
+  ```json
+  {
+    "response": {
+      "IdError": true,
+      "Respuesta": "La cotizacion 0123456 no existe."
+    }
+  }
+  ```
+
+  **`IdError`** · BOOLEAN — `true` = la cotización no salió en la impresora o falló una validación; `false` = se imprimió
+  **`Respuesta`** · STRING — Mensaje para el usuario
+
+  ---
+
+  ## 9. Validaciones
+
+  | Condición | Respuesta |
+  |-----------|-----------|
+  | `IdUser` vacío | Se requiere el usuario (IdUser). |
+  | Usuario inexistente | El usuario X no existe. |
+  | `IdCot` vacío | Se requiere el folio de la cotizacion (IdCot). |
+  | `IdTienda` vacío | Indique la tienda donde se va a imprimir la cotizacion. |
+  | Tienda fuera del catálogo | La tienda X no es valida. |
+  | Cotización inexistente | La cotizacion X no existe. |
+  | Cotización no autorizada | La cotizacion X no esta autorizada. No se puede imprimir ni enviar a la tienda. |
+  | Impresora sin registro | La impresora X de la tienda Y no esta registrada. |
+  | Impresora sin comando | La impresora X de la tienda Y no esta configurada para imprimir. |
+  | Falla al mandar a la impresora | No se pudo enviar la cotizacion a la impresora X. (+ estado del correo) |
+
+  Todas las validaciones regresan antes de generar el reporte, imprimir o mandar correo.
+
+  ---
+
+  ## 10. Observaciones Técnicas
+
+  ### 10.1 Tienda → impresora y correo
+
+  | Id | Tienda | Impresora |
+  |----|--------|-----------|
+  | 1 | Matriz | `3` |
+  | 2 | Pablo Livas | `Plofi` |
+  | 3 | Ruiz Cortines | `Rcofi` |
+  | 4 | Cumbres | `Cuofi` |
+  | 5 | Diego Diaz | `Ddofi` |
+  | 6 | Cerradas de Anahuac | `Caofi` |
+  | 7 | Saltillo | `Saget` |
+  | 8 | Chihuahua | `Chlas` |
+
+  Correos, en el mismo orden: `auxt`, `plauxt`, `dalfaro`, `cuauxt`, `mbernal`, `agarcia`, `epauli`, `scruz` (`@adosa.com.mx`). El catálogo vive en `CargaTiendas` de `cotimprime.p`.
+
+  ### 10.2 Flujo
+
+  1. Arma el reporte de `vtac0500.p` (mismos encabezados, columnas y totales por moneda).
+  2. Lo manda a la impresora de la tienda con el comando de la tabla `Impresoras`. Si la impresora es `TipoForma` 6 (ecotank) lo convierte antes a PDF, igual que el carácter.
+  3. Manda el correo con el reporte adjunto como `Cotizacion_<folio>.txt`, sin los caracteres de control de la impresora.
+
+  ### 10.3 Correo
+
+  **Para** · correo de la tienda
+  **Con copia** · correo del usuario que mandó imprimir (`Usuario.e-mail`; si está vacío, `e-mail2`; si no tiene, sin copia)
+  **Copia oculta** · desarrollo10
+  **Asunto** · `Cotizacion <folio> para recoger en tienda - <tienda>`
+
+  En el servidor de desarrollo todo el correo llega a desarrollo10 con `DESARROLLO` en el asunto. **La impresión sí sale en la impresora real también en desarrollo.**
+
+  ### 10.4 Resultado
+
+  - Se imprimió y se mandó el correo → `IdError = false`.
+  - Se imprimió pero el correo falló → `IdError = false` y la `Respuesta` lo avisa.
+  - No se imprimió → `IdError = true`; el correo se manda de todos modos y la `Respuesta` dice si salió.
+
+  ### 10.5 Diferencias contra el carácter
+
+  - **Cotización no autorizada:** el carácter deja imprimirla con la leyenda *COTIZACION NO AUTORIZADA*. Aquí se **bloquea**: no se imprime ni se manda el correo.
+  - La sucursal del encabezado sale de la **tienda elegida**: Chihuahua para la tienda 8; para las demás, Saltillo (el reporte solo conoce esas dos sucursales). El carácter la toma de la ubicación del usuario.
+  - No se porta la opción de fax ni la pregunta *"no cabe en forma vertical"*.
+
+  Auditoría: `oeVentas` / `Cotizaciones` / `cotimprime` / `POST` / `/GestionCotizacion/Imprime`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

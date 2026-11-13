@@ -123,7 +123,12 @@ docs: |
           "Autorizada": true,
           "AutPor": "JLM",
           "Cancelado": false,
-          "MargenBruto": 28.73
+          "MargenBruto": 28.73,
+          "MargenV": 22.32,
+          "SubTotal": 55308.73,
+          "IVA": 8616.70,
+          "Tot": 63925.43,
+          "MargenActual": 0
         }
       ],
       "ttDetCotDet": [
@@ -141,7 +146,63 @@ docs: |
           "Descto": 5,
           "IndicaPre": "L",
           "Importe": 9935.81,
-          "Margen": 32.45
+          "Margen": 32.45,
+          "PorcIVA": 16,
+          "Iva": 1589.73,
+          "Costo": 7120.54,
+          "PrecioD1": 0,
+          "IndicaPreD1": "",
+          "IdClienteD1": 0,
+          "MargenActual": 0,
+          "TipoArt": "A"
+        },
+        {
+          "IdCot": "2084315",
+          "Clave": "113983",
+          "Tipo": 1,
+          "Descr": "CUADERNO PROFESIONAL RAYA 100H",
+          "Cant": 50.00,
+          "IdColor": 0,
+          "sColor": "",
+          "IdPres": 3,
+          "Pres": "PAQUETE",
+          "PUnit": 52.10,
+          "Descto": 0,
+          "IndicaPre": "*",
+          "Importe": 2605.00,
+          "Margen": 0,
+          "PorcIVA": 0,
+          "Iva": 0,
+          "Costo": 0,
+          "PrecioD1": 54.42,
+          "IndicaPreD1": "D",
+          "IdClienteD1": 241,
+          "MargenActual": 0,
+          "TipoArt": "D"
+        },
+        {
+          "IdCot": "2084315",
+          "Clave": "",
+          "Tipo": 5,
+          "Descr": "ENTREGA EN ALMACEN DEL CLIENTE",
+          "Cant": 0,
+          "IdColor": 0,
+          "sColor": "",
+          "IdPres": 0,
+          "Pres": "",
+          "PUnit": 0,
+          "Descto": 0,
+          "IndicaPre": "",
+          "Importe": 0,
+          "Margen": 0,
+          "PorcIVA": 0,
+          "Iva": 0,
+          "Costo": 0,
+          "PrecioD1": 0,
+          "IndicaPreD1": "",
+          "IdClienteD1": 0,
+          "MargenActual": 0,
+          "TipoArt": ""
         }
       ]
     }
@@ -176,7 +237,12 @@ docs: |
   **`Autorizada`** · BOOLEAN — `true` = autorizada
   **`AutPor`** · STRING — Usuario que autorizó
   **`Cancelado`** · BOOLEAN — `true` = cancelada
-  **`MargenBruto`** · DECIMAL — Margen bruto (%) de la cotización completa — el "M1" de la autorización de cotizaciones (`vtaa0070.p`). Redondeado a 2 decimales; puede ser negativo. Solo se calcula para usuarios autorizados (ver sección 13); para el resto se retorna `0`
+  **`SubTotal`** · DECIMAL — Subtotal de la cotización (`Cot.SubTotal`) *(ticket 3439)*
+  **`IVA`** · DECIMAL — IVA de la cotización (`Cot.IVA`), suma del IVA real de cada partida; los productos exentos aportan 0 *(ticket 3439)*
+  **`Tot`** · DECIMAL — Total de la cotización (`Cot.Tot`); es el mismo que muestran el grid de consulta y el PDF *(ticket 3439)*
+  **`MargenBruto`** · DECIMAL — Margen bruto (%) de la cotización completa — el "M1" de la autorización de cotizaciones (`vtaa0070.p`). Redondeado a 2 decimales; puede ser negativo. Solo se calcula para usuarios autorizados (ver sección 13); para el resto se retorna `0`. Si la cotización se creó con el cambio de márgenes grabados (`Cot.TotCosto > 0`) se toma de **`Cot.MargenC`**; en cotizaciones anteriores se calcula al vuelo con la misma fórmula
+  **`MargenV`** · DECIMAL — Margen (%) de la cotización **sobre venta**: `(1 − Σ costo×cant / Σ Importe) × 100` (equivale a `MargenBruto / (100 + MargenBruto) × 100`; ej. 12.5 % sobre costo = 11.11 % sobre venta). Se toma de **`Cot.MargenV`** (grabado en el alta) o al vuelo en cotizaciones anteriores. Mismo permiso que `MargenBruto` (sección 13); para el resto `0`
+  **`MargenActual`** · DECIMAL — **Margen al día** (%) de la cotización, sobre costo, con el **costo actual** del artículo (`HCosto × Equiv`, TC real en `X`/`Y`/`Z`, descuentos de pronto pago). Es el mismo margen de autorización que se ve en pantalla negra (`vtad0100.p`). Se compara contra `MargenBruto` (costo grabado): pueden diferir por ofertas o actualizaciones de costo. **Solo en cotizaciones pendientes por autorizar** (no autorizadas ni canceladas) y para usuarios autorizados a ver margen; en otro caso `0` *(ticket 3561)*
 
   ### Campos de `ttDetCotDet` (1 registro por partida)
 
@@ -193,7 +259,15 @@ docs: |
   **`Descto`** · INT — Porcentaje de descuento de la partida
   **`IndicaPre`** · STRING — Indicador de precio
   **`Importe`** · DECIMAL — Importe de la partida
+  **`PorcIVA`** · DECIMAL — Porcentaje de IVA de la partida tal como se grabó (`16` normal; `0` en productos exentos como libros y cuadernos) *(ticket 3439)*
+  **`Iva`** · DECIMAL — IVA de la partida (`Importe × PorcIVA / 100`); `0` en renglones sin importe (cortes y comentarios) *(ticket 3439)*
   **`Margen`** · DECIMAL — Margen (%) de la partida, redondeado a 2 decimales. **Puede ser negativo** (ej. `-1.78`) cuando el precio neto queda por debajo del costo. Solo se calcula para usuarios autorizados (ver sección 13); para el resto se retorna `0`
+  **`Costo`** · DECIMAL — Costo grabado en la partida (`DetCot.Costo`), por presentación; es el que usan el margen y la autorización. Solo para usuarios autorizados a ver el margen (sección 13); para el resto `0` *(ticket 3550)*
+  **`PrecioD1`** · DECIMAL — Precio de referencia del distribuidor D1 para el artículo/presentación/color de la partida. Solo en partidas `Tipo = 1` con `IndicaPre = "*"` (precio especial); el front lo compara contra el precio de la partida para marcar en rojo si queda por debajo. Sin cliente D1 = precio de lista (`Precios.PMay`); en el resto de partidas `0` *(ticket 3562)*
+  **`IndicaPreD1`** · STRING — Indicador de precio que da el motor al cliente D1 de referencia (`"D"` = descuento distribuidor); vacío si no hay cliente D1 o la partida no es `"*"` *(ticket 3562)*
+  **`IdClienteD1`** · INT — Cliente D1 de referencia usado para el cálculo; `0` = ningún D1 aplica o la partida no es `"*"` *(ticket 3562)*
+  **`MargenActual`** · DECIMAL — Margen al día (%) de la partida, sobre costo: `((PUnit × (1 − Descto/100)) / costo actual − 1) × 100`, con el mismo costo actual que `ttCondVenta.MargenActual`. Sirve para ver qué partida bajó contra su `Margen` capturado. Solo partidas `Tipo = 1`, en cotizaciones pendientes y para usuarios autorizados; en otro caso `0` *(ticket 3561)*
+  **`TipoArt`** · STRING — Tipo de artículo del catálogo (`A`, `B`, `C`, `N`, `D` = descontinuado, etc.). Sale del **color** de la partida (`ArtCol.Id-TipoArt`) y, si el color no tiene tipo, del **artículo** (`Articulo.Id-TipoArt`). Solo partidas `Tipo = 1`; vacío en renglones sin código, cortes y comentarios (`Tipo` 2–5). No confundir con `Tipo` (tipo de **renglón**) *(ticket 3904)*
 
   ### Response de error controlado
 
@@ -214,12 +288,19 @@ docs: |
   | `IdCliente` vacío | `IdError: true` — `"Se requiere el cliente."` |
   | `IdCliente` no numérico o `0` | `IdError: true` — `"Numero de cliente invalido."` |
   | `IdCot` vacío | `IdError: true` — `"Se requiere la cotizacion."` |
-  | `IdCot` no numérico o `0` | `IdError: true` — `"Numero de cotizacion invalido."` |
+  | `IdCot` que no existe | Consulta OK; `ttClienteDet`, `ttCondVenta` y `ttDetCotDet` vacíos (el folio no se valida como numérico) |
   | `iduser` vacío | `IdError: true` — `"Se requiere el usuario (iduser)."` |
   | `iduser` no autorizado a ver margen | Consulta OK; `ttDetCotDet.Margen` = `0` en todas las partidas y `ttCondVenta.MargenBruto` = `0` |
   | `iduser` autorizado | Consulta OK; `ttDetCotDet.Margen` calculado por partida y `ttCondVenta.MargenBruto` (M1) calculado |
+  | Cotización pendiente + `iduser` autorizado | Además `MargenActual` (cotización y partida) con el costo del día *(ticket 3561)* |
+  | Cotización autorizada o cancelada | `MargenActual` = `0` (cotización y partidas) |
   | Cliente no encontrado | `ttClienteDet` vacío (sin error) |
   | Cotización sin detalle | `ttDetCotDet` vacío (sin error) |
+  | Partida con `IndicaPre = "*"` sin cliente D1 | `PrecioD1` = precio de lista (`PMay`), `IdClienteD1` = `0` |
+  | Error del motor de precios en el cálculo D1 | Consulta OK; la partida conserva `PrecioD1` = lista y el error queda en el log del agente |
+  | Partida `Tipo` 2–5 (sin código, cortes, comentario) | Consulta OK; `TipoArt` = `""` *(ticket 3904)* |
+  | Partida con color cuyo `ArtCol` tiene tipo | `TipoArt` = tipo del color (aunque el artículo tenga otro) |
+  | Artículo no encontrado en catálogo | Consulta OK; `TipoArt` = `""` |
 
   ---
 
@@ -255,7 +336,17 @@ docs: |
   6. **Campo `MargenBruto` (M1):** replica el "M1" que muestra el resumen de la autorización de cotizaciones (`vtaa0070.p` / `vtaa0076.i`), calculado sobre **toda la cotización** (solo partidas `Tipo = 1`): `costo = Σ((CostoEsp si > 0, si no Costo) × Cant)`, `subtotal = Σ(Importe)` y `M1% = ((subtotal / costo) − 1) × 100`, redondeado a 2 decimales. A diferencia del margen por partida, **no aplica tipo de cambio** (igual que la pantalla original). Si el costo acumulado es `0` o el resultado es indeterminado, se retorna `0`. Aplica la misma regla de usuarios autorizados del punto 4.
   7. **Orden del detalle (`ttDetCotDet`):** las partidas se retornan en el mismo orden que muestra la autorización de cotizaciones (`vtaa0070.p`): por **secuencia de impresión** (`USE-INDEX idx-sec` = `Id-Cot` + `Id-Seq`).
   8. **Dirección:** se arma concatenando calle, colonia, ciudad, estado y C.P. del cliente.
-  9. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+  9. **Tipo de renglón e IDs de color/presentación (ticket 3392):** cada partida incluye `Tipo` (`DetCot.Tipo`: `1` artículo · `2` sin código · `3`/`4` cortes · `5` comentario) y los identificadores `IdColor` (`DetCot.Id-Color`) e `IdPres` (`DetCot.Id-Pres`), además de las descripciones `sColor` / `Pres` que ya se devolvían. Los IDs se leen directo de `DetCot`, por lo que llegan aunque el renglón no tenga color o sea un comentario.
+  10. **Precio de referencia D1 (ticket 3562):** el detalle (PAS) no podía marcar en rojo el precio por debajo del D1, así que se envía `PrecioD1` por partida, con el mismo cálculo que `/Cotizacion/Captura/Partidas` (`cotpartida.p`). Solo se calcula en partidas `Tipo = 1` con `IndicaPre = "*"`.
+      - **Cliente de referencia:** se busca dinámico en `DstArt` activo por el artículo y, si no hay, por su grupo (`GGGG00`). Debe ser segmento `D1`, activo y **sin pronto pago** (`DescPP1 = DescPP2 = 0`); entre varios gana el `Id-Cliente` menor. Se resuelve una vez por artículo.
+      - **Precio:** se valúa con el motor `obtprecdesc.leePrecios` para ese cliente, usando las condiciones grabadas en `Cot` (`Plazo`, `Id-UbiVta`, `Vigencia`, `PrecioTemp`, `TipoPrecio`), el color y la presentación de la partida, y `PrecCalc = NO`. `PrecioD1` = `Precio2` del motor (`Precio1` si no aplica descuento).
+      - **`TipoPrecio` fuera de `M`, `MX`, `TC` o `EX`** (los únicos que acepta el motor): se valúa como `M` (mayoreo).
+      - **Degradable:** un error del motor no afecta el resto de la respuesta; queda una línea por artículo en el log del agente (`cotdetalle PrecioD1 art= cteRef= nivel=`).
+  11. **Tipo de artículo (ticket 3904):** se agrega `TipoArt` por partida para identificar en "Ver Cotización" los artículos descontinuados a los que se dio descuento por debajo del costo.
+      - **Regla:** manda el tipo del **color** (`ArtCol.Id-TipoArt` por artículo + `Id-Color`) y, si no hay, el del **artículo** (`Articulo.Id-TipoArt`). Es la misma regla que usa el alta de cotización para detectar descontinuados: un color puede estar descontinuado (`D`) aunque el artículo no.
+      - **Solo `Tipo = 1`:** los cortes (`3`/`4`), igual que los comentarios y los renglones sin código, se graban sin clave de artículo, por lo que no tienen tipo y regresan `""`.
+      - **Compatibilidad:** campo nuevo al final de `ttDetCotDet`; los consumidores que no lo lean no se ven afectados.
+  12. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
 
   ---
   **Desarrollado por:** SIS10 - JASS
