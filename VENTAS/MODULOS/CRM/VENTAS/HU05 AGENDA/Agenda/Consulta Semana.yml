@@ -5,16 +5,16 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Agenda/Consulta?IdVendedor=4791&FecIni=2026-10-20&FecFin=2026-10-26&IdUser=jjlg
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Agenda/Consulta?IdVendedor=4791&FecIni=2026-11-17&FecFin=2026-11-18&IdUser=jjlg
   params:
     - name: IdVendedor
       value: "4791"
       type: query
     - name: FecIni
-      value: 2026-10-20
+      value: 2026-11-17
       type: query
     - name: FecFin
-      value: 2026-10-26
+      value: 2026-11-18
       type: query
     - name: IdUser
       value: jjlg
@@ -28,45 +28,32 @@ settings:
   maxRedirects: 5
   forwardAuthorizationHeader: true
 
-docs: |-
+docs: |
   # Servicio REST - Consulta de Agenda Semanal (KPIs + Actividades)
 
   ## 1. Titulo
-
-  **Agenda Semanal del Vendedor (HU-05)** - devuelve los **KPIs** (cards) y las **actividades** de la semana para el calendario.
+  **Agenda Semanal del Vendedor (HU-05)** - devuelve los **KPIs** (cards) y las **actividades** de la semana para el calendario. Programa `agenda.p` . Proc `consultaSemana`.
 
   ## 2. Metodo
-
   ```
   GET
   ```
-
   ## 3. URL
-
   ```
   http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Agenda/Consulta
   ```
-
   ## 4. Parametros (Query String)
-
   > OK = Requerido
-  >
-  > `IdVendedor` . STRING . OK - Vendedor (responsable).
-  >
-  > `FecIni` . DATE . OK - Lunes de la semana (YYYY-MM-DD).
-  >
-  > `FecFin` . DATE . OK - Domingo de la semana (YYYY-MM-DD).
-  >
-  > `IdUser` . STRING . OK - Usuario que ejecuta.
+  **`Id-Vendedor`** . STRING . OK - Vendedor (responsable).
+  **`FecIni`** . DATE . OK - Lunes de la semana (YYYY-MM-DD).
+  **`FecFin`** . DATE . OK - Domingo de la semana (YYYY-MM-DD).
+  **`IdUser`** . STRING . OK - Usuario que ejecuta.
 
   ## 7. Ejemplo
-
   ```
   GET http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Agenda/Consulta?Id-Vendedor=001&FecIni=2026-08-24&FecFin=2026-08-30&IdUser=jjlg
   ```
-
   ## 8. Response
-
   ```json
   {
     "IdError": false,
@@ -75,29 +62,22 @@ docs: |-
       "ttKpi": [ { "Programadas": 3, "Realizadas": 1, "Canceladas": 0, "NoRealizadas": 1, "Pendientes": 1, "PctCumplimiento": 33 } ],
       "ttAgUI": [
         { "IdAgenda": 5, "FecActividad": "2026-08-25", "FecHoraIni": "2026-08-25T10:00:00", "FecHoraFin": "2026-08-25T11:00:00",
-           "IdTipoActividad": 1, "TipoActividad": "Visita", "Titulo": "Visita Cliente", "Cuenta": "ACME SA", "IdEstatus": 2, "Estatus": "Realizada", "Ubicacion": "Av. Industria 100" }
+           "IdTipoActividad": 1, "TipoActividad": "Visita", "Titulo": "Visita Cliente", "Cuenta": "ACME SA",
+           "TipoCliente": "A", "TipoRegistro": "Oportunidad", "IdEstatus": 2, "Estatus": "Realizada", "Ubicacion": "Av. Industria 100" }
       ]
     }
   }
   ```
-
   ## 9. Campos
+  **`ttKpi`** (1 fila) - **`Programadas`** = total de la semana (denominador) . **`Realizadas`/`Canceladas`/`NoRealizadas`** . **`Pendientes`** = estatus Programada . **`PctCumplimiento`** = Realizadas/Programadas x100 (entero, <=100).
+  **`ttAgUI`** - una fila por actividad: Id, fechas/horas, tipo (id+nombre), Titulo, Cuenta (cliente o lead), Estatus (id+nombre), Ubicacion, y el tipo de registro (Ticket 3240):
 
-  `ttKpi` (1 fila) - `Programadas` = total de la semana (denominador) .
-
-  `Realizadas`**/**`Canceladas`**/**`NoRealizadas` .
-
-  `Pendientes` = estatus Programada .
-
-  `PctCumplimiento` = Realizadas/Programadas x100 (entero, &lt;=100).
-
-  `ttAgUI` - una fila por actividad: Id, fechas/horas, tipo (id+nombre), Titulo, Cuenta (cliente o lead), Estatus (id+nombre), Ubicacion.
+  **`TipoCliente`** · CHARACTER — `A` = cuenta existente con Oportunidad · `B` = prospecto (ligado a un Lead) · `C` = cuenta existente **sin** Oportunidad (2026-11-17). Mismo valor que devuelve `/Agenda/Detalle`.
+  **`TipoRegistro`** · CHARACTER — Etiqueta lista para el card del Calendario Semanal: `Oportunidad` (cuando `TipoCliente=A`) · `Lead` (cuando `TipoCliente=B`) · `Cliente` (cuando `TipoCliente=C`).
 
   ## 10. Notas
-
   - El rango Lun-Dom lo calcula el front (selector de semana ISO).
   - "Programadas" = **total** de actividades de la semana (definicion a confirmar con PM).
 
   ---
-
   **Desarrollado por:** SIS10 - JASS
