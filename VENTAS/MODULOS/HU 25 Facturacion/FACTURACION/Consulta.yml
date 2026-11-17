@@ -23,6 +23,7 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
 docs: |
   # Servicio REST — Factura de Contado (Consulta para Sustitución)
@@ -34,6 +35,7 @@ docs: |
   **Factura de Contado — Consulta para Sustitución**
   Consulta los datos generales de una factura de contado vigente (`Remision` con `TipoVenta = 2`, no cancelada) para su edición, con las descripciones de catálogos (vendedor, régimen fiscal, ciudad/estado, entrega, transporte, forma de pago) y la bandera `TieneUUID`.
   Si la factura **ya está timbrada**, primero **pide confirmación** (`Confirmar=true`), igual que la ventana del modo carácter: modificarla genera un folio electrónico nuevo.
+  *(Ticket 3990)* Regresa además **`Sugerencia`**: el último folio ya timbrado del mismo RFC, como referencia para la corrección.
   Programa servidor: `facturasust.p` · Procedimiento: `consultaFactura` | Versión REST de la consulta inicial de la pantalla `vtaa0190.p` (modo carácter): "Cambio de información a facturas de contado con sustitución de facturas".
 
   ---
@@ -105,6 +107,7 @@ docs: |
       "IdError": true,
       "RequiereConfirmar": true,
       "Respuesta": "La factura 63233AK ya cuenta con folio electronico, al realizar una modificacion se generara un nuevo folio electronico. Desea continuar?",
+      "Sugerencia": "",
       "ttFactura": { "ttFactura": [] }
     }
   }
@@ -122,6 +125,7 @@ docs: |
       "IdError": false,
       "RequiereConfirmar": false,
       "Respuesta": "Factura 12345AB lista para edicion. La factura ya cuenta con folio electronico; al guardar cambios se generara un folio nuevo.",
+      "Sugerencia": "11987AB",
       "ttFactura": {
         "ttFactura": [
           {
@@ -185,6 +189,7 @@ docs: |
       "IdError": true,
       "RequiereConfirmar": false,
       "Respuesta": "Factura de contado inexistente, verifique...",
+      "Sugerencia": "",
       "ttFactura": { "ttFactura": [] }
     }
   }
@@ -216,6 +221,14 @@ docs: |
   > Una excepción no controlada también regresa `RequiereConfirmar: false`, así que nunca se confunde con la confirmación.
 
   Si el front necesita saber si la factura está timbrada **una vez cargada**, ese dato viene en el registro: **`ttFactura.TieneUUID`** (ver sección 10).
+
+  ### Sugerencia *(Ticket 3990)*
+
+  **`Sugerencia`** · STRING — Folio del **último documento ya timbrado del mismo RFC**, para mostrarlo como referencia al corregir. Va en el primer nivel (fuera de `ttFactura`) para no alterar el body del `POST /Ventas/FacturaContado/Sustituye`. Campo opcional: los consumidores que no lo lean no se ven afectados.
+  - Misma regla que la `Sugerencia` de `/Ventas/Pedidos/Gestion/PorTimbrarDetalle`: busca con UUID desde el 05/07/2022 en Factura de contado → Factura de crédito → Nota de crédito → Complemento de pago, y toma el más reciente de la primera tabla que tenga. Por eso **puede ser un folio de crédito, NCR o complemento**, no solo de contado
+  - Diferencias con PorTimbrarDetalle: **nunca** es la factura consultada, **excluye documentos cancelados** y con RFC genérico (`XAXX010101000` / `XEXX010101000`) viene **vacía** (PorTimbrarDetalle regresa el RFC)
+  - Solo se llena cuando se regresa el registro (factura sin UUID, o con UUID y `Confirmar=true`). En la pregunta de confirmación o en un error viene vacía
+  - Sin documento que sugerir → `""` y **no** marca error
 
   ---
 
@@ -253,6 +266,7 @@ docs: |
   **`TieneUUID`** · BOOLEAN — `true` = la factura ya está timbrada; al guardar cambios se generará un **folio nuevo** (el front debe pedir confirmación); `false` = solo se actualiza y timbra
   **`UUID`** · STRING — Folio fiscal actual
   **`SustIdRemision`** · STRING — Folio de la factura que ésta sustituyó (si aplica)
+  **`ForzarFiscal`** · BOOLEAN — *(Ticket 3836)* Siempre `false` en el GET. Solo tiene efecto en el POST: `true` = forzar el proceso de datos fiscales aunque no haya cambios (ver `facturasust-FacturaContadoSustituye.md`)
 
   > Este registro es **exactamente** el que espera el `POST /Ventas/FacturaContado/Sustituye` en su body: el front solo edita los campos que el usuario cambió y lo reenvía **sin agregarle ni quitarle nada**. El usuario (`IdUser`) va como parámetro de query en ambos endpoints, no como campo de la tabla.
 
@@ -269,6 +283,7 @@ docs: |
   | **Factura ya timbrada y `Confirmar ≠ true`** | `IdError: true` + **`RequiereConfirmar: true`** — `"La factura <folio> ya cuenta con folio electronico, al realizar una modificacion se generara un nuevo folio electronico. Desea continuar?"` y `ttFactura` **vacío**. No es un error real: es la confirmación que el front debe mostrar |
   | Factura ya timbrada y `Confirmar = true` | `IdError: false` + `RequiereConfirmar: false` + registro `ttFactura` (con `TieneUUID: true`) |
   | Factura sin timbrar | `IdError: false` + `RequiereConfirmar: false` + registro `ttFactura` (con `TieneUUID: false`); ignora `Confirmar` |
+  | Sin documento timbrado previo del RFC, o RFC genérico *(3990)* | `Sugerencia: ""`, sin error |
 
   > En **todos** los casos de error de la tabla salvo el de la confirmación, `RequiereConfirmar` viene en `false`. Ver sección 9.
 
@@ -297,14 +312,15 @@ docs: |
   | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA.      |
 
   ---
-
+   
   ## 15. Observaciones Técnicas
 
   1. **Origen:** versión REST de la fase de consulta de `vtaa0190.p` (modo carácter). El registro que regresa es el mismo que se manda de vuelta (editado) al POST `/Ventas/FacturaContado/Sustituye`.
   2. **Confirmación de factura timbrada:** el servicio replica la ventana del modo carácter *"La factura … ya cuenta con folio electronico, al realizar una modificacion se generara un nuevo folio electronico. ¿Desea continuar?"*. El servidor la impone: sin `Confirmar=true` **no** entrega el registro, así que el front no puede entrar a editar una factura timbrada sin que el usuario acepte. `TieneUUID` sigue viniendo en el registro para que el front mantenga el aviso visible durante la edición.
   3. **Autollenados de la pantalla** (al cambiar cliente se copian los datos fiscales del catálogo `Cliente`; al cambiar RFC se buscan datos en `CteSReg`): son responsabilidad del front; este servicio valida los datos finales.
   4. **Flujo completo:** ver documento `facturasust-FacturaContadoSustituye.md`.
-  5. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+  5. **Sugerencia (Ticket 3990, 17/11/2026):** `FIND LAST` por `Idx-RFC` (RFC + FecReg) en `Remision`, `Factura`, `NCR` y `CPago`, excluyendo cancelados (`FecCancel` en Remision/Factura, `FecCanc` en NCR/CPago) y la propia factura. Una consulta por tabla como máximo.
+  6. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
 
   ---
   **Desarrollado por:** SIS10 - JASS
