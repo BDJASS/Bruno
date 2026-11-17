@@ -1,0 +1,372 @@
+info:
+  name: Alta Pedido CON REQ
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/Captura/Alta
+  body:
+    type: json
+    data: |-
+      {"dsPedAlta": {
+        "ttEncPed": [
+          {
+            "IdCliente": 35947,
+            "IdVendedor": "",
+            "Iniciales": "JPOM",
+            "IdAlm": "02B",
+            "IdUbiVta": "",
+            "IdCaptura": "",
+            "TipoPrecio": "M",
+            "IdMoneda": 1,
+            "IdCond": 2,
+            "Plazo": 0,
+            "PagAnt": true,
+            "Enviar": true,
+            "Seguro": false,
+            "Sust": false,
+            "Vigentes": true,
+            "BckOrd": 1,
+            "FecBck": null,
+            "IdEntrega": 11,
+            "IdTran": 0,
+            "IdRutaEmb": 1,
+            "IdRemision": "N",
+            "IdForPed": "",
+            "ReqCte": "",
+            "OrdComCte": "",
+            "Attn": "ILIANA TREVIÑO",
+            "Adelantado": false,
+            "SurtParcial": false,
+            "IdCot": "2163679",
+            "Nota1": "",
+            "Nota2": "",
+            "Obs1": "",
+            "Obs2": "",
+            "IdRFiscal": "616",
+            "IdUsoCFDI": "S01",
+            "FEFormaPago": "01",
+            "FEDigitosCuenta": "",
+            "Email": "",
+            "Email2": "",
+            "RazonSocial1": "",
+            "CalleNo1": "",
+            "Colonia1": "",
+            "IdCiudad1": 0,
+            "Delegacion1": "",
+            "Ciudad1": "",
+            "Estado1": "",
+            "Pais1": "",
+            "CP1": "",
+            "Referencia": "",
+            "TelEmb": "",
+            "FaxEmb": "",
+            "IvaGlobal": 0.0,
+            "Especial": false,
+            "EnTarima": false,
+            "BuzonFiscal": "",
+            "RFC": "XAXX010101000",
+            "RazonSocial": "MANUEL RODRIGUEZ",
+            "Propietario": "",
+            "CalleNo": "RIO NAZAS 241",
+            "Colonia": "DOS RIOS",
+            "Tel": "8123428861",
+            "CP": "67196",
+            "IdCiudad": 0
+          }
+        ],
+        "ttPartPed": [
+          {
+            "IdArticulo": "002963",
+            "IdColor": 2395,
+            "IdPres": 3,
+            "Descr": "BLOCK DIBUJO ESP. NORMA 581119 MARQUILLA 30.5 X 24 CMS. 30 H.",
+            "Cant": 50.0,
+            "PUnit": 48.71,
+            "Descto": 0,
+            "PorcIVA": 16.0,
+            "IndicaPre": "",
+            "IdMoneda": 1,
+            "Costo": 35.41368,
+            "Tipo": 1,
+            "IdCot": "2163679",
+            "NoPP": false
+          }
+        ]
+      }}
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Pedido / Captura / Alta — Alta de pedido con JSON limpio
+
+  ## 1. Descripción
+
+  Da de alta un **pedido de venta** a partir de un JSON limpio (lo que el usuario captura). El servidor:
+
+  1. **Valida** el encabezado y las partidas (tipos, obligatorios, existencia de catálogos).
+  2. **Deriva** del cliente los datos fijos (razón social, RFC, teléfono, dirección) y del usuario el vendedor / ubicación / almacén origen.
+  3. **Calcula** Importe, IVA y existencia por partida, y los totales (subtotal, IVA, total, y subtotal con existencia).
+  4. **Evalúa las políticas de venta/crédito** con la misma lógica de `vtad0125.p` y decide `EnFirme` igual que el modo carácter `vtaa0110.p`.
+  5. **Delega el grabado** al motor probado `pedido2.p / creaPedidos` (folio real, costos, inventario comprometido, requisición).
+
+  Tercera y última llamada del flujo: `/Pedido/Captura/Consulta` → `/Pedido/Captura/Partidas` → `/Pedido/Captura/Alta` (esta).
+
+  ## 2. Método y URL
+
+  `POST` `http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/Captura/Alta`
+
+  Programa: `pedaltaped.p` · Procedimiento: `creaPedidoLimpio`
+
+  ## 3. Headers
+
+  `Content-Type: application/json`
+
+  ## 4. Cuerpo (body) — DATASET `dsPedAlta`
+
+  El body es un dataset con **un encabezado (`ttEncPed`)** y **n partidas (`ttPartPed`)**.
+
+  ### 4.1. Campos de `ttEncPed` (encabezado)
+
+  > ✅ = Requerido · ❌ = Opcional · Vacío/0 = el servidor lo deriva o usa default
+
+  **`IdCliente`** · INTEGER · ✅ — Cliente del pedido.
+  **`Iniciales`** · STRING · ✅ — Usuario que captura (Id-User); deriva almacén y capturador.
+  **`IdVendedor`** · STRING · ❌ — Vendedor; si vacío se deriva del usuario (o `0104`).
+  **`IdAlm`** · STRING · ❌ — Almacén origen; si vacío deriva de `Usuario.Id-Ubicacion` / AlmPrior.
+  **`IdUbiVta`** · STRING · ❌ — Ubicación de venta; si vacío deriva del usuario/vendedor.
+  **`IdCaptura`** · STRING · ❌ — `"0104"` = CallCenter (recalcula existencia); si vacío = vendedor.
+  **`TipoPrecio`** · STRING · ✅ — `M` / `II` / `MX` / `TC` / `EX`.
+  **`IdMoneda`** · INTEGER · ❌ — `1` = pesos (default). `>1` fuerza pendiente de autorización.
+  **`IdCond`** · INTEGER · ❌ — `0` = contado; `<>0` = crédito.
+  **`Plazo`** · INTEGER · ❌ — Plazo de crédito.
+  **`PagAnt`** · BOOLEAN · ❌ — Pago anticipado.
+  **`Enviar`** · BOOLEAN · ❌ — Envío (CEDIS) — afecta el cálculo del monto de políticas.
+  **`Seguro`** · BOOLEAN · ❌ — Seguro.
+  **`Sust`** · BOOLEAN · ❌ — Sustituir.
+  **`Vigentes`** · BOOLEAN · ❌ — Permite precios no vigentes.
+  **`BckOrd`** · INTEGER · ❌ — Backorder (default `1`).
+  **`FecBck`** · DATE · ❌ — Fecha límite de backorder.
+  **`IdEntrega`** · INTEGER · ❌ — Tipo de entrega.
+  **`IdTran`** · INTEGER · ❌ — Transporte.
+  **`IdRutaEmb`** · INTEGER · ❌ — Ruta de embarque.
+  **`IdRemision`** · STRING · ❌ — `S` / `N`.
+  **`IdForPed`** · STRING · ❌ — Folio de forma de pedido.
+  **`ReqCte`** · STRING · ❌ — Requisición del cliente / orden de compra.
+  **`OrdComCte`** · STRING · ❌ — Orden de compra del cliente.
+  **`Attn`** · STRING · ❌ — Atención.
+  **`Adelantado`** · BOOLEAN · ❌ — Facturar por adelantado.
+  **`SurtParcial`** · BOOLEAN · ❌ — Surtido parcial.
+  **`IdCot`** · STRING · ❌ — Cotización origen.
+  **`Nota1` / `Nota2`** · STRING · ❌ — Observaciones (Notas).
+  **`Obs1` / `Obs2`** · STRING · ❌ — Memos (Observaciones).
+  **`IdRFiscal`** · STRING · ❌ — Régimen fiscal; si vacío se usa el del cliente.
+  **`IdUsoCFDI`** · STRING · ❌ — Uso CFDI; si vacío se usa el del cliente.
+  **`FEFormaPago`** · STRING · ❌ — Forma de pago; si vacío se usa la del cliente.
+  **`FEDigitosCuenta`** · STRING · ❌ — Dígitos de cuenta.
+  **`Email` / `Email2`** · STRING · ❌ — Correos; `Email` vacío usa el del cliente.
+  **`RazonSocial1`, `CalleNo1`, `Colonia1`, `IdCiudad1`, `Delegacion1`, `Ciudad1`, `Estado1`, `Pais1`, `CP1`, `Referencia`, `TelEmb`, `FaxEmb`** · ❌ — Datos de **embarque alterno**; si se omiten se usa la dirección del cliente.
+  **`IvaGlobal`** · DECIMAL · ❌ — % de IVA general para el cálculo del monto de políticas (default `16`).
+  **`BuzonFiscal`** · STRING · ❌ — Correo(s) para envío del CFDI, separados por `;` *(ticket 3697)*
+  - Vacío = buzón fiscal del cliente · Se quitan espacios · Cada correo debe ser válido
+  - Pasa a la factura/remisión: la factura electrónica se envía a este buzón + el correo de contacto
+
+  **`EnTarima`** · BOOLEAN · ❌ — Tipo de empaque *(ticket 3697)*
+  - `false` Bulto · `true` Tarima · Sin valor = Bulto
+
+  **Cliente 3 (sin registro / mostrador)** — datos del modal de cliente sin registro; para otros clientes se ignoran
+
+  **`RFC`** · STRING · ✅ en cliente 3 — RFC capturado (se quitan espacios y guiones); no nulo ni vacío, 12 o 13 caracteres
+  - Público en general: enviar `XAXX010101000`
+  **`RazonSocial`** · STRING · ✅ en cliente 3 — Razón social
+  **`Propietario`** · STRING · ❌ — Si no viene `Attn`, se usa como atención
+  **`CalleNo`** · STRING · ❌ — Calle y número
+  **`Colonia`** · STRING · ❌ — Colonia
+  **`Tel`** · STRING · ❌ — Teléfono
+  **`CP`** · STRING · ❌ — Código postal
+  **`IdCiudad`** · INT · ❌ — Población; si viene debe existir (de ella salen estado y país)
+  - Si el RFC ya está registrado como cliente sin registro, de ahí se toman buzón fiscal, régimen fiscal, uso de CFDI, forma de pago y correo cuando no se envían
+  - RFC genérico: uso de CFDI `S01` y régimen `616` si no se envían (como el legado)
+  - Al grabar, se da de alta o se actualiza el cliente sin registro con el RFC (excepto el genérico)
+
+  **`PasswordAut`** · STRING · ❌ — Password de autorización de **monto mínimo**
+  - Solo se usa cuando la política da código 1–6; se valida en el servidor (passwords de autorización tipo 1)
+  - Válido → el pedido se graba **no en firme** y la bitácora guarda quién autorizó · Inválido → error · Se enmascara al leerlo
+
+  **`CreaReq`** · BOOLEAN · ❌ — Generar **requisiciones automáticas de traspaso** para lo que falta en el origen
+  - **Sin valor (no viene o `null`)** = el usuario aún no decide: si aplica, el alta **se detiene** con `CodErr = 90` y la pregunta (ver 6)
+  - `true` / `false` = respuesta del usuario al modal "¿Desea generar las requisiciones de traspaso?"; se reenvía el mismo JSON
+  - Solo aplica con `BckOrd = 3` (enviar hasta que esté completo) y origen `02B` o `FUG`. Se pregunta aunque el pedido vaya a quedar pendiente (como el legado), pero la requisición **solo se genera si el pedido queda en firme**; si queda pendiente, la respuesta avisa que no se generó y qué traspasos hacer a mano al autorizarse
+
+  **`ConfirmaPendiente`** · BOOLEAN · ❌ — Confirmación de grabar el pedido **pendiente de autorización** por política de crédito (códigos 7–10, incluye moneda extranjera)
+  - **Sin valor (no viene o `null`)** = aún no confirma: el alta **se detiene** con `CodErr = 91` y la pregunta *"El pedido no quedara en firme, desea proceder con el guardado?"*
+  - `true` = grabar pendiente de autorización · `false` = no grabar
+  - Va **antes** de la pregunta de requisición (`CodErr = 90`), igual que el legado; en el reenvío se conservan ambos campos
+
+  **`Especial`** · BOOLEAN · ❌ — Pedido especial *(ticket 3697)*
+  - `true` = imprime "ESPECIAL" en el pedido y la remisión de embarque, y se copia a la factura/remisión · Sin valor = `false`
+
+  ### 4.2. Campos de `ttPartPed` (partidas)
+
+  **`Tipo`** · INTEGER · ❌ — Tipo de renglón (= `DetPedido.Tipo`). Ausente o `0` = `1` *(ticket 3697)*
+  - `1` Artículo · `2` Artículo sin código (concepto libre **con** importe) · `3`/`4` Corte · `5` Comentario
+
+  > **Tipo 1 (artículo):** aplican todos los campos de abajo. Color y presentación llegan ya validados desde `/Pedido/Captura/Partidas` o desde la cotización origen.
+  > **Tipo 2 (sin código):** solo **`Descr`** (✅), **`Cant`** (✅ > 0), **`PUnit`**, `Descto`, `PorcIVA` (si `0` → `IvaGlobal`). Se graba sin artículo/color/presentación/moneda, sin existencia ni costo, con `CantEnt = Cant` (como el legado). Suma a subtotal/IVA y a la política de monto.
+  > **Tipo 3, 4, 5 (corte/comentario):** solo **`Descr`** (✅, el texto). Todo lo demás se ignora; se graba con `IdArticulo = ""` y cantidad/precio/importe/IVA en `0`. No afecta totales, existencia ni políticas.
+  > Los renglones se graban en el **orden recibido** (`IdSeq` 10, 20, 30…). Debe venir **al menos un renglón Tipo 1 o 2**.
+
+  **`IdArticulo`** · STRING · ✅ en Tipo 1 — Artículo (activo). En Tipos 2–5 se ignora.
+  **`IdColor`** · INTEGER · ❌ — Color.
+  **`IdPres`** · INTEGER · ❌ — Presentación.
+  **`Descr`** · STRING · ✅ — Descripción de la partida / texto del comentario o corte.
+  **`Cant`** · DECIMAL · ✅ en Tipos 1 y 2 — Cantidad (> 0). En Tipos 3–5 se ignora.
+  **`PUnit`** · DECIMAL · ✅ en Tipos 1 y 2 — Precio unitario (ya calculado por `/Pedido/Captura/Partidas`).
+  **`Descto`** · INTEGER · ❌ — % de descuento.
+  **`PorcIVA`** · DECIMAL · ❌ — % IVA; si `0` se deriva del artículo (Tipo 1) o de `IvaGlobal` (Tipo 2).
+  **`IndicaPre`** · STRING · ❌ — Indicador de precio (``, D, C, *…).
+  **`IdMoneda`** · INTEGER · ❌ — Moneda de la partida (default `1`).
+  **`Costo`** · DECIMAL · ❌ — Costo; si `0` lo calcula el motor.
+  **`IdCot`** · STRING · ❌ — Cotización origen de la partida.
+  **`NoPP`** · BOOLEAN · ❌ — Partida **sin descuento por pronto pago** *(ticket 3697)*
+  - Tomarlo de `ttPresentacion.NoPP` del servicio de partidas de cotización · Precio `D`/`Z` = `true` aunque no venga
+  - Al remisionar, estas partidas no reciben el descuento por pronto pago
+
+  ### 4.3. Ejemplo de body
+
+  ```json
+  {
+    "dsPedAlta": {
+      "ttEncPed": [
+        {
+          "IdCliente": 575, "Iniciales": "jass", "TipoPrecio": "M",
+          "IdMoneda": 1, "IdCond": 0, "Enviar": false, "BckOrd": 1,
+          "IdRemision": "N", "ReqCte": "OC-8891", "Attn": "COMPRAS",
+          "Especial": false, "EnTarima": false, "BuzonFiscal": "facturas@cliente.com"
+        }
+      ],
+      "ttPartPed": [
+        { "Tipo": 1, "IdArticulo": "021118", "IdColor": 2, "IdPres": 4, "Descr": "LAPIZ ADHESIVO",
+          "Cant": 12, "PUnit": 18.50, "Descto": 0, "PorcIVA": 16 },
+        { "Tipo": 5, "IdArticulo": "", "Descr": "SOBRE PEDIDO.", "Cant": 0, "PUnit": 0 },
+        { "Tipo": 2, "IdArticulo": "", "Descr": "FLETE", "Cant": 1, "PUnit": 150, "PorcIVA": 16 }
+      ]
+    }
+  }
+  ```
+
+  ## 5. Decisión de firmeza (`EnFirme`) — mismo proceso que el modo carácter
+
+  El pedido queda **EN FIRME** (`EnFirme=true`) sólo si no hay problema de política y ningún bloqueo; de lo contrario se graba **PENDIENTE DE AUTORIZACIÓN** (`EnFirme=false`). Reglas (fieles a `vtaa0110.p` + `vtad0125.p`):
+
+  1. **Moneda ≠ pesos** (`IdMoneda>1`) → `CodErr=7`, `EnFirme=false` (no evalúa más políticas).
+  2. En pesos se evalúa la política con el **monto**:
+     - Local (`Enviar=false` y no FUG): crédito = Total; contado = Subtotal neto.
+     - Envío/foráneo: crédito = SubtotalConExistencia × (1 + IVA/100); contado = SubtotalConExistencia.
+  3. Códigos de política (`CodErr`):
+     - `1–6` = **monto mínimo** (pedido demasiado chico) → **se bloquea el alta** (`IdError=true`, con `CodErr` en la respuesta), **salvo** que venga `PasswordAut` con un password de autorización válido: entonces se graba **no en firme** (pendiente de autorización) y la bitácora registra quién autorizó.
+       - Envío (`3` crédito / `6` contado): también se resuelve cambiando la entrega a **16 o 3 con ruta 22** (pasa por mercancía) o **14** (taxi por cobrar) y reenviando.
+     - `7–10` = crédito (excede límite / vencido / cheques devueltos / deuda vencida) → primero se confirma con el usuario (`CodErr = 91` / `ConfirmaPendiente`) y luego se graba `EnFirme=false`.
+     - `0` = sin problema → `EnFirme=true`.
+     - `Calidad.PolVenta` con código `<7` → `0`. Contado que excede límite (`>6` con `IdCond=0`) → `0`.
+  4. Fuerzan `EnFirme=false` aunque `CodErr=0`: cliente en `BlkAut`; RFC en `blkRFC`; Calidad 37 que excede cantidad/límite de ChequePF (marca ` *CHPF*`); `(SaldoMov + SubtotalNeto) > Cliente.Saldo × 1.3` con `Plazo>0` y `SubtotalNeto ≥ 20000`.
+
+  ## 6. Respuesta
+
+  **`IdError`** · BOOLEAN — `true` si no se pudo grabar (validación, monto mínimo o error).
+  **`Respuesta`** · STRING — Mensaje amigable del resultado. Con `CreaReq = true` se agrega el resultado de la requisición automática:
+  - `Se generaron las requisiciones de traspaso: REQ000123 (alm 6),REQ000124 (alm 03A).` (+ avisos de partidas que no se completaron o que solo se completan con existencia foránea)
+  - `No se genero la requisicion automatica: <motivo>` — el pedido **sí** quedó grabado; la requisición se hace manual
+  - `Requisicion automatica NO GENERADA: el pedido quedo pendiente de autorizacion; al autorizarse genere la requisicion manual de: 013526/0 3 PZA alm 03A.`
+  - `Requisicion automatica no aplica: solo para backorder 3 ... con origen 02B o FUG.`
+  **`Folio`** · STRING — Folio real del pedido generado (vacío si no se grabó).
+  **`EnFirme`** · BOOLEAN — `true` = pedido en firme; `false` = pendiente de autorización.
+  **`CodErr`** · INTEGER — Código de política (0..10) evaluado · **`91`** = confirmar pedido pendiente por crédito · **`90`** = pregunta de requisición automática (en ambos no se grabó; ver abajo).
+  **`MensajePolitica`** · STRING — Mensaje textual de la política aplicada (si aplica).
+
+  **Confirmación de pedido pendiente por crédito (`IdError = true`, `CodErr = 91`):** el pedido **no se grabó**. `MensajePolitica` trae la política de crédito y `Respuesta` la pregunta, por ejemplo:
+  > `LA DEUDA VENCIDA DEL CLIENTE EXCEDE UN 10% DEL TOTAL DE SU DEUDA, AVISAR AL DEPTO. DE CREDITOS, HABLAR A CREDITOS PARA SU AUTORIZACION. El pedido no quedara en firme, desea proceder con el guardado?`
+
+  El front muestra el modal (Sí / No) y, con **Sí**, reenvía el mismo JSON con `ConfirmaPendiente = true`. Después puede llegar la pregunta de requisición (`CodErr = 90`).
+
+  **Pregunta de requisición automática (`IdError = true`, `CodErr = 90`):** el pedido **no se grabó**. `Respuesta` trae la pregunta y el detalle, por ejemplo:
+  > `2 de 3 articulo(s) sin existencia suficiente en el origen se completan con traspasos. Desea generar las requisiciones de traspaso? Traspasos: 021118 color 2 4 CAJA (200 UMI) del almacen 6; 030045 color 0 1 PZA (1 UMI) del almacen 03A; Sin requisicion: 040012 color 1: No se completa con los almacenes de traspaso; no se genera requisicion (faltan 30 UMI).`
+
+  El front muestra el modal (Sí / No / Cancelar) y **reenvía el mismo JSON** con `CreaReq = true` o `false`; Cancelar = no reenviar.
+
+  ## 7. Validaciones (bloquean el alta)
+
+  | Condición | Mensaje |
+  |-----------|---------|
+  | Sin encabezado | "Falta el encabezado (ttEncPed)." |
+  | `IdCliente <= 0` | "Se requiere IdCliente." |
+  | `Iniciales` vacío | "Se requiere Iniciales (usuario)." |
+  | `TipoPrecio` fuera de M/II/MX/TC/EX | "TipoPrecio invalido (M, II, MX, TC o EX): X." |
+  | Cliente inexistente | "No existe el cliente N." |
+  | Cliente 3 sin RFC (nulo o vacío) | "Se requiere el RFC para el cliente 3." |
+  | Cliente 3 con RFC de menos de 12 o más de 13 caracteres | "El RFC del cliente 3 debe tener 12 o 13 caracteres." |
+  | Cliente 3 sin razón social | "Se requiere la Razon Social para el cliente 3." |
+  | Cliente 3 con ciudad inexistente | "No existe la ciudad N." |
+  | RFC del cliente < 12 caracteres | "Es Necesario Alimentar Completo el R.F.C. del Cliente, si no cuenta con uno utilice: XAXX-010101-000" |
+  | Cliente que requiere OC sin `ReqCte` (excepto cliente 222 o usuario OCS) | "Este cliente requiere propocionarnos Orden de Compra" |
+  | `ReqCte` ya usada en otro pedido del mismo cliente (excepto clientes especiales de la lista del legado) | "Esta requisicion ya existe en el pedido N para el mismo cliente." |
+  | `BuzonFiscal` con un correo inválido | "El Buzon Fiscal capturado no es valido: X." |
+  | Cliente 4763 (TERRA) sin embarque | "Se necesitan datos completos de embarque para ventas a TERRA NETWORKS." |
+  | Usuario inexistente | "Usuario no encontrado: X." |
+  | No se determina vendedor | "No se pudo determinar un vendedor valido para el usuario X." |
+  | No se determina almacén | "No se pudo determinar el almacen origen del usuario X." |
+  | `Tipo` fuera de 1–5 | "Tipo de partida invalido (N). Use 1 Articulo, 2 Articulo sin codigo, 3/4 Corte o 5 Comentario." |
+  | Partida **Tipo 1** sin artículo | "Hay una partida sin IdArticulo." |
+  | Artículo inexistente/inactivo | "Articulo inexistente o inactivo: X." |
+  | Partida sin descripción (Tipo 1) | "Falta la descripcion en el articulo X." |
+  | Cantidad ≤ 0 (Tipo 1) | "Cantidad invalida en articulo X." |
+  | Renglón Tipo 2–5 sin texto | "Falta el texto (Descr) en el renglon N (articulo sin codigo / comentario/corte)." |
+  | Cantidad ≤ 0 en Tipo 2 | "Cantidad invalida en el renglon N (articulo sin codigo)." |
+  | Sin partidas | "El pedido no tiene partidas." |
+  | Solo comentarios/cortes | "El pedido no tiene partidas (articulos)." |
+  | Política de monto mínimo (CodErr 1–6) sin `PasswordAut` | Texto de la política + ", HABLAR CON EL CLIENTE PARA INCREMENTAR PEDIDO (o capture el password de autorizacion para continuar)." |
+  | Monto mínimo con `PasswordAut` incorrecto | "El password de autorizacion es incorrecto. " + texto de la política |
+  | Política de crédito (CodErr 7–10) sin `ConfirmaPendiente` (`CodErr = 91`) | Texto de la política + ", HABLAR A CREDITOS PARA SU AUTORIZACION. El pedido no quedara en firme, desea proceder con el guardado?" |
+  | Política de crédito con `ConfirmaPendiente = false` | "No se grabo el pedido: no se acepto grabarlo pendiente de autorizacion (política)." |
+  | `BckOrd = 3`, origen 02B/FUG, `CreaReq` sin valor y hay artículos que se completan con traspasos (`CodErr = 90`) | "N de M articulo(s) sin existencia suficiente en el origen se completan con traspasos. Desea generar las requisiciones de traspaso? Traspasos: …" |
+
+  ## 8. Observaciones técnicas
+
+  - El endpoint **arma el dataset completo** `dsPedido2` (encabezado + partidas con Importe/IVA/Existencia) y delega a `pedido2.p/creaPedidos`, que asigna el folio real, calcula costos, compromete inventario y crea requisición (si `EnFirme` y almacén 02B/FUG).
+  - La política se **porta** de `vtad0125.p` (no se ejecuta el programa carácter) para correr headless sin prompts ni dependencias de terminal. Es equivalente porque `vtaa0110.p` invoca `vtad0125.p` con `p-Factor=1`, lo que anula la disminución de monto mínimo y el password de autorización.
+  - Los datos fijos del cliente (razón social, RFC, teléfono, dirección) se **derivan en el servidor**; no es necesario enviarlos en el body. **Excepción: cliente 3** (sin registro), donde se toman del encabezado (ver 4.1) y se obtienen con el servicio `/Cliente/SinRegistro/Consulta`.
+  - El pedido pendiente de autorización se procesa después por el flujo de autorización de Créditos.
+  - **Renglones sin artículo (ticket 3697):** se aceptan Tipos 2–5 con las mismas reglas que la captura de pedidos del call center y que el alta de cotización, por lo que una cotización con comentarios se convierte a pedido conservando sus comentarios en el orden original. El motor de grabado ya los soporta: solo costea, valida y compromete inventario en Tipo 1; a los cortes (3/4) les aplica la regla de cliente que devuelve cortes (*"Cliente Devuelve Cortes, No es Posible Pasar Pedido."*).
+  - **Correo interno de diagnóstico:** en **cada** alta (grabe o no) se envía a desarrollo un correo con el encabezado y las partidas **tal como llegaron en el JSON** (distingue `NULL`, `""` y `0`), el resultado (folio, `EnFirme`, `CodErr`, política y respuesta) y, si se grabó, los valores que quedaron en el pedido y sus partidas. En el servidor de desarrollo se redirige solo a desarrollo. El HTML queda en `/usr3/tmp/altaped_<folio o cte>_<fecha>_<hora>.html`. No afecta la respuesta del servicio.
+  - **`Especial`, `EnTarima` y `BuzonFiscal` (ticket 3697):** antes no estaban en el contrato y se ignoraban aunque el front los mandara, por lo que el pedido quedaba con buzón fiscal vacío (la factura solo llegaba al correo de contacto). Ahora se graban en el pedido igual que en la captura legada. La sugerencia automática de "pedido especial" del legado (artículos pedidos por encima del promedio de ventas) no forma parte de este servicio.
+  - **Paridad con la captura legada (ticket 3697):** el servidor asigna la **fecha de captura** del pedido (se imprime como "FECHA" en pedido y remisiones) y el **proveedor** de cada partida a partir del artículo (lo usa el reporte de ventas por proveedor). La **orden de compra** obligatoria del cliente se valida aquí con el mismo mensaje del legado, porque el proceso de grabado la omite en capturas de call center. Si viene `ReqCte`, se rechaza cuando esa requisición ya existe en otro pedido del mismo cliente, igual que la validación del legado; los clientes especiales de su lista sí pueden repetirla.
+  - **Sin pronto pago por partida (ticket 3697):** se graba lo que manda el front en `NoPP`, más la regla del motor de precios (precio `D`/`Z`). **Pendiente:** al convertir una cotización a pedido el detalle de la cotización no trae este dato (la partida de cotización no lo guarda), por lo que en esa ruta solo aplica la regla `D`/`Z`; una oferta marcada sin pronto pago no se detecta.
+  - **Fuente del pedido:** los pedidos creados por este servicio quedan con **fuente 8 (AdCorex)**, para distinguirlos de los del call center (fuente 4).
+  - **Bitácora del alta:** si el pedido se creó, se registra en la bitácora del pedido (la que muestra `/Ventas/Pedidos/Bitacora`) quién lo creó y con qué datos: alta (fuente), cliente, razón social, RFC, vendedor, total, en firme o pendiente (con el código de política), cotización origen, requisición del cliente y almacén origen. Se graba después de confirmar el pedido, en una transacción corta que solo agrega renglones, para no retener ni esperar bloqueos; si fallara, no afecta el alta.
+  - **Márgenes grabados (ticket 3710):** al crear el pedido se guardan en el encabezado su costo total y sus márgenes, con el mismo esquema que el alta de cotización, para consultarlos después sin recalcularlos:
+    - `TotCosto` = suma de costo × cantidad de las partidas **Tipo 1** (el costo que manda el front o, si viene en `0`, el que calcula el motor)
+    - `MargenC` = margen sobre costo = ((importe / costo) − 1) × 100
+    - `MargenV` = margen sobre venta = (1 − costo / importe) × 100
+    - Importe = suma del importe de las partidas Tipo 1 (los renglones sin código, cortes y comentarios no entran). Redondeo a 2 decimales; si no se puede calcular queda en `0`
+    - `TotCosto > 0` indica que el pedido trae márgenes grabados; los pedidos anteriores a este cambio quedan en `0`
+    - No cambia la respuesta del servicio. Si después se modifican precios o costos del pedido, estos valores no se recalculan
+    - **Pendiente:** definir en qué consulta se mostrarán y llenar los pedidos del mes en curso que no los tengan
+  - **Impresión del pedido:** solo se ejecuta en producción; en el servidor de desarrollo se omite.
+  - **Bloqueos:** el consecutivo de folios, las existencias y las autorizaciones se piden sin esperar indefinidamente: hasta 10 intentos de 1 segundo. Si el registro sigue ocupado, el alta responde `IdError = true` con quién lo tiene, por ejemplo *"El usuario X tiene bloqueada la tabla Folio PEDSLAG en este momento. Espere unos segundos y vuelva a intentar. No se genero el pedido; intente de nuevo."* (si es otra petición del sistema, lo indica así). En ese caso **no se crea nada**: no se consume folio, no se graba el pedido ni se compromete inventario, por lo que reintentar no genera duplicados.
+  - **Requisición automática de traspaso (`CreaReq`):** igual que la captura legada, pero en el mismo servicio y en dos pasadas (como el password de monto mínimo). Orden igual al legado: primero la confirmación de crédito (`CodErr = 91`, si aplica) y después la pregunta de requisición (`CodErr = 90`), que se hace aunque el pedido vaya a quedar pendiente. Si el usuario contesta **Sí** y el pedido queda pendiente de autorización, la requisición **no se genera** (en el legado tampoco, y además no avisa); aquí la respuesta, la bitácora y el correo avisan que no se generó y qué traspasos hacer a mano cuando Créditos lo autorice (asunto del correo *REQ NO GENERADA (PENDIENTE)*). Cálculo: faltante de cada artículo contra la existencia del origen (con origen 02B, si 02A + 02C cubren lo que falta no hay faltante); un mismo artículo/color en varias partidas se acumula; el faltante se redondea a la presentación. La existencia puede cambiar entre la pregunta y el reenvío; al grabar se recalcula. Al grabar con `CreaReq = true`, para cada artículo cuyo faltante se completa con los almacenes de traspaso (6, 7, 8, 9, 10, 03A, mayor existencia primero) se genera una requisición autorizada por almacén, se compromete la existencia de ese almacén, se imprime y se envía correo al vendedor con el detalle (incluye los artículos que no se completaron y los que solo se completan con existencia foránea). La requisición se genera **aparte del pedido**: si falla (folio o existencia ocupados por otro usuario, folio no definido), **el pedido se graba igual** y la respuesta indica el motivo; no quedan requisiciones a medias ni impresas. Las requisiciones de este servicio llevan el comentario `REQ AUTOMATICA - ADCOREX` y el resultado queda en la bitácora del pedido. Si el usuario contesta **No** (`CreaReq = false`) y había traspasos disponibles, la bitácora registra *"RECHAZADA por el usuario; traspasos ofrecidos: artículo/color alm X"*, para saber después por qué el pedido no tuvo traspaso. En el correo interno de diagnóstico se ve la línea **Requisición automática** (lo que mandó el front en `CreaReq` y el resultado), el estatus *NO CREADO - PREGUNTA REQUISICION* cuando se respondió `CodErr = 90`, y en el asunto *REQ GENERADA*, *REQ RECHAZADA* o *REQ FALLO*.
+  - **Ubicación y presentación:** no se revalidan en este servicio; las partidas de artículo llegan ya validadas desde `/Pedido/Captura/Partidas` o desde la cotización origen.
+
+  ## 9. Relacionados
+
+  - `/Pedido/Captura/Consulta` — [pedcliente-CapturaPedidoCliente.md](pedcliente-CapturaPedidoCliente.md)
+  - `/Pedido/Captura/Partidas` — [pedpartida-CapturaPedidoPartidas.md](pedpartida-CapturaPedidoPartidas.md)
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

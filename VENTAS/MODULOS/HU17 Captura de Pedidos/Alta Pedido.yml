@@ -235,7 +235,12 @@ docs: |
   **`CreaReq`** · BOOLEAN · ❌ — Generar **requisiciones automáticas de traspaso** para lo que falta en el origen
   - **Sin valor (no viene o `null`)** = el usuario aún no decide: si aplica, el alta **se detiene** con `CodErr = 90` y la pregunta (ver 6)
   - `true` / `false` = respuesta del usuario al modal "¿Desea generar las requisiciones de traspaso?"; se reenvía el mismo JSON
-  - Solo aplica con `BckOrd = 3` (enviar hasta que esté completo), origen `02B` o `FUG` y pedido **en firme**
+  - Solo aplica con `BckOrd = 3` (enviar hasta que esté completo) y origen `02B` o `FUG`. Se pregunta aunque el pedido vaya a quedar pendiente (como el legado), pero la requisición **solo se genera si el pedido queda en firme**; si queda pendiente, la respuesta avisa que no se generó y qué traspasos hacer a mano al autorizarse
+
+  **`ConfirmaPendiente`** · BOOLEAN · ❌ — Confirmación de grabar el pedido **pendiente de autorización** por política de crédito (códigos 7–10, incluye moneda extranjera)
+  - **Sin valor (no viene o `null`)** = aún no confirma: el alta **se detiene** con `CodErr = 91` y la pregunta *"El pedido no quedara en firme, desea proceder con el guardado?"*
+  - `true` = grabar pendiente de autorización · `false` = no grabar
+  - Va **antes** de la pregunta de requisición (`CodErr = 90`), igual que el legado; en el reenvío se conservan ambos campos
 
   **`Especial`** · BOOLEAN · ❌ — Pedido especial *(ticket 3697)*
   - `true` = imprime "ESPECIAL" en el pedido y la remisión de embarque, y se copia a la factura/remisión · Sin valor = `false`
@@ -300,7 +305,7 @@ docs: |
   3. Códigos de política (`CodErr`):
      - `1–6` = **monto mínimo** (pedido demasiado chico) → **se bloquea el alta** (`IdError=true`, con `CodErr` en la respuesta), **salvo** que venga `PasswordAut` con un password de autorización válido: entonces se graba **no en firme** (pendiente de autorización) y la bitácora registra quién autorizó.
        - Envío (`3` crédito / `6` contado): también se resuelve cambiando la entrega a **16 o 3 con ruta 22** (pasa por mercancía) o **14** (taxi por cobrar) y reenviando.
-     - `7–10` = crédito (excede límite / vencido / cheques devueltos / deuda vencida) → se graba `EnFirme=false`.
+     - `7–10` = crédito (excede límite / vencido / cheques devueltos / deuda vencida) → primero se confirma con el usuario (`CodErr = 91` / `ConfirmaPendiente`) y luego se graba `EnFirme=false`.
      - `0` = sin problema → `EnFirme=true`.
      - `Calidad.PolVenta` con código `<7` → `0`. Contado que excede límite (`>6` con `IdCond=0`) → `0`.
   4. Fuerzan `EnFirme=false` aunque `CodErr=0`: cliente en `BlkAut`; RFC en `blkRFC`; Calidad 37 que excede cantidad/límite de ChequePF (marca ` *CHPF*`); `(SaldoMov + SubtotalNeto) > Cliente.Saldo × 1.3` con `Plazo>0` y `SubtotalNeto ≥ 20000`.
@@ -311,12 +316,17 @@ docs: |
   **`Respuesta`** · STRING — Mensaje amigable del resultado. Con `CreaReq = true` se agrega el resultado de la requisición automática:
   - `Se generaron las requisiciones de traspaso: REQ000123 (alm 6),REQ000124 (alm 03A).` (+ avisos de partidas que no se completaron o que solo se completan con existencia foránea)
   - `No se genero la requisicion automatica: <motivo>` — el pedido **sí** quedó grabado; la requisición se hace manual
-  - `Requisicion automatica no generada: el pedido quedo pendiente de autorizacion.`
+  - `Requisicion automatica NO GENERADA: el pedido quedo pendiente de autorizacion; al autorizarse genere la requisicion manual de: 013526/0 3 PZA alm 03A.`
   - `Requisicion automatica no aplica: solo para backorder 3 ... con origen 02B o FUG.`
   **`Folio`** · STRING — Folio real del pedido generado (vacío si no se grabó).
   **`EnFirme`** · BOOLEAN — `true` = pedido en firme; `false` = pendiente de autorización.
-  **`CodErr`** · INTEGER — Código de política (0..10) evaluado · **`90`** = pregunta de requisición automática (no se grabó; ver abajo).
+  **`CodErr`** · INTEGER — Código de política (0..10) evaluado · **`91`** = confirmar pedido pendiente por crédito · **`90`** = pregunta de requisición automática (en ambos no se grabó; ver abajo).
   **`MensajePolitica`** · STRING — Mensaje textual de la política aplicada (si aplica).
+
+  **Confirmación de pedido pendiente por crédito (`IdError = true`, `CodErr = 91`):** el pedido **no se grabó**. `MensajePolitica` trae la política de crédito y `Respuesta` la pregunta, por ejemplo:
+  > `LA DEUDA VENCIDA DEL CLIENTE EXCEDE UN 10% DEL TOTAL DE SU DEUDA, AVISAR AL DEPTO. DE CREDITOS, HABLAR A CREDITOS PARA SU AUTORIZACION. El pedido no quedara en firme, desea proceder con el guardado?`
+
+  El front muestra el modal (Sí / No) y, con **Sí**, reenvía el mismo JSON con `ConfirmaPendiente = true`. Después puede llegar la pregunta de requisición (`CodErr = 90`).
 
   **Pregunta de requisición automática (`IdError = true`, `CodErr = 90`):** el pedido **no se grabó**. `Respuesta` trae la pregunta y el detalle, por ejemplo:
   > `2 de 3 articulo(s) sin existencia suficiente en el origen se completan con traspasos. Desea generar las requisiciones de traspaso? Traspasos: 021118 color 2 4 CAJA (200 UMI) del almacen 6; 030045 color 0 1 PZA (1 UMI) del almacen 03A; Sin requisicion: 040012 color 1: No se completa con los almacenes de traspaso; no se genera requisicion (faltan 30 UMI).`
@@ -355,7 +365,9 @@ docs: |
   | Solo comentarios/cortes | "El pedido no tiene partidas (articulos)." |
   | Política de monto mínimo (CodErr 1–6) sin `PasswordAut` | Texto de la política + ", HABLAR CON EL CLIENTE PARA INCREMENTAR PEDIDO (o capture el password de autorizacion para continuar)." |
   | Monto mínimo con `PasswordAut` incorrecto | "El password de autorizacion es incorrecto. " + texto de la política |
-  | Pedido en firme, `BckOrd = 3`, origen 02B/FUG, `CreaReq` sin valor y hay artículos que se completan con traspasos (`CodErr = 90`) | "N de M articulo(s) sin existencia suficiente en el origen se completan con traspasos. Desea generar las requisiciones de traspaso? Traspasos: …" |
+  | Política de crédito (CodErr 7–10) sin `ConfirmaPendiente` (`CodErr = 91`) | Texto de la política + ", HABLAR A CREDITOS PARA SU AUTORIZACION. El pedido no quedara en firme, desea proceder con el guardado?" |
+  | Política de crédito con `ConfirmaPendiente = false` | "No se grabo el pedido: no se acepto grabarlo pendiente de autorizacion (política)." |
+  | `BckOrd = 3`, origen 02B/FUG, `CreaReq` sin valor y hay artículos que se completan con traspasos (`CodErr = 90`) | "N de M articulo(s) sin existencia suficiente en el origen se completan con traspasos. Desea generar las requisiciones de traspaso? Traspasos: …" |
 
   ## 8. Observaciones técnicas
 
@@ -380,7 +392,7 @@ docs: |
     - **Pendiente:** definir en qué consulta se mostrarán y llenar los pedidos del mes en curso que no los tengan
   - **Impresión del pedido:** solo se ejecuta en producción; en el servidor de desarrollo se omite.
   - **Bloqueos:** el consecutivo de folios, las existencias y las autorizaciones se piden sin esperar indefinidamente: hasta 10 intentos de 1 segundo. Si el registro sigue ocupado, el alta responde `IdError = true` con quién lo tiene, por ejemplo *"El usuario X tiene bloqueada la tabla Folio PEDSLAG en este momento. Espere unos segundos y vuelva a intentar. No se genero el pedido; intente de nuevo."* (si es otra petición del sistema, lo indica así). En ese caso **no se crea nada**: no se consume folio, no se graba el pedido ni se compromete inventario, por lo que reintentar no genera duplicados.
-  - **Requisición automática de traspaso (`CreaReq`):** igual que la captura legada, pero en el mismo servicio y en dos pasadas (como el password de monto mínimo). La pregunta se hace después de evaluar la política: si el pedido no va a quedar en firme no se pregunta, porque no se generaría. Cálculo: faltante de cada artículo contra la existencia del origen (con origen 02B, si 02A + 02C cubren lo que falta no hay faltante); un mismo artículo/color en varias partidas se acumula; el faltante se redondea a la presentación. La existencia puede cambiar entre la pregunta y el reenvío; al grabar se recalcula. Al grabar con `CreaReq = true`, para cada artículo cuyo faltante se completa con los almacenes de traspaso (6, 7, 8, 9, 10, 03A, mayor existencia primero) se genera una requisición autorizada por almacén, se compromete la existencia de ese almacén, se imprime y se envía correo al vendedor con el detalle (incluye los artículos que no se completaron y los que solo se completan con existencia foránea). La requisición se genera **aparte del pedido**: si falla (folio o existencia ocupados por otro usuario, folio no definido), **el pedido se graba igual** y la respuesta indica el motivo; no quedan requisiciones a medias ni impresas. Las requisiciones de este servicio llevan el comentario `REQ AUTOMATICA - ADCOREX` y el resultado queda en la bitácora del pedido.
+  - **Requisición automática de traspaso (`CreaReq`):** igual que la captura legada, pero en el mismo servicio y en dos pasadas (como el password de monto mínimo). Orden igual al legado: primero la confirmación de crédito (`CodErr = 91`, si aplica) y después la pregunta de requisición (`CodErr = 90`), que se hace aunque el pedido vaya a quedar pendiente. Si el usuario contesta **Sí** y el pedido queda pendiente de autorización, la requisición **no se genera** (en el legado tampoco, y además no avisa); aquí la respuesta, la bitácora y el correo avisan que no se generó y qué traspasos hacer a mano cuando Créditos lo autorice (asunto del correo *REQ NO GENERADA (PENDIENTE)*). Cálculo: faltante de cada artículo contra la existencia del origen (con origen 02B, si 02A + 02C cubren lo que falta no hay faltante); un mismo artículo/color en varias partidas se acumula; el faltante se redondea a la presentación. La existencia puede cambiar entre la pregunta y el reenvío; al grabar se recalcula. Al grabar con `CreaReq = true`, para cada artículo cuyo faltante se completa con los almacenes de traspaso (6, 7, 8, 9, 10, 03A, mayor existencia primero) se genera una requisición autorizada por almacén, se compromete la existencia de ese almacén, se imprime y se envía correo al vendedor con el detalle (incluye los artículos que no se completaron y los que solo se completan con existencia foránea). La requisición se genera **aparte del pedido**: si falla (folio o existencia ocupados por otro usuario, folio no definido), **el pedido se graba igual** y la respuesta indica el motivo; no quedan requisiciones a medias ni impresas. Las requisiciones de este servicio llevan el comentario `REQ AUTOMATICA - ADCOREX` y el resultado queda en la bitácora del pedido. Si el usuario contesta **No** (`CreaReq = false`) y había traspasos disponibles, la bitácora registra *"RECHAZADA por el usuario; traspasos ofrecidos: artículo/color alm X"*, para saber después por qué el pedido no tuvo traspaso. En el correo interno de diagnóstico se ve la línea **Requisición automática** (lo que mandó el front en `CreaReq` y el resultado), el estatus *NO CREADO - PREGUNTA REQUISICION* cuando se respondió `CodErr = 90`, y en el asunto *REQ GENERADA*, *REQ RECHAZADA* o *REQ FALLO*.
   - **Ubicación y presentación:** no se revalidan en este servicio; las partidas de artículo llegan ya validadas desde `/Pedido/Captura/Partidas` o desde la cotización origen.
 
   ## 9. Relacionados
