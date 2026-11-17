@@ -145,6 +145,24 @@ docs: |
 
   ---
 
+  ## 10.1 Bultos, tarimas y aviso de corte (2026-11-11)
+
+  > Igual que la pantalla de Generales del modo carácter. Pendiente de compilar y probar.
+
+  **`Bultos`** · INT — Bultos empacados del embarque del pedido (de todos los ligados, o del corrugado). Si el pedido no trae nada se devuelve `1` (nunca `0`).
+  **`BultosEditable`** · BOOLEAN — `true` = el pedido no trae bultos empacados: el `1` es un valor por defecto y el front debe dejarlo capturar; `false` = dato del empaque, solo lectura.
+  **`Tarimas`** · INT — Tarimas del pedido. Siempre capturable.
+
+  **Nota para el front**
+
+  - Habilitar `Tarimas` siempre.
+  - Habilitar `Bultos` solo cuando `BultosEditable = true`.
+  - Regresar ambos valores en `ttFacturaGral` al POST; el POST graba lo capturado.
+
+  **Aviso de corte** — Si el pedido tiene un artículo a corte sin cantidad entregada y el almacén del usuario no le ha dado mantenimiento a ese corte, la `Respuesta` termina con `AVISO: No se ha dado mantenimiento al corte del pedido.` No bloquea.
+
+  ---
+
   ## 11. Registro en el resourceModel
 
   Recurso a dar de alta (aún **no registrado**): path `/Pedido/datosGeneralesContado`, verbo **GET**, operación `pedfactura..datosGeneralesContado`, params `IdPedido`, `Resto`, `IvaGlobal`, `IdUser` (**sin `Origen`** — se deriva del usuario); **respuesta = dataset `dsFactura`**. Regenerar `pedfactura.pidl` en PDSOE.

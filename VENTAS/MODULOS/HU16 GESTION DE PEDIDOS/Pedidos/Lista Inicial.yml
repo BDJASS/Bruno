@@ -5,10 +5,10 @@ info:
 
 http:
   method: GET
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/listaPedidosPorFacturar?IdUser=olds
+  url: http://192.0.1.9:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/listaPedidosPorFacturar?IdUser=lapg
   params:
     - name: IdUser
-      value: olds
+      value: lapg
       type: query
   auth: inherit
 
@@ -17,6 +17,7 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
 docs: |
   # Servicio REST — Facturación: Lista de Pedidos por Facturar

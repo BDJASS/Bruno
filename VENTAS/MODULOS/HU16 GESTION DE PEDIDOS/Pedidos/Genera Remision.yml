@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/generaRemisionContado?IdPedido=2981608&Resto=0&IdUser=olds&Ajuste=
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/generaRemisionContado?IdPedido=2981608&Resto=0&IdUser=olds&Confirmado=false
   params:
     - name: IdPedido
       value: "2981608"
@@ -16,8 +16,8 @@ http:
     - name: IdUser
       value: olds
       type: query
-    - name: Ajuste
-      value: ""
+    - name: Confirmado
+      value: "false"
       type: query
   body:
     type: json
@@ -45,8 +45,9 @@ http:
                   "TipoPrecio": "M",
                   "IdCond": 0,
                   "Condicion": "CONTADO",
-                  "Bultos": 0,
+                  "Bultos": 1,
                   "Tarimas": 0,
+                  "BultosEditable": true,
                   "IdEntrega": 11,
                   "Entrega": "NUESTRA CAMIONETA",
                   "ImpFlete": 0.0,
@@ -296,6 +297,7 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
 docs: |
   # Servicio REST — Facturación: Genera Remisión (Contado)
@@ -333,6 +335,9 @@ docs: |
   > ✅ = Requerido · ❌ = Opcional
 
   **`IdUser`** · STRING · ✅ — Usuario que factura. Vacío → *"Se requiere el usuario (IdUser)."*
+
+  **`Confirmado`** · LOGICAL · ❌ — Confirmación de la alerta de facturación por adelantado *(2026-11-13)*
+  - Vacío o `false` = si el pedido no está empacado y no es por adelantado, regresa la alerta · `true` = el usuario aceptó: se factura por adelantado
   **`IdPedido`** · STRING · ✅ — Folio del pedido (se normaliza)
   **`Resto`** · STRING · ❌ — Resto; vacío = `0`
   > **El origen ya NO se recibe:** se **deriva del usuario** (`Usuario.Id-Ubicacion` donde `Usuario.Id-User = IdUser`); determina la serie del folio y el almacén de la factura. Usuario inexistente / sin ubicación → error.
@@ -368,6 +373,7 @@ docs: |
   **Generales:** **`Requisicion`** · STRING → `Remision.Requisicion`
   **Embarque:** **`RazonSocial1`** · **`CalleNo1`** · **`Colonia1`** · STRING · **`IdCiudad1`** · INTEGER (clave; deriva `Ciudad1`/`Estado1` del catálogo) · **`Delegacion1`** · **`CP1`** · STRING · **`IdRutaEmb`** · INTEGER (solo si `Id-Tran = 0`) · **`Tel1`** · **`Fax1`** · **`Email`** · **`Attn1`** · STRING
   **Memo:** **`Observaciones1`** · **`Observaciones2`** · STRING → `Remision.Observaciones[1..2]`
+  **Bultos y tarimas (2026-11-11):** **`Tarimas`** · INTEGER → se graba siempre · **`Bultos`** · INTEGER → se graba solo si `BultosEditable = true` (sin dato = `1`, nunca `0`)
 
   > `ttFacturaDet` puede ir **vacío**: `generaRemisionContado` **no** lo usa (re-lee `DetPedido`). Solo el encabezado editable (Embarque/Memo/Requisición) es sobreescribible; totales, renglones y datos fiscales salen de `Pedido`/`DetPedido`.
 
@@ -397,8 +403,24 @@ docs: |
   {
     "response": {
       "IdError": false,
-      "Respuesta": "Remision 24993CB generada y timbrada correctamente. UUID: 5D8A...-...-...",
-      "IdRemision": "24993CB"
+      "Respuesta": "24993CB",
+      "IdRemision": "24993CB",
+      "UUIDTimbre": "5D8A...-...-...",
+      "Timbrado": true
+    }
+  }
+  ```
+
+  ### Generada sin timbre (la remisión es válida; reintentar con `timbraRemision`)
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "24993CB",
+      "IdRemision": "24993CB",
+      "UUIDTimbre": "",
+      "Timbrado": false
     }
   }
   ```
@@ -406,9 +428,9 @@ docs: |
   ### Error
 
   ```json
-  { "response": { "IdError": true, "Respuesta": "PEDIDO YA FACTURADO, FOLIO: 24990XB", "IdRemision": "" } }
-  { "response": { "IdError": true, "Respuesta": "[RequiereAjuste:II] NO SE PUEDEN HACER VENTAS DE CONTADO CON MAYOREO POR MENOS DE $500.00 Desea cambiar a Precio Publico II?", "IdRemision": "" } }
-  { "response": { "IdError": true, "Respuesta": "ESTE PEDIDO TIENE CONDICIONES DE CREDITO; facturar por el flujo de CREDITO.", "IdRemision": "" } }
+  { "response": { "IdError": true, "Respuesta": "PEDIDO YA FACTURADO, FOLIO: 24990XB", "IdRemision": "", "UUIDTimbre": "", "Timbrado": false } }
+  { "response": { "IdError": true, "Respuesta": "[RequiereAjuste:II] NO SE PUEDEN HACER VENTAS DE CONTADO CON MAYOREO POR MENOS DE $500.00 Desea cambiar a Precio Publico II?", "IdRemision": "", "UUIDTimbre": "", "Timbrado": false } }
+  { "response": { "IdError": true, "Respuesta": "ESTE PEDIDO TIENE CONDICIONES DE CREDITO; facturar por el flujo de CREDITO.", "IdRemision": "", "UUIDTimbre": "", "Timbrado": false } }
   ```
 
   ---
@@ -416,8 +438,15 @@ docs: |
   ## 9. Campos de respuesta
 
   **`IdError`** · BOOLEAN — `true` si no se pudo generar (nada se guarda; la transacción se deshace)
-  **`Respuesta`** · STRING — mensaje al usuario
+  **`Respuesta`** · STRING — si se generó: **solo el folio** (igual a `IdRemision`), sin texto del PAC ni avisos; si hubo error (`IdError = true`): el motivo *(2026-11-11)*
   **`IdRemision`** · STRING — folio de la remisión generada (vacío si hubo error)
+  **`UUIDTimbre`** · STRING — UUID del CFDI; vacío si no quedó timbrada, si la serie no es electrónica o hubo error *(2026-11-11)*
+  **`Timbrado`** · BOOLEAN — `true` = quedó timbrada (hay UUID); `false` = sin timbre *(2026-11-11)*
+  **`RequiereConfirmacion`** · BOOLEAN — `true` = no se generó nada: `Respuesta` trae una pregunta para el usuario (alerta de facturación por adelantado). Si acepta, se reenvía la misma petición con `Confirmado=true` *(2026-11-13)*
+
+  > Si `IdError = false` y `Timbrado = false`: el documento SÍ se generó; con serie electrónica (G/C/J/S/F) falta el timbre y se reintenta con `timbraRemision`; con serie no electrónica no requiere timbre (no se envía correo). El vendedor solo ve el folio.
+
+  **Correo de timbrado pendiente (2026-11-11)** — Cuando el documento queda sin timbre se envía un correo interno (tarjeta estándar ADOSA) con folio, folio electrónico, pedido, cliente, vendedor, monto, usuario, fecha/hora y el **motivo técnico** del timbrador/PAC. El correo de auditoría se sigue enviando y su campo *Resultado* trae el detalle completo (timbrado y avisos).
 
   ---
 
@@ -435,6 +464,117 @@ docs: |
   9. **Caja/pago:** si `Pagada`, genera `MovCaja` + `DetMovC` (`GeneraMovsCaja`, port de `p-generaMovsCaja`); abre `CtlCaja` automáticamente si no hay una abierta.
   10. **Subprogramas:** `vtaa0508.p` (descompromete) · `embd0020.p "Remision"` (marca facturado) · `vtaa0405.p` (distribuye IVA/estadística) · `vtaa0494.p`.
   11. **COMMIT** → **auto-timbra** `vtac2070.p` (si folio de serie electrónica G/C/J/S/F) → auditoría + **correo** (`correotarjeta.i`). Contado = EFECTIVO: **no** carga CxC/`MovCliente`.
+
+  ---
+
+  ## 10.1 Reglas igualadas al modo carácter (2026-11-10)
+
+  > Desde esta fecha `generaRemisionContado` sigue las mismas reglas, validaciones y orden de `vtaa0399.p` y del browse `vtaa0499.i`. Pendiente de compilar y probar.
+
+  **Rechazos antes de remisionar** (no se graba nada)
+
+  - Pedido de otro almacén (en contado no hay usuarios exentos).
+  - Cliente de frontera (renglones con IVA mayor a 0 y menor a 15).
+  - Pedido con estatus 5 o mayor → `PEDIDO YA FACTURADO, FOLIO: ...`.
+  - Solicitud de cancelación, pedido de sucursal (`*** GRAFICO`), RFC incompleto.
+  - Backorder de enviar completo (3 o 4) incompleto y pedido pagado con tarjeta.
+  - Cliente 222 sin requisición (ni en el pedido ni en `ttFacturaGral.Requisicion`).
+  - Pedidos ligados (`Id-Liga` "F") con algún ligado sin mantenimiento completo, o que no pueden ir todos juntos.
+  - Pedido con condiciones de crédito.
+  - Pedido con renglones de `02B` cuando el usuario no es de `02B`.
+  - Pedido sin empacar (estatus distinto de 4) o sin partidas entregadas: total de venta menor a 0.10. Los adelantados que aún no están en estatus 4 caen aquí.
+
+  **Qué renglones se remisionan**
+
+  - Solo de pedidos empacados (estatus 4).
+  - Artículo de un almacén con entrega: solo si tiene cantidad entregada, y se cobra lo entregado.
+  - Artículo de un almacén sin entrega: solo si la ubicación de venta es `MMT` o `MAS`, por lo pedido.
+  - Cortes y comentarios (Tipo 3 en adelante): siempre.
+  - Pedido por adelantado: todos los renglones, por lo pedido.
+  - Almacén por defecto del renglón: el almacén prioritario del vendedor.
+  - Pedidos ligados: una sola remisión con todos. Pedido en corrugado: los renglones de todo el corrugado.
+
+  **Inventario y pedido**
+
+  - `DetPedido.CantFac` se asigna con lo remisionado (ya no se acumula).
+  - Renglón no entregado que se remisiona: sale de inventario una sola vez y queda `CantEnt = remisionado`, `CantCom = 0`.
+  - Pedido adelantado: no mueve inventario.
+
+  **Política de venta y totales**
+
+  - No se valida cuando el origen es `02B`.
+  - Se valida con el total de venta (renglones Tipo menor a 6) y factor 0.25.
+  - Códigos 2 y 5 piden `Ajuste=II`; 3 y 6 piden `Ajuste=PASA` o `Ajuste=TAXI`; 4 es aviso.
+  - Si no hay descuento, `Descuento1/2/3` quedan en cero.
+  - `Id-RemTC` se llena cuando el pedido se pagó con tarjeta.
+  - Régimen fiscal de respaldo: del cliente, o del registro por RFC.
+  - El timbrado usa el origen del usuario.
+  - Si algo falla dentro de la transacción, la respuesta trae el motivo real y no se graba nada.
+
+  **Bultos, tarimas y aviso de corte (2026-11-11)**
+
+  - Bultos: los empacados del embarque del pedido (de todos los ligados, o del corrugado), igual que la pantalla de Generales del carácter.
+  - Si el pedido no trae bultos empacados se graba lo que mande el front en `ttFacturaGral.Bultos`; sin dato se graba `1`. Nunca queda en `0`.
+  - Si el pedido sí trae bultos empacados, el valor del front se ignora (en carácter no es capturable).
+  - Tarimas: se graba `ttFacturaGral.Tarimas` cuando viene el dataset.
+  - Aviso de corte sin mantenimiento: no bloquea; va en el correo de auditoría (la `Respuesta` solo lleva el folio).
+
+  **No portado** (decisión pendiente): venta como ticket (siempre sale como factura, `TipoVenta = 2`), descuento manual con contraseña; contraseña de backorder 3/4 incompleto (la valida el front). La impresión y las etiquetas ya se hacen en automático (ver 10.2).
+
+  ---
+
+  ## 10.2 Impresión automática (2026-11-12)
+
+  Al terminar, la remisión se manda directo a la impresora, **sin preguntar al vendedor**. Usa el servicio de [impresión](pedimprime-ImprimeDocumento.md): mismas copias, etiquetas de embarque y de bultos, y aviso a CEDIS que el modo carácter.
+
+  | Regla (en este orden) | Impresora |
+  |---------|-----------|
+  | Pedido del almacén `11` | `SATEF` |
+  | Pedido del almacén `12` | `CHFAC` |
+  | Folio: Penúltima letra `C` | `8` |
+  | Folio: Penúltima letra `F` | `J2` |
+  | Otro | Pendiente de impresora |
+
+  La regla por almacén (2026-11-13) usa el almacén del pedido que se factura y va antes que la regla por folio.
+
+  - No detiene la facturación y no hay campos nuevos.
+  - **`Respuesta`:** si el documento se timbró y se mandó a la impresora, trae el folio y el aviso: `0123456C1 Se envio automaticamente a la Impresora 8.` En cualquier otro caso (sin timbre, pendiente de impresora o falla al imprimir) trae solo el folio. El folio debe tomarse siempre de `IdRemision`.
+  - Por cada remisión llega a Sistemas **un solo correo**, "Facturación de pedido", con: el resultado de la facturación, el timbrado (o el motivo si quedó pendiente), la impresora a la que se fue, las impresiones enviadas, los procesos adicionales (etiquetas, aviso a CEDIS), los archivos generados y el tiempo de cada paso. Ya no salen aparte el correo de auditoría ni el de timbrado pendiente; solo se mandan como respaldo si el correo único no pudo salir.
+  - Folio fuera de la regla, o impresora que no existe en el catálogo: el correo llega con asunto `... - PENDIENTE DE IMPRESORA`. La hoja no se imprime; las etiquetas sí. Se imprime después con el servicio de impresión indicando la impresora.
+  - Remisión sin timbre: no se imprime; el correo llega con asunto `... - TIMBRADO PENDIENTE` y trae el motivo.
+  - El front no hace nada para imprimir.
+
+  ---
+
+  ## 10.3 Facturación por adelantado (2026-11-13)
+
+  En el modo carácter los pedidos por adelantado se facturan en otra opción. Ahora entran por este mismo servicio:
+
+  | Caso | Resultado |
+  |------|-----------|
+  | Pedido marcado por adelantado | Se remisiona directo por adelantado |
+  | No marcado, sin empacar y sin nada entregado | Alerta: `IdError=true`, `RequiereConfirmacion=true` y la pregunta en `Respuesta`. Con `Confirmado=true` se remisiona por adelantado y el pedido queda marcado |
+  | Sin empacar con partidas ya entregadas | Se detiene: se factura de forma normal cuando termine el empaque |
+  | Pedido empacado (estatus 4) no marcado | Facturación normal, sin cambios |
+
+  **Cómo se remisiona por adelantado**
+
+  - Todos los renglones con cantidad pedida (y los de texto) **por la cantidad pedida**, sin importar si el pedido está empacado.
+  - Solo el pedido capturado: no aplica liga de pedidos ni corrugado.
+  - La remisión queda marcada como por adelantado.
+  - Pedido que ya venía marcado: no mueve inventario. Pedido que se marca al confirmar: le da salida de inventario sin bajar el comprometido, igual que el carácter.
+  - No genera backorder automático ni descompromete lo no entregado.
+
+  **Igual al carácter (2026-11-16):** el pedido que va por adelantado sigue las reglas de la opción de adelantado del carácter, no las de la facturación normal:
+
+  - No se validan la solicitud de cancelación, los clientes de frontera ni el backorder 3/4 pagado con tarjeta. Sí se validan el almacén del pedido, la condición de crédito, la política de venta y las de la pantalla de pedidos por facturar (RFC, sucursal, requisición del cliente 222).
+  - La salida de inventario no baja el comprometido.
+  - Sin depósito conciliado: la remisión no nace pagada ni genera movimientos de caja.
+  - Sin costo especial ni el registro de cambios por renglón.
+  - Etiquetas de embarque con la misma regla de entrega/almacén, sin revisar pedidos remisionados y sin etiquetas de bultos de FUG.
+  - El correo de la facturación indica que fue por adelantado.
+
+  **Para el front:** cuando llegue `RequiereConfirmacion=true`, mostrar `Respuesta` como pregunta (Sí / No). Con Sí, reenviar la misma petición agregando `Confirmado=true`. Con No, no hacer nada.
 
   ---
 
@@ -457,6 +597,11 @@ docs: |
   | P5 | Pedido pagado con depósito conciliado | `Pagada=TRUE` + `MovCaja`/`DetMovC` generados |
   | P6 | Remisión "II" | `Tot` sin doble IVA (subtotal neto de IVA) |
   | P7 | Pedido de crédito (`Id-Cond>0`) | `"ESTE PEDIDO TIENE CONDICIONES DE CREDITO..."` |
+  | P20 | Pedido marcado por adelantado, sin empacar | Se remisiona por lo pedido; sin movimiento de inventario |
+  | P21 | Pedido sin empacar, no marcado, sin entregas, sin `Confirmado` | `IdError=true`, `RequiereConfirmacion=true`, nada se crea |
+  | P22 | El mismo pedido con `Confirmado=true` | Se remisiona por adelantado y el pedido queda marcado |
+  | P23 | Pedido sin empacar con partidas ya entregadas | Se detiene con mensaje; `RequiereConfirmacion=false` |
+  | P24 | Pedido empacado normal | Igual que antes |
 
   ---
   **Desarrollado por:** SIS10 - JASS

@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/generaFactura?IdPedido=2968082&Resto=0&IdUser=olds
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Pedido/generaFactura?IdPedido=2968082&Resto=0&IdUser=olds&Confirmado=false
   params:
     - name: IdPedido
       value: "2968082"
@@ -15,6 +15,9 @@ http:
       type: query
     - name: IdUser
       value: olds
+      type: query
+    - name: Confirmado
+      value: "false"
       type: query
   body:
     type: json
@@ -42,8 +45,9 @@ http:
                   "TipoPrecio": "M",
                   "IdCond": 2,
                   "Condicion": "CREDITO",
-                  "Bultos": 0,
+                  "Bultos": 1,
                   "Tarimas": 0,
+                  "BultosEditable": true,
                   "IdEntrega": 19,
                   "Entrega": "FLETE REGR. ENT.DOM.",
                   "ImpFlete": 0.0,
@@ -143,6 +147,7 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
 docs: |
   # Servicio REST — Facturación: Genera Factura
@@ -152,7 +157,7 @@ docs: |
   ## 1. Título del Servicio
 
   **Facturación — Generación de la Factura**
-  **Genera** la factura de un pedido: consume el folio real, crea `Factura`/`DetFactura`, afecta inventario y cuentas por cobrar (CxC), descompromete y marca el pedido facturado. Port del motor carácter `vtaa0499.p` (crédito) a REST, no interactivo, en **una sola transacción**. **Timbra el CFDI automáticamente** tras generar (igual que el carácter, que corre `vtac2060.p` al final); si el PAC falla, la factura sigue válida y el timbrado es reintentable con [TimbraFactura](pedfactura-TimbraFactura.md).
+  **Genera** la factura de un pedido: consume el folio real, crea `Factura`/`DetFactura`, afecta inventario y cuentas por cobrar (CxC), descompromete y marca el pedido facturado. Port del motor carácter `vtaa0499.p` (crédito) a REST, no interactivo, en **una sola transacción**. **No timbra** (el CFDI es un paso aparte, ver [TimbraFactura](pedfactura-TimbraFactura.md)).
   Programa servidor: `pedfactura.p` · Procedimiento: `generaFactura`. Módulo `/Ventas/Pedidos/`.
 
   > ⚠️ **Proceso crítico (dinero, folios fiscales, inventario, CxC).** Requiere compilar en PDSOE y **QA contra una factura de carácter** antes de producción (ver §11).
@@ -180,10 +185,13 @@ docs: |
   > ✅ = Requerido · ❌ = Opcional
 
   **`IdUser`** · STRING · ✅ — Usuario que factura. Vacío → *"Se requiere el usuario (IdUser)."*
+
+  **`Confirmado`** · LOGICAL · ❌ — Confirmación de la alerta de facturación por adelantado *(2026-11-13)*
+  - Vacío o `false` = si el pedido no está empacado y no es por adelantado, regresa la alerta · `true` = el usuario aceptó: se factura por adelantado
   **`IdPedido`** · STRING · ✅ — Folio del pedido (se normaliza)
   **`Resto`** · STRING · ❌ — Resto; vacío = `0`
   > **El origen ya NO se recibe:** se **deriva del usuario** (`Usuario.Id-Ubicacion` donde `Usuario.Id-User = IdUser`); determina la serie del folio y el almacén de la factura. Usuario inexistente / sin ubicación → error.
-  > **El IVA ya NO se recibe** (se eliminó el parámetro `IvaGlobal`): la tasa de referencia se toma de `SysGeneral.Porc-IVA` (16), igual que `g-Iva` en carácter; la zona del cliente decide frontera / tasa aplicada.
+  **`IvaGlobal`** · DECIMAL · ❌ — IVA global para comparar contra la zona (default `16`)
 
   ---
 
@@ -243,8 +251,24 @@ docs: |
   {
     "response": {
       "IdError": false,
-      "Respuesta": "Factura FACCEDIS0012345 generada y timbrada correctamente. UUID: 5D8A...-...-...",
-      "IdFactura": "0012345"
+      "Respuesta": "0012345",
+      "IdFactura": "0012345",
+      "UUIDTimbre": "1A2B3C4D-1111-2222-3333-444455556666",
+      "Timbrado": true
+    }
+  }
+  ```
+
+
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "0012345",
+      "IdFactura": "0012345",
+      "UUIDTimbre": "",
+      "Timbrado": false
     }
   }
   ```
@@ -252,8 +276,8 @@ docs: |
   ### Error
 
   ```json
-  { "response": { "IdError": true, "Respuesta": "PEDIDO YA FACTURADO, FOLIO: F0012345", "IdFactura": "" } }
-  { "response": { "IdError": true, "Respuesta": "No se encontro el consecutivo de folio para la serie FACCEDIS (almacen ''). Verifique el catalogo de folios.", "IdFactura": "" } }
+  { "response": { "IdError": true, "Respuesta": "PEDIDO YA FACTURADO, FOLIO: F0012345", "IdFactura": "", "UUIDTimbre": "", "Timbrado": false } }
+  { "response": { "IdError": true, "Respuesta": "No se encontro el consecutivo de folio para la serie FACCEDIS (almacen ''). Verifique el catalogo de folios.", "IdFactura": "", "UUIDTimbre": "", "Timbrado": false } }
   ```
 
   ---
@@ -261,8 +285,15 @@ docs: |
   ## 9. Campos de respuesta
 
   **`IdError`** · BOOLEAN — `true` si no se pudo generar (nada se guarda; la transacción se deshace)
-  **`Respuesta`** · STRING — mensaje al usuario
+  **`Respuesta`** · STRING — si se generó: **solo el folio** (igual a `IdFactura`), sin texto del PAC ni avisos; si hubo error (`IdError = true`): el motivo *(2026-11-11)*
   **`IdFactura`** · STRING — folio de la factura generada (vacío si hubo error)
+  **`UUIDTimbre`** · STRING — UUID del CFDI; vacío si la factura no quedó timbrada o hubo error *(2026-11-11)*
+  **`Timbrado`** · BOOLEAN — `true` = la factura quedó timbrada (hay UUID); `false` = sin timbre *(2026-11-11)*
+  **`RequiereConfirmacion`** · BOOLEAN — `true` = no se generó nada: `Respuesta` trae una pregunta para el usuario (alerta de facturación por adelantado). Si acepta, se reenvía la misma petición con `Confirmado=true` *(2026-11-13)*
+
+  > Si `IdError = false` y `Timbrado = false`, la factura **sí existe** (`IdFactura`) pero falta el timbre: el front debe ofrecer reintentar con `timbraFactura`. El vendedor solo ve el folio.
+
+  **Correo de timbrado pendiente (2026-11-11)** — Cuando el documento queda sin timbre se envía un correo interno (tarjeta estándar ADOSA) con folio, folio electrónico, pedido, cliente, vendedor, monto, usuario, fecha/hora y el **motivo técnico** del timbrador/PAC. El correo de auditoría se sigue enviando y su campo *Resultado* trae el detalle completo (timbrado y avisos).
 
   ---
 
@@ -279,7 +310,122 @@ docs: |
   8. **CxC** (`{cxca0001.i}`): cargo a `MovCliente` con `Saldo = Factura.Tot`.
   9. **COMMIT** + auditoría (`programas/auditoria.p`, módulo Pedidos).
 
-  **Decisiones aplicadas:** sin validación de límite de crédito (igual que el motor carácter, cuyo `vtad0125.p` está comentado en crédito); una sola transacción, folio real directo (sin `TMPFAC`); **auto-timbra** el CFDI tras el commit (`vtac2060.p`); folio con `EXCLUSIVE-LOCK NO-WAIT` + reintentos; correo de auditoría (`correotarjeta.i`). Totales completos: recálculo IVA plano + ajuste "II" (`vtaa0500.i`), seguro, descuento `DesCred`, IVA flete y retención `regaltex`.
+  **Decisiones aplicadas:** sin validación de límite de crédito (igual que el motor); una sola transacción, folio real directo (sin `TMPFAC`); no timbra CFDI (paso aparte).
+
+  ---
+
+  ## 10.1 Reglas igualadas al modo carácter (2026-11-10)
+
+  > Desde esta fecha `generaFactura` sigue las mismas reglas, validaciones y orden de `vtaa0499.p` y del browse `vtaa0498.i`. Pendiente de compilar y probar.
+
+  **Rechazos antes de facturar** (no se graba nada)
+
+  - Pedido de otro almacén (usuarios exentos: `gee, OLDS, JPOM, CAVF, EDR, LAPG, HLG, ELAS, FRANC`).
+  - Pedido con estatus 5 o mayor → `PEDIDO YA FACTURADO, FOLIO: ...`.
+  - Solicitud de cancelación, pedido de sucursal (`*** GRAFICO`), RFC incompleto.
+  - Cliente 165 / 33233 y asociados después del día 20; clientes 2101 / 32728 / 34780 desde el día 25.
+  - Cliente 222 sin requisición (ni en el pedido ni en `ttFacturaGral.Requisicion`).
+  - Pedido por adelantado (salvo ubicación `MMT`); pedido de contado (`Id-Cond = 0`).
+  - Pedidos ligados (`Id-Liga` "F") con algún ligado sin mantenimiento completo, o que no pueden ir todos juntos.
+  - Pedido sin empacar (estatus distinto de 4) o sin partidas entregadas: total menor a 0.10.
+
+  **Qué renglones se facturan**
+
+  - Solo de pedidos empacados (estatus 4).
+  - Artículo de un almacén con entrega: solo si tiene cantidad entregada, y se factura lo entregado.
+  - Artículo de un almacén sin entrega: solo si la ubicación de venta es `MMT` o `MAS`, por lo pedido.
+  - Renglones sin código, cortes y comentarios (Tipo 2 en adelante): siempre.
+  - Mercancía de `02B` no se factura desde otro almacén.
+  - Pedidos ligados: una sola factura con todos. Pedido en corrugado: los renglones de todo el corrugado.
+  - Usuarios `LAPG, HLG, ELAS, CAVF, EDR, OLDS, JPOM, FRANC` con clientes 2732, 1317, 1335, 3501, 34814, 245, 29893, 3699: un solo renglón `REMISION pedido-resto`.
+
+  **Inventario y pedido**
+
+  - `DetPedido.CantFac` se asigna con lo facturado (ya no se acumula).
+  - Renglón no entregado que se factura: sale de inventario una sola vez y queda `CantEnt = facturado`, `CantCom = 0`.
+  - Pedido adelantado `MMT`: no mueve inventario.
+
+  **Encabezado y totales**
+
+  - Tipo de cambio real cuando el pedido es en moneda 3.
+  - Condiciones 1, 4 y 5: plazo y vencimiento por la fecha de la condición.
+  - Régimen fiscal de respaldo: del cliente, o del registro por RFC.
+  - `Propietario` y ruta de embarque por defecto del cliente; bultos de ligados o del corrugado.
+  - Zona con IVA distinto al de la empresa: el pedido se re-calcula a ese IVA antes de facturar.
+  - % de IVA por renglón: 11 si el folio empieza con `1`, 16 en los demás; exentos se respetan.
+  - Autorización: se pierde si el subtotal rebasa 120 % de lo autorizado; el folio de autorización se liga a la factura.
+
+  **Después de facturar**
+
+  - Backorder automático (tipo 2): se genera el resto del pedido con lo no entregado.
+  - Movimiento en caja si el usuario que factura tiene caja asignada. Si la caja no se puede afectar, la factura queda y el aviso va en el correo de auditoría.
+  - Si algo falla dentro de la transacción, la respuesta trae el motivo real y no se graba nada.
+
+  **Bultos, tarimas y aviso de corte (2026-11-11)**
+
+  - Bultos: los empacados del embarque del pedido (de todos los ligados, o del corrugado), igual que la pantalla de Generales del carácter.
+  - Si el pedido no trae bultos empacados se graba lo que mande el front en `ttFacturaGral.Bultos`; sin dato se graba `1`. Nunca queda en `0`.
+  - Si el pedido sí trae bultos empacados, el valor del front se ignora (en carácter no es capturable).
+  - Tarimas: se graba `ttFacturaGral.Tarimas` cuando viene el dataset.
+  - Aviso de corte sin mantenimiento: no bloquea; va en el correo de auditoría (la `Respuesta` solo lleva el folio).
+
+  **No portado** (decisión pendiente): contraseña de backorder 3/4 incompleto (la valida el front). La impresión y las etiquetas ya se hacen en automático (ver 10.2).
+
+  ---
+
+  ## 10.2 Impresión automática (2026-11-12)
+
+  Al terminar, la factura se manda directo a la impresora, **sin preguntar al vendedor**. Usa el servicio de [impresión](pedimprime-ImprimeDocumento.md): mismas copias, etiquetas de embarque y de bultos, y aviso a CEDIS que el modo carácter.
+
+  | Regla (en este orden) | Impresora |
+  |---------|-----------|
+  | Pedido del almacén `11` | `SATEF` |
+  | Pedido del almacén `12` | `CHFAC` |
+  | Folio: Inicia en `2` | `8` |
+  | Folio: Inicia en `3` | `J2` |
+  | Otro | Pendiente de impresora |
+
+  La regla por almacén (2026-11-13) usa el almacén del pedido que se factura y va antes que la regla por folio.
+
+  - No detiene la facturación y no hay campos nuevos.
+  - **`Respuesta`:** si el documento se timbró y se mandó a la impresora, trae el folio y el aviso: `920109 Se envio automaticamente a la Impresora 8.` En cualquier otro caso (sin timbre, pendiente de impresora o falla al imprimir) trae solo el folio. El folio debe tomarse siempre de `IdFactura`.
+  - Por cada factura llega a Sistemas **un solo correo**, "Facturación de pedido", con: el resultado de la facturación, el timbrado (o el motivo si quedó pendiente), la impresora a la que se fue, las impresiones enviadas, los procesos adicionales (etiquetas, aviso a CEDIS), los archivos generados y el tiempo de cada paso. Ya no salen aparte el correo de auditoría ni el de timbrado pendiente; solo se mandan como respaldo si el correo único no pudo salir.
+  - Folio fuera de la regla, o impresora que no existe en el catálogo: el correo llega con asunto `... - PENDIENTE DE IMPRESORA`. La hoja no se imprime; las etiquetas sí. Se imprime después con el servicio de impresión indicando la impresora.
+  - Factura sin timbre: no se imprime; el correo llega con asunto `... - TIMBRADO PENDIENTE` y trae el motivo.
+  - El front no hace nada para imprimir.
+
+  ---
+
+  ## 10.3 Facturación por adelantado (2026-11-13)
+
+  En el modo carácter los pedidos por adelantado se facturan en otra opción. Ahora entran por este mismo servicio:
+
+  | Caso | Resultado |
+  |------|-----------|
+  | Pedido marcado por adelantado | Se factura directo por adelantado |
+  | No marcado, sin empacar y sin nada entregado | Alerta: `IdError=true`, `RequiereConfirmacion=true` y la pregunta en `Respuesta`. Con `Confirmado=true` se factura por adelantado y el pedido queda marcado |
+  | Sin empacar con partidas ya entregadas | Se detiene: se factura de forma normal cuando termine el empaque |
+  | Pedido empacado (estatus 4) no marcado | Facturación normal, sin cambios |
+
+  **Cómo se factura por adelantado**
+
+  - Todos los renglones con cantidad pedida (y los de texto) **por la cantidad pedida**, sin importar si el pedido está empacado.
+  - Solo el pedido capturado: no aplica liga de pedidos ni corrugado.
+  - **No mueve inventario ni el comprometido:** la mercancía se surte después en la opción de surtido de pedidos facturados por adelantado.
+  - El pedido queda en estatus 5 y terminado; la factura y el pedido quedan marcados como por adelantado.
+  - No genera backorder automático.
+
+  **Igual al carácter (2026-11-16):** el pedido que va por adelantado sigue las reglas de la opción de adelantado del carácter, no las de la facturación normal:
+
+  - No se validan la solicitud de cancelación, los clientes que no se facturan después del día 25 ni la regla del cliente 3. Sí se validan las de la pantalla de pedidos por facturar: RFC, pedido de sucursal, clientes del día 20 y requisición del cliente 222.
+  - Serie: fuera de 02B y FUG siempre la serie normal, también en frontera.
+  - Seguro con tope de $35,000 y su IVA al IVA de la empresa.
+  - Sin retención de IVA (regaltex) ni la revisión final de IVA.
+  - Etiquetas de embarque solo con entrega mayor a 10; sin revisar pedidos remisionados y sin etiquetas de bultos de FUG.
+  - El movimiento en caja del usuario sí se registra, igual que en el carácter.
+  - El correo de la facturación indica que fue por adelantado.
+
+  **Para el front:** cuando llegue `RequiereConfirmacion=true`, mostrar `Respuesta` como pregunta (Sí / No). Con Sí, reenviar la misma petición agregando `Confirmado=true`. Con No, no hacer nada.
 
   ---
 
@@ -302,6 +448,11 @@ docs: |
   | P4 | Pedido ya facturado | `"PEDIDO YA FACTURADO..."`, nada se crea |
   | P5 | Serie sin consecutivo de folio | Mensaje de folio, transacción deshecha |
   | P6 | Reintento del mismo pedido | Bloqueado (ya tiene `Id-Factura`) |
+  | P20 | Pedido marcado por adelantado, sin empacar | Se factura por lo pedido; pedido en estatus 5 sin movimiento de inventario |
+  | P21 | Pedido sin empacar, no marcado, sin entregas, sin `Confirmado` | `IdError=true`, `RequiereConfirmacion=true`, nada se crea |
+  | P22 | El mismo pedido con `Confirmado=true` | Se factura por adelantado y el pedido queda marcado |
+  | P23 | Pedido sin empacar con partidas ya entregadas | Se detiene con mensaje; `RequiereConfirmacion=false` |
+  | P24 | Pedido empacado normal | Igual que antes |
 
   ---
   **Desarrollado por:** SIS10 - JASS
