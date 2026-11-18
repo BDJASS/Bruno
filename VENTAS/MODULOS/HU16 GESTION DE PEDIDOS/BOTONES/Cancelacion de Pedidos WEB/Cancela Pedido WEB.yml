@@ -1,0 +1,154 @@
+info:
+  name: Cancela Pedido WEB
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/CancelacionWeb?IdPedido=0331115&IdUser=jpom
+  params:
+    - name: IdPedido
+      value: "0331115"
+      type: query
+    - name: IdUser
+      value: jpom
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Pedidos: Cancelación de Pedido de Internet (WEB)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedidos — Cancelación de Pedido de Internet (WEB)**
+  Cancela de forma definitiva un pedido de internet que todavía no está en firme: respalda el pedido y sus renglones en las tablas de cancelados, regresa el comprometido a existencia, deja la bitácora de baja con el usuario que cancela y elimina el pedido.
+  Programa servidor: `pedcancweb.p` · Procedimiento: `cancelaPedidoWeb` (POST) | Versión REST de la opción **Cancelar** de `cxcd1680.p` ("LIBERACION DE PEDIDOS (INTERNET)"), rutina `cxcd1681.i`. Módulo `/Ventas/Pedidos/`.
+
+  > Solo se porta la **cancelación**. El listado de la pantalla, la autorización y la consulta del pedido no forman parte de este servicio.
+
+  ---
+
+  ## 2. Método HTTP y URL
+
+  ```
+  POST http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/CancelacionWeb
+  ```
+
+  ---
+
+  ## 3. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · Sin body
+
+  **`IdPedido`** · STRING · ✅ — Folio del pedido WEB (se normaliza: primer carácter + resto a 6 dígitos, p.ej. `331175` → `0331175`)
+  **`IdUser`** · STRING · ✅ — Usuario que cancela; se graba en `Pedido.UsuarioCanc`, en la bitácora `LogBaja` y en la auditoría
+
+  ---
+
+  ## 4. Ejemplo de Request
+
+  ```
+  POST .../Ventas/Pedidos/CancelacionWeb?IdPedido=0331175&IdUser=sis10
+  ```
+
+  ---
+
+  ## 5. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "El pedido 0331175 se cancelo correctamente."
+    }
+  }
+  ```
+
+  ---
+
+  ## 6. Campos del Response
+
+  **`IdError`** · BOOLEAN — `true` = no se canceló (ver `Respuesta`); `false` = pedido cancelado y eliminado
+  **`Respuesta`** · STRING — Mensaje amigable del resultado o del motivo del rechazo
+
+  ---
+
+  ## 7. Validaciones del Servicio
+
+  Un pedido es **de internet** cuando cumple los filtros con los que `cxcd1680.p` arma su lista: folio que empieza con `0`, vendedor `0100` (INTERNET) y condición `0` (contado).
+
+  | Caso | Respuesta |
+  |------|-----------|
+  | `IdUser` vacío | `"Se requiere el usuario (IdUser)."` |
+  | `IdPedido` vacío | `"Se requiere el pedido (IdPedido)."` |
+  | Pedido inexistente y sin respaldo en `CancPed` | `"El pedido <folio> no existe."` |
+  | Pedido ya eliminado con respaldo en `CancPed` | `"El pedido <folio> ya ha sido cancelado."` |
+  | No es pedido de internet | `"El pedido <folio> no es un pedido de internet."` |
+  | `Pedido.Cancelado = true` | `"El pedido <folio> ya ha sido cancelado."` |
+  | `Pedido.EnFirme = true` | `"El pedido <folio> ya esta en firme y no se puede cancelar."` |
+  | Primer dígito del folio ≥ 5 | `"El pedido <folio> no se puede cancelar."` |
+  | Registro bloqueado (Pedido, DetPedido, BtcBajDetPed, CancDetPed, ArtUbic, CancPed) | Mensaje de `usuariolock.i` indicando qué usuario tiene el registro |
+
+  > Ante cualquier bloqueo o error dentro de la transacción **se deshace todo**; no queda nada a medias.
+
+  ---
+
+  ## 8. Efectos de la cancelación
+
+  Todo en **una sola transacción**, en el mismo orden que `cxcd1681.i`:
+
+  1. **Bitácora de bajas de renglones:** se borran los `BtcBajDetPed` del pedido.
+  2. **Marca de cancelación:** `Pedido.Cancelado = true`, `FecCancel = hoy`, `UsuarioCanc = IdUser`. Si `Id-Fuente <> 0`: `FuenteSta = 1`, `FuenteFec = hoy`, `FuenteHor = hora`.
+  3. **Renglones:** cada `DetPedido` se respalda en `CancDetPed`; si es artículo (`Tipo = 1`) con comprometido, `ArtUbic.Exist += CantCom`, `ArtUbic.BO -= CantBO`, `ArtUbic.Compro -= CantCom` (réplica de `vtaa0006.i`); después se borra el renglón.
+  4. **Respaldo del pedido:** `BUFFER-COPY` a `CancPed` (ya con la marca de cancelación) + `CancPed.FecCancel = hoy`.
+  5. **Bitácora `LogBaja`:** `programas/vtaa0117_rest.p` con origen `"1660"` (el mismo de la pantalla) y el `IdUser`.
+  6. **Embarques:** `embd0010.p` opción `2` (baja).
+  7. **Eliminación:** `DELETE Pedido`.
+  8. **Auditoría** (no crítica, fuera de la transacción): `programas/auditoria.p`, módulo `Pedidos`, recurso `/Ventas/Pedidos/CancelacionWeb`.
+
+  ---
+
+  ## 9. Plan de Pruebas
+
+  > Preparación: un pedido WEB en la lista de "LIBERACION DE PEDIDOS (INTERNET)" (`PED_WEB`) y un pedido de otro vendedor (`PED_OTRO`).
+
+  | # | Request | Esperado |
+  |---|---------|----------|
+  | C1 | POST sin `IdUser` | `"Se requiere el usuario (IdUser)."` |
+  | C2 | POST `IdPedido=PED_OTRO` | `"... no es un pedido de internet."` |
+  | C3 | POST `IdPedido=PED_WEB` | `IdError: false`; en BD: no existe `Pedido`/`DetPedido`, existen `CancPed` (Cancelado = sí, UsuarioCanc = IdUser) y `CancDetPed`, `ArtUbic` ajustado, `LogBaja` con Donde `1660` e Id-User = IdUser, `BtcBajDetPed` vacío, embarques dado de baja |
+  | C4 | Repetir C3 | `"... ya ha sido cancelado."` |
+  | C5 | C3 con el pedido abierto en otra sesión | Mensaje de bloqueo con el usuario; sin cambios en BD |
+  | C6 | C3 con el `ArtUbic` de un renglón bloqueado | Mensaje de bloqueo de inventario; sin cambios en BD |
+
+  ---
+
+  ## 10. Resultado
+
+  | Estado              | Descripción                                                  |
+  |---------------------|--------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Servicio desarrollado. Pendiente de compilación/deploy y QA. |
+
+  ---
+
+  ## 11. Observaciones Técnicas
+
+  1. **Confirmación en el front:** el diálogo "Confirmar la Cancelacion Definitiva del Pedido ?" de la pantalla lo resuelve el front antes de llamar al servicio.
+  2. **Usuario real:** la pantalla graba `USERID('dictdb')`; en PASOE eso es la cuenta de servicio, por eso se graba el `IdUser` y se usa `vtaa0117_rest.p` en lugar de `vtaa0117.p`.
+  3. **Sin Resto:** la pantalla busca el pedido solo por folio (`FIND FIRST`); los pedidos WEB no tienen restos.
+  4. **Filtro BlkAut:** la pantalla excluye de su lista a los clientes con autorización bloqueada (`BlkAut`); eso solo decide qué se muestra y no se valida aquí.
+  5. **Candados `NO-WAIT`:** en lugar de esperar como el modo carácter, el servicio avisa qué registro está en uso y deshace.
+  6. **Respaldos previos:** si ya existiera un `CancDetPed`/`CancPed` con la misma llave se reemplaza (la pantalla tronaría por el índice único).
+  7. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS

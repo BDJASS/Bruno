@@ -1,0 +1,200 @@
+info:
+  name: Pedidos para Ligar en Captura
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Liga/CandidatosCaptura?IdUser=olds&IdCliente=1186&Opcion=1&IdEntrega=12&IdCond=2&FEFormaPago=99&PagAnt=NO&Adelantado=NO&SurtParcial=NO&IdTran=0
+  params:
+    - name: IdUser
+      value: "olds"
+      type: query
+    - name: IdCliente
+      value: "1186"
+      type: query
+    - name: Opcion
+      value: "1"
+      type: query
+    - name: IdEntrega
+      value: "12"
+      type: query
+    - name: IdCond
+      value: "2"
+      type: query
+    - name: FEFormaPago
+      value: "99"
+      type: query
+    - name: PagAnt
+      value: "NO"
+      type: query
+    - name: Adelantado
+      value: "NO"
+      type: query
+    - name: SurtParcial
+      value: "NO"
+      type: query
+    - name: IdTran
+      value: "0"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Pedidos: Candidatos para Ligar en la Captura (sin folio)
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedidos — Candidatos para Ligar antes de generar el pedido**
+  Devuelve los pedidos del cliente que se pueden ligar **cuando el pedido todavía no existe** (al convertir una cotización o en un pedido directo). Como no hay folio, la búsqueda parte del cliente y de las condiciones capturadas en pantalla. Ticket 3960.
+  Aplica la misma regla que [LigaCandidatos](pedcambio-LigaCandidatos.md) y que el servicio del CallCenter (`ligarpedidos`); solo cambia de dónde salen los valores.
+  Programa servidor: `pedcambio.p` · Procedimiento: `ligaCandidatosCaptura`. Módulo `/Ventas/Pedidos/`.
+
+  > **Flujo completo:** (1) este GET lista los candidatos y el usuario elige; (2) el front crea el pedido con el alta de siempre, sin cambios; (3) con el folio que regresa el alta, el front liga con [LigaPedidos](pedcambio-LigaPedidos.md) mandando los pedidos elegidos. Para el usuario es un solo clic; en el back son llamadas independientes.
+
+  > [LigaCandidatos](pedcambio-LigaCandidatos.md) (con folio, Gestión de Pedidos) no cambia.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Liga/CandidatosCaptura
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional · Los SI/NO vacíos se toman como `NO`
+
+  **`IdUser`** · STRING · ✅ — Usuario que consulta. Vacío → *"Se requiere el usuario (IdUser)."*
+  **`IdCliente`** · STRING · ✅ — Cliente del pedido que se está capturando
+  **`IdEntrega`** · STRING · ✅ — Forma de entrega capturada (mayor a 0)
+  **`IdCond`** · STRING · ✅ — Condición de venta capturada
+  - `0` Contado · mayor a 0 = crédito
+
+  **`Opcion`** · STRING · ❌ — Tipo de liga
+  - `1` Facturación (default) · `2` Embarques (bloqueada)
+
+  **`FEFormaPago`** · STRING · ❌ — Forma de pago capturada
+  - Ej: `"03"` · Se compara tal cual contra la del pedido
+
+  **`PagAnt`** · STRING · ❌ — Pago anticipado
+  - `SI` · `NO`
+
+  **`Adelantado`** · STRING · ❌ — Pedido adelantado
+  - `SI` · `NO`
+
+  **`SurtParcial`** · STRING · ❌ — Surtido parcial
+  - `SI` · `NO`
+
+  **`IdTran`** · STRING · ❌ — Transporte capturado
+  - Vacío = `0`
+
+  ---
+
+  ## 5. Body
+
+  No aplica.
+
+  ---
+
+  ## 6. Headers
+
+  ```
+  Content-Type: application/json
+  ```
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Pedidos/Liga/CandidatosCaptura?IdUser=olds&IdCliente=1186&Opcion=1&IdEntrega=12&IdCond=2&FEFormaPago=99&PagAnt=NO&Adelantado=NO&SurtParcial=NO&IdTran=0
+  ```
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Se encontraron 2 pedido(s) que se pueden ligar.",
+      "ttLigaCand": {
+        "ttLigaCand": [
+          { "IdPedido": "0456123", "Resto": 0, "FecReg": "2026-11-10", "IdFactura": "", "Adelantado": false, "IdLiga": "", "IdEstatus": 1 },
+          { "IdPedido": "0456200", "Resto": 0, "FecReg": "2026-11-12", "IdFactura": "", "Adelantado": false, "IdLiga": "L0001234", "IdEstatus": 2 }
+        ]
+      }
+    }
+  }
+  ```
+
+  ### Campos de `ttLigaCand`
+
+  **`IdPedido`** · CHARACTER — Folio del pedido candidato
+  **`Resto`** · INTEGER — Resto del pedido
+  **`FecReg`** · DATE — Fecha de registro
+  **`IdFactura`** · CHARACTER — Factura del pedido, si ya tiene
+  **`Adelantado`** · LOGICAL — `true` = pedido adelantado
+  **`IdLiga`** · CHARACTER — Liga actual; vacío = sin liga
+  **`IdEstatus`** · INTEGER — Estatus del pedido
+
+  Misma estructura que [LigaCandidatos](pedcambio-LigaCandidatos.md).
+
+  ---
+
+  ## 9. Validaciones
+
+  | Condición | Respuesta |
+  |-----------|-----------|
+  | `IdUser` vacío | Se requiere el usuario (IdUser). |
+  | `IdCliente` vacío o no numérico | Indique el cliente del pedido. |
+  | Cliente inexistente | El cliente X no existe. |
+  | `Opcion` distinta de 1 y 2 | Opcion invalida: 1 = ligar en facturacion, 2 = ligar en embarques. |
+  | `Opcion` = 2 | Temporalmente se encuentra bloqueada la opcion para ligar en embarques. |
+  | `IdEntrega` vacío o 0 | No se ha seleccionado la forma de entrega. |
+  | `IdCond` vacío | No se ha seleccionado la condicion de venta. |
+  | `IdTran` no numérico | El transporte no es valido. |
+  | Sin candidatos | `IdError = false` · El cliente no tiene pedidos que se puedan ligar con estas condiciones. |
+
+  ---
+
+  ## 10. Observaciones Técnicas
+
+  ### 10.1 Regla de candidatos
+
+  Pedidos del cliente con estatus menor a 5 que coinciden con lo capturado en: forma de entrega, transporte, surtido parcial, condición de venta, adelantado, forma de pago y pago anticipado. Solo folios de 7 posiciones, igual que el CallCenter.
+
+  ### 10.2 Diferencias contra el CallCenter
+
+  - El CallCenter manda además `Enviar` (surte de CEDIS); solo aplica a la liga por embarques, que está bloqueada, así que aquí no se recibe.
+  - El CallCenter manda la liga dentro del alta. Aquí la liga se hace después del alta, con [LigaPedidos](pedcambio-LigaPedidos.md).
+  - Se agrega `IdEstatus` a la respuesta y los mensajes de validación.
+
+  ### 10.3 A considerar en el front
+
+  - Si el alta sale bien y la liga falla, el pedido queda creado **sin liga**: avisar al usuario con el mensaje de la liga.
+  - [LigaPedidos](pedcambio-LigaPedidos.md) valida mismo cliente, estatus y condición de venta. Si el usuario cambia condiciones después de elegir los candidatos, hay que volver a consultar antes de generar.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS
