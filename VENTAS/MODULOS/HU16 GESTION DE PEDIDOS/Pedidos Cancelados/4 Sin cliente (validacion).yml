@@ -1,0 +1,206 @@
+info:
+  name: Sin cliente (validacion)
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Cancelados?IdCliente=&IdUser=olds
+  params:
+    - name: IdCliente
+      value: ""
+      type: query
+    - name: IdUser
+      value: "olds"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  # Servicio REST — Pedidos Cancelados por Cliente y Motivo
+
+  ---
+
+  ## 1. Título del Servicio
+
+  **Pedidos Cancelados (Ventas / Pedidos / Cancelados)**
+  Dado un cliente, devuelve sus **pedidos efectivamente cancelados** filtrados por **motivo de cancelación**, del más reciente al más antiguo. Lo usa **Convertir a pedido** para avisar cuando el cliente tiene cancelaciones por *Falta de pago* o *Cliente ya no desea la mercancía no responde*.
+  Programa servidor: `pedcancelados.p` · Procedimiento: `leeCancelados`.
+
+  > Creado 2026-11-18 (ticket 3931). Consumo en AdCorex: ticket de front 3932.
+
+  ---
+
+  ## 2. Método HTTP
+
+  ```
+  GET
+  ```
+
+  ---
+
+  ## 3. URL Completa
+
+  ```
+  http://192.0.1.14:8853/RestADOSAVentas/rest/RestADOSAVentas/Ventas/Pedidos/Cancelados
+  ```
+
+  ---
+
+  ## 4. Parámetros de Entrada (Query String)
+
+  > ✅ = Requerido · ❌ = Opcional
+
+  **`IdCliente`** · STRING · ✅ — Clave del cliente (numérica, mayor a 0)
+  **`Motivos`** · STRING · ❌ — Motivos de cancelación a buscar, separados por coma
+  - Ej: `Falta de pago,Cliente ya no desea la mercancía no responde`
+  - Si algún motivo contiene coma, separarlos con `|` (si la lista trae `|` se usa ese separador)
+  - Comparación **exacta** con el texto del catálogo de la solicitud de cancelación, sin importar mayúsculas ni espacios al inicio/fin
+  - Vacío = todos los pedidos cancelados del cliente
+
+  **`Meses`** · STRING · ❌ — Periodo hacia atrás, por fecha de cancelación
+  - Vacío = `12` · Tope `60`
+
+  **`IdUser`** · STRING · ✅ — Usuario que ejecuta la consulta
+
+  ---
+
+  ## 5. Body
+
+  No aplica. Método `GET`.
+
+  ---
+
+  ## 6. Headers
+
+  | Header         | Valor                                  |
+  |----------------|----------------------------------------|
+  | `Accept`       | `application/json`                     |
+  | `Content-Type` | `application/json` *(opcional en GET)* |
+
+  ---
+
+  ## 7. Ejemplo de Request
+
+  ```
+  GET .../Ventas/Pedidos/Cancelados?IdCliente=54371&Motivos=Falta de pago,Cliente ya no desea la mercancía no responde&IdUser=olds
+  ```
+
+  > En el front, codificar los valores de la URL (espacios y acentos).
+
+  ---
+
+  ## 8. Ejemplo de Response
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "Consulta generada.",
+      "ttPedCanc": {
+        "ttPedCanc": [
+          {
+            "IdPedido": "2002699",
+            "Resto": 0,
+            "Fecha": "2026-11-16",
+            "Motivo": "Falta de pago",
+            "Usuario": "OLDS",
+            "IdVendedor": "5414",
+            "Subtotal": 1500.5
+          },
+          {
+            "IdPedido": "2001000",
+            "Resto": 1,
+            "Fecha": "2026-08-20",
+            "Motivo": "Cliente ya no desea la mercancía no responde",
+            "Usuario": "JASS",
+            "IdVendedor": "5400",
+            "Subtotal": 99.0
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  Sin resultados (no es error):
+
+  ```json
+  {
+    "response": {
+      "IdError": false,
+      "Respuesta": "El cliente no tiene pedidos cancelados con esos motivos en el periodo.",
+      "ttPedCanc": { "ttPedCanc": [] }
+    }
+  }
+  ```
+
+  ### Campos de `ttPedCanc` (1 registro por pedido-resto cancelado)
+
+  **`IdPedido`** · STRING — Folio del pedido
+  **`Resto`** · INTEGER — Resto del pedido
+  **`Fecha`** · DATE — Fecha de cancelación; si no se grabó, la de la solicitud de cancelación y al final la de registro del pedido
+  **`Motivo`** · STRING — Motivo capturado en la solicitud de cancelación
+  **`Usuario`** · STRING — Quien solicitó la cancelación; si no hubo solicitud, quien canceló
+  **`IdVendedor`** · STRING — Vendedor del pedido
+  **`Subtotal`** · DECIMAL — Subtotal del pedido (en su moneda)
+
+  > Ordenado por `Fecha` descendente (y folio descendente en la misma fecha).
+
+  ---
+
+  ## 9. Validaciones del Servicio
+
+  | Condición | Comportamiento |
+  |-----------|----------------|
+  | `IdUser` vacío | `IdError: true` — `"Se requiere el usuario (IdUser)."` |
+  | `IdCliente` vacío | `IdError: true` — `"Se requiere el cliente."` |
+  | `IdCliente` no numérico o ≤ 0 | `IdError: true` — `"Numero de cliente invalido."` |
+  | `Meses` no numérico o ≤ 0 | `IdError: true` — `"El periodo en meses debe ser un numero mayor a cero."` |
+  | Sin coincidencias | `IdError: false` — tabla vacía |
+
+  ---
+
+  ## 10. Evidencia de Ejecución
+
+  *Pendiente de captura por parte del equipo de QA.*
+
+  ---
+
+  ## 11. Fecha de Prueba
+
+  | Ambiente | Fecha         | Ejecutado por |
+  |----------|---------------|---------------|
+  | DEV      | *(pendiente)* | *(pendiente)* |
+
+  ---
+
+  ## 12. Resultado
+
+  | Estado              | Descripción                                                       |
+  |---------------------|-------------------------------------------------------------------|
+  | ⏳ Pendiente prueba | Pendiente de compilar y publicar en DEV, y de ejecución por QA. |
+
+  ---
+
+  ## 13. Observaciones Técnicas
+
+  1. **Dos orígenes de cancelados:**
+     - `Pedido` con `Cancelado = true`: desde el 2026-11-09 cancelar ya **no borra** el pedido (lo marca cancelado, estatus 6).
+     - `CancPed`: respaldo de los pedidos cancelados **antes** del 2026-11-09, cuando la cancelación borraba el pedido.
+
+     Si un pedido-resto aparece en ambos, se devuelve una sola vez.
+  2. **Solo cancelados efectivos:** las solicitudes de cancelación **pendientes** (pedido con solicitud pero sin cancelar) no se incluyen.
+  3. **Motivo:** es el de la solicitud de cancelación (texto libre del catálogo fijo del modal Solicitud de Cancelación). Las cancelaciones hechas directamente por CEDIS sin solicitud no tienen motivo: solo salen cuando `Motivos` va vacío.
+  4. **Periodo:** se filtra por fecha de cancelación (`Meses` hacia atrás desde hoy). En los cancelados anteriores al 2026-11-09 la búsqueda se acota además por fecha de registro del pedido dentro del periodo.
+  5. **Eficiencia:** va por índices de cliente — en `Pedido` por `EnFirme + Cancelado + Id-Cliente` (solo los cancelados del cliente) y en `CancPed` por `Id-Cliente + FecReg` — sin recorrer pedidos de otros clientes ni leer el detalle. No se usa `/Ventas/Pedidos/Gestion/Consulta` porque solo lee `Pedido` (no vería los cancelados anteriores al 2026-11-09) y recorre por fecha de registro de todos los clientes.
+  6. **Autenticación:** servicio sobre OpenEdge PASOE; si el ambiente requiere Bearer, incluir `Authorization: Bearer <token>`.
+
+  ---
+  **Desarrollado por:** SIS10 - JASS
